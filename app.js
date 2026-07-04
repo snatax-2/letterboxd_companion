@@ -487,6 +487,7 @@ async function fetchSuggestions(q) {
   } catch { 
     searchStatus.style.display = 'none'; 
     suggestEl.style.display = 'none'; 
+    showToast('Recherche indisponible, vérifie ta connexion.');
   }
 }
 
@@ -541,6 +542,7 @@ async function selectMovie(m, year) {
     }
   } catch (err) {
     document.getElementById('strip-genre').textContent = year || '';
+    showToast('Détails du film indisponibles, réessaie plus tard.');
   } finally {
     searchStatus.style.display = 'none';
     isFetchingMovie = false;
@@ -1656,7 +1658,10 @@ wlInput.addEventListener('input', () => {
         });
         wlSuggestEl.appendChild(el);
       });
-    } catch { wlSuggestEl.style.display = 'none'; }
+    } catch {
+      wlSuggestEl.style.display = 'none';
+      showToast('Recherche indisponible, vérifie ta connexion.');
+    }
   }, 280);
 });
 
