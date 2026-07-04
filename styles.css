@@ -735,4 +735,17 @@
     .score-big { font-size: 3.2rem; }
     .score-main { padding: 10px 14px; }
     .rating-stars label { font-size: 2.8rem; }
+
+    /* Barre "Rechercher un film à ajouter" + bouton : empilée pour éviter que le champ soit écrasé */
+    .watchlist-add-row {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .watchlist-add-input {
+      width: 100%;
+    }
+    .watchlist-add-btn {
+      width: 100%;
+      padding: 10px 14px;
+    }
   }
