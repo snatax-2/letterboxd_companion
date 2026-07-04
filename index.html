@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="default">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ludex Rating Companion</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Confirmer</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="modal-cancel">Annuler</button>
+      <button class="modal-btn danger" id="modal-confirm">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-box">
+    <div class="modal-title">🎨 Personnalisation</div>
+    <div class="modal-body">
+      <label class="settings-label">Nom de l'application</label>
+      <input type="text" id="setting-app-name" class="settings-input" placeholder="Ex: Ludex Film Journal">
+
+      <label class="settings-label">Thème visuel</label>
+      <div class="theme-grid" id="theme-grid">
+        <div class="theme-card" data-theme="default">
+          <div class="theme-preview" style="background:#14181c">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1f2935;flex:1"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#ff8000;width:55%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#40bcf4"></div><div class="theme-preview-dot" style="background:#00e054"></div><div class="theme-preview-dot" style="background:#ff4040"></div></div>
+          </div>
+          <div class="theme-label" style="background:#1f2935;color:#9ab;font-family:'Titillium Web',sans-serif">Letterboxd</div>
+        </div>
+        <div class="theme-card" data-theme="scuderia">
+          <div class="theme-preview" style="background:#0a0a0a">
+            <div class="theme-preview-row"><div style="width:3px;background:#e32636;align-self:stretch;flex-shrink:0"></div><div class="theme-preview-bar" style="background:#0f0f0f;flex:1;margin-left:4px"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#e32636;width:60%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#e32636"></div><div class="theme-preview-dot" style="background:#FFF200"></div><div class="theme-preview-dot" style="background:#444"></div></div>
+          </div>
+          <div class="theme-label" style="background:#0f0f0f;color:#e32636;font-family:Oswald,sans-serif;letter-spacing:.1em;font-style:italic;">SCUDERIA</div>
+        </div>
+        <div class="theme-card" data-theme="anderson">
+          <div class="theme-preview" style="background:#FDF6E3; border: 2px solid #D1495B;">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#F5EBD0;flex:1;border:1px solid #CEBF9A"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#D1495B,#669999);width:65%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#D1495B"></div><div class="theme-preview-dot" style="background:#669999"></div><div class="theme-preview-dot" style="background:#E8A825"></div></div>
+          </div>
+          <div class="theme-label" style="background:#F5EBD0;color:#D1495B;font-family:'Jost',sans-serif;font-style:normal;border-top:2px solid #D1495B">Wes Anderson</div>
+        </div>
+        <div class="theme-card" data-theme="filmnoir">
+          <div class="theme-preview" style="background:#050505">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#111;flex:1;border:1px solid #333;border-radius:0"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#555;width:65%;border-radius:0"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#fff;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#aaa;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#555;border-radius:0;width:8px;height:8px"></div></div>
+          </div>
+          <div class="theme-label" style="background:#000;color:#e0e0e0;font-family:'Cinzel',serif;letter-spacing:.08em;border-top:1px solid #333;">FILM NOIR</div>
+        </div>
+        <div class="theme-card" data-theme="system">
+          <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
+             <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;">🌓</div>
+          </div>
+          <div class="theme-label" style="background:#1f2935;color:#fff;font-family:var(--font-heading)">Auto (Système)</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="settings-cancel">Annuler</button>
+      <button class="modal-btn primary" id="settings-save">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<header class="app-header">
+  <h1 class="app-title" id="main-app-title"><em>Ludex</em> Rating Companion</h1>
+  <div class="header-actions">
+    <button class="icon-btn" id="settings-btn" title="Personnaliser">⚙️</button>
+    <button class="icon-btn" id="export-btn" title="Sauvegarder les données">↑ Exporter</button>
+    <button class="icon-btn" id="import-trigger" title="Restaurer les données">↓ Importer</button>
+    <input type="file" id="import-file" accept=".json" style="display:none">
+  </div>
+</header>
+
+<div class="layout">
+
+  <div class="col-left" id="col-rating">
+    <div class="card">
+      <div class="card-title">
+        Film
+        <button class="btn-new-review" id="new-btn">➕ Nouvelle critique</button>
+      </div>
+
+      <div class="search-wrap">
+        <div class="search-row">
+          <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
+          <input type="date" class="date-input" id="view-date">
+          <button class="heart-btn" id="heart-btn" title="Aimer ce film">♥</button>
+        </div>
+        <div class="search-status" id="search-status"></div>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+
+      <div class="context-row" id="context-tags">
+        <button type="button" class="ctx-tag" data-tag="🍿 Cinéma">🍿 Cinéma</button>
+        <button type="button" class="ctx-tag" data-tag="🔄 Re-visionnage">🔄 Re-visionnage</button>
+        <button type="button" class="ctx-tag" data-tag="📝 Analyse / Étude">📝 Analyse / Étude</button>
+        <button type="button" class="ctx-tag" data-tag="🛋️ À la maison">🛋️ À la maison</button>
+      </div>
+
+      <div class="film-strip" id="film-strip">
+        <img class="film-strip-poster" id="strip-poster" src="" alt="">
+        <div class="film-strip-info">
+          <div class="film-strip-title" id="strip-title"></div>
+          <div class="film-strip-genre" id="strip-genre"></div>
+          <div class="strip-ratings" id="strip-ratings" style="display:none;">
+            <span class="strip-tmdb-badge">
+              <span class="strip-rating-icon">★</span>
+              <span class="strip-rating-val" id="strip-tmdb-score">—</span>
+              <span class="strip-rating-src">TMDb</span>
+            </span>
+            <span class="strip-votes" id="strip-votes"></span>
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" id="movie-title">
+      <input type="hidden" id="movie-year">
+      <input type="hidden" id="movie-poster">
+      <input type="hidden" id="movie-genre">
+      <input type="hidden" id="movie-runtime">
+      <input type="hidden" id="movie-director">
+      <input type="hidden" id="movie-actors">
+      <input type="hidden" id="movie-tmdb-score">
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">
+        Notation
+        <span class="card-title-badge" id="mode-badge">Mode détaillé</span>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-tab active" id="tab-detail" onclick="setMode('detail')">Détaillé (6 critères)</button>
+        <button class="mode-tab" id="tab-quick" onclick="setMode('quick')">Rapide (étoiles)</button>
+      </div>
+
+      <div class="detailed-section">
+
+        <div class="weights-toggle" id="weights-toggle" onclick="toggleWeights()">
+          ⚙ Personnaliser les pondérations
+        </div>
+        <div class="weights-panel" id="weights-panel">
+          <div class="weights-grid">
+            <div class="weight-item"><label>Scénario</label><input type="number" id="w-scenario" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label>Réalisation</label><input type="number" id="w-realisation" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label>Photographie</label><input type="number" id="w-photo" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label>Acteurs</label><input type="number" id="w-acteurs" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label>Ambiance & Son</label><input type="number" id="w-ambiance" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label>Affect ❤️</label><input type="number" id="w-affect" value="1" min="0" max="5" step="0.5"></div>
+          </div>
+          <button class="weight-reset" onclick="resetWeights()">Remettre à égalité</button>
+        </div>
+
+        <div class="criteria-list">
+
+          <div class="criterion-block">
+            <div class="criterion-head">
+              <span class="criterion-label">Scénario & Écriture <span class="weight-badge" id="wb-scenario">×1</span></span>
+              <span class="criterion-val" id="val-scenario">5.0</span>
+            </div>
+            <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-scenario">—</div>
+          </div>
+
+          <div class="criterion-block">
+            <div class="criterion-head">
+              <span class="criterion-label">Réalisation & Mise en scène <span class="weight-badge" id="wb-realisation">×1</span></span>
+              <span class="criterion-val" id="val-realisation">5.0</span>
+            </div>
+            <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-realisation">—</div>
+          </div>
+
+          <div class="criterion-block">
+            <div class="criterion-head">
+              <span class="criterion-label">Photographie & Esthétique <span class="weight-badge" id="wb-photo">×1</span></span>
+              <span class="criterion-val" id="val-photo">5.0</span>
+            </div>
+            <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-photo">—</div>
+          </div>
+
+          <div class="criterion-block">
+            <div class="criterion-head">
+              <span class="criterion-label">Interprétation & Acteurs <span class="weight-badge" id="wb-acteurs">×1</span></span>
+              <span class="criterion-val" id="val-acteurs">5.0</span>
+            </div>
+            <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-acteurs">—</div>
+          </div>
+
+          <div class="criterion-block">
+            <div class="criterion-head">
+              <span class="criterion-label">Ambiance & Son <span class="weight-badge" id="wb-ambiance">×1</span></span>
+              <span class="criterion-val" id="val-ambiance">5.0</span>
+            </div>
+            <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-ambiance">—</div>
+          </div>
+
+          <div class="criterion-block affect-block">
+            <div class="criterion-head">
+              <span class="criterion-label affect-label">❤️ Impact Affectif <span class="weight-badge" id="wb-affect">×1</span></span>
+              <span class="criterion-val affect-val" id="val-affect">5.0</span>
+            </div>
+            <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
+            <div class="criterion-desc" id="desc-affect">—</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="quick-section">
+        <div class="rating-stars" id="quick-stars-container">
+          <input type="radio" id="s10" name="rating" value="5"><label for="s10" class="right-half">★</label>
+          <input type="radio" id="s9" name="rating" value="4.5"><label for="s9" class="left-half">★</label>
+          <input type="radio" id="s8" name="rating" value="4"><label for="s8" class="right-half">★</label>
+          <input type="radio" id="s7" name="rating" value="3.5"><label for="s7" class="left-half">★</label>
+          <input type="radio" id="s6" name="rating" value="3"><label for="s6" class="right-half">★</label>
+          <input type="radio" id="s5" name="rating" value="2.5" checked><label for="s5" class="left-half">★</label>
+          <input type="radio" id="s4" name="rating" value="2"><label for="s4" class="right-half">★</label>
+          <input type="radio" id="s3" name="rating" value="1.5"><label for="s3" class="left-half">★</label>
+          <input type="radio" id="s2" name="rating" value="1"><label for="s2" class="right-half">★</label>
+          <input type="radio" id="s1" name="rating" value="0.5"><label for="s1" class="left-half">★</label>
+        </div>
+        <div class="quick-rating-label" id="quick-rating-label"><span>★★½</span> — 5.0/10</div>
+      </div>
+
+      <div class="score-result">
+        <div class="score-main">
+          <div class="score-big" id="score-big">5.0</div>
+          <div class="score-denom">/10</div>
+        </div>
+        <div class="stars-display" id="stars-display">★★½</div>
+
+        <div class="review-wrap">
+          <label for="review-text">Ma critique (optionnel)</label>
+          <textarea class="review-textarea" id="review-text" placeholder="Quelques mots sur ce film..."></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-copy" id="copy-btn">📋 Texte</button>
+          <button class="btn btn-save" id="save-btn">💾 Sauver</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-right" id="col-right-views">
+
+    <div class="right-tabs-container">
+      <button class="right-tab active" id="tab-right-history">📊 Historique & Stats</button>
+      <button class="right-tab" id="tab-right-watchlist">🎯 Watchlist</button>
+    </div>
+
+    <div class="right-view active" id="view-history">
+      <div class="card" id="stats-card">
+        <div class="card-title">Dashboard Analytique</div>
+        
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-total">0</div>
+            <div class="kpi-label">Films notés</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-avg" style="color:var(--gold)">-</div>
+            <div class="kpi-label">Moyenne</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" id="kpi-year" style="color:var(--blue)">0</div>
+            <div class="kpi-label" id="kpi-year-label">En 2026</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dash-box">
+            <div class="dash-box-title">L'ADN de tes notes</div>
+            <div id="radar-chart-container" style="display:flex; justify-content:center; align-items:center; min-height:160px; width:100%;"></div>
+            <div id="radar-empty" style="display:none; font-size:0.8rem; text-align:center; color:var(--text); margin-top:20px;">Utilise le mode Détaillé pour débloquer ce radar.</div>
+          </div>
+
+          <div class="dash-box">
+            <div class="dash-box-title">Activité (6 derniers mois)</div>
+            <div id="timeline-chart-container" style="display:flex; justify-content:center; align-items:flex-end; min-height:160px; padding-top:10px; width:100%;"></div>
+          </div>
+
+          <div class="dash-box full-width">
+            <div class="dash-box-title" style="display:flex; justify-content:space-between">
+              <span>Top Réalisateurs</span>
+              <span style="color:var(--blue); text-transform:none; font-family:var(--font-body)">Basé sur tes vues</span>
+            </div>
+            <div class="top-list" id="top-directors-list"></div>
+          </div>
+          
+          <div class="dash-box full-width">
+            <div class="dash-box-title">Distribution des notes</div>
+            <div class="histo" id="histogram"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Historique
+          <span class="card-title-badge" id="hist-count-badge">0 film</span>
+        </div>
+
+        <div class="search-wrap" style="margin-bottom: 14px;">
+          <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
+        </div>
+
+        <div class="filter-row" id="filter-row">
+          <button class="filter-btn active" data-sort="date">Récents</button>
+          <button class="filter-btn" data-sort="score-desc">Mieux notés</button>
+          <button class="filter-btn" data-sort="score-asc">Moins bien</button>
+          <button class="filter-btn" data-sort="title">A→Z</button>
+        </div>
+
+        <div class="genre-filter-row" id="genre-filter-row" style="display:none;">
+          <span class="genre-filter-label">Genre :</span>
+          <div class="genre-chips" id="genre-chips"></div>
+        </div>
+
+        <div class="history-scroller" id="history-list"></div>
+      </div>
+    </div> 
+    
+    <div class="right-view" id="view-watchlist">
+      <!-- Carrousel dynamique de recommandations sans encombrer l'onglet "Noter" -->
+      <div class="card" id="recommendations-card" style="margin-bottom: 16px; display: none;">
+        <div class="card-title">Suggestions pour toi</div>
+        <div class="carousel-container" id="carousel-container"></div>
+      </div>
+
+      <div class="card" id="watchlist-card">
+        <div class="card-title">
+          À voir
+          <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
+        </div>
+        <div class="watchlist-add-row wl-suggest-wrap">
+          <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
+          <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
+          <div class="wl-suggestions" id="wl-suggestions"></div>
+        </div>
+        <div class="watchlist-scroller" id="watchlist-list">
+          <div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>
+        </div>
+      </div>
+    </div> 
+  </div>
+
+</div>
+
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="nav-btn active" id="nav-rating">
+    <span class="nav-btn-icon">🎬</span> Noter
+  </button>
+  <button class="nav-btn" id="nav-history">
+    <span class="nav-btn-icon">📊</span> Historique
+  </button>
+  <button class="nav-btn" id="nav-watchlist">
+    <span class="nav-btn-icon">🎯</span> À voir
+  </button>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
