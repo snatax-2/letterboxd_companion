@@ -669,6 +669,16 @@
     }
     
     .right-tabs-container { display: none; }
+
+    /* Bug Safari iOS : un flex item en position:sticky ne s'étire pas en largeur.
+       Inutile sur mobile de toute façon (navigation par onglets en bas). */
+    .col-right {
+      position: static;
+      width: 100%;
+    }
+    .col-left {
+      width: 100%;
+    }
     
     .search-input, .date-input, input[type="number"], .watchlist-add-input, .settings-input, .settings-select { 
       font-size: 16px !important; /* Évite le zoom auto intempestif sur iOS */
