@@ -2,6 +2,18 @@ export default async function handler(req, res) {
   const { query, id, providers, img, recommendations } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
+  // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
+  // à servir une version (légèrement) périmée jusqu'à `staleWhileRevalidate` secondes
+  // pendant que Vercel va chercher une version fraîche en arrière-plan.
+  // -> évite de re-solliciter TMDb à chaque requête identique et réduit le risque
+  //    d'atteindre le quota de l'API.
+  function setCache(maxAge, staleWhileRevalidate) {
+    res.setHeader(
+      'Cache-Control',
+      `public, s-maxage=${maxAge}, stale-while-revalidate=${staleWhileRevalidate}`
+    );
+  }
+
   try {
     if (img) {
       // Cas 4 : Proxy image (contourne CORS TMDb sur mobile Chrome)
@@ -15,7 +27,8 @@ export default async function handler(req, res) {
       const buffer = await imgRes.arrayBuffer();
       const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
       res.setHeader('Content-Type', contentType);
-      res.setHeader('Cache-Control', 'public, max-age=86400');
+      // Les images TMDb sont immuables pour un chemin donné : cache long.
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
       return res.status(200).send(Buffer.from(buffer));
 
     } else if (id && recommendations) {
@@ -24,6 +37,7 @@ export default async function handler(req, res) {
         `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const recData = await recRes.json();
+      setCache(43200, 604800); // 12h, revalidation jusqu'à 7 jours
       return res.status(200).json(recData);
 
     } else if (id && providers) {
@@ -35,6 +49,7 @@ export default async function handler(req, res) {
       // Retourner uniquement la région demandée pour alléger la réponse
       const region = providers; // ex: 'BE'
       const regionData = provData.results?.[region] || null;
+      setCache(21600, 86400); // 6h, revalidation jusqu'à 1 jour (providers changent plus souvent)
       return res.status(200).json({
         'watch/providers': {
           results: {
@@ -48,6 +63,7 @@ export default async function handler(req, res) {
         `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits`
       );
       const detailsData = await detailsRes.json();
+      setCache(21600, 604800); // 6h, revalidation jusqu'à 7 jours (infos très stables)
       return res.status(200).json(detailsData);
     } else {
       // Cas 1 : Recherche par titre
@@ -55,6 +71,7 @@ export default async function handler(req, res) {
         `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=fr-FR`
       );
       const searchData = await searchRes.json();
+      setCache(3600, 86400); // 1h, revalidation jusqu'à 1 jour
       return res.status(200).json(searchData);
     }
   } catch (error) {
