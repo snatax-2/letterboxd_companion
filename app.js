@@ -1,3 +1,7 @@
+// ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
+// Modifie les fichiers dans src/, puis lance `npm run build`.
+// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js
+
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
 // ═══════════════════════════════════════════

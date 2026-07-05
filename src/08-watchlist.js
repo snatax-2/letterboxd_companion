@@ -1,0 +1,311 @@
+// ═══════════════════════════════════════════
+//  WATCHLIST & DYNAMIC RECOMMENDATIONS
+// ═══════════════════════════════════════════
+const WATCHLIST_KEY = 'lbx_watchlist';
+
+function loadWatchlist() {
+  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY)) || []; } catch { return []; }
+}
+function saveWatchlist(list) {
+  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+}
+
+async function renderRecommendations() {
+  const container = document.getElementById('carousel-container');
+  const card = document.getElementById('recommendations-card');
+  if (!container || !card) return;
+
+  const history = loadHistory();
+  const watchlist = loadWatchlist();
+
+  // 1. On cherche les films bien notés (>= 8.0)
+  const topFilms = history.filter(h => parseFloat(h.score) >= 8.0);
+  
+  if (topFilms.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  // Affiche la carte avec un état de chargement
+  card.style.display = 'block';
+  container.innerHTML = '<span class="wl-provider-loading" style="padding: 10px;">⏳ Recherche de suggestions basées sur vos goûts...</span>';
+
+  // 2. On sélectionne jusqu'à 3 films aléatoires du top pour varier les plaisirs
+  const shuffledTop = [...topFilms].sort(() => 0.5 - Math.random()).slice(0, 3);
+  let allRecommendations = [];
+  
+  // Ensembles pour éviter de suggérer des films déjà vus ou déjà dans la watchlist
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+  const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
+
+  for (const film of shuffledTop) {
+    if (!film.tmdbId) continue;
+    try {
+      const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
+      const data = await res.json();
+      
+      // Sécurité : TMDb renvoie parfois les films directement dans un tableau, parfois dans data.results
+      const moviesArray = data.results || (Array.isArray(data) ? data : null);
+      
+      if (moviesArray && moviesArray.length > 0) {
+        allRecommendations.push(...moviesArray);
+      }
+    } catch (e) {
+      console.warn("Impossible de charger les suggestions pour l'ID " + film.tmdbId, e);
+    }
+  }
+
+  // 3. Filtrage des doublons et des films déjà connus
+  const uniqueRecs = [];
+  const addedIds = new Set();
+
+  allRecommendations.forEach(m => {
+    if (!m || !m.id) return;
+    const idStr = String(m.id);
+    if (!addedIds.has(idStr) && !seenIds.has(idStr) && !watchlistIds.has(idStr)) {
+      addedIds.add(idStr);
+      uniqueRecs.push(m);
+    }
+  });
+
+  // 4. Rendu visuel
+  if (uniqueRecs.length === 0) {
+    card.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = '';
+
+  uniqueRecs.slice(0, 10).forEach(m => {
+    const year = m.release_date?.slice(0, 4) || '????';
+    const item = document.createElement('div');
+    item.className = 'carousel-item';
+    item.title = `${m.title} (${year})`;
+
+    const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
+    item.innerHTML = posterUrl 
+      ? `<img class="carousel-poster" src="${posterUrl}" loading="lazy">`
+      : `<div class="carousel-poster" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text);">🎬</div>`;
+
+    // Clic : ajoute à la watchlist et rafraîchit le carrousel
+    item.addEventListener('click', () => {
+      addToWatchlistFromTMDb(m, year);
+      setTimeout(renderRecommendations, 300);
+    });
+    container.appendChild(item);
+  });
+}
+
+function renderWatchlist() {
+  renderRecommendations(); // Met à jour dynamiquement les suggestions
+  const list = loadWatchlist();
+  const container = document.getElementById('watchlist-list');
+  const badge = document.getElementById('watchlist-count-badge');
+  badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
+
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>';
+    return;
+  }
+
+  container.innerHTML = '';
+  list.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'wl-card';
+    div.id = `wl-item-${i}`;
+
+    const posterHtml = item.poster
+      ? `<div class="wl-poster"><img src="${item.poster}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      : `<div class="wl-poster">🎬</div>`;
+
+    div.innerHTML = `
+      ${posterHtml}
+      <div class="wl-body">
+        <div class="wl-title">${item.title}</div>
+        <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+        <div class="wl-providers" id="wl-providers-${i}">
+          <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+        </div>
+      </div>
+      <div class="wl-actions">
+        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">⭐</button>
+        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">✕</button>
+      </div>`;
+
+    container.appendChild(div);
+
+    if (item.tmdbId) {
+      fetchProviders(item.tmdbId, i);
+    } else {
+      const pd = document.getElementById(`wl-providers-${i}`);
+      if (pd) pd.innerHTML = '';
+    }
+  });
+}
+
+async function fetchProviders(tmdbId, idx) {
+  const el = document.getElementById(`wl-providers-${idx}`);
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE`);
+    const data = await res.json();
+
+    const providerRoot = data['watch/providers']?.results?.BE
+                      || data.providers?.results?.BE
+                      || data.watchProviders?.BE
+                      || null;
+
+    if (!providerRoot) {
+      el.innerHTML = '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+      return;
+    }
+
+    let html = '';
+
+    const flat = providerRoot.flatrate || [];
+    if (flat.length > 0) {
+      html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
+      flat.slice(0, 5).forEach(p => {
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+      });
+    }
+
+    const rent = providerRoot.rent || [];
+    const rentOnly = rent.filter(r => !flat.find(f => f.provider_id === r.provider_id));
+    if (rentOnly.length > 0) {
+      html += `<span class="wl-provider-tag rent">Location</span>`;
+      rentOnly.slice(0, 4).forEach(p => {
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+      });
+    }
+
+    if (!html) {
+      el.innerHTML = '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+    } else {
+      el.innerHTML = html;
+    }
+  } catch {
+    if (el) el.innerHTML = '<span class="wl-no-streaming">Providers indisponibles</span>';
+  }
+}
+
+async function addToWatchlistFromTMDb(movie, year) {
+  const list = loadWatchlist();
+  const key = (movie.title + '|' + year).toLowerCase();
+  if (list.find(i => (i.title + '|' + (i.year||'')).toLowerCase() === key)) {
+    showToast('Déjà dans la liste.');
+    return;
+  }
+
+  let genre = '';
+  try {
+    const res = await fetch(`/api/search?id=${movie.id}`);
+    const data = await res.json();
+    genre = data.genres?.map(g => g.name).join(', ') || '';
+  } catch {}
+
+  list.unshift({
+    title: movie.title,
+    year,
+    poster: movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : '',
+    genre,
+    tmdbId: movie.id,
+    addedAt: new Date().toISOString()
+  });
+  saveWatchlist(list);
+  renderWatchlist();
+  showToast(`"${movie.title}" ajouté à la liste 🎯`);
+}
+
+window.removeWatchlist = function(idx) {
+  const list = loadWatchlist();
+  const title = list[idx]?.title;
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  renderWatchlist();
+  if (title) showToast(`"${title}" retiré`);
+};
+
+window.watchlistToForm = function(idx) {
+  const list = loadWatchlist();
+  const item = list[idx];
+  if (!item) return;
+  searchEl.value = item.title;
+  searchEl.dispatchEvent(new Event('input'));
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  renderWatchlist();
+  
+  if (window.innerWidth <= 860) switchMobileNav('rating');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`Recherche lancée pour "${item.title}"`);
+};
+
+const wlInput = document.getElementById('watchlist-input');
+const wlSuggestEl = document.getElementById('wl-suggestions');
+let wlSearchTimer;
+
+wlInput.addEventListener('input', () => {
+  clearTimeout(wlSearchTimer);
+  const q = wlInput.value.trim();
+  if (q.length < 2) { wlSuggestEl.style.display = 'none'; return; }
+  
+  wlSearchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (!data.results?.length) { wlSuggestEl.style.display = 'none'; return; }
+      wlSuggestEl.innerHTML = '';
+      wlSuggestEl.style.display = 'block';
+      data.results.slice(0, 5).forEach(m => {
+        const year = m.release_date?.slice(0, 4) || '';
+        const el = document.createElement('div');
+        el.className = 'wl-suggest-item';
+        el.innerHTML = `
+          ${m.poster_path
+            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">🎬</div>`}
+          <div>
+            <div class="wl-suggest-title">${m.title}</div>
+            <div class="wl-suggest-year">${year}</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          wlSuggestEl.style.display = 'none';
+          wlInput.value = '';
+          addToWatchlistFromTMDb(m, year);
+        });
+        wlSuggestEl.appendChild(el);
+      });
+    } catch {
+      wlSuggestEl.style.display = 'none';
+      showToast('Recherche indisponible, vérifie ta connexion.');
+    }
+  }, 280);
+});
+
+document.addEventListener('click', e => {
+  if (!wlInput.contains(e.target) && !wlSuggestEl.contains(e.target)) {
+    wlSuggestEl.style.display = 'none';
+  }
+});
+
+document.getElementById('watchlist-add-btn').addEventListener('click', () => {
+  const val = wlInput.value.trim();
+  if (!val) return;
+  wlSuggestEl.style.display = 'none';
+  const list = loadWatchlist();
+  const key = val.toLowerCase();
+  if (list.find(i => i.title.toLowerCase() === key)) { showToast('Déjà dans la liste.'); wlInput.value = ''; return; }
+  list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
+  saveWatchlist(list);
+  renderWatchlist();
+  showToast(`"${val}" ajouté à la liste 🎯`);
+  wlInput.value = '';
+});
+
+wlInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { wlSuggestEl.style.display = 'none'; }
+});
+
+renderWatchlist();
+

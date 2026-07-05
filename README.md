@@ -6,21 +6,44 @@ App de notation de films (recherche TMDb, fiche film, watchlist, providers de st
 
 ```
 ludex/
-├── index.html          → structure de la page (avant : tout était dans un seul fichier)
-├── styles.css           → tous les styles et thèmes (extraits du <style> inline)
-├── app.js                → toute la logique front (extraite du <script> inline)
-├── favicon.png           → à ajouter (référencé par index.html, absent de l'upload d'origine)
+├── index.html            → structure de la page
+├── styles.css             → tous les styles et thèmes
+├── app.js                  → ⚠️ FICHIER GÉNÉRÉ, ne pas éditer directement (voir src/)
+├── src/                    → code source réel de app.js, découpé par thème
+│   ├── 00-pwa.js             → enregistrement du service worker
+│   ├── 01-navigation.js       → onglets desktop & mobile
+│   ├── 02-theme.js            → thèmes & réglages
+│   ├── 03-foundation.js       → config, helpers, state, stockage local
+│   ├── 04-search.js           → recherche TMDb & auto-complétion
+│   ├── 05-rating-form.js      → formulaire de notation (score, tags, sauvegarde...)
+│   ├── 06-history.js          → historique, dashboard, stats, tri
+│   ├── 07-data-io.js          → export / import
+│   ├── 08-watchlist.js        → watchlist & recommandations
+│   └── 09-modal-init.js       → modale de confirmation & initialisation
+├── scripts/
+│   ├── build-app-js.js      → concatène src/*.js dans l'ordre pour produire app.js
+│   └── generate-sw-cache.js → calcule le hash de version pour sw.js
+├── sw.js                   → service worker (PWA, hors-ligne)
+├── manifest.json            → manifeste PWA (icônes, nom, couleurs)
+├── favicon.png, icon-192.png, icon-512.png, apple-touch-icon.png
 ├── api/
-│   └── search.js         → fonction serverless Vercel (proxy TMDb + cache image)
+│   └── search.js          → fonction serverless Vercel (proxy TMDb + cache)
 ├── package.json
+├── vercel.json
 ├── .gitignore
-└── .env.example          → variable d'environnement nécessaire (TMDB_KEY)
+└── .env.example           → variable d'environnement nécessaire (TMDB_KEY)
 ```
 
-Le fichier original faisait 2800+ lignes en un seul `.html` (CSS + JS + markup mélangés). Séparer en 3 fichiers permet :
-- l'autocomplétion / linting correct dans VS Code (un `.html` de 130 Ko empêche souvent l'extension CSS/JS de bien fonctionner) ;
-- un diff Git lisible (modifier une couleur ne touche plus à 2800 lignes de JS) ;
-- un chargement mis en cache par le navigateur (`styles.css`/`app.js` sont mis en cache séparément du HTML).
+### Pourquoi `app.js` est généré
+
+Le fichier faisait à l'origine ~1750 lignes en un seul bloc. Le code est maintenant réparti dans `src/`, mais le navigateur charge toujours un seul fichier classique `app.js` (pas de modules ES, aucun risque de casser l'ordre d'exécution existant). Le script `scripts/build-app-js.js` recolle les fichiers de `src/` bout à bout, dans l'ordre de leur préfixe numérique (`00-`, `01-`, `02-`...), pour reproduire exactement le même comportement qu'avant le découpage.
+
+**Règle à retenir : ne jamais éditer `app.js` directement**, il serait écrasé au prochain build. Édite le fichier concerné dans `src/`, puis régénère avec :
+```bash
+npm run build:js
+```
+
+Vercel régénère aussi `app.js` automatiquement à chaque déploiement (`npm run build`, voir `vercel.json`).
 
 ## 1. Mise en place dans VS Code
 
@@ -46,6 +69,11 @@ vercel dev
 ```
 
 Cela lance un serveur local qui simule l'environnement Vercel (fichiers statiques + `/api`). Ouvre l'URL affichée (en général `http://localhost:3000`).
+
+⚠️ **`vercel dev` ne relance pas automatiquement le build** (`npm run build`) à chaque modification. Si tu modifies un fichier dans `src/`, régénère `app.js` toi-même avant de tester :
+```bash
+npm run build:js
+```
 
 ## 3. Passage sur GitHub
 
@@ -81,7 +109,7 @@ git push -u origin main
 
 Chaque nouveau `git push` sur `main` redéploiera automatiquement en production ; chaque push sur une autre branche/PR génère un déploiement de preview isolé.
 
-## Points à vérifier après la migration
+## Points à vérifier
 
-- Ajouter le fichier `favicon.png` à la racine (il était référencé mais absent de l'upload).
-- Le endpoint `/api/search` gère 5 cas via des query params (`query`, `id`, `providers`, `img`, `recommendations`) — inchangé par rapport à l'original, aucune modif de logique métier n'a été faite, seulement la structuration des fichiers.
+- Le endpoint `/api/search` gère 5 cas via des query params (`query`, `id`, `providers`, `img`, `recommendations`), avec mise en cache CDN adaptée à chaque type de donnée.
+- `app.js` est généré depuis `src/` à chaque build — voir la section "Structure du projet" plus haut si tu ajoutes du code.
