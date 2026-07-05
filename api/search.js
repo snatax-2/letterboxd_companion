@@ -75,6 +75,7 @@ export default async function handler(req, res) {
       return res.status(200).json(searchData);
     }
   } catch (error) {
+    res.setHeader('Cache-Control', 'no-store'); // ne jamais mettre en cache une erreur
     return res.status(500).json({ error: "Erreur lors de l'appel API" });
   }
 }

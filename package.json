@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Ludex Rating Companion — app de notation de films avec recherche TMDb, watchlist et providers de streaming (BE).",
   "private": true,
+  "scripts": {
+    "build": "node scripts/generate-sw-cache.js"
+  },
   "engines": {
     "node": ">=18"
   }
