@@ -36,6 +36,9 @@ window.deleteItem = function(idx, btnEl) {
   setTimeout(() => {
     history.splice(idx, 1);
     saveHistory(history);
+    if (deletedItemCache?.title) {
+      recordTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+    }
     renderAll();
     showToast(`Film supprimé.`, true);
   }, 300);
@@ -46,6 +49,9 @@ window.undoDelete = function() {
   const history = loadHistory();
   history.splice(deletedItemIndex, 0, deletedItemCache); 
   saveHistory(history);
+  if (deletedItemCache?.title) {
+    removeTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+  }
   renderAll();
   showToast(`Suppression annulée.`);
   deletedItemCache = null;

@@ -64,6 +64,8 @@ Vercel régénère aussi `app.js` automatiquement à chaque déploiement (`npm r
 
 Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamais les perdre) et de les retrouver sur un autre appareil via un "code de synchronisation" que tu choisis toi-même.
 
+**Fusion, pas écrasement** : si tu notes un film sur ton PC et un autre sur ton téléphone avant de synchroniser, les deux sont conservés — rien n'est perdu. Si tu notes le *même* film des deux côtés, c'est la version la plus récente qui est gardée. Les suppressions sont respectées elles aussi (via un petit mécanisme de traces horodatées), donc un film supprimé sur un appareil ne réapparaît pas après une synchro depuis un autre appareil qui l'avait encore.
+
 1. Crée un compte gratuit sur https://supabase.com et un nouveau projet.
 2. Dans le projet, va dans **SQL Editor** → **New query**, colle ceci, puis **Run** :
    ```sql

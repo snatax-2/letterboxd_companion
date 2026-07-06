@@ -231,7 +231,8 @@ document.getElementById('save-btn').addEventListener('click', () => {
     values: currentMode === 'detail'
       ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
       : { quick: quickRating },
-    savedAt: existing && existing.savedAt ? existing.savedAt : new Date().toISOString()
+    savedAt: existing && existing.savedAt ? existing.savedAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString() // sert à la fusion lors de la synchro cloud
   };
 
   if (existing) {

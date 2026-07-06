@@ -219,9 +219,11 @@ async function addToWatchlistFromTMDb(movie, year) {
 
 window.removeWatchlist = function(idx) {
   const list = loadWatchlist();
-  const title = list[idx]?.title;
+  const item = list[idx];
+  const title = item?.title;
   list.splice(idx, 1);
   saveWatchlist(list);
+  if (item) recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
   renderWatchlist();
   if (title) showToast(`"${title}" retiré`);
 };
@@ -234,6 +236,7 @@ window.watchlistToForm = function(idx) {
   searchEl.dispatchEvent(new Event('input'));
   list.splice(idx, 1);
   saveWatchlist(list);
+  recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
   renderWatchlist();
   
   if (window.innerWidth <= 860) switchMobileNav('rating');
