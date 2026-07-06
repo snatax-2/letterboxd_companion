@@ -565,7 +565,7 @@
   /* ── MODALS ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
   .modal-title { color: var(--text-hi); font-weight: 700; margin-bottom: 12px; font-family: var(--font-heading); font-size: 1.2rem;}
   .theme-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px; }
   .theme-card { border:2px solid transparent; border-radius:6px; cursor:pointer; overflow:hidden; transition:border-color .15s, transform .12s; position:relative; }
