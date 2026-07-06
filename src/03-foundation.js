@@ -211,20 +211,6 @@ function loadDraft() {
   } catch(e) { console.error("Erreur de chargement du brouillon", e); }
 }
 
-(async () => {
-  try {
-    if (window.storage) {
-      const r = await window.storage.get(STORE_KEY);
-      if (r && r.value) {
-        const cloud = JSON.parse(r.value);
-        const local = loadHistory();
-        if (cloud.length >= local.length) {
-          localStorage.setItem(STORE_KEY, r.value);
-        }
-      }
-    }
-  } catch {}
-  renderAll();
-  loadDraft();
-})();
+renderAll();
+loadDraft();
 

@@ -19,7 +19,8 @@ ludex/
 │   ├── 06-history.js          → historique, dashboard, stats, tri
 │   ├── 07-data-io.js          → export / import
 │   ├── 08-watchlist.js        → watchlist & recommandations
-│   └── 09-modal-init.js       → modale de confirmation & initialisation
+│   ├── 09-modal-init.js       → modale de confirmation & initialisation
+│   └── 10-cloud-sync.js       → synchronisation cloud (sauvegarde/restauration)
 ├── scripts/
 │   ├── build-app-js.js      → concatène src/*.js dans l'ordre pour produire app.js
 │   └── generate-sw-cache.js → calcule le hash de version pour sw.js
@@ -58,6 +59,33 @@ Vercel régénère aussi `app.js` automatiquement à chaque déploiement (`npm r
    ```
    TMDB_KEY=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
    ```
+
+## Synchronisation cloud (Supabase)
+
+Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamais les perdre) et de les retrouver sur un autre appareil via un "code de synchronisation" que tu choisis toi-même.
+
+1. Crée un compte gratuit sur https://supabase.com et un nouveau projet.
+2. Dans le projet, va dans **SQL Editor** → **New query**, colle ceci, puis **Run** :
+   ```sql
+   create table if not exists ludex_sync (
+     sync_code  text primary key,
+     payload    jsonb not null,
+     updated_at timestamptz not null default now()
+   );
+   ```
+3. Va dans **Settings → API**. Note deux valeurs :
+   - **Project URL** (ex: `https://xxxxxxxxxxxx.supabase.co`)
+   - **service_role key** (⚠️ pas la clé "anon" — la clé "service_role", à garder secrète)
+4. Ajoute-les à ton `.env` local :
+   ```
+   SUPABASE_URL=https://xxxxxxxxxxxx.supabase.co
+   SUPABASE_SERVICE_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
+   ```
+5. Ajoute les **mêmes** variables dans Vercel : `Project Settings → Environment Variables` (Production + Preview + Development).
+6. Dans l'app, ouvre les réglages (⚙️) → section "Synchronisation cloud" → choisis un code (ex: un mot de passe que toi seul connais) → **Sauvegarder maintenant**.
+7. Sur un autre appareil/navigateur, ouvre les réglages, entre le **même code**, clique **Restaurer depuis le cloud**.
+
+La clé `service_role` ne quitte jamais le serveur (elle est utilisée uniquement dans `api/sync.js`, jamais envoyée au navigateur) — c'est cette fonction serverless qui fait l'intermédiaire entre l'app et Supabase.
 
 ## 2. Tester en local
 
