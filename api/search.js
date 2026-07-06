@@ -1,4 +1,14 @@
+import { rateLimit } from './_rateLimit.js';
+
 export default async function handler(req, res) {
+  // Limite large : l'auto-complétion peut déclencher plusieurs appels par minute
+  // en usage normal (une requête par pause de frappe), donc on reste généreux —
+  // le but est de bloquer un abus/script, pas de gêner un usage normal.
+  if (!rateLimit(req, res, { name: 'search', limit: 60, windowMs: 60_000 })) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
+  }
+
   const { query, id, providers, img, recommendations } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 

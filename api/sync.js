@@ -16,6 +16,8 @@
 //     updated_at timestamptz not null default now()
 //   );
 
+import { rateLimit } from './_rateLimit.js';
+
 const TABLE = 'ludex_sync';
 
 function isValidCode(code) {
@@ -25,6 +27,23 @@ function isValidCode(code) {
 }
 
 export default async function handler(req, res) {
+  // Limite par IP : usage normal = 1 sauvegarde auto/45s + quelques clics manuels,
+  // donc 30/min est très large pour un utilisateur légitime.
+  if (!rateLimit(req, res, { name: 'sync-ip', limit: 30, windowMs: 60_000 })) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
+  }
+
+  // Limite par code de synchronisation (indépendamment de l'IP) : empêche de
+  // marteler/deviner un code précis en le testant rapidement depuis plusieurs IP.
+  const codeForLimit = req.query.code;
+  if (typeof codeForLimit === 'string') {
+    if (!rateLimit(req, res, { name: 'sync-code', limit: 20, windowMs: 60_000, identifier: codeForLimit })) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(429).json({ error: 'Trop de requêtes pour ce code, réessaie dans un instant.' });
+    }
+  }
+
   const SUPABASE_URL = process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
