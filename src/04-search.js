@@ -88,7 +88,7 @@ async function fetchSuggestions(q) {
       const item = document.createElement('div');
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
-        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" loading="lazy">`
+        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">🎬</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
@@ -168,6 +168,7 @@ async function selectMovie(m, year) {
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
     document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
+    document.getElementById('strip-poster').alt = `Affiche de ${m.title}`;
     document.getElementById('strip-poster').style.display = 'block';
   }
   

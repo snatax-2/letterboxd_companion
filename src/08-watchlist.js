@@ -84,7 +84,7 @@ async function renderRecommendations() {
 
     const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
     item.innerHTML = posterUrl 
-      ? `<img class="carousel-poster" src="${posterUrl}" loading="lazy">`
+      ? `<img class="carousel-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
       : `<div class="carousel-poster" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text);">🎬</div>`;
 
     // Clic : ajoute à la watchlist et rafraîchit le carrousel
@@ -115,7 +115,7 @@ function renderWatchlist() {
     div.id = `wl-item-${i}`;
 
     const posterHtml = item.poster
-      ? `<div class="wl-poster"><img src="${item.poster}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">🎬</div>`;
 
     div.innerHTML = `
@@ -166,7 +166,7 @@ async function fetchProviders(tmdbId, idx) {
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -175,7 +175,7 @@ async function fetchProviders(tmdbId, idx) {
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -266,7 +266,7 @@ wlInput.addEventListener('input', () => {
         el.className = 'wl-suggest-item';
         el.innerHTML = `
           ${m.poster_path
-            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" loading="lazy">`
+            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">🎬</div>`}
           <div>
             <div class="wl-suggest-title">${m.title}</div>

@@ -7,17 +7,13 @@ const viewHist = document.getElementById('view-history');
 const viewWl = document.getElementById('view-watchlist');
 
 function switchRightTab(tabName) {
-  if (tabName === 'history') {
-    tabHistBtn.classList.add('active');
-    tabWlBtn.classList.remove('active');
-    viewHist.classList.add('active');
-    viewWl.classList.remove('active');
-  } else {
-    tabHistBtn.classList.remove('active');
-    tabWlBtn.classList.add('active');
-    viewHist.classList.remove('active');
-    viewWl.classList.add('active');
-  }
+  const isHistory = tabName === 'history';
+  tabHistBtn.classList.toggle('active', isHistory);
+  tabWlBtn.classList.toggle('active', !isHistory);
+  tabHistBtn.setAttribute('aria-selected', String(isHistory));
+  tabWlBtn.setAttribute('aria-selected', String(!isHistory));
+  viewHist.classList.toggle('active', isHistory);
+  viewWl.classList.toggle('active', !isHistory);
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
@@ -33,19 +29,25 @@ function switchMobileNav(view) {
   navRating.classList.remove('active');
   navHistory.classList.remove('active');
   navWatchlist.classList.remove('active');
+  navRating.removeAttribute('aria-current');
+  navHistory.removeAttribute('aria-current');
+  navWatchlist.removeAttribute('aria-current');
   
   colRating.style.display = 'none';
   colRightViews.style.display = 'none';
 
   if (view === 'rating') {
     navRating.classList.add('active');
+    navRating.setAttribute('aria-current', 'page');
     colRating.style.display = 'block'; 
   } else if (view === 'history') {
     navHistory.classList.add('active');
+    navHistory.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('history');
   } else if (view === 'watchlist') {
     navWatchlist.classList.add('active');
+    navWatchlist.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('watchlist');
   }

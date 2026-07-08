@@ -189,7 +189,7 @@ function renderHistory() {
     else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
 
     const imgHtml = item.poster
-      ? `<img class="hist-poster" src="${item.poster}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
+      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
       : `<div class="hist-poster-ph">🎬</div>`;
 
     const tmdbHtml = item.tmdbScore
@@ -230,7 +230,7 @@ function renderHistory() {
       </div>
       <div class="hist-actions">
         <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">✏️</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer">🗑</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">🗑</button>
       </div>`;
     container.appendChild(div);
   });

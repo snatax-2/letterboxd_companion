@@ -23,17 +23,13 @@ const viewHist = document.getElementById('view-history');
 const viewWl = document.getElementById('view-watchlist');
 
 function switchRightTab(tabName) {
-  if (tabName === 'history') {
-    tabHistBtn.classList.add('active');
-    tabWlBtn.classList.remove('active');
-    viewHist.classList.add('active');
-    viewWl.classList.remove('active');
-  } else {
-    tabHistBtn.classList.remove('active');
-    tabWlBtn.classList.add('active');
-    viewHist.classList.remove('active');
-    viewWl.classList.add('active');
-  }
+  const isHistory = tabName === 'history';
+  tabHistBtn.classList.toggle('active', isHistory);
+  tabWlBtn.classList.toggle('active', !isHistory);
+  tabHistBtn.setAttribute('aria-selected', String(isHistory));
+  tabWlBtn.setAttribute('aria-selected', String(!isHistory));
+  viewHist.classList.toggle('active', isHistory);
+  viewWl.classList.toggle('active', !isHistory);
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
@@ -49,19 +45,25 @@ function switchMobileNav(view) {
   navRating.classList.remove('active');
   navHistory.classList.remove('active');
   navWatchlist.classList.remove('active');
+  navRating.removeAttribute('aria-current');
+  navHistory.removeAttribute('aria-current');
+  navWatchlist.removeAttribute('aria-current');
   
   colRating.style.display = 'none';
   colRightViews.style.display = 'none';
 
   if (view === 'rating') {
     navRating.classList.add('active');
+    navRating.setAttribute('aria-current', 'page');
     colRating.style.display = 'block'; 
   } else if (view === 'history') {
     navHistory.classList.add('active');
+    navHistory.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('history');
   } else if (view === 'watchlist') {
     navWatchlist.classList.add('active');
+    navWatchlist.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('watchlist');
   }
@@ -121,33 +123,57 @@ function applySettings(settings) {
   
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
   const th = settings.theme || 'default';
-  document.querySelectorAll('.theme-card').forEach(tc =>
-    tc.classList.toggle('selected', tc.dataset.theme === th)
-  );
+  document.querySelectorAll('.theme-card').forEach(tc => {
+    const isSelected = tc.dataset.theme === th;
+    tc.classList.toggle('selected', isSelected);
+    tc.setAttribute('aria-checked', String(isSelected));
+  });
 }
 
 document.getElementById('settings-btn').addEventListener('click', () => {
+  lastFocusedBeforeModal = document.getElementById('settings-btn');
   document.getElementById('settings-modal').classList.add('open');
+  document.getElementById('setting-app-name').focus();
 });
 
 document.getElementById('settings-cancel').addEventListener('click', () => {
   const s = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
   applySettings(s); 
   document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('settings-btn').focus();
 });
 
-document.getElementById('theme-grid').addEventListener('click', e => {
-  const card = e.target.closest('.theme-card');
-  if (!card) return;
-  document.querySelectorAll('.theme-card').forEach(tc => tc.classList.remove('selected'));
+function selectThemeCard(card) {
+  document.querySelectorAll('.theme-card').forEach(tc => {
+    tc.classList.remove('selected');
+    tc.setAttribute('aria-checked', 'false');
+  });
   card.classList.add('selected');
-  if(card.dataset.theme !== "system") {
+  card.setAttribute('aria-checked', 'true');
+  if (card.dataset.theme !== "system") {
       document.documentElement.setAttribute('data-theme', card.dataset.theme);
   } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
   }
   renderAll();
+}
+
+document.getElementById('theme-grid').addEventListener('click', e => {
+  const card = e.target.closest('.theme-card');
+  if (!card) return;
+  selectThemeCard(card);
+});
+
+// Accessibilité clavier : les cartes de thème ont role="radio" (voir index.html),
+// donc Entrée et Espace doivent les activer comme un vrai bouton radio.
+document.getElementById('theme-grid').addEventListener('keydown', e => {
+  const card = e.target.closest('.theme-card');
+  if (!card) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    selectThemeCard(card);
+  }
 });
 
 document.getElementById('settings-save').addEventListener('click', () => {
@@ -165,6 +191,7 @@ document.getElementById('settings-save').addEventListener('click', () => {
   applySettings(newSettings);
   renderAll();
   document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('settings-btn').focus();
 });
 
 loadSettings();
@@ -259,6 +286,16 @@ function buildStripMeta({ genre = '', runtime = '', year = '', director = '', ac
   return meta;
 }
 
+// Échappe une chaîne pour une insertion sûre dans un attribut HTML (alt, aria-label, title...)
+// Utilisé pour les titres de films (qui peuvent contenir des guillemets ou des chevrons).
+function escAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
@@ -339,6 +376,7 @@ function loadDraft() {
       });
       if (draft.poster) {
         document.getElementById('strip-poster').src = draft.poster;
+        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${draft.title}` : '';
         document.getElementById('strip-poster').style.display = 'block';
       }
       if (draft.tmdbScore) {
@@ -357,6 +395,7 @@ function loadDraft() {
     
     isLiked = draft.liked || false;
     document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
     activeContextTags = new Set(draft.tags || []);
     document.querySelectorAll('.ctx-tag').forEach(b => {
@@ -475,7 +514,7 @@ async function fetchSuggestions(q) {
       const item = document.createElement('div');
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
-        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" loading="lazy">`
+        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">🎬</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
@@ -555,6 +594,7 @@ async function selectMovie(m, year) {
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
     document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
+    document.getElementById('strip-poster').alt = `Affiche de ${m.title}`;
     document.getElementById('strip-poster').style.display = 'block';
   }
   
@@ -572,6 +612,7 @@ document.getElementById('heart-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate(50);
   isLiked = !isLiked;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
   saveDraft();
 });
 
@@ -849,6 +890,7 @@ function resetForm() {
   
   isLiked = false;
   document.getElementById('heart-btn').classList.remove('active');
+  document.getElementById('heart-btn').setAttribute('aria-pressed', 'false');
   setTodayDate();
   
   activeContextTags.clear();
@@ -882,6 +924,7 @@ window.loadItem = function(idx) {
   document.getElementById('review-text').value   = item.review || '';
   isLiked = item.liked || false;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
   activeContextTags = new Set(item.contextTags || []);
   document.querySelectorAll('.ctx-tag').forEach(b => {
@@ -900,6 +943,7 @@ window.loadItem = function(idx) {
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;
+    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${item.title}` : '';
     document.getElementById('strip-poster').style.display = 'block';
   }
 
@@ -1114,7 +1158,7 @@ function renderHistory() {
     else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
 
     const imgHtml = item.poster
-      ? `<img class="hist-poster" src="${item.poster}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
+      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
       : `<div class="hist-poster-ph">🎬</div>`;
 
     const tmdbHtml = item.tmdbScore
@@ -1155,7 +1199,7 @@ function renderHistory() {
       </div>
       <div class="hist-actions">
         <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">✏️</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer">🗑</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">🗑</button>
       </div>`;
     container.appendChild(div);
   });
@@ -1475,7 +1519,7 @@ async function renderRecommendations() {
 
     const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
     item.innerHTML = posterUrl 
-      ? `<img class="carousel-poster" src="${posterUrl}" loading="lazy">`
+      ? `<img class="carousel-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
       : `<div class="carousel-poster" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text);">🎬</div>`;
 
     // Clic : ajoute à la watchlist et rafraîchit le carrousel
@@ -1506,7 +1550,7 @@ function renderWatchlist() {
     div.id = `wl-item-${i}`;
 
     const posterHtml = item.poster
-      ? `<div class="wl-poster"><img src="${item.poster}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">🎬</div>`;
 
     div.innerHTML = `
@@ -1557,7 +1601,7 @@ async function fetchProviders(tmdbId, idx) {
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -1566,7 +1610,7 @@ async function fetchProviders(tmdbId, idx) {
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -1657,7 +1701,7 @@ wlInput.addEventListener('input', () => {
         el.className = 'wl-suggest-item';
         el.innerHTML = `
           ${m.poster_path
-            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" loading="lazy">`
+            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">🎬</div>`}
           <div>
             <div class="wl-suggest-title">${m.title}</div>
@@ -1706,6 +1750,44 @@ renderWatchlist();
 // ═══════════════════════════════════════════
 //  MODAL DE CONFIRMATION
 // ═══════════════════════════════════════════
+
+// Mémorise l'élément qui avait le focus avant l'ouverture d'une modale, pour lui
+// rendre le focus à la fermeture (bonne pratique d'accessibilité au clavier).
+let lastFocusedBeforeModal = null;
+
+function getFocusableElements(container) {
+  return Array.from(
+    container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  ).filter(el => !el.disabled && el.offsetParent !== null);
+}
+
+// Piège le focus (Tab / Shift+Tab) à l'intérieur d'une modale ouverte, pour ne
+// pas laisser un utilisateur au clavier "sortir" vers le contenu masqué derrière.
+function trapFocus(e) {
+  const openModalEl = document.querySelector('.modal-overlay.open');
+  if (!openModalEl || e.key !== 'Tab') return;
+  const focusable = getFocusableElements(openModalEl);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function closeModal(modalEl) {
+  modalEl.classList.remove('open');
+  if (modalEl.id === 'modal') pendingAction = null;
+  if (lastFocusedBeforeModal) {
+    lastFocusedBeforeModal.focus();
+    lastFocusedBeforeModal = null;
+  }
+}
+
 function openModal(title, body, onConfirm, danger = false) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').textContent  = body;
@@ -1713,25 +1795,35 @@ function openModal(title, body, onConfirm, danger = false) {
   confirmBtn.className = 'modal-btn ' + (danger ? 'danger' : 'primary');
   confirmBtn.textContent = danger ? 'Supprimer' : 'Confirmer';
   pendingAction = onConfirm;
+  lastFocusedBeforeModal = document.activeElement;
   document.getElementById('modal').classList.add('open');
+  // Focus sur "Annuler" par défaut : plus sûr pour une action destructive
+  // (Entrée pressée par réflexe n'active pas la suppression).
+  document.getElementById('modal-cancel').focus();
 }
 
 document.getElementById('modal-confirm').addEventListener('click', () => {
   if (pendingAction) { pendingAction(); pendingAction = null; }
-  document.getElementById('modal').classList.remove('open');
+  closeModal(document.getElementById('modal'));
 });
 document.getElementById('modal-cancel').addEventListener('click', () => {
-  pendingAction = null;
-  document.getElementById('modal').classList.remove('open');
+  closeModal(document.getElementById('modal'));
 });
 
 document.querySelectorAll('.modal-overlay').forEach(modal => {
   modal.addEventListener('click', e => {
-    if (e.target === modal) {
-      modal.classList.remove('open');
-      if (modal.id === 'modal') pendingAction = null;
-    }
+    if (e.target === modal) closeModal(modal);
   });
+});
+
+// Échap ferme la modale actuellement ouverte, où que soit le focus.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const openModalEl = document.querySelector('.modal-overlay.open');
+    if (openModalEl) closeModal(openModalEl);
+  } else if (e.key === 'Tab') {
+    trapFocus(e);
+  }
 });
 
 // ═══════════════════════════════════════════

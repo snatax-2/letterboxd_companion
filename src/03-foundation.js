@@ -88,6 +88,16 @@ function buildStripMeta({ genre = '', runtime = '', year = '', director = '', ac
   return meta;
 }
 
+// Échappe une chaîne pour une insertion sûre dans un attribut HTML (alt, aria-label, title...)
+// Utilisé pour les titres de films (qui peuvent contenir des guillemets ou des chevrons).
+function escAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
@@ -168,6 +178,7 @@ function loadDraft() {
       });
       if (draft.poster) {
         document.getElementById('strip-poster').src = draft.poster;
+        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${draft.title}` : '';
         document.getElementById('strip-poster').style.display = 'block';
       }
       if (draft.tmdbScore) {
@@ -186,6 +197,7 @@ function loadDraft() {
     
     isLiked = draft.liked || false;
     document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
     activeContextTags = new Set(draft.tags || []);
     document.querySelectorAll('.ctx-tag').forEach(b => {

@@ -5,6 +5,7 @@ document.getElementById('heart-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate(50);
   isLiked = !isLiked;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
   saveDraft();
 });
 
@@ -282,6 +283,7 @@ function resetForm() {
   
   isLiked = false;
   document.getElementById('heart-btn').classList.remove('active');
+  document.getElementById('heart-btn').setAttribute('aria-pressed', 'false');
   setTodayDate();
   
   activeContextTags.clear();
@@ -315,6 +317,7 @@ window.loadItem = function(idx) {
   document.getElementById('review-text').value   = item.review || '';
   isLiked = item.liked || false;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
   activeContextTags = new Set(item.contextTags || []);
   document.querySelectorAll('.ctx-tag').forEach(b => {
@@ -333,6 +336,7 @@ window.loadItem = function(idx) {
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;
+    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${item.title}` : '';
     document.getElementById('strip-poster').style.display = 'block';
   }
 

@@ -49,7 +49,7 @@
     /* 7. Wes Anderson - Vintage et structuré */
     --bg: #FDF6E3; --surface: #FAF3E0; --surface2: #F0E6CD; --border: #D1495B; 
     --border-hi: #D1495B; --text: #555555; --text-hi: #333333; --text-mid: #666666;
-    --orange: #D1495B; --gold: #E8A825; --blue: #669999; --red: #D1495B; --green: #568259;
+    --orange: #D1495B; --gold: #E8A825; --blue: #476b6b; --red: #D1495B; --green: #568259;
     --radius: 0px; --radius-sm: 0px;
     --font-heading: 'Jost', sans-serif;
     --font-body: 'Jost', sans-serif;
@@ -340,6 +340,13 @@
     background: linear-gradient(to right, var(--orange) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%));
     border-radius: 999px; outline: none; margin-bottom: 10px; cursor: pointer;
     transition: background 0.12s;
+  }
+  /* outline:none ci-dessus retire l'anneau de focus par défaut du navigateur :
+     sans ceci, un utilisateur au clavier n'a AUCUN moyen visuel de savoir qu'un
+     slider est actif. :focus-visible ne s'affiche que pour la navigation clavier
+     (pas au clic souris), donc ça n'ajoute pas de bruit visuel en usage normal. */
+  input[type="range"]:focus-visible {
+    box-shadow: 0 0 0 3px rgba(255,128,0,0.45);
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;

@@ -1,6 +1,44 @@
 // ═══════════════════════════════════════════
 //  MODAL DE CONFIRMATION
 // ═══════════════════════════════════════════
+
+// Mémorise l'élément qui avait le focus avant l'ouverture d'une modale, pour lui
+// rendre le focus à la fermeture (bonne pratique d'accessibilité au clavier).
+let lastFocusedBeforeModal = null;
+
+function getFocusableElements(container) {
+  return Array.from(
+    container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  ).filter(el => !el.disabled && el.offsetParent !== null);
+}
+
+// Piège le focus (Tab / Shift+Tab) à l'intérieur d'une modale ouverte, pour ne
+// pas laisser un utilisateur au clavier "sortir" vers le contenu masqué derrière.
+function trapFocus(e) {
+  const openModalEl = document.querySelector('.modal-overlay.open');
+  if (!openModalEl || e.key !== 'Tab') return;
+  const focusable = getFocusableElements(openModalEl);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function closeModal(modalEl) {
+  modalEl.classList.remove('open');
+  if (modalEl.id === 'modal') pendingAction = null;
+  if (lastFocusedBeforeModal) {
+    lastFocusedBeforeModal.focus();
+    lastFocusedBeforeModal = null;
+  }
+}
+
 function openModal(title, body, onConfirm, danger = false) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').textContent  = body;
@@ -8,25 +46,35 @@ function openModal(title, body, onConfirm, danger = false) {
   confirmBtn.className = 'modal-btn ' + (danger ? 'danger' : 'primary');
   confirmBtn.textContent = danger ? 'Supprimer' : 'Confirmer';
   pendingAction = onConfirm;
+  lastFocusedBeforeModal = document.activeElement;
   document.getElementById('modal').classList.add('open');
+  // Focus sur "Annuler" par défaut : plus sûr pour une action destructive
+  // (Entrée pressée par réflexe n'active pas la suppression).
+  document.getElementById('modal-cancel').focus();
 }
 
 document.getElementById('modal-confirm').addEventListener('click', () => {
   if (pendingAction) { pendingAction(); pendingAction = null; }
-  document.getElementById('modal').classList.remove('open');
+  closeModal(document.getElementById('modal'));
 });
 document.getElementById('modal-cancel').addEventListener('click', () => {
-  pendingAction = null;
-  document.getElementById('modal').classList.remove('open');
+  closeModal(document.getElementById('modal'));
 });
 
 document.querySelectorAll('.modal-overlay').forEach(modal => {
   modal.addEventListener('click', e => {
-    if (e.target === modal) {
-      modal.classList.remove('open');
-      if (modal.id === 'modal') pendingAction = null;
-    }
+    if (e.target === modal) closeModal(modal);
   });
+});
+
+// Échap ferme la modale actuellement ouverte, où que soit le focus.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const openModalEl = document.querySelector('.modal-overlay.open');
+    if (openModalEl) closeModal(openModalEl);
+  } else if (e.key === 'Tab') {
+    trapFocus(e);
+  }
 });
 
 // ═══════════════════════════════════════════

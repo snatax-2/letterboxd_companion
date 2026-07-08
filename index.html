@@ -35,7 +35,7 @@
 <body>
 
 
-<div class="modal-overlay" id="modal">
+<div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal-box">
     <div class="modal-title" id="modal-title">Confirmer</div>
     <div class="modal-body" id="modal-body"></div>
@@ -46,16 +46,17 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="settings-modal">
+<div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal-box">
-    <div class="modal-title">🎨 Personnalisation</div>
+    <div class="modal-title" id="settings-modal-title">🎨 Personnalisation</div>
     <div class="modal-body">
       <label class="settings-label">Nom de l'application</label>
       <input type="text" id="setting-app-name" class="settings-input" placeholder="Ex: Ludex Film Journal">
 
+
       <label class="settings-label">Thème visuel</label>
-      <div class="theme-grid" id="theme-grid">
-        <div class="theme-card" data-theme="default">
+      <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Thème visuel">
+        <div class="theme-card" data-theme="default" role="radio" aria-checked="true" tabindex="0" aria-label="Thème Letterboxd">
           <div class="theme-preview" style="background:#14181c">
             <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1f2935;flex:1"></div></div>
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#ff8000;width:55%"></div></div>
@@ -63,7 +64,7 @@
           </div>
           <div class="theme-label" style="background:#1f2935;color:#9ab;font-family:'Titillium Web',sans-serif">Letterboxd</div>
         </div>
-        <div class="theme-card" data-theme="scuderia">
+        <div class="theme-card" data-theme="scuderia" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Scuderia">
           <div class="theme-preview" style="background:#0a0a0a">
             <div class="theme-preview-row"><div style="width:3px;background:#e32636;align-self:stretch;flex-shrink:0"></div><div class="theme-preview-bar" style="background:#0f0f0f;flex:1;margin-left:4px"></div></div>
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#e32636;width:60%"></div></div>
@@ -71,15 +72,15 @@
           </div>
           <div class="theme-label" style="background:#0f0f0f;color:#e32636;font-family:Oswald,sans-serif;letter-spacing:.1em;font-style:italic;">SCUDERIA</div>
         </div>
-        <div class="theme-card" data-theme="anderson">
+        <div class="theme-card" data-theme="anderson" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Wes Anderson">
           <div class="theme-preview" style="background:#FDF6E3; border: 2px solid #D1495B;">
             <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#F5EBD0;flex:1;border:1px solid #CEBF9A"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#D1495B,#669999);width:65%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#D1495B"></div><div class="theme-preview-dot" style="background:#669999"></div><div class="theme-preview-dot" style="background:#E8A825"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#D1495B,#476b6b);width:65%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#D1495B"></div><div class="theme-preview-dot" style="background:#476b6b"></div><div class="theme-preview-dot" style="background:#E8A825"></div></div>
           </div>
           <div class="theme-label" style="background:#F5EBD0;color:#D1495B;font-family:'Jost',sans-serif;font-style:normal;border-top:2px solid #D1495B">Wes Anderson</div>
         </div>
-        <div class="theme-card" data-theme="filmnoir">
+        <div class="theme-card" data-theme="filmnoir" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Film Noir">
           <div class="theme-preview" style="background:#050505">
             <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#111;flex:1;border:1px solid #333;border-radius:0"></div></div>
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#555;width:65%;border-radius:0"></div></div>
@@ -87,7 +88,7 @@
           </div>
           <div class="theme-label" style="background:#000;color:#e0e0e0;font-family:'Cinzel',serif;letter-spacing:.08em;border-top:1px solid #333;">FILM NOIR</div>
         </div>
-        <div class="theme-card" data-theme="system">
+        <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
           <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
              <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;">🌓</div>
           </div>
@@ -117,7 +118,7 @@
 <header class="app-header">
   <h1 class="app-title" id="main-app-title"><em>Ludex</em> Rating Companion</h1>
   <div class="header-actions">
-    <button class="icon-btn" id="settings-btn" title="Personnaliser">⚙️</button>
+    <button class="icon-btn" id="settings-btn" title="Personnaliser" aria-label="Personnaliser l'apparence">⚙️</button>
     <button class="icon-btn" id="export-btn" title="Sauvegarder les données">↑ Exporter</button>
     <button class="icon-btn" id="import-trigger" title="Restaurer les données">↓ Importer</button>
     <input type="file" id="import-file" accept=".json" style="display:none">
@@ -137,7 +138,7 @@
         <div class="search-row">
           <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
           <input type="date" class="date-input" id="view-date">
-          <button class="heart-btn" id="heart-btn" title="Aimer ce film">♥</button>
+          <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false">♥</button>
         </div>
         <div class="search-status" id="search-status"></div>
         <div class="suggestions" id="suggestions"></div>
@@ -301,9 +302,9 @@
 
   <div class="col-right" id="col-right-views">
 
-    <div class="right-tabs-container">
-      <button class="right-tab active" id="tab-right-history">📊 Historique & Stats</button>
-      <button class="right-tab" id="tab-right-watchlist">🎯 Watchlist</button>
+    <div class="right-tabs-container" role="tablist" aria-label="Historique ou Watchlist">
+      <button class="right-tab active" id="tab-right-history" role="tab" aria-selected="true">📊 Historique & Stats</button>
+      <button class="right-tab" id="tab-right-watchlist" role="tab" aria-selected="false">🎯 Watchlist</button>
     </div>
 
     <div class="right-view active" id="view-history">
@@ -405,7 +406,7 @@
 </div>
 
 <nav class="mobile-nav" id="mobile-nav">
-  <button class="nav-btn active" id="nav-rating">
+  <button class="nav-btn active" id="nav-rating" aria-current="page">
     <span class="nav-btn-icon">🎬</span> Noter
   </button>
   <button class="nav-btn" id="nav-history">
@@ -416,7 +417,7 @@
   </button>
 </nav>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <script src="app.js" defer></script>
 </body>
