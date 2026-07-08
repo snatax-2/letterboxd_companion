@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js
+// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -19,25 +19,38 @@ if ('serviceWorker' in navigator) {
 // ═══════════════════════════════════════════
 const tabHistBtn = document.getElementById('tab-right-history');
 const tabWlBtn = document.getElementById('tab-right-watchlist');
+const tabDiscoverBtn = document.getElementById('tab-right-discover');
 const viewHist = document.getElementById('view-history');
 const viewWl = document.getElementById('view-watchlist');
+const viewDiscover = document.getElementById('view-discover');
 
 function switchRightTab(tabName) {
-  const isHistory = tabName === 'history';
-  tabHistBtn.classList.toggle('active', isHistory);
-  tabWlBtn.classList.toggle('active', !isHistory);
-  tabHistBtn.setAttribute('aria-selected', String(isHistory));
-  tabWlBtn.setAttribute('aria-selected', String(!isHistory));
-  viewHist.classList.toggle('active', isHistory);
-  viewWl.classList.toggle('active', !isHistory);
+  const tabs = {
+    history:   { btn: tabHistBtn,     view: viewHist },
+    watchlist: { btn: tabWlBtn,       view: viewWl },
+    discover:  { btn: tabDiscoverBtn, view: viewDiscover },
+  };
+  for (const [name, { btn, view }] of Object.entries(tabs)) {
+    const isActive = name === tabName;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    view.classList.toggle('active', isActive);
+  }
+  // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
+  // re-fetch à chaque fois qu'on revient sur l'onglet).
+  if (tabName === 'discover' && !discoverLoaded) {
+    loadDiscoverQueue();
+  }
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
 tabWlBtn.addEventListener('click', () => switchRightTab('watchlist'));
+tabDiscoverBtn.addEventListener('click', () => switchRightTab('discover'));
 
 const navRating = document.getElementById('nav-rating');
 const navHistory = document.getElementById('nav-history');
 const navWatchlist = document.getElementById('nav-watchlist');
+const navDiscover = document.getElementById('nav-discover');
 const colRating = document.getElementById('col-rating');
 const colRightViews = document.getElementById('col-right-views');
 
@@ -55,10 +68,12 @@ function switchMobileNav(view) {
   navRating.classList.remove('active');
   navHistory.classList.remove('active');
   navWatchlist.classList.remove('active');
+  navDiscover.classList.remove('active');
   navRating.removeAttribute('aria-current');
   navHistory.removeAttribute('aria-current');
   navWatchlist.removeAttribute('aria-current');
-  
+  navDiscover.removeAttribute('aria-current');
+
   colRating.style.display = 'none';
   colRightViews.style.display = 'none';
 
@@ -79,12 +94,19 @@ function switchMobileNav(view) {
     colRightViews.style.display = 'flex';
     switchRightTab('watchlist');
     playMobileViewAnim(colRightViews);
+  } else if (view === 'discover') {
+    navDiscover.classList.add('active');
+    navDiscover.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('discover');
+    playMobileViewAnim(colRightViews);
   }
 }
 
 navRating.addEventListener('click', () => switchMobileNav('rating'));
 navHistory.addEventListener('click', () => switchMobileNav('history'));
 navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
+navDiscover.addEventListener('click', () => switchMobileNav('discover'));
 
 window.addEventListener('resize', () => {
   if (window.innerWidth > 860) {
@@ -94,6 +116,7 @@ window.addEventListener('resize', () => {
     const activeNavId = document.querySelector('.nav-btn.active')?.id;
     if (activeNavId === 'nav-history') switchMobileNav('history');
     else if (activeNavId === 'nav-watchlist') switchMobileNav('watchlist');
+    else if (activeNavId === 'nav-discover') switchMobileNav('discover');
     else switchMobileNav('rating');
   }
 });
@@ -101,6 +124,65 @@ window.addEventListener('resize', () => {
 if (window.innerWidth <= 860) {
   switchMobileNav('rating');
 }
+
+// ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
+// Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,
+// dans l'ordre affiché en bas de l'écran : Noter → Historique → À voir → Découvrir.
+// Complète les boutons de la barre de navigation, ne les remplace pas.
+(function initMobileSwipeNav() {
+  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover'];
+  const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
+  const SWIPE_ANGLE_RATIO = 1.5; // le geste doit être nettement plus horizontal que vertical
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  function currentView() {
+    if (navHistory.classList.contains('active')) return 'history';
+    if (navWatchlist.classList.contains('active')) return 'watchlist';
+    if (navDiscover.classList.contains('active')) return 'discover';
+    return 'rating';
+  }
+
+  // Zones où un glissement horizontal a déjà un sens propre (scroller le
+  // carrousel, déplacer un curseur, sélectionner du texte, swiper une carte
+  // "Découvrir"...) : on n'y déclenche pas de changement d'onglet.
+  function isExcludedTarget(target) {
+    return !!target.closest(
+      '#carousel-container, .discover-card, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+    );
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (window.innerWidth > 860) { tracking = false; return; }
+    if (e.touches.length !== 1 || isExcludedTarget(e.target)) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return; // trop vertical, probablement un scroll
+
+    const idx = TAB_ORDER.indexOf(currentView());
+    if (dx < 0 && idx < TAB_ORDER.length - 1) {
+      switchMobileNav(TAB_ORDER[idx + 1]); // glissement vers la gauche -> onglet suivant
+      if (navigator.vibrate) navigator.vibrate(15);
+    } else if (dx > 0 && idx > 0) {
+      switchMobileNav(TAB_ORDER[idx - 1]); // glissement vers la droite -> onglet précédent
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+  }, { passive: true });
+})();
 
 // ═══════════════════════════════════════════
 //  THEMING & SETTINGS
@@ -1458,94 +1540,8 @@ function saveWatchlist(list) {
   localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
 }
 
-async function renderRecommendations() {
-  const container = document.getElementById('carousel-container');
-  const card = document.getElementById('recommendations-card');
-  if (!container || !card) return;
-
-  const history = loadHistory();
-  const watchlist = loadWatchlist();
-
-  // 1. On cherche les films bien notés (>= 8.0)
-  const topFilms = history.filter(h => parseFloat(h.score) >= 8.0);
-  
-  if (topFilms.length === 0) {
-    card.style.display = 'none';
-    return;
-  }
-
-  // Affiche la carte avec un état de chargement
-  card.style.display = 'block';
-  container.innerHTML = '<span class="wl-provider-loading" style="padding: 10px;">⏳ Recherche de suggestions basées sur vos goûts...</span>';
-
-  // 2. On sélectionne jusqu'à 3 films aléatoires du top pour varier les plaisirs
-  const shuffledTop = [...topFilms].sort(() => 0.5 - Math.random()).slice(0, 3);
-  let allRecommendations = [];
-  
-  // Ensembles pour éviter de suggérer des films déjà vus ou déjà dans la watchlist
-  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
-  const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
-
-  for (const film of shuffledTop) {
-    if (!film.tmdbId) continue;
-    try {
-      const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
-      const data = await res.json();
-      
-      // Sécurité : TMDb renvoie parfois les films directement dans un tableau, parfois dans data.results
-      const moviesArray = data.results || (Array.isArray(data) ? data : null);
-      
-      if (moviesArray && moviesArray.length > 0) {
-        allRecommendations.push(...moviesArray);
-      }
-    } catch (e) {
-      console.warn("Impossible de charger les suggestions pour l'ID " + film.tmdbId, e);
-    }
-  }
-
-  // 3. Filtrage des doublons et des films déjà connus
-  const uniqueRecs = [];
-  const addedIds = new Set();
-
-  allRecommendations.forEach(m => {
-    if (!m || !m.id) return;
-    const idStr = String(m.id);
-    if (!addedIds.has(idStr) && !seenIds.has(idStr) && !watchlistIds.has(idStr)) {
-      addedIds.add(idStr);
-      uniqueRecs.push(m);
-    }
-  });
-
-  // 4. Rendu visuel
-  if (uniqueRecs.length === 0) {
-    card.style.display = 'none';
-    return;
-  }
-
-  container.innerHTML = '';
-
-  uniqueRecs.slice(0, 10).forEach(m => {
-    const year = m.release_date?.slice(0, 4) || '????';
-    const item = document.createElement('div');
-    item.className = 'carousel-item';
-    item.title = `${m.title} (${year})`;
-
-    const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
-    item.innerHTML = posterUrl 
-      ? `<img class="carousel-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-      : `<div class="carousel-poster" style="display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--text);">🎬</div>`;
-
-    // Clic : ajoute à la watchlist et rafraîchit le carrousel
-    item.addEventListener('click', () => {
-      addToWatchlistFromTMDb(m, year);
-      setTimeout(renderRecommendations, 300);
-    });
-    container.appendChild(item);
-  });
-}
 
 function renderWatchlist() {
-  renderRecommendations(); // Met à jour dynamiquement les suggestions
   const list = loadWatchlist();
   const container = document.getElementById('watchlist-list');
   const badge = document.getElementById('watchlist-count-badge');
@@ -2161,3 +2157,222 @@ setInterval(() => {
     pushToCloud(true);
   }
 }, 45000);
+
+// ═══════════════════════════════════════════
+//  DÉCOUVRIR : suggestions façon "swipe" (glisser à droite = watchlist, à gauche = passer)
+// ═══════════════════════════════════════════
+//
+// Remplace l'ancien carrousel horizontal : au lieu de montrer 10 petites
+// affiches à la fois, on présente une suggestion à la fois, en grand, avec
+// un geste de swipe (comme Tinder) pour l'ajouter à la watchlist ou la passer.
+//
+// Les films "passés" sont mémorisés localement (lbx_discover_passed) pour ne
+// plus les reproposer. Cette liste n'est pour l'instant PAS synchronisée dans
+// le cloud (contrairement à l'historique/watchlist) : un film passé sur un
+// appareil peut donc réapparaître sur un autre. C'est un choix délibéré pour
+// garder cette fonctionnalité simple ; à revoir si besoin plus tard.
+
+const DISCOVER_PASSED_KEY = 'lbx_discover_passed';
+const DISCOVER_PASSED_MAX = 500; // évite que la liste grossisse indéfiniment
+const DISCOVER_SWIPE_THRESHOLD = 100; // px
+
+function loadDiscoverPassed() {
+  try { return JSON.parse(localStorage.getItem(DISCOVER_PASSED_KEY)) || []; } catch { return []; }
+}
+function markDiscoverPassed(tmdbId) {
+  const list = loadDiscoverPassed();
+  const idStr = String(tmdbId);
+  if (!list.includes(idStr)) list.push(idStr);
+  localStorage.setItem(DISCOVER_PASSED_KEY, JSON.stringify(list.slice(-DISCOVER_PASSED_MAX)));
+}
+
+let discoverQueue = [];
+let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
+
+const discoverStack = document.getElementById('discover-stack');
+const discoverActionsEl = document.getElementById('discover-actions');
+const discoverReloadBtn = document.getElementById('discover-reload-btn');
+const discoverPassBtn = document.getElementById('discover-pass-btn');
+const discoverLikeBtn = document.getElementById('discover-like-btn');
+
+async function loadDiscoverQueue() {
+  discoverActionsEl.style.display = 'none';
+  discoverStack.innerHTML = '<div class="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>';
+
+  const history = loadHistory();
+  const watchlist = loadWatchlist();
+  const topFilms = history.filter(h => parseFloat(h.score) >= 8.0);
+
+  if (topFilms.length === 0) {
+    discoverStack.innerHTML = '<div class="discover-empty">Note quelques films à 8/10 ou plus pour débloquer des suggestions personnalisées ici.</div>';
+    return;
+  }
+
+  const shuffledTop = [...topFilms].sort(() => 0.5 - Math.random()).slice(0, 3);
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+  const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
+  const passedIds = new Set(loadDiscoverPassed());
+
+  let allRecs = [];
+  for (const film of shuffledTop) {
+    if (!film.tmdbId) continue;
+    try {
+      const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
+      const data = await res.json();
+      const moviesArray = data.results || (Array.isArray(data) ? data : null);
+      if (moviesArray) allRecs.push(...moviesArray);
+    } catch (e) {
+      console.warn("Impossible de charger les suggestions pour l'ID " + film.tmdbId, e);
+    }
+  }
+
+  const uniqueRecs = [];
+  const addedIds = new Set();
+  allRecs.forEach(m => {
+    if (!m || !m.id) return;
+    const idStr = String(m.id);
+    if (!addedIds.has(idStr) && !seenIds.has(idStr) && !watchlistIds.has(idStr) && !passedIds.has(idStr)) {
+      addedIds.add(idStr);
+      uniqueRecs.push(m);
+    }
+  });
+
+  discoverQueue = uniqueRecs.slice(0, 15);
+  discoverLoaded = true;
+  renderDiscoverStack();
+}
+
+function renderDiscoverStack() {
+  discoverStack.innerHTML = '';
+
+  if (discoverQueue.length === 0) {
+    discoverActionsEl.style.display = 'none';
+    discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    return;
+  }
+
+  discoverActionsEl.style.display = 'flex';
+
+  // Aperçu de la carte suivante, en arrière-plan (purement visuel, non interactive)
+  if (discoverQueue[1]) {
+    discoverStack.appendChild(buildDiscoverCardEl(discoverQueue[1], false));
+  }
+  // Carte active, au premier plan
+  const topCard = buildDiscoverCardEl(discoverQueue[0], true);
+  discoverStack.appendChild(topCard);
+  attachSwipeHandlers(topCard);
+}
+
+function buildDiscoverCardEl(m, isTop) {
+  const year = m.release_date?.slice(0, 4) || '????';
+  const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
+  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : '';
+  let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
+  if (overview.length > 160) overview = overview.slice(0, 160) + '…';
+
+  const el = document.createElement('div');
+  el.className = 'discover-card ' + (isTop ? 'top' : 'behind');
+  el.innerHTML = `
+    <div class="discover-card-poster-wrap">
+      ${posterUrl
+        ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        : `<div class="discover-card-poster-ph">🎬</div>`}
+      ${isTop ? `<div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>` : ''}
+    </div>
+    <div class="discover-card-info">
+      <div class="discover-card-title">${escAttr(m.title)}</div>
+      <div class="discover-card-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
+      <div class="discover-card-overview">${escAttr(overview)}</div>
+    </div>
+  `;
+  if (isTop) {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', `Suggestion : ${m.title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+  }
+  return el;
+}
+
+// Résout un swipe/clic/touche : retire le film de la file, exécute l'action,
+// puis réaffiche la pile avec la carte suivante.
+function resolveDiscoverSwipe(direction) {
+  const movie = discoverQueue.shift();
+  if (!movie) return;
+
+  if (direction === 'like') {
+    const year = movie.release_date?.slice(0, 4) || '????';
+    addToWatchlistFromTMDb(movie, year);
+    if (navigator.vibrate) navigator.vibrate(20);
+  } else {
+    markDiscoverPassed(movie.id);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+  renderDiscoverStack();
+}
+
+function attachSwipeHandlers(cardEl) {
+  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  const stampLike = cardEl.querySelector('.discover-stamp.like');
+  const stampPass = cardEl.querySelector('.discover-stamp.pass');
+
+  function onStart(clientX, clientY) {
+    startX = clientX; startY = clientY; dx = 0; dy = 0; dragging = true;
+    cardEl.classList.add('dragging');
+    cardEl.classList.remove('snap-back', 'flying');
+  }
+  function onMove(clientX, clientY) {
+    if (!dragging) return;
+    dx = clientX - startX;
+    dy = clientY - startY;
+    cardEl.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx / 18}deg)`;
+    const progress = Math.min(1, Math.abs(dx) / DISCOVER_SWIPE_THRESHOLD);
+    if (dx > 0) { stampLike.style.opacity = progress; stampPass.style.opacity = 0; }
+    else if (dx < 0) { stampPass.style.opacity = progress; stampLike.style.opacity = 0; }
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('dragging');
+
+    if (Math.abs(dx) > DISCOVER_SWIPE_THRESHOLD) {
+      const direction = dx > 0 ? 'like' : 'pass';
+      cardEl.classList.add('flying');
+      cardEl.style.transform = `translate(${dx > 0 ? 900 : -900}px, ${dy * 0.4}px) rotate(${dx / 10}deg)`;
+      cardEl.style.opacity = '0';
+      setTimeout(() => resolveDiscoverSwipe(direction), 280);
+    } else {
+      cardEl.classList.add('snap-back');
+      cardEl.style.transform = '';
+      stampLike.style.opacity = 0;
+      stampPass.style.opacity = 0;
+    }
+  }
+
+  cardEl.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  cardEl.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  cardEl.addEventListener('touchend', onEnd);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  cardEl.addEventListener('mousedown', e => {
+    e.preventDefault();
+    onStart(e.clientX, e.clientY);
+    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
+    const upHandler = () => {
+      onEnd();
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+
+  // Clavier : accessibilité pour qui n'utilise pas le tactile/la souris
+  cardEl.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); resolveDiscoverSwipe('like'); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); resolveDiscoverSwipe('pass'); }
+  });
+}
+
+discoverPassBtn.addEventListener('click', () => resolveDiscoverSwipe('pass'));
+discoverLikeBtn.addEventListener('click', () => resolveDiscoverSwipe('like'));
+discoverReloadBtn.addEventListener('click', () => loadDiscoverQueue());

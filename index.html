@@ -302,9 +302,10 @@
 
   <div class="col-right" id="col-right-views">
 
-    <div class="right-tabs-container" role="tablist" aria-label="Historique ou Watchlist">
+    <div class="right-tabs-container" role="tablist" aria-label="Historique, Watchlist ou Découvrir">
       <button class="right-tab active" id="tab-right-history" role="tab" aria-selected="true">📊 Historique & Stats</button>
       <button class="right-tab" id="tab-right-watchlist" role="tab" aria-selected="false">🎯 Watchlist</button>
+      <button class="right-tab" id="tab-right-discover" role="tab" aria-selected="false">🔥 Découvrir</button>
     </div>
 
     <div class="right-view active" id="view-history">
@@ -380,12 +381,6 @@
     </div> 
     
     <div class="right-view" id="view-watchlist">
-      <!-- Carrousel dynamique de recommandations sans encombrer l'onglet "Noter" -->
-      <div class="card" id="recommendations-card" style="margin-bottom: 16px; display: none;">
-        <div class="card-title">Suggestions pour toi</div>
-        <div class="carousel-container" id="carousel-container"></div>
-      </div>
-
       <div class="card" id="watchlist-card">
         <div class="card-title">
           À voir
@@ -400,7 +395,23 @@
           <div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>
         </div>
       </div>
-    </div> 
+    </div>
+
+    <div class="right-view" id="view-discover">
+      <div class="card" id="discover-card-wrap">
+        <div class="card-title">
+          🔥 Découvrir
+          <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions">↻</button>
+        </div>
+        <div class="discover-stack" id="discover-stack" aria-live="polite">
+          <div class="discover-loading" id="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>
+        </div>
+        <div class="discover-actions" id="discover-actions" style="display:none">
+          <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer">✕</button>
+          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist">❤️</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -414,6 +425,9 @@
   </button>
   <button class="nav-btn" id="nav-watchlist">
     <span class="nav-btn-icon">🎯</span> À voir
+  </button>
+  <button class="nav-btn" id="nav-discover">
+    <span class="nav-btn-icon">🔥</span> Découvrir
   </button>
 </nav>
 

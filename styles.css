@@ -667,29 +667,74 @@
   ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
-  /* ── CAROUSEL DE RECOMMANDATIONS ── */
-  .carousel-container {
-    display: flex;
-    overflow-x: auto;
-    gap: 12px;
-    padding-bottom: 10px;
-    scrollbar-width: none;
+  /* ── DÉCOUVRIR : pile de cartes façon "swipe" ── */
+  .discover-reload-btn {
+    background: none; border: none; color: var(--text-mid); font-size: 1.1rem;
+    cursor: pointer; margin-left: auto; padding: 4px 8px; border-radius: var(--radius-sm);
+    transition: transform .15s ease, color .15s ease;
   }
-  .carousel-container::-webkit-scrollbar { display: none; }
-  .carousel-item {
-    flex: 0 0 100px;
-    cursor: pointer;
-    transition: transform 0.2s;
+  .discover-reload-btn:hover { color: var(--text-hi); }
+  .discover-reload-btn:active { transform: scale(.9) rotate(-30deg); }
+
+  .discover-stack {
+    position: relative;
+    height: 420px;
+    max-width: 300px;
+    margin: 10px auto 0;
   }
-  .carousel-item:hover { transform: scale(1.05); }
-  .carousel-poster {
-    width: 100px;
-    height: 150px;
-    object-fit: cover;
-    border-radius: var(--radius);
+  .discover-loading, .discover-empty {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; padding: 20px; color: var(--text-mid); font-size: 0.9rem; line-height: 1.5;
+  }
+  .discover-card {
+    position: absolute; inset: 0;
     background: var(--surface2);
-    box-shadow: var(--box-shadow-style, 0 2px 8px rgba(0,0,0,0.3));
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45);
+    display: flex; flex-direction: column;
+    touch-action: pan-y; /* laisse le scroll vertical de la page passer, on gère le swipe horizontal nous-même */
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
   }
+  .discover-card:active { cursor: grabbing; }
+  .discover-card.behind { z-index: 1; transform: scale(.94) translateY(10px); opacity: .55; pointer-events: none; }
+  .discover-card.top { z-index: 2; }
+  .discover-card.dragging { transition: none; }
+  .discover-card.snap-back { transition: transform .25s cubic-bezier(.2,.8,.2,1); }
+  .discover-card.flying { transition: transform .35s ease-out, opacity .35s ease-out; }
+
+  .discover-card-poster-wrap { position: relative; width: 100%; height: 62%; flex-shrink: 0; background: var(--bg); }
+  .discover-card-poster { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .discover-card-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+
+  .discover-card-info { padding: 10px 14px; flex: 1; overflow-y: auto; }
+  .discover-card-title { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-hi); line-height: 1.25; }
+  .discover-card-meta { font-size: 0.75rem; color: var(--text-mid); margin: 3px 0 6px; }
+  .discover-card-overview { font-size: 0.78rem; color: var(--text); line-height: 1.4; }
+
+  .discover-stamp {
+    position: absolute; top: 20px; padding: 5px 12px; border: 3px solid; border-radius: 8px;
+    font-family: var(--font-heading); font-weight: 900; font-size: 1.05rem; text-transform: uppercase;
+    opacity: 0; pointer-events: none;
+  }
+  .discover-stamp.like { left: 16px; color: var(--green); border-color: var(--green); transform: rotate(-12deg); }
+  .discover-stamp.pass { right: 16px; color: var(--red); border-color: var(--red); transform: rotate(12deg); }
+
+  .discover-actions { display: flex; justify-content: center; gap: 22px; margin-top: 14px; }
+  .discover-action-btn {
+    width: 54px; height: 54px; border-radius: 50%; background: var(--surface2);
+    border: 2px solid var(--border-hi); font-size: 1.3rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .12s ease, border-color .15s ease;
+  }
+  .discover-action-btn.pass { color: var(--red); }
+  .discover-action-btn.pass:hover, .discover-action-btn.pass:active { border-color: var(--red); }
+  .discover-action-btn.like { color: var(--green); }
+  .discover-action-btn.like:hover, .discover-action-btn.like:active { border-color: var(--green); }
+  .discover-action-btn:active { transform: scale(.9); }
 
   /* ── OPTIMISATION RESPONSIVE COMPLETE (ZÉRO DÉCALAGE) ── */
   @media (max-width: 860px) {
@@ -708,6 +753,11 @@
       transform: translateY(100%);
     }
     .modal-overlay.open .modal-box { transform: translateY(0); }
+
+    /* Carte "Découvrir" plus grande sur mobile : la version desktop (300px de
+       large) laisserait beaucoup d'espace vide sur un écran de téléphone. */
+    .discover-stack { max-width: 100%; height: min(64vh, 520px); }
+    .discover-action-btn { width: 62px; height: 62px; font-size: 1.5rem; }
 
     .layout { 
       display: flex; 
