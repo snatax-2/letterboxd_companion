@@ -96,6 +96,30 @@
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
   }
 
+  /* ── RETOUR TACTILE (feedback au clic/tap) ──
+     Un écran tactile n'a pas de :hover ; sans ce retour visuel immédiat, l'app
+     donne l'impression de "ne pas réagir" au toucher. On applique une légère
+     réduction d'échelle sur les principaux éléments cliquables. */
+  .icon-btn, .nav-btn, .theme-card, .hist-action-btn, .right-tab, .modal-btn,
+  .wl-btn, .carousel-item, .suggestion-item, .wl-suggest-item, .ctx-tag {
+    transition: transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .icon-btn:active, .nav-btn:active, .theme-card:active, .hist-action-btn:active,
+  .right-tab:active, .modal-btn:active, .wl-btn:active, .carousel-item:active,
+  .suggestion-item:active, .wl-suggest-item:active, .ctx-tag:active {
+    transform: scale(.94);
+  }
+
+  /* Respecte la préférence système "réduire les animations" (accessibilité) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   body {
     font-family: var(--font-body);
     background-color: var(--bg);
@@ -105,6 +129,7 @@
     min-height: 100vh;
     padding: 24px 16px 60px;
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
   }
 
   /* ── HEADER ── */
@@ -452,7 +477,7 @@
     box-shadow: var(--box-shadow-style, none);
   }
   .btn:hover { opacity: 1; transform: translateY(-1px); }
-  .btn:active { transform: translateY(0px); }
+  .btn:active { transform: scale(.96); }
   .btn-copy { background: var(--surface2); color: var(--text-hi); border: 1px solid var(--border-hi); }
   .btn-copy.copied { background: var(--green); color: #0d1117; border-color: var(--green); }
   .btn-save { background: var(--blue); color: #0d1117; font-weight: 800; }
@@ -572,7 +597,8 @@
   /* ── MODALS ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
+  .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }
   .modal-title { color: var(--text-hi); font-weight: 700; margin-bottom: 12px; font-family: var(--font-heading); font-size: 1.2rem;}
   .theme-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px; }
   /* Si le nombre de thèmes est impair, le dernier se retrouve seul sur sa ligne :
@@ -670,7 +696,19 @@
     body { 
       padding: 12px 10px 80px 10px; 
     }
-    
+
+    /* Modales façon "bottom sheet" sur mobile : ancrées en bas, glissent vers le
+       haut à l'ouverture — plus proche des habitudes d'une app native que le
+       popup centré hérité du desktop. */
+    .modal-overlay { align-items: flex-end; }
+    .modal-box {
+      max-width: none; width: 100%; max-height: 80vh;
+      border-radius: 16px 16px 0 0;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+    }
+    .modal-overlay.open .modal-box { transform: translateY(0); }
+
     .layout { 
       display: flex; 
       flex-direction: column; 
@@ -689,6 +727,14 @@
     .col-left {
       width: 100%;
     }
+
+    /* Petite transition d'entrée quand on change d'onglet mobile (Noter / Historique
+       / À voir), pour éviter la bascule instantanée et sèche entre les sections. */
+    @keyframes mobileViewIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .mobile-view-anim { animation: mobileViewIn .22s ease-out; }
     
     .search-input, .date-input, input[type="number"], .watchlist-add-input, .settings-input, .settings-select { 
       font-size: 16px !important; /* Évite le zoom auto intempestif sur iOS */

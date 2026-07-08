@@ -25,6 +25,16 @@ const navWatchlist = document.getElementById('nav-watchlist');
 const colRating = document.getElementById('col-rating');
 const colRightViews = document.getElementById('col-right-views');
 
+// Redémarre l'animation d'entrée (mobileViewIn) sur un élément : on retire la
+// classe, on force un reflow (lecture d'une propriété layout), puis on la
+// rajoute — sinon le navigateur ne rejoue pas l'animation si la classe était
+// déjà présente.
+function playMobileViewAnim(el) {
+  el.classList.remove('mobile-view-anim');
+  void el.offsetWidth;
+  el.classList.add('mobile-view-anim');
+}
+
 function switchMobileNav(view) {
   navRating.classList.remove('active');
   navHistory.classList.remove('active');
@@ -40,16 +50,19 @@ function switchMobileNav(view) {
     navRating.classList.add('active');
     navRating.setAttribute('aria-current', 'page');
     colRating.style.display = 'block'; 
+    playMobileViewAnim(colRating);
   } else if (view === 'history') {
     navHistory.classList.add('active');
     navHistory.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('history');
+    playMobileViewAnim(colRightViews);
   } else if (view === 'watchlist') {
     navWatchlist.classList.add('active');
     navWatchlist.setAttribute('aria-current', 'page');
     colRightViews.style.display = 'flex';
     switchRightTab('watchlist');
+    playMobileViewAnim(colRightViews);
   }
 }
 
