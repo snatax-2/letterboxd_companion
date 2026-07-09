@@ -236,12 +236,27 @@ function renderHistory() {
   });
 }
 
+// Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de CRITERIA)
+const CRITERIA_SHORT_LABELS = {
+  scenario: 'Scén.',
+  realisation: 'Réal.',
+  photo: 'Photo',
+  acteurs: 'Casting',
+  ambiance: 'Ambiance',
+  rythme: 'Rythme',
+  affect: 'Affect',
+};
+
 function createRadarSVG(averages) {
   if (averages.every(a => a === 0)) return null;
 
   const s = 180, c = s/2, r = s*0.42;
-  const angles = [0, 60, 120, 180, 240, 300].map(a => (a - 90) * Math.PI / 180);
-  const labels = ['Scén.', 'Réal.', 'Photo.', 'Casting', 'Son', 'Affect'];
+  // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
+  // ce nombre en dur, sinon l'ajout d'un critère (ex: "Rythme") désaligne le
+  // graphique ou perd un axe silencieusement.
+  const angleStep = 360 / CRITERIA.length;
+  const angles = CRITERIA.map((_, i) => (i * angleStep - 90) * Math.PI / 180);
+  const labels = CRITERIA.map(critKey => CRITERIA_SHORT_LABELS[critKey] || critKey);
 
   let svg = `<svg viewBox="0 0 ${s} ${s}" width="100%" height="100%" style="max-width:250px; overflow:visible;">`;
   
@@ -319,14 +334,26 @@ function renderStats() {
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
   document.getElementById('kpi-year').textContent = yearCount;
 
-  let critSums = [0,0,0,0,0,0], detailCount = 0;
+  // Un tableau de taille fixe (6) ici serait faux dès qu'un 7e critère existe
+  // (ex: "Rythme" ajouté après coup) : on se base sur CRITERIA.length.
+  // On compte aussi les valeurs par critère séparément (pas un seul detailCount
+  // partagé), car un ancien film noté avant l'ajout d'un critère n'a pas cette
+  // valeur : il ne doit compter ni dans sa somme, ni dans son diviseur pour CE
+  // critère précis (sinon la moyenne de cet axe serait faussée, voire NaN).
+  let critSums = new Array(CRITERIA.length).fill(0);
+  let critCounts = new Array(CRITERIA.length).fill(0);
   history.forEach(h => { 
     if(h.mode === 'detail' && h.values && h.values.scenario !== undefined) { 
-      detailCount++; 
-      CRITERIA.forEach((c,i) => critSums[i]+=parseFloat(h.values[c])); 
+      CRITERIA.forEach((c,i) => {
+        const val = parseFloat(h.values[c]);
+        if (!isNaN(val)) {
+          critSums[i] += val;
+          critCounts[i]++;
+        }
+      });
     }
   });
-  const avgs = detailCount > 0 ? critSums.map(s => s/detailCount) : [0,0,0,0,0,0];
+  const avgs = critCounts.map((count, i) => count > 0 ? critSums[i] / count : 0);
   const radarSvg = createRadarSVG(avgs);
   if (radarSvg) { 
     document.getElementById('radar-chart-container').innerHTML = radarSvg; 

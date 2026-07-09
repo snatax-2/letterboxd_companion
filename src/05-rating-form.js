@@ -67,6 +67,7 @@ function resetWeights() {
   CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = 1; });
   updateWeightBadges();
   calculateScore();
+  document.getElementById('genre-weight-suggest').style.display = 'none';
 }
 
 function updateWeightBadges() {
@@ -78,7 +79,89 @@ function updateWeightBadges() {
 
 CRITERIA.forEach(c => {
   const el = document.getElementById(`w-${c}`);
-  if (el) el.addEventListener('input', () => { updateWeightBadges(); calculateScore(); });
+  if (el) el.addEventListener('input', () => {
+    updateWeightBadges();
+    calculateScore();
+    document.getElementById('genre-weight-suggest').style.display = 'none'; // l'utilisateur personnalise -> on n'insiste plus
+  });
+});
+
+// ─── Pondérations suggérées selon le genre du film ──────────────────────────
+// Certains critères comptent naturellement plus selon le genre (l'ambiance
+// sonore pour un film d'horreur, le jeu d'acteur pour un drame...). On propose
+// un préréglage adapté, sans jamais écraser silencieusement une personnalisation :
+// - si les poids sont encore à leur valeur par défaut (×1 partout), on l'applique direct ;
+// - sinon, on affiche juste un bouton pour l'appliquer à la demande.
+const GENRE_WEIGHT_PRESETS = {
+  'Horreur':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1,    ambiance: 2,    rythme: 1.5,  affect: 1 },
+  'Musique':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1.25, ambiance: 2,    rythme: 1,    affect: 1 },
+  'Romance':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1.5,  ambiance: 1,    rythme: 0.75, affect: 2 },
+  'Documentaire':    { scenario: 1.5,  realisation: 1,    photo: 1,    acteurs: 0.5,  ambiance: 0.75, rythme: 1,    affect: 0.75 },
+  'Animation':       { scenario: 1.25, realisation: 1.25, photo: 1.5,  acteurs: 0.75, ambiance: 1,    rythme: 1,    affect: 1 },
+  'Science-Fiction': { scenario: 1.5,  realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1,    rythme: 1,    affect: 1 },
+  'Fantastique':     { scenario: 1.25, realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1.25, rythme: 1,    affect: 1 },
+  'Guerre':          { scenario: 1.25, realisation: 1.25, photo: 1,    acteurs: 1.25, ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Thriller':        { scenario: 1.25, realisation: 1.25, photo: 1,    acteurs: 1,    ambiance: 1.25, rythme: 1.5,  affect: 1 },
+  'Drame':           { scenario: 1.5,  realisation: 1,    photo: 1,    acteurs: 1.5,  ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Comédie':         { scenario: 1.25, realisation: 1,    photo: 0.75, acteurs: 1.5,  ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Action':          { scenario: 0.75, realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1,    rythme: 1.5,  affect: 1 },
+};
+// Ordre de priorité si un film a plusieurs genres correspondants : les genres
+// les plus "définissants" d'abord (un film peut être à la fois Action et
+// Comédie, mais un genre comme Horreur ou Musique oriente plus fortement
+// l'appréciation qu'Action, souvent secondaire).
+const GENRE_PRIORITY = ['Horreur','Musique','Romance','Documentaire','Animation','Science-Fiction','Fantastique','Guerre','Thriller','Drame','Comédie','Action'];
+
+let pendingGenrePreset = null; // { name, weights } en attente si l'utilisateur a déjà personnalisé
+
+function weightsAreDefault() {
+  return CRITERIA.every(c => parseFloat(document.getElementById(`w-${c}`).value) === 1);
+}
+
+function applyWeightPreset(weights) {
+  CRITERIA.forEach(c => {
+    const el = document.getElementById(`w-${c}`);
+    if (el && weights[c] !== undefined) el.value = weights[c];
+  });
+  updateWeightBadges();
+  calculateScore();
+}
+
+function pickGenrePreset(genreNames) {
+  if (!genreNames || !genreNames.length) return null;
+  for (const g of GENRE_PRIORITY) {
+    if (genreNames.includes(g) && GENRE_WEIGHT_PRESETS[g]) {
+      return { name: g, weights: GENRE_WEIGHT_PRESETS[g] };
+    }
+  }
+  return null;
+}
+
+// Appelée après la sélection d'un film (une fois son genre connu depuis TMDb).
+function suggestGenreWeights(genreNames) {
+  const suggestBtn = document.getElementById('genre-weight-suggest');
+  const match = pickGenrePreset(genreNames);
+  if (!match) { suggestBtn.style.display = 'none'; pendingGenrePreset = null; return; }
+
+  if (weightsAreDefault()) {
+    applyWeightPreset(match.weights);
+    showToast(`Pondérations ajustées pour le genre "${match.name}" 🎯`);
+    suggestBtn.style.display = 'none';
+    pendingGenrePreset = null;
+  } else {
+    // L'utilisateur a déjà personnalisé : on ne touche à rien, mais on propose.
+    pendingGenrePreset = match;
+    suggestBtn.textContent = `🎯 Suggestion "${match.name}"`;
+    suggestBtn.style.display = 'inline-flex';
+  }
+}
+
+document.getElementById('genre-weight-suggest').addEventListener('click', () => {
+  if (!pendingGenrePreset) return;
+  applyWeightPreset(pendingGenrePreset.weights);
+  showToast(`Pondérations ajustées pour le genre "${pendingGenrePreset.name}" 🎯`);
+  document.getElementById('genre-weight-suggest').style.display = 'none';
+  pendingGenrePreset = null;
 });
 
 // ═══════════════════════════════════════════
@@ -100,7 +183,12 @@ function calculateScore() {
       const val = parseFloat(document.getElementById(c).value);
       criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
-      document.getElementById(`desc-${c}`).textContent = getDesc(c, val);
+      const descEl = document.getElementById(`desc-${c}`);
+      descEl.textContent = getDesc(c, val);
+      // Repli progressif : le texte descriptif ne s'affiche qu'une fois qu'on
+      // s'est écarté de la valeur neutre par défaut (5), pour ne pas noyer le
+      // formulaire sous 7 blocs de texte dès l'ouverture d'une fiche vierge.
+      descEl.classList.toggle('revealed', val !== 5);
     });
     score = computeWeightedScore(criteriaValues, w);
   }
@@ -137,6 +225,29 @@ CRITERIA.forEach(c => {
     updateSliderPct(document.getElementById(c));
     calculateScore();
     saveDraft();
+    // Un input[type=range] avec un `step` ne déclenche 'input' qu'une fois la
+    // valeur quantifiée (donc déjà une fois par graduation de 0.5) : une petite
+    // vibration ici suffit à donner un vrai "cranté" tactile au glissement,
+    // sans logique supplémentaire de détection de palier.
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+});
+
+// Boutons ± à côté de chaque slider : plus précis qu'un glissé du doigt pour
+// viser une valeur exacte sur mobile. Un seul gestionnaire délégué pour les
+// 14 boutons (7 critères × 2), via les attributs data-target/data-step.
+document.querySelectorAll('.criterion-step-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const slider = document.getElementById(btn.dataset.target);
+    const step = parseFloat(btn.dataset.step);
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    const next = Math.min(max, Math.max(min, parseFloat(slider.value) + step));
+    slider.value = next;
+    // Un événement 'input' synthétique réutilise exactement la même logique
+    // que le glissement manuel (recalcul du score, sauvegarde du brouillon,
+    // vibration), sans dupliquer ce code ici.
+    slider.dispatchEvent(new Event('input'));
   });
 });
 
