@@ -201,7 +201,6 @@
             <div class="weight-item"><label>Photographie</label><input type="number" id="w-photo" value="1" min="0" max="5" step="0.5"></div>
             <div class="weight-item"><label>Acteurs</label><input type="number" id="w-acteurs" value="1" min="0" max="5" step="0.5"></div>
             <div class="weight-item"><label>Ambiance & Son</label><input type="number" id="w-ambiance" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Rythme & Montage</label><input type="number" id="w-rythme" value="1" min="0" max="5" step="0.5"></div>
             <div class="weight-item"><label>Affect ❤️</label><input type="number" id="w-affect" value="1" min="0" max="5" step="0.5"></div>
           </div>
           <button class="weight-reset" onclick="resetWeights()">Remettre à égalité</button>
@@ -214,11 +213,7 @@
               <span class="criterion-label">Scénario & Écriture <span class="weight-badge" id="wb-scenario">×1</span></span>
               <span class="criterion-val" id="val-scenario">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="scenario" data-step="-0.5" aria-label="Diminuer Scénario & Écriture de 0,5">−</button>
-              <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="scenario" data-step="0.5" aria-label="Augmenter Scénario & Écriture de 0,5">+</button>
-            </div>
+            <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-scenario">—</div>
           </div>
 
@@ -227,11 +222,7 @@
               <span class="criterion-label">Réalisation & Mise en scène <span class="weight-badge" id="wb-realisation">×1</span></span>
               <span class="criterion-val" id="val-realisation">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="realisation" data-step="-0.5" aria-label="Diminuer Réalisation & Mise en scène de 0,5">−</button>
-              <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="realisation" data-step="0.5" aria-label="Augmenter Réalisation & Mise en scène de 0,5">+</button>
-            </div>
+            <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-realisation">—</div>
           </div>
 
@@ -240,11 +231,7 @@
               <span class="criterion-label">Photographie & Esthétique <span class="weight-badge" id="wb-photo">×1</span></span>
               <span class="criterion-val" id="val-photo">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="photo" data-step="-0.5" aria-label="Diminuer Photographie & Esthétique de 0,5">−</button>
-              <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="photo" data-step="0.5" aria-label="Augmenter Photographie & Esthétique de 0,5">+</button>
-            </div>
+            <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-photo">—</div>
           </div>
 
@@ -253,11 +240,7 @@
               <span class="criterion-label">Interprétation & Acteurs <span class="weight-badge" id="wb-acteurs">×1</span></span>
               <span class="criterion-val" id="val-acteurs">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="-0.5" aria-label="Diminuer Interprétation & Acteurs de 0,5">−</button>
-              <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="0.5" aria-label="Augmenter Interprétation & Acteurs de 0,5">+</button>
-            </div>
+            <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-acteurs">—</div>
           </div>
 
@@ -266,25 +249,8 @@
               <span class="criterion-label">Ambiance & Son <span class="weight-badge" id="wb-ambiance">×1</span></span>
               <span class="criterion-val" id="val-ambiance">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="-0.5" aria-label="Diminuer Ambiance & Son de 0,5">−</button>
-              <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="0.5" aria-label="Augmenter Ambiance & Son de 0,5">+</button>
-            </div>
+            <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-ambiance">—</div>
-          </div>
-
-          <div class="criterion-block">
-            <div class="criterion-head">
-              <span class="criterion-label">Rythme & Montage <span class="weight-badge" id="wb-rythme">×1</span></span>
-              <span class="criterion-val" id="val-rythme">5.0</span>
-            </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="rythme" data-step="-0.5" aria-label="Diminuer Rythme & Montage de 0,5">−</button>
-              <input type="range" id="rythme" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="rythme" data-step="0.5" aria-label="Augmenter Rythme & Montage de 0,5">+</button>
-            </div>
-            <div class="criterion-desc" id="desc-rythme">—</div>
           </div>
 
           <div class="criterion-block affect-block">
@@ -292,11 +258,7 @@
               <span class="criterion-label affect-label">❤️ Impact Affectif <span class="weight-badge" id="wb-affect">×1</span></span>
               <span class="criterion-val affect-val" id="val-affect">5.0</span>
             </div>
-            <div class="criterion-slider-row">
-              <button type="button" class="criterion-step-btn" data-target="affect" data-step="-0.5" aria-label="Diminuer ❤️ Impact Affectif de 0,5">−</button>
-              <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
-              <button type="button" class="criterion-step-btn" data-target="affect" data-step="0.5" aria-label="Augmenter ❤️ Impact Affectif de 0,5">+</button>
-            </div>
+            <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
             <div class="criterion-desc" id="desc-affect">—</div>
           </div>
 

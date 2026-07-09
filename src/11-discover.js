@@ -197,18 +197,9 @@ function attachSwipeHandlers(cardEl) {
     }
   }
 
-  cardEl.addEventListener('touchstart', e => {
-    e.stopPropagation(); // évite que le geste remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
-    onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  cardEl.addEventListener('touchmove', e => {
-    e.stopPropagation();
-    onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  cardEl.addEventListener('touchend', e => {
-    e.stopPropagation();
-    onEnd();
-  });
+  cardEl.addEventListener('touchstart', e => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  cardEl.addEventListener('touchmove', e => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+  cardEl.addEventListener('touchend', onEnd);
 
   // Souris (pratique pour tester sur desktop / vercel dev)
   cardEl.addEventListener('mousedown', e => {

@@ -101,12 +101,12 @@
      donne l'impression de "ne pas réagir" au toucher. On applique une légère
      réduction d'échelle sur les principaux éléments cliquables. */
   .icon-btn, .nav-btn, .theme-card, .hist-action-btn, .right-tab, .modal-btn,
-  .wl-btn, .carousel-item, .suggestion-item, .wl-suggest-item, .ctx-tag, .criterion-step-btn {
+  .wl-btn, .carousel-item, .suggestion-item, .wl-suggest-item, .ctx-tag {
     transition: transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
   }
   .icon-btn:active, .nav-btn:active, .theme-card:active, .hist-action-btn:active,
   .right-tab:active, .modal-btn:active, .wl-btn:active, .carousel-item:active,
-  .suggestion-item:active, .wl-suggest-item:active, .ctx-tag:active, .criterion-step-btn:active {
+  .suggestion-item:active, .wl-suggest-item:active, .ctx-tag:active {
     transform: scale(.94);
   }
 
@@ -360,24 +360,11 @@
   .criterion-val { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700; color: var(--text-hi); background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 9px; min-width: 44px; text-align: center; transition: background 0.2s, color 0.2s; }
   .criterion-val.affect-val { color: var(--blue); border-color: var(--blue); background: rgba(64,188,244,0.08); }
 
-  .criterion-slider-row { display: flex; align-items: center; gap: 8px; }
-  .criterion-step-btn {
-    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
-    border: 1px solid var(--border-hi); background: var(--surface2); color: var(--text-hi);
-    font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1; padding: 0;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: transform .12s ease, background-color .15s ease, border-color .15s ease, color .15s ease;
-  }
-  .criterion-step-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .affect-block .criterion-step-btn:hover { border-color: var(--blue); color: var(--blue); }
-
   input[type="range"] {
-    -webkit-appearance: none; width: 100%; height: 6px; flex: 1;
-    /* Piste en zones de qualité (rouge -> orange -> jaune -> vert), fixe sur
-       toute la largeur : la position du curseur natif indique la valeur, la
-       couleur de fond donne un repère qualitatif instantané sans lire le chiffre. */
-    background: linear-gradient(to right, #ff4040 0%, #ff8000 30%, #ffcc00 50%, #8bc34a 70%, #00e054 100%);
-    border-radius: 999px; outline: none; margin-bottom: 0; cursor: pointer;
+    -webkit-appearance: none; width: 100%; height: 6px;
+    background: linear-gradient(to right, var(--orange) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%));
+    border-radius: 999px; outline: none; margin-bottom: 10px; cursor: pointer;
+    transition: background 0.12s;
   }
   /* outline:none ci-dessus retire l'anneau de focus par défaut du navigateur :
      sans ceci, un utilisateur au clavier n'a AUCUN moyen visuel de savoir qu'un
@@ -388,34 +375,30 @@
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
-    background: #fff; cursor: pointer;
+    background: var(--orange); cursor: pointer;
     box-shadow: 0 0 0 3px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.5);
     transition: transform .12s, box-shadow .12s;
   }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); box-shadow: 0 0 0 4px rgba(255,128,0,0.25), 0 2px 8px rgba(0,0,0,0.5); }
   input[type="range"]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 50%; background: #fff; cursor: pointer; border: none;
+    width: 18px; height: 18px; border-radius: 50%; background: var(--orange); cursor: pointer; border: none;
     box-shadow: 0 0 0 3px rgba(0,0,0,0.4); transition: transform .12s;
   }
   input[type="range"]::-moz-range-thumb:hover { transform: scale(1.25); }
+  input[type="range"]::-moz-range-progress { background: var(--orange); height: 6px; border-radius: 999px; }
   
-  .affect-range {
-    background: linear-gradient(to right, #0d3a52 0%, #1a6f96 35%, #40bcf4 70%, #8fe0ff 100%);
-  }
+  .affect-range { background: linear-gradient(to right, var(--blue) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%)); }
+  .affect-range::-webkit-slider-thumb { background: var(--blue); box-shadow: 0 0 0 3px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.5); }
+  .affect-range::-webkit-slider-thumb:hover { box-shadow: 0 0 0 4px rgba(64,188,244,0.25), 0 2px 8px rgba(0,0,0,0.5); }
+  .affect-range::-moz-range-thumb { background: var(--blue); }
+  .affect-range::-moz-range-progress { background: var(--blue); }
 
   .criterion-desc {
     font-size: 0.79rem; color: var(--text); background: var(--surface2);
-    border-left: 3px solid var(--orange); border-radius: 0 6px 6px 0;
-    line-height: 1.5; transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease, margin-top 0.3s ease;
-    overflow: hidden; max-height: 0; opacity: 0; padding: 0 12px; margin-top: 0;
+    border-left: 3px solid var(--orange); padding: 7px 12px; border-radius: 0 6px 6px 0;
+    line-height: 1.5; min-height: 34px; margin-top: 0; transition: border-color 0.2s;
   }
-  /* Repli progressif : le texte n'apparaît que si la valeur s'écarte du 5.0
-     neutre par défaut (voir calculateScore() dans 05-rating-form.js), pour ne
-     pas noyer le formulaire sous 7 blocs de texte dès l'ouverture d'une fiche
-     vierge. max-height généreux pour ne pas tronquer un texte qui wrap sur
-     plusieurs lignes sur petit écran. */
-  .criterion-desc.revealed { max-height: 150px; opacity: 1; padding: 7px 12px; margin-top: 8px; }
-  .affect-block .criterion-desc { border-left-color: var(--blue); }
+  .criterion-desc .affect-block { border-left-color: var(--blue); }
 
   /* ── QUICK RATING ── */
   .detailed-section { display: block; }
