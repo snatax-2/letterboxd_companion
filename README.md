@@ -11,16 +11,19 @@ ludex/
 ├── app.js                  → ⚠️ FICHIER GÉNÉRÉ, ne pas éditer directement (voir src/)
 ├── src/                    → code source réel de app.js, découpé par thème
 │   ├── 00-pwa.js             → enregistrement du service worker
-│   ├── 01-navigation.js       → onglets desktop & mobile
+│   ├── 01-navigation.js       → onglets desktop & mobile, swipe entre onglets
 │   ├── 02-theme.js            → thèmes & réglages
 │   ├── 03-foundation.js       → config, helpers, state, stockage local
+│   ├── 03b-pure-logic.js      → logique pure et testable (score, fusion cloud) — voir tests/
 │   ├── 04-search.js           → recherche TMDb & auto-complétion
 │   ├── 05-rating-form.js      → formulaire de notation (score, tags, sauvegarde...)
 │   ├── 06-history.js          → historique, dashboard, stats, tri
 │   ├── 07-data-io.js          → export / import
-│   ├── 08-watchlist.js        → watchlist & recommandations
+│   ├── 08-watchlist.js        → watchlist
 │   ├── 09-modal-init.js       → modale de confirmation & initialisation
-│   └── 10-cloud-sync.js       → synchronisation cloud (sauvegarde/restauration)
+│   ├── 10-cloud-sync.js       → synchronisation cloud (sauvegarde/restauration)
+│   └── 11-discover.js         → onglet "Découvrir" façon Tinder (swipe pour ajouter/passer)
+├── tests/                  → tests automatisés (node:test), voir section dédiée plus bas
 ├── scripts/
 │   ├── build-app-js.js      → concatène src/*.js dans l'ordre pour produire app.js
 │   └── generate-sw-cache.js → calcule le hash de version pour sw.js
@@ -28,11 +31,15 @@ ludex/
 ├── manifest.json            → manifeste PWA (icônes, nom, couleurs)
 ├── favicon.png, icon-192.png, icon-512.png, apple-touch-icon.png
 ├── api/
-│   └── search.js          → fonction serverless Vercel (proxy TMDb + cache)
+│   ├── package.json       → marque ce dossier en module ES (pour Node/tests uniquement)
+│   ├── _rateLimit.js       → limiteur de requêtes partagé (pas une route, préfixe _)
+│   ├── search.js           → fonction serverless Vercel (proxy TMDb + cache)
+│   └── sync.js             → fonction serverless Vercel (synchro cloud Supabase)
+├── .github/workflows/ci.yml → vérifications automatiques (build, tests, syntaxe) à chaque push
 ├── package.json
 ├── vercel.json
 ├── .gitignore
-└── .env.example           → variable d'environnement nécessaire (TMDB_KEY)
+└── .env.example           → variables d'environnement nécessaires (TMDB_KEY, SUPABASE_*)
 ```
 
 ### Pourquoi `app.js` est généré
@@ -89,6 +96,21 @@ Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamai
 
 La clé `service_role` ne quitte jamais le serveur (elle est utilisée uniquement dans `api/sync.js`, jamais envoyée au navigateur) — c'est cette fonction serverless qui fait l'intermédiaire entre l'app et Supabase.
 
+## Tests automatisés
+
+La logique la plus critique de l'app (calcul du score, fusion de la synchro cloud, rate limiting de l'API) est couverte par des tests automatisés, sans dépendance externe (juste `node:test`, intégré à Node.js).
+
+```bash
+npm test
+```
+
+Ce que ça couvre :
+- **`tests/score.test.js`** — calcul du score en mode rapide et en mode détaillé (moyenne pondérée), conversion en étoiles.
+- **`tests/merge-logic.test.js`** — fusion de l'historique/watchlist entre deux appareils : union de films différents, résolution de conflit sur le même film (le plus récent gagne), respect des suppressions (tombstones), purge automatique après 90 jours.
+- **`tests/rate-limit.test.js`** — limite de requêtes par IP et par identifiant, isolation entre IP différentes.
+
+Ces tests tournent aussi automatiquement dans le CI/CD (GitHub Actions) à chaque `push`. La logique testée vit dans `src/03b-pure-logic.js` : un fichier volontairement sans DOM ni `localStorage`, pour pouvoir être exécuté tel quel par Node (voir le commentaire en tête de ce fichier pour le détail du fonctionnement).
+
 ## 2. Tester en local
 
 Le projet a une fonction serverless (`/api/search.js`), donc un simple `Live Server` sur `index.html` ne suffira pas pour les appels API. Utilise la CLI Vercel :
@@ -104,6 +126,21 @@ Cela lance un serveur local qui simule l'environnement Vercel (fichiers statique
 ```bash
 npm run build:js
 ```
+
+### Tests automatisés
+
+```bash
+npm test
+```
+
+Protège la logique la plus critique de l'app contre une régression future :
+- **Calcul du score** (`tests/score.test.js`) : mode rapide, mode détaillé (moyenne pondérée), conversion en étoiles.
+- **Fusion de la synchro cloud** (`tests/merge-logic.test.js`) : union de films différents, résolution de conflit (le plus récent gagne), suppressions respectées (tombstones), pas de doublons.
+- **Rate limiting de l'API** (`tests/rate-limit.test.js`) : blocage au-delà de la limite, compteurs indépendants par IP/par code.
+
+Cette logique vit dans `src/03b-pure-logic.js` — un fichier volontairement sans DOM ni `localStorage`, pour pouvoir être testé avec Node directement (sans navigateur). Le reste du code (lecture de sliders, écriture à l'écran...) reste dans les fichiers habituels et appelle ces fonctions pures.
+
+Ces tests tournent aussi automatiquement dans le CI/CD (voir plus bas) à chaque `push`.
 
 ## 3. Passage sur GitHub
 

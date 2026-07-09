@@ -29,7 +29,7 @@ const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
 const WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones';
-const TOMBSTONE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 jours
+// TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
 
 const syncCodeInput = document.getElementById('setting-sync-code');
 const syncSaveBtn = document.getElementById('sync-save-btn');
@@ -76,80 +76,9 @@ function removeTombstone(storageKey, key) {
   saveTombstones(storageKey, loadTombstones(storageKey).filter(t => t.key !== key));
 }
 
-// Fusionne deux listes de tombstones : garde la date de suppression la plus
-// récente par clé, et purge celles plus vieilles que TOMBSTONE_MAX_AGE_MS
-// (pas la peine de trainer une trace de suppression indéfiniment).
-function mergeTombstoneLists(a, b) {
-  const map = new Map();
-  for (const t of [...a, ...b]) {
-    const existing = map.get(t.key);
-    if (!existing || new Date(t.deletedAt) > new Date(existing.deletedAt)) map.set(t.key, t);
-  }
-  const cutoff = Date.now() - TOMBSTONE_MAX_AGE_MS;
-  return [...map.values()].filter(t => new Date(t.deletedAt).getTime() > cutoff);
-}
-
-// ─── Clés d'identité pour la fusion ──────────────────────────────────────────
-
-function historyItemKey(item) {
-  return (item.title || '').toLowerCase();
-}
-
-function watchlistItemKey(item) {
-  return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
-}
-
-// ─── Fusion historique ───────────────────────────────────────────────────────
-
-function mergeHistory(local, remote, tombstones) {
-  const merged = new Map(); // key -> entry
-  for (const entry of [...local, ...remote]) {
-    const key = historyItemKey(entry);
-    if (!key) continue;
-    const existing = merged.get(key);
-    const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
-    if (!existing) {
-      merged.set(key, entry);
-    } else {
-      const existingTime = new Date(existing.updatedAt || existing.savedAt || 0).getTime();
-      if (entryTime >= existingTime) merged.set(key, entry);
-    }
-  }
-
-  const result = [];
-  for (const [key, entry] of merged) {
-    const tomb = tombstones.find(t => t.key === key);
-    if (tomb) {
-      const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
-      if (new Date(tomb.deletedAt).getTime() >= entryTime) continue; // supprimé plus récemment que la dernière modif
-    }
-    result.push(entry);
-  }
-  result.sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
-  return result;
-}
-
-// ─── Fusion watchlist ────────────────────────────────────────────────────────
-
-function mergeWatchlist(local, remote, tombstones) {
-  const merged = new Map();
-  for (const item of [...local, ...remote]) {
-    const key = watchlistItemKey(item);
-    if (!merged.has(key)) merged.set(key, item);
-  }
-
-  const result = [];
-  for (const [key, item] of merged) {
-    const tomb = tombstones.find(t => t.key === key);
-    if (tomb) {
-      const itemTime = new Date(item.addedAt || 0).getTime();
-      if (new Date(tomb.deletedAt).getTime() >= itemTime) continue;
-    }
-    result.push(item);
-  }
-  result.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
-  return result;
-}
+// mergeTombstoneLists, historyItemKey, watchlistItemKey, mergeHistory et
+// mergeWatchlist vivent maintenant dans 03b-pure-logic.js (logique pure,
+// testable automatiquement sans DOM — voir tests/merge-logic.test.js).
 
 // ─── Cœur de la synchro : fusionne l'état local avec un payload cloud ───────
 // Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être

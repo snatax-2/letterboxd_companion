@@ -48,14 +48,23 @@ async function loadDiscoverQueue() {
     return;
   }
 
-  const shuffledTop = [...topFilms].sort(() => 0.5 - Math.random()).slice(0, 3);
+  // Seuls les films liés à une fiche TMDb (tmdbId) peuvent servir de base à des
+  // recommandations. On filtre AVANT de tirer au sort, sinon un tirage
+  // malchanceux (uniquement des films ajoutés en "saisie manuelle") viderait la
+  // file sans raison apparente, avec un message trompeur ("tout vu").
+  const topFilmsWithId = topFilms.filter(f => f.tmdbId);
+  if (topFilmsWithId.length === 0) {
+    discoverStack.innerHTML = '<div class="discover-empty">Tes films notés 8/10 ou plus ont été ajoutés en saisie manuelle (sans fiche TMDb) : impossible d\'en tirer des suggestions. Essaie de renoter un film en le sélectionnant depuis les résultats de recherche.</div>';
+    return;
+  }
+
+  const shuffledTop = [...topFilmsWithId].sort(() => 0.5 - Math.random()).slice(0, 3);
   const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
   const passedIds = new Set(loadDiscoverPassed());
 
   let allRecs = [];
   for (const film of shuffledTop) {
-    if (!film.tmdbId) continue;
     try {
       const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
       const data = await res.json();

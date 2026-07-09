@@ -5,7 +5,8 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build-app-js.js && node scripts/generate-sw-cache.js",
-    "build:js": "node scripts/build-app-js.js"
+    "build:js": "node scripts/build-app-js.js",
+    "test": "node --test --test-concurrency=1 tests/*.test.js"
   },
   "engines": {
     "node": ">=18"

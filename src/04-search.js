@@ -65,6 +65,7 @@ function selectManual(title) {
   document.getElementById('movie-director').value = '';
   document.getElementById('movie-actors').value  = '';
   document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
   document.getElementById('strip-ratings').style.display = 'none';
 
   const strip = document.getElementById('film-strip');
@@ -110,6 +111,7 @@ async function selectMovie(m, year) {
   document.getElementById('movie-title').value  = m.title;
   document.getElementById('movie-year').value   = year;
   document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
+  document.getElementById('movie-tmdb-id').value = m.id;
   searchEl.value = `${m.title} (${year})`;
   suggestEl.style.display = 'none';
   document.getElementById('strip-ratings').style.display = 'none';

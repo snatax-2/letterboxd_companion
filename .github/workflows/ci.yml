@@ -53,6 +53,9 @@ jobs:
           done
           exit $status
 
+      - name: Tests automatisés (calcul du score, fusion cloud, rate limiting)
+        run: npm test
+
       - name: Génération du hash de cache du service worker (sw.js)
         run: node scripts/generate-sw-cache.js
 

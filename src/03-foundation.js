@@ -137,6 +137,7 @@ function saveDraft() {
     director: document.getElementById('movie-director').value,
     actors: document.getElementById('movie-actors').value,
     tmdbScore: document.getElementById('movie-tmdb-score').value,
+    tmdbId: document.getElementById('movie-tmdb-id').value,
     searchValue: document.getElementById('movie-search').value,
     date: document.getElementById('view-date').value,
     liked: isLiked,
@@ -167,6 +168,7 @@ function loadDraft() {
       document.getElementById('movie-director').value = draft.director || '';
       document.getElementById('movie-actors').value = draft.actors || '';
       document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
+      document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
       document.getElementById('movie-search').value = draft.searchValue || '';
       
       const strip = document.getElementById('film-strip');

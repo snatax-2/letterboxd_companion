@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js
+// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -430,6 +430,7 @@ function saveDraft() {
     director: document.getElementById('movie-director').value,
     actors: document.getElementById('movie-actors').value,
     tmdbScore: document.getElementById('movie-tmdb-score').value,
+    tmdbId: document.getElementById('movie-tmdb-id').value,
     searchValue: document.getElementById('movie-search').value,
     date: document.getElementById('view-date').value,
     liked: isLiked,
@@ -460,6 +461,7 @@ function loadDraft() {
       document.getElementById('movie-director').value = draft.director || '';
       document.getElementById('movie-actors').value = draft.actors || '';
       document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
+      document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
       document.getElementById('movie-search').value = draft.searchValue || '';
       
       const strip = document.getElementById('film-strip');
@@ -518,6 +520,159 @@ function loadDraft() {
 
 renderAll();
 loadDraft();
+
+// ═══════════════════════════════════════════
+//  LOGIQUE PURE (testable) : calcul du score & fusion cloud
+// ═══════════════════════════════════════════
+//
+// Ce fichier ne touche JAMAIS au DOM ni à localStorage : chaque fonction ici
+// prend des données en entrée et renvoie un résultat, sans effet de bord.
+// C'est délibéré : c'est ce qui permet de les tester automatiquement avec
+// Node (voir tests/) sans avoir besoin d'un navigateur.
+//
+// Les fichiers qui ont besoin d'effets de bord (lire un slider, écrire dans le
+// DOM, lire/écrire localStorage...) restent des fines couches au-dessus de ces
+// fonctions — voir calculateScore() dans 05-rating-form.js et mergeWithRemote()
+// dans 10-cloud-sync.js.
+//
+// Le bloc tout en bas (`if (typeof module !== 'undefined')...`) permet à ce
+// même fichier de fonctionner à la fois :
+//  - dans le navigateur : concaténé tel quel dans app.js, les fonctions
+//    deviennent de simples fonctions globales (comme avant l'extraction) ;
+//  - dans Node (tests) : `require()` direct, sans DOM.
+
+const TOMBSTONE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 jours
+
+// ─── Score ────────────────────────────────────────────────────────────────
+
+// Mode rapide : note en étoiles (0.5 à 5, pas de 0.5) -> score sur 10.
+function computeQuickScore(quickRatingStars) {
+  return quickRatingStars * 2;
+}
+
+// Mode détaillé : moyenne pondérée des 6 critères (scenario, realisation,
+// photo, acteurs, ambiance, affect), chacun noté de 0 à 10.
+// `criteriaValues` : { scenario: 7.5, realisation: 8, ... }
+// `weights`        : { scenario: 1, realisation: 1.5, ... }
+function computeWeightedScore(criteriaValues, weights) {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const key of Object.keys(criteriaValues)) {
+    const val = criteriaValues[key];
+    const wt = weights[key] ?? 1;
+    weightedSum += val * wt;
+    totalWeight += wt;
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : 5;
+}
+
+// Convertit un score sur 10 en équivalent "étoiles" (pas de 0.5), pour l'affichage.
+function scoreToStars(score) {
+  return Math.round((score / 2) * 2) / 2;
+}
+
+// Formatte un nombre d'étoiles en chaîne ★★★½
+function getStarStr(stars) {
+  let s = '';
+  const full = Math.floor(stars);
+  const half = (stars % 1) !== 0;
+  for (let i = 0; i < full; i++) s += '★';
+  if (half) s += '½';
+  return s || '½';
+}
+
+// ─── Fusion cloud : clés d'identité ─────────────────────────────────────────
+
+function historyItemKey(item) {
+  return (item.title || '').toLowerCase();
+}
+
+function watchlistItemKey(item) {
+  return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
+}
+
+// ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
+
+// Fusionne deux listes de tombstones : garde la date de suppression la plus
+// récente par clé, et purge celles plus vieilles que TOMBSTONE_MAX_AGE_MS
+// (pas la peine de trainer une trace de suppression indéfiniment).
+function mergeTombstoneLists(a, b) {
+  const map = new Map();
+  for (const t of [...a, ...b]) {
+    const existing = map.get(t.key);
+    if (!existing || new Date(t.deletedAt) > new Date(existing.deletedAt)) map.set(t.key, t);
+  }
+  const cutoff = Date.now() - TOMBSTONE_MAX_AGE_MS;
+  return [...map.values()].filter(t => new Date(t.deletedAt).getTime() > cutoff);
+}
+
+// ─── Fusion cloud : historique ───────────────────────────────────────────────
+
+function mergeHistory(local, remote, tombstones) {
+  const merged = new Map(); // key -> entry
+  for (const entry of [...local, ...remote]) {
+    const key = historyItemKey(entry);
+    if (!key) continue;
+    const existing = merged.get(key);
+    const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
+    if (!existing) {
+      merged.set(key, entry);
+    } else {
+      const existingTime = new Date(existing.updatedAt || existing.savedAt || 0).getTime();
+      if (entryTime >= existingTime) merged.set(key, entry);
+    }
+  }
+
+  const result = [];
+  for (const [key, entry] of merged) {
+    const tomb = tombstones.find(t => t.key === key);
+    if (tomb) {
+      const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= entryTime) continue; // supprimé plus récemment que la dernière modif
+    }
+    result.push(entry);
+  }
+  result.sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+  return result;
+}
+
+// ─── Fusion cloud : watchlist ────────────────────────────────────────────────
+
+function mergeWatchlist(local, remote, tombstones) {
+  const merged = new Map();
+  for (const item of [...local, ...remote]) {
+    const key = watchlistItemKey(item);
+    if (!merged.has(key)) merged.set(key, item);
+  }
+
+  const result = [];
+  for (const [key, item] of merged) {
+    const tomb = tombstones.find(t => t.key === key);
+    if (tomb) {
+      const itemTime = new Date(item.addedAt || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= itemTime) continue;
+    }
+    result.push(item);
+  }
+  result.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
+  return result;
+}
+
+// ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    computeQuickScore,
+    computeWeightedScore,
+    scoreToStars,
+    getStarStr,
+    historyItemKey,
+    watchlistItemKey,
+    mergeTombstoneLists,
+    mergeHistory,
+    mergeWatchlist,
+    TOMBSTONE_MAX_AGE_MS,
+  };
+}
 
 // ═══════════════════════════════════════════
 //  CONTEXT TAGS
@@ -586,6 +741,7 @@ function selectManual(title) {
   document.getElementById('movie-director').value = '';
   document.getElementById('movie-actors').value  = '';
   document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
   document.getElementById('strip-ratings').style.display = 'none';
 
   const strip = document.getElementById('film-strip');
@@ -631,6 +787,7 @@ async function selectMovie(m, year) {
   document.getElementById('movie-title').value  = m.title;
   document.getElementById('movie-year').value   = year;
   document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
+  document.getElementById('movie-tmdb-id').value = m.id;
   searchEl.value = `${m.title} (${year})`;
   suggestEl.style.display = 'none';
   document.getElementById('strip-ratings').style.display = 'none';
@@ -786,32 +943,25 @@ CRITERIA.forEach(c => {
 // ═══════════════════════════════════════════
 //  SCORE CALCULATION
 // ═══════════════════════════════════════════
-function getStarStr(stars) {
-  let s = '';
-  const full = Math.floor(stars);
-  const half = (stars % 1) !== 0;
-  for (let i = 0; i < full; i++) s += '★';
-  if (half) s += '½';
-  return s || '½';
-}
-
+// Le calcul du score lui-même (computeQuickScore / computeWeightedScore /
+// scoreToStars / getStarStr) vit dans 03b-pure-logic.js, pour pouvoir être
+// testé automatiquement sans DOM. Cette fonction-ci reste la fine couche qui
+// lit les sliders et écrit le résultat à l'écran.
 function calculateScore() {
   let score;
 
   if (currentMode === 'quick') {
-    score = quickRating * 2; 
+    score = computeQuickScore(quickRating);
   } else {
     const w = getWeights();
-    let weightedSum = 0, totalWeight = 0;
+    const criteriaValues = {};
     CRITERIA.forEach(c => {
       const val = parseFloat(document.getElementById(c).value);
-      const wt  = w[c];
+      criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
       document.getElementById(`desc-${c}`).textContent = getDesc(c, val);
-      weightedSum  += val * wt;
-      totalWeight  += wt;
     });
-    score = totalWeight > 0 ? weightedSum / totalWeight : 5;
+    score = computeWeightedScore(criteriaValues, w);
   }
 
   const scoreEl = document.getElementById('score-big');
@@ -821,7 +971,7 @@ function calculateScore() {
   denomEl.textContent = '/10';
   scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
 
-  const stars = Math.round((score / 2) * 2) / 2;
+  const stars = scoreToStars(score);
   document.getElementById('stars-display').textContent = getStarStr(stars);
 
   return score;
@@ -924,6 +1074,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     director:   document.getElementById('movie-director').value,
     actors:     document.getElementById('movie-actors').value, 
     tmdbScore:  document.getElementById('movie-tmdb-score').value || null,
+    tmdbId:     document.getElementById('movie-tmdb-id').value || null,
     date:       document.getElementById('view-date').value,
     liked:      isLiked,
     contextTags: Array.from(activeContextTags),
@@ -979,6 +1130,7 @@ function resetForm() {
   document.getElementById('movie-director').value  = '';
   document.getElementById('movie-actors').value    = '';
   document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
   document.getElementById('review-text').value     = '';
   document.getElementById('strip-ratings').style.display = 'none';
   document.getElementById('film-strip').classList.remove('visible');
@@ -1013,6 +1165,7 @@ window.loadItem = function(idx) {
   document.getElementById('movie-runtime').value = item.runtime || '';
   document.getElementById('movie-director').value = item.director || '';
   document.getElementById('movie-actors').value   = item.actors || ''; 
+  document.getElementById('movie-tmdb-id').value  = item.tmdbId || '';
   
   searchEl.value = item.title;
   document.getElementById('view-date').value     = item.date  || '';
@@ -1873,7 +2026,7 @@ const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
 const WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones';
-const TOMBSTONE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 jours
+// TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
 
 const syncCodeInput = document.getElementById('setting-sync-code');
 const syncSaveBtn = document.getElementById('sync-save-btn');
@@ -1920,80 +2073,9 @@ function removeTombstone(storageKey, key) {
   saveTombstones(storageKey, loadTombstones(storageKey).filter(t => t.key !== key));
 }
 
-// Fusionne deux listes de tombstones : garde la date de suppression la plus
-// récente par clé, et purge celles plus vieilles que TOMBSTONE_MAX_AGE_MS
-// (pas la peine de trainer une trace de suppression indéfiniment).
-function mergeTombstoneLists(a, b) {
-  const map = new Map();
-  for (const t of [...a, ...b]) {
-    const existing = map.get(t.key);
-    if (!existing || new Date(t.deletedAt) > new Date(existing.deletedAt)) map.set(t.key, t);
-  }
-  const cutoff = Date.now() - TOMBSTONE_MAX_AGE_MS;
-  return [...map.values()].filter(t => new Date(t.deletedAt).getTime() > cutoff);
-}
-
-// ─── Clés d'identité pour la fusion ──────────────────────────────────────────
-
-function historyItemKey(item) {
-  return (item.title || '').toLowerCase();
-}
-
-function watchlistItemKey(item) {
-  return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
-}
-
-// ─── Fusion historique ───────────────────────────────────────────────────────
-
-function mergeHistory(local, remote, tombstones) {
-  const merged = new Map(); // key -> entry
-  for (const entry of [...local, ...remote]) {
-    const key = historyItemKey(entry);
-    if (!key) continue;
-    const existing = merged.get(key);
-    const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
-    if (!existing) {
-      merged.set(key, entry);
-    } else {
-      const existingTime = new Date(existing.updatedAt || existing.savedAt || 0).getTime();
-      if (entryTime >= existingTime) merged.set(key, entry);
-    }
-  }
-
-  const result = [];
-  for (const [key, entry] of merged) {
-    const tomb = tombstones.find(t => t.key === key);
-    if (tomb) {
-      const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
-      if (new Date(tomb.deletedAt).getTime() >= entryTime) continue; // supprimé plus récemment que la dernière modif
-    }
-    result.push(entry);
-  }
-  result.sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
-  return result;
-}
-
-// ─── Fusion watchlist ────────────────────────────────────────────────────────
-
-function mergeWatchlist(local, remote, tombstones) {
-  const merged = new Map();
-  for (const item of [...local, ...remote]) {
-    const key = watchlistItemKey(item);
-    if (!merged.has(key)) merged.set(key, item);
-  }
-
-  const result = [];
-  for (const [key, item] of merged) {
-    const tomb = tombstones.find(t => t.key === key);
-    if (tomb) {
-      const itemTime = new Date(item.addedAt || 0).getTime();
-      if (new Date(tomb.deletedAt).getTime() >= itemTime) continue;
-    }
-    result.push(item);
-  }
-  result.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
-  return result;
-}
+// mergeTombstoneLists, historyItemKey, watchlistItemKey, mergeHistory et
+// mergeWatchlist vivent maintenant dans 03b-pure-logic.js (logique pure,
+// testable automatiquement sans DOM — voir tests/merge-logic.test.js).
 
 // ─── Cœur de la synchro : fusionne l'état local avec un payload cloud ───────
 // Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être
@@ -2208,14 +2290,23 @@ async function loadDiscoverQueue() {
     return;
   }
 
-  const shuffledTop = [...topFilms].sort(() => 0.5 - Math.random()).slice(0, 3);
+  // Seuls les films liés à une fiche TMDb (tmdbId) peuvent servir de base à des
+  // recommandations. On filtre AVANT de tirer au sort, sinon un tirage
+  // malchanceux (uniquement des films ajoutés en "saisie manuelle") viderait la
+  // file sans raison apparente, avec un message trompeur ("tout vu").
+  const topFilmsWithId = topFilms.filter(f => f.tmdbId);
+  if (topFilmsWithId.length === 0) {
+    discoverStack.innerHTML = '<div class="discover-empty">Tes films notés 8/10 ou plus ont été ajoutés en saisie manuelle (sans fiche TMDb) : impossible d\'en tirer des suggestions. Essaie de renoter un film en le sélectionnant depuis les résultats de recherche.</div>';
+    return;
+  }
+
+  const shuffledTop = [...topFilmsWithId].sort(() => 0.5 - Math.random()).slice(0, 3);
   const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
   const passedIds = new Set(loadDiscoverPassed());
 
   let allRecs = [];
   for (const film of shuffledTop) {
-    if (!film.tmdbId) continue;
     try {
       const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
       const data = await res.json();

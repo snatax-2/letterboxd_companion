@@ -84,32 +84,25 @@ CRITERIA.forEach(c => {
 // ═══════════════════════════════════════════
 //  SCORE CALCULATION
 // ═══════════════════════════════════════════
-function getStarStr(stars) {
-  let s = '';
-  const full = Math.floor(stars);
-  const half = (stars % 1) !== 0;
-  for (let i = 0; i < full; i++) s += '★';
-  if (half) s += '½';
-  return s || '½';
-}
-
+// Le calcul du score lui-même (computeQuickScore / computeWeightedScore /
+// scoreToStars / getStarStr) vit dans 03b-pure-logic.js, pour pouvoir être
+// testé automatiquement sans DOM. Cette fonction-ci reste la fine couche qui
+// lit les sliders et écrit le résultat à l'écran.
 function calculateScore() {
   let score;
 
   if (currentMode === 'quick') {
-    score = quickRating * 2; 
+    score = computeQuickScore(quickRating);
   } else {
     const w = getWeights();
-    let weightedSum = 0, totalWeight = 0;
+    const criteriaValues = {};
     CRITERIA.forEach(c => {
       const val = parseFloat(document.getElementById(c).value);
-      const wt  = w[c];
+      criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
       document.getElementById(`desc-${c}`).textContent = getDesc(c, val);
-      weightedSum  += val * wt;
-      totalWeight  += wt;
     });
-    score = totalWeight > 0 ? weightedSum / totalWeight : 5;
+    score = computeWeightedScore(criteriaValues, w);
   }
 
   const scoreEl = document.getElementById('score-big');
@@ -119,7 +112,7 @@ function calculateScore() {
   denomEl.textContent = '/10';
   scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
 
-  const stars = Math.round((score / 2) * 2) / 2;
+  const stars = scoreToStars(score);
   document.getElementById('stars-display').textContent = getStarStr(stars);
 
   return score;
@@ -222,6 +215,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     director:   document.getElementById('movie-director').value,
     actors:     document.getElementById('movie-actors').value, 
     tmdbScore:  document.getElementById('movie-tmdb-score').value || null,
+    tmdbId:     document.getElementById('movie-tmdb-id').value || null,
     date:       document.getElementById('view-date').value,
     liked:      isLiked,
     contextTags: Array.from(activeContextTags),
@@ -277,6 +271,7 @@ function resetForm() {
   document.getElementById('movie-director').value  = '';
   document.getElementById('movie-actors').value    = '';
   document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
   document.getElementById('review-text').value     = '';
   document.getElementById('strip-ratings').style.display = 'none';
   document.getElementById('film-strip').classList.remove('visible');
@@ -311,6 +306,7 @@ window.loadItem = function(idx) {
   document.getElementById('movie-runtime').value = item.runtime || '';
   document.getElementById('movie-director').value = item.director || '';
   document.getElementById('movie-actors').value   = item.actors || ''; 
+  document.getElementById('movie-tmdb-id').value  = item.tmdbId || '';
   
   searchEl.value = item.title;
   document.getElementById('view-date').value     = item.date  || '';
