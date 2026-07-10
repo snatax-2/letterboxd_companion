@@ -373,10 +373,12 @@
 
   input[type="range"] {
     -webkit-appearance: none; width: 100%; height: 6px; flex: 1;
-    /* Piste en zones de qualité (rouge -> orange -> jaune -> vert), fixe sur
-       toute la largeur : la position du curseur natif indique la valeur, la
-       couleur de fond donne un repère qualitatif instantané sans lire le chiffre. */
-    background: linear-gradient(to right, #ff4040 0%, #ff8000 30%, #ffcc00 50%, #8bc34a 70%, #00e054 100%);
+    /* Piste en zones de qualité, construite à partir des couleurs DU THÈME
+       actif (--red/--gold/--green) plutôt que des teintes fixes : chaque
+       thème garde sa propre identité (ex: rouge/jaune Ferrari pour Scuderia,
+       tons pastel pour Wes Anderson...) au lieu d'un rouge-orange-vert
+       générique qui jure avec le reste de l'interface. */
+    background: linear-gradient(to right, var(--red) 0%, var(--gold) 50%, var(--green) 100%);
     border-radius: 999px; outline: none; margin-bottom: 0; cursor: pointer;
   }
   /* outline:none ci-dessus retire l'anneau de focus par défaut du navigateur :
@@ -400,7 +402,10 @@
   input[type="range"]::-moz-range-thumb:hover { transform: scale(1.25); }
   
   .affect-range {
-    background: linear-gradient(to right, #0d3a52 0%, #1a6f96 35%, #40bcf4 70%, #8fe0ff 100%);
+    /* Reste visuellement distinct de l'échelle "qualité" (rouge->vert) : ici
+       neutre -> couleur d'accent du thème, pour rappeler que l'affect est un
+       axe personnel/émotionnel, pas un jugement de qualité objective. */
+    background: linear-gradient(to right, var(--surface2) 0%, var(--blue) 100%);
   }
 
   .criterion-desc {
