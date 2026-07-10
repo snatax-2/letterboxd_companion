@@ -124,7 +124,8 @@ async function selectMovie(m, year) {
     const res = await fetch(`/api/search?id=${m.id}`);
     const data = await res.json();
 
-    const genres = data.genres?.map(g => g.name).join(', ') || '';
+    const genreNames = data.genres?.map(g => g.name) || [];
+    const genres = genreNames.join(', ');
     const runtime = data.runtime ? `${data.runtime} min` : '';
     
     let director = '';
@@ -144,6 +145,8 @@ async function selectMovie(m, year) {
     document.getElementById('movie-runtime').value = runtime;
     document.getElementById('movie-director').value = director;
     document.getElementById('movie-actors').value = actors; 
+
+    suggestGenreWeights(genreNames);
 
     document.getElementById('strip-genre').innerHTML = buildStripMeta({
       genre: genres, runtime, year, director, actors

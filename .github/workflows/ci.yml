@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Installation des dépendances
+        run: npm ci
+
       - name: Validation des fichiers JSON (package.json, manifest.json, vercel.json)
         run: |
           for f in package.json manifest.json vercel.json; do
@@ -52,6 +55,9 @@ jobs:
             fi
           done
           exit $status
+
+      - name: Vérifie que app.js s'exécute sans erreur (DOM simulé)
+        run: npm run check:load
 
       - name: Tests automatisés (calcul du score, fusion cloud, rate limiting)
         run: npm test
