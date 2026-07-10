@@ -17,6 +17,8 @@
     --star-empty-color: #445566;
     --star-font: Arial, sans-serif;
     --star-shadow: none;
+    --star-symbol: '★';
+    --icon-stroke: 2;
     
     --header-bar: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
   }
@@ -39,10 +41,13 @@
     --star-empty-color: #2a2a2a;
     --star-font: 'Oswald', sans-serif;
     --star-shadow: 0 0 4px rgba(255, 242, 0, 0.6);
+    --star-symbol: '◆'; /* diamant plein, plus anguleux et agressif que l'étoile classique */
+    --icon-stroke: 2.5; /* traits plus épais et tranchants, esprit course */
     
     --title-style: italic;
     --title-spacing: 0.1em;
-    --header-bar: transparent;
+    /* Bande racing rouge/jaune, façon écurie de course, au lieu d'être invisible */
+    --header-bar: linear-gradient(to right, #e32636 50%, #FFF200 50%);
   }
 
   [data-theme="anderson"] {
@@ -60,12 +65,15 @@
     --star-empty-color: #CEBF9A;
     --star-font: 'Jost', sans-serif;
     --star-shadow: 2px 2px 0px rgba(209, 73, 91, 0.3);
+    --star-symbol: '✦'; /* étoile-diamant plus délicate, esprit papeterie vintage */
+    --icon-stroke: 1.5; /* traits plus fins et délicats */
     
     --box-shadow-style: 4px 4px 0px rgba(209, 73, 91, 0.2); 
     --bg-texture: repeating-linear-gradient(45deg, rgba(209, 73, 91, 0.03) 25%, transparent 25%, transparent 75%, rgba(209, 73, 91, 0.03) 75%, rgba(209, 73, 91, 0.03)), 
                   repeating-linear-gradient(-45deg, rgba(209, 73, 91, 0.03) 25%, transparent 25%, transparent 75%, rgba(209, 73, 91, 0.03) 75%, rgba(209, 73, 91, 0.03));
     --bg-size: 20px 20px;
-    --header-bar: transparent;
+    /* Tri-bande pastel dans la palette du thème, façon liseré de carte postale */
+    --header-bar: linear-gradient(to right, #D1495B 33%, #E8A825 33%, #E8A825 66%, #476b6b 66%);
   }
 
   [data-theme="filmnoir"] {
@@ -84,13 +92,24 @@
     --star-empty-color: #333333;
     --star-font: 'Cinzel', serif;
     --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
+    --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
+    --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
     
     --review-font: var(--font-mono); 
     --review-bg: #000000;
-    --header-bar: transparent;
+    /* Faisceau de projecteur qui s'estompe, plutôt qu'une ligne franche */
+    --header-bar: linear-gradient(to right, transparent, #ffffff 50%, transparent);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Icônes SVG (remplacent les emoji dans l'interface — voir 00b-icons.js).
+     currentColor + vertical-align assurent qu'elles s'intègrent proprement
+     dans le texte environnant et héritent la couleur du thème actif. */
+  .icon {
+    width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0;
+    display: inline-block;
+  }
 
   body, .card, .btn, .hist-item, .wl-card, .right-tab, .search-input, .review-textarea, .modal-box, .dash-box {
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
@@ -253,7 +272,7 @@
 
   .heart-btn {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    color: #455; padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all .2s;
+    color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all .2s;
     display: flex; align-items: center; justify-content: center; min-width: 44px;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
@@ -419,6 +438,17 @@
     background: var(--text-hi); opacity: 0.55; border-radius: 1px;
     transform: translate(-50%, -50%); pointer-events: none; z-index: 1;
   }
+  /* Graduations aux valeurs entières (0 à 10), sous la piste : repère visuel
+     pour viser rapidement une valeur du regard, sans remplacer le slider par
+     des blocs tap-to-fill (qui casseraient l'accessibilité native — flèches
+     clavier, lecteurs d'écran — et ne collent pas bien à une échelle en 0,5). */
+  .criterion-ticks {
+    position: absolute; left: 0; right: 0; top: 100%; margin-top: 5px; height: 4px;
+    background-image: repeating-linear-gradient(
+      to right, var(--border-hi) 0, var(--border-hi) 1px, transparent 1px, transparent calc(100% / 10)
+    );
+    pointer-events: none;
+  }
   .criterion-step-btn {
     flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
     border: 1px solid var(--border-hi); background: var(--surface2); color: var(--text-hi);
@@ -492,7 +522,7 @@
   
   /* APPLICATION DYNAMIQUE DU STYLE DES ÉTOILES PAR THÈME */
   .rating-stars label::before { 
-      content: '★'; position: absolute; top: 0; width: 1em; text-align: center; 
+      content: var(--star-symbol, '★'); position: absolute; top: 0; width: 1em; text-align: center; 
       color: var(--star-empty-color); 
       transition: color 0.1s, text-shadow 0.1s; 
       font-family: var(--star-font); 
@@ -699,6 +729,20 @@
   .modal-body { font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; font-family: var(--font-body);}
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
   .modal-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; font-family: var(--font-heading); font-size: 0.85rem; cursor: pointer; background: var(--bg); color: var(--text); font-weight: 600; letter-spacing: 0.04em; transition: all .15s; }
+
+  /* Menu d'actions rapides (appui long sur un film de l'historique) */
+  .action-sheet-box { max-width: 340px; }
+  .action-sheet-list { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
+  .action-sheet-item {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    padding: 12px 14px; border: none; border-radius: var(--radius-sm); background: none;
+    color: var(--text-hi); font-family: var(--font-body); font-size: 0.92rem; cursor: pointer;
+    transition: background-color .15s ease, transform .12s ease;
+  }
+  .action-sheet-item:hover { background: var(--surface2); }
+  .action-sheet-item:active { transform: scale(.98); background: var(--surface2); }
+  .action-sheet-item.danger { color: var(--red); }
+  .action-sheet-item .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
   .modal-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .modal-btn.danger { background: rgba(255, 64, 64, 0.15); border-color: var(--red); color: var(--red); }
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
@@ -729,6 +773,20 @@
   .svg-text-mono { fill: var(--text-mid); font-family: var(--font-mono); font-size: 9px; }
   .svg-axis { stroke: var(--border); stroke-width: 1; }
   .svg-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,2; opacity: 0.5;}
+
+  /* Le radar "se dessine" depuis le centre à l'affichage (effet scan), au lieu
+     d'apparaître d'un bloc — petit détail qui donne une sensation plus
+     travaillée à l'onglet Historique. */
+  @keyframes radarGrow {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+  @keyframes radarDotIn {
+    from { opacity: 0; transform: scale(0); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .radar-fill-anim { animation: radarGrow 0.6s cubic-bezier(.34,1.56,.64,1) both; }
+  .radar-dot-anim { transform-box: fill-box; transform-origin: center; animation: radarDotIn 0.3s ease-out both; }
 
   .top-list { display: flex; flex-direction: column; gap: 6px; }
   .top-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; cursor: pointer; transition: border-color 0.15s;}

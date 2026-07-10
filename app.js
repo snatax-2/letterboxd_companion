@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js
+// Assemblé depuis : 00-pwa.js, 00b-icons.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -12,6 +12,70 @@ if ('serviceWorker' in navigator) {
       // seul l'usage hors-ligne / l'installation ne sera pas dispo.
     });
   });
+}
+
+// ═══════════════════════════════════════════
+//  BIBLIOTHÈQUE D'ICÔNES SVG (remplace les emoji de l'interface)
+// ═══════════════════════════════════════════
+// Icônes en traits fins (style "line icon"), en `currentColor` : elles héritent
+// automatiquement la couleur du texte environnant, donc s'adaptent au thème
+// actif sans configuration supplémentaire. L'épaisseur du trait elle-même
+// est pilotée par la variable CSS --icon-stroke (définie par thème dans
+// styles.css), pour que chaque thème garde une identité de trait différente
+// (ex: traits plus fins et élégants pour Wes Anderson, plus épais et
+// tranchants pour Scuderia) sans dupliquer les SVG eux-mêmes.
+//
+// Usage : ICONS.trash, ICONS.heart, etc. — chaîne de balisage SVG prête à
+// insérer dans un template literal (voir 06-history.js, 08-watchlist.js...).
+// Pour le HTML statique (index.html), les mêmes icônes sont recopiées
+// directement dans le balisage (pas de dépendance à l'exécution du JS).
+
+const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"';
+
+const ICONS = {
+  settings: `<svg ${ICON_ATTRS}><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg>`,
+
+  exportIcon: `<svg ${ICON_ATTRS}><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,
+
+  importIcon: `<svg ${ICON_ATTRS}><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,
+
+  plus: `<svg ${ICON_ATTRS}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+
+  heart: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 5 5.5 5c2 0 3.5 1.2 4.5 3 1-1.8 2.5-3 4.5-3C18 5 19.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg>`,
+
+  search: `<svg ${ICON_ATTRS}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+
+  barChart: `<svg ${ICON_ATTRS}><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg>`,
+
+  target: `<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>`,
+
+  flame: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg>`,
+
+  clapper: `<svg ${ICON_ATTRS}><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg>`,
+
+  copy: `<svg ${ICON_ATTRS}><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>`,
+
+  refresh: `<svg ${ICON_ATTRS}><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,
+
+  trash: `<svg ${ICON_ATTRS}><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/><line x1="10" y1="11" x2="10" y2="16"/><line x1="14" y1="11" x2="14" y2="16"/></svg>`,
+
+  palette: `<svg ${ICON_ATTRS}><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.3c1.8 0 3.2-1.4 3.2-3.2C21 6.6 17 2 12 2z"/><circle cx="7" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>`,
+
+  cloud: `<svg ${ICON_ATTRS}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
+
+  moon: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`,
+
+  edit: `<svg ${ICON_ATTRS}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,
+
+  check: `<svg ${ICON_ATTRS}><polyline points="20 6 9 17 4 12"/></svg>`,
+
+  close: `<svg ${ICON_ATTRS}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+
+  star: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>`,
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ICONS };
 }
 
 // ═══════════════════════════════════════════
@@ -860,14 +924,14 @@ async function fetchSuggestions(q) {
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
         ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="suggestion-poster-placeholder">🎬</div>`;
+        : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
       suggestEl.appendChild(item);
     });
     const manualItem = document.createElement('div');
     manualItem.className = 'suggestion-item suggestion-manual';
-    manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">✏️</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
+    manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
     manualItem.addEventListener('click', () => { suggestEl.style.display = 'none'; selectManual(q); });
     suggestEl.appendChild(manualItem);
   } catch { 
@@ -1273,9 +1337,9 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
-    btn.textContent = '✓ Copié !';
+    btn.innerHTML = `${ICONS.check} Copié !`;
     btn.classList.add('copied');
-    setTimeout(() => { btn.innerHTML = '📋 Texte'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(() => { btn.innerHTML = `${ICONS.copy} Texte`; btn.classList.remove('copied'); }, 2000);
     showToast('Critique copiée dans le presse-papier');
   });
 });
@@ -1341,7 +1405,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     showToast(`"${title}" enregistré`);
     const saveBtn = document.getElementById('save-btn');
     const origSave = saveBtn.innerHTML;
-    saveBtn.innerHTML = '✓ Sauvé !';
+    saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
     saveBtn.style.background = 'var(--green)';
     saveBtn.style.color = '#0d1117';
     setTimeout(() => { saveBtn.innerHTML = origSave; saveBtn.style.background = ''; saveBtn.style.color = ''; }, 1800);
@@ -1698,12 +1762,12 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
     return;
   }
 
   if (sorted.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div>Aucun résultat pour cette recherche.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
     return;
   }
 
@@ -1712,6 +1776,7 @@ function renderHistory() {
     const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
     const div = document.createElement('div');
     div.className = 'hist-item';
+    div.dataset.idx = realIdx;
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
@@ -1720,7 +1785,7 @@ function renderHistory() {
 
     const imgHtml = item.poster
       ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
-      : `<div class="hist-poster-ph">🎬</div>`;
+      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
 
     const tmdbHtml = item.tmdbScore
       ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
@@ -1759,26 +1824,185 @@ function renderHistory() {
         ${reviewHTML}
       </div>
       <div class="hist-actions">
-        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">✏️</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">🗑</button>
+        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">${ICONS.edit}</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
       </div>`;
     container.appendChild(div);
   });
 }
 
-// Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de CRITERIA)
-const CRITERIA_SHORT_LABELS = {
-  scenario: 'Scén.',
-  realisation: 'Réal.',
-  photo: 'Photo',
-  acteurs: 'Casting',
-  ambiance: 'Ambiance',
-  rythme: 'Rythme',
-  affect: 'Affect',
+// ═══════════════════════════════════════════
+//  ACTIONS RAPIDES (appui long sur un film de l'historique)
+// ═══════════════════════════════════════════
+
+// Reconstruit le même texte partageable que le bouton "Copier" du formulaire,
+// mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
+// dans le formulaire d'abord). Garde les deux textes strictement identiques.
+function buildCopyTextForItem(item) {
+  const heartStr = item.liked ? ' ❤️' : '';
+  const dateStr = item.date
+    ? new Date(item.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  const score = parseFloat(item.score) || 0;
+  const stars = getStarStr(scoreToStars(score));
+
+  let text = `📽 ${item.title} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
+  if (item.director) text += `🎬 Un film de ${item.director}\n`;
+  if (item.actors) text += `🎭 Avec ${item.actors}\n`;
+  if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
+  if (item.contextTags && item.contextTags.length > 0) text += `🏷 ${item.contextTags.join(' · ')}\n`;
+
+  text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
+
+  if (item.mode === 'detail' && item.values) {
+    const v = item.values;
+    const f = (x) => (parseFloat(x) || 0).toFixed(1);
+    text += `\nScénario ${f(v.scenario)} · Réal ${f(v.realisation)} · Photo ${f(v.photo)} · Acteurs ${f(v.acteurs)} · Son ${f(v.ambiance)} · Affect ${f(v.affect)}\n`;
+  }
+
+  if (item.review) text += `\n${item.review}`;
+  return text;
+}
+
+window.toggleLikedForItem = function(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+  item.liked = !item.liked;
+  item.updatedAt = new Date().toISOString();
+  saveHistory(history);
+  renderAll();
+  showToast(item.liked ? `"${item.title}" ajouté à tes coups de cœur ❤️` : `"${item.title}" retiré de tes coups de cœur`);
 };
+
+const actionSheetEl = document.getElementById('action-sheet');
+const actionSheetTitleEl = document.getElementById('action-sheet-title');
+const actionSheetListEl = document.getElementById('action-sheet-list');
+const actionSheetCancelBtn = document.getElementById('action-sheet-cancel');
+
+function openActionSheetForItem(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+
+  actionSheetTitleEl.textContent = item.title;
+
+  const actions = [
+    { label: 'Modifier', icon: ICONS.edit, onClick: () => loadItem(idx) },
+    {
+      label: item.liked ? 'Retirer des coups de cœur' : 'Ajouter aux coups de cœur',
+      icon: ICONS.heart,
+      onClick: () => toggleLikedForItem(idx),
+    },
+    {
+      label: 'Copier le texte',
+      icon: ICONS.copy,
+      onClick: () => {
+        navigator.clipboard.writeText(buildCopyTextForItem(item)).then(() => {
+          showToast('Critique copiée dans le presse-papier');
+        });
+      },
+    },
+    {
+      label: 'Supprimer',
+      icon: ICONS.trash,
+      danger: true,
+      onClick: () => {
+        const cardEl = document.querySelector(`.hist-item[data-idx="${idx}"]`);
+        deleteItem(idx, cardEl ? cardEl.querySelector('.hist-action-btn.del') : null);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => {
+      closeActionSheet();
+      onClick();
+    });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+  actionSheetListEl.querySelector('.action-sheet-item')?.focus();
+}
+
+function closeActionSheet() {
+  closeModal(actionSheetEl);
+}
+
+actionSheetCancelBtn.addEventListener('click', closeActionSheet);
+actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl) closeActionSheet(); });
+
+// Détection de l'appui long (mobile) sur un film de l'historique. Délégué sur
+// le conteneur (pas un listener par carte) : fonctionne aussi pour les films
+// ajoutés après coup, sans re-câblage. Annulé si le doigt bouge trop (= scroll)
+// ou si l'appui vise déjà un bouton (édition/suppression directe).
+(function initHistoryLongPress() {
+  const LONG_PRESS_MS = 500;
+  const MOVE_CANCEL_PX = 10;
+  let pressTimer = null;
+  let startX = 0, startY = 0;
+  let pressedItem = null;
+
+  const container = document.getElementById('history-list');
+  if (!container) return;
+
+  function cancelPress() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    pressedItem = null;
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    pressedItem = item;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pressTimer = setTimeout(() => {
+      if (!pressedItem) return;
+      if (navigator.vibrate) navigator.vibrate(20);
+      openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
+      pressedItem = null;
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressTimer) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) cancelPress();
+  }, { passive: true });
+
+  container.addEventListener('touchend', cancelPress);
+  container.addEventListener('touchcancel', cancelPress);
+})();
 
 function createRadarSVG(averages) {
   if (averages.every(a => a === 0)) return null;
+
+  // Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de
+  // CRITERIA). Déclaré ICI (local à la fonction) et non en haut du fichier :
+  // un `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution du script n'a pas atteint cette ligne — or `renderAll()` est
+  // appelée une première fois de façon précoce (voir 03-foundation.js), avant
+  // que 06-history.js n'ait fini de s'exécuter, ce qui provoquait un plantage
+  // total de l'app au chargement pour tout utilisateur ayant déjà un historique.
+  const CRITERIA_SHORT_LABELS = {
+    scenario: 'Scén.',
+    realisation: 'Réal.',
+    photo: 'Photo',
+    acteurs: 'Casting',
+    ambiance: 'Ambiance',
+    rythme: 'Rythme',
+    affect: 'Affect',
+  };
 
   const s = 180, c = s/2, r = s*0.42;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
@@ -1803,10 +2027,12 @@ function createRadarSVG(averages) {
   });
 
   const dataPts = angles.map((a, i) => `${c + (averages[i]/10)*r*Math.cos(a)},${c + (averages[i]/10)*r*Math.sin(a)}`).join(' ');
-  svg += `<polygon points="${dataPts}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" style="transition:all 0.5s ease" />`;
+  // Anime la forme depuis le centre (effet "scan") plutôt que de l'afficher
+  // d'un coup — transform-origin fixé sur le centre exact du cercle (c,c).
+  svg += `<polygon points="${dataPts}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" class="radar-fill-anim" style="transform-origin:${c}px ${c}px;" />`;
   
   angles.forEach((a, i) => {
-    svg += `<circle cx="${c + (averages[i]/10)*r*Math.cos(a)}" cy="${c + (averages[i]/10)*r*Math.sin(a)}" r="3" fill="var(--blue)" />`;
+    svg += `<circle cx="${c + (averages[i]/10)*r*Math.cos(a)}" cy="${c + (averages[i]/10)*r*Math.sin(a)}" r="3" fill="var(--blue)" class="radar-dot-anim" style="animation-delay:${0.5 + i*0.05}s" />`;
   });
 
   svg += `</svg>`;
@@ -1842,9 +2068,35 @@ function createTimelineSVG(history) {
   return svg;
 }
 
+// Anime un chiffre de 0 (ou de sa valeur affichée actuelle) jusqu'à sa valeur
+// finale, avec un ralentissement en fin de course (ease-out) pour un rendu
+// plus "premium" qu'un simple changement instantané. Respecte la préférence
+// système "réduire les animations" : dans ce cas, affiche direct la valeur finale.
+function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const format = (v) => decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
+
+  if (reduceMotion) {
+    el.textContent = format(endValue);
+    return;
+  }
+
+  const startValue = 0;
+  const startTime = performance.now();
+
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = format(startValue + (endValue - startValue) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = format(endValue);
+  }
+  requestAnimationFrame(step);
+}
+
 function renderStats() {
   const history = loadHistory();
-  document.getElementById('kpi-total').textContent = history.length;
+  animateCountUp(document.getElementById('kpi-total'), history.length);
   
   if (history.length === 0) {
     document.getElementById('kpi-avg').textContent = '-'; 
@@ -1858,11 +2110,11 @@ function renderStats() {
   }
 
   const avg = history.reduce((sum, h) => sum + parseFloat(h.score), 0) / history.length;
-  document.getElementById('kpi-avg').textContent = avg.toFixed(1);
+  animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
 
   const currentYear = new Date().getFullYear().toString();
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
-  document.getElementById('kpi-year').textContent = yearCount;
+  animateCountUp(document.getElementById('kpi-year'), yearCount);
 
   // Réutilise la même fonction que le repère de moyenne perso sur les sliders
   // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
@@ -2028,7 +2280,7 @@ function renderWatchlist() {
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
   if (list.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
     return;
   }
 
@@ -2040,7 +2292,7 @@ function renderWatchlist() {
 
     const posterHtml = item.poster
       ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
-      : `<div class="wl-poster">🎬</div>`;
+      : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
       ${posterHtml}
@@ -2052,8 +2304,8 @@ function renderWatchlist() {
         </div>
       </div>
       <div class="wl-actions">
-        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">⭐</button>
-        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">✕</button>
+        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
+        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
       </div>`;
 
     container.appendChild(div);
@@ -2191,7 +2443,7 @@ wlInput.addEventListener('input', () => {
         el.innerHTML = `
           ${m.poster_path
             ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">🎬</div>`}
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
             <div class="wl-suggest-title">${m.title}</div>
             <div class="wl-suggest-year">${year}</div>
@@ -2322,6 +2574,23 @@ updateWeightBadges();
 calculateScore();
 updateAllSliders();
 renderCriteriaAverageMarkers();
+
+// ─── Écran de démarrage (splash) ─────────────────────────────────────────────
+// Masqué une fois l'app initialisée, avec une durée minimale d'affichage pour
+// que ce soit perçu comme un vrai temps de chargement plutôt qu'un flash
+// imperceptible (notamment quand tout est déjà en cache et charge quasi
+// instantanément).
+(function hideSplash() {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  const MIN_DISPLAY_MS = 400;
+  const elapsed = performance.now();
+  const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+  setTimeout(() => {
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500); // laisse le temps au fondu de finir avant de retirer le nœud
+  }, remaining);
+})();
 
 // ═══════════════════════════════════════════
 //  SYNCHRONISATION CLOUD (Supabase, via /api/sync)
@@ -2695,7 +2964,7 @@ function buildDiscoverCardEl(m, isTop) {
     <div class="discover-card-poster-wrap">
       ${posterUrl
         ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="discover-card-poster-ph">🎬</div>`}
+        : `<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}
       ${isTop ? `<div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>` : ''}
     </div>
     <div class="discover-card-info">

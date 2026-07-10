@@ -168,12 +168,12 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎬</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
     return;
   }
 
   if (sorted.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div>Aucun résultat pour cette recherche.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
     return;
   }
 
@@ -182,6 +182,7 @@ function renderHistory() {
     const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
     const div = document.createElement('div');
     div.className = 'hist-item';
+    div.dataset.idx = realIdx;
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
@@ -190,7 +191,7 @@ function renderHistory() {
 
     const imgHtml = item.poster
       ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
-      : `<div class="hist-poster-ph">🎬</div>`;
+      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
 
     const tmdbHtml = item.tmdbScore
       ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
@@ -229,26 +230,185 @@ function renderHistory() {
         ${reviewHTML}
       </div>
       <div class="hist-actions">
-        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">✏️</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">🗑</button>
+        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">${ICONS.edit}</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
       </div>`;
     container.appendChild(div);
   });
 }
 
-// Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de CRITERIA)
-const CRITERIA_SHORT_LABELS = {
-  scenario: 'Scén.',
-  realisation: 'Réal.',
-  photo: 'Photo',
-  acteurs: 'Casting',
-  ambiance: 'Ambiance',
-  rythme: 'Rythme',
-  affect: 'Affect',
+// ═══════════════════════════════════════════
+//  ACTIONS RAPIDES (appui long sur un film de l'historique)
+// ═══════════════════════════════════════════
+
+// Reconstruit le même texte partageable que le bouton "Copier" du formulaire,
+// mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
+// dans le formulaire d'abord). Garde les deux textes strictement identiques.
+function buildCopyTextForItem(item) {
+  const heartStr = item.liked ? ' ❤️' : '';
+  const dateStr = item.date
+    ? new Date(item.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  const score = parseFloat(item.score) || 0;
+  const stars = getStarStr(scoreToStars(score));
+
+  let text = `📽 ${item.title} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
+  if (item.director) text += `🎬 Un film de ${item.director}\n`;
+  if (item.actors) text += `🎭 Avec ${item.actors}\n`;
+  if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
+  if (item.contextTags && item.contextTags.length > 0) text += `🏷 ${item.contextTags.join(' · ')}\n`;
+
+  text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
+
+  if (item.mode === 'detail' && item.values) {
+    const v = item.values;
+    const f = (x) => (parseFloat(x) || 0).toFixed(1);
+    text += `\nScénario ${f(v.scenario)} · Réal ${f(v.realisation)} · Photo ${f(v.photo)} · Acteurs ${f(v.acteurs)} · Son ${f(v.ambiance)} · Affect ${f(v.affect)}\n`;
+  }
+
+  if (item.review) text += `\n${item.review}`;
+  return text;
+}
+
+window.toggleLikedForItem = function(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+  item.liked = !item.liked;
+  item.updatedAt = new Date().toISOString();
+  saveHistory(history);
+  renderAll();
+  showToast(item.liked ? `"${item.title}" ajouté à tes coups de cœur ❤️` : `"${item.title}" retiré de tes coups de cœur`);
 };
+
+const actionSheetEl = document.getElementById('action-sheet');
+const actionSheetTitleEl = document.getElementById('action-sheet-title');
+const actionSheetListEl = document.getElementById('action-sheet-list');
+const actionSheetCancelBtn = document.getElementById('action-sheet-cancel');
+
+function openActionSheetForItem(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+
+  actionSheetTitleEl.textContent = item.title;
+
+  const actions = [
+    { label: 'Modifier', icon: ICONS.edit, onClick: () => loadItem(idx) },
+    {
+      label: item.liked ? 'Retirer des coups de cœur' : 'Ajouter aux coups de cœur',
+      icon: ICONS.heart,
+      onClick: () => toggleLikedForItem(idx),
+    },
+    {
+      label: 'Copier le texte',
+      icon: ICONS.copy,
+      onClick: () => {
+        navigator.clipboard.writeText(buildCopyTextForItem(item)).then(() => {
+          showToast('Critique copiée dans le presse-papier');
+        });
+      },
+    },
+    {
+      label: 'Supprimer',
+      icon: ICONS.trash,
+      danger: true,
+      onClick: () => {
+        const cardEl = document.querySelector(`.hist-item[data-idx="${idx}"]`);
+        deleteItem(idx, cardEl ? cardEl.querySelector('.hist-action-btn.del') : null);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => {
+      closeActionSheet();
+      onClick();
+    });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+  actionSheetListEl.querySelector('.action-sheet-item')?.focus();
+}
+
+function closeActionSheet() {
+  closeModal(actionSheetEl);
+}
+
+actionSheetCancelBtn.addEventListener('click', closeActionSheet);
+actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl) closeActionSheet(); });
+
+// Détection de l'appui long (mobile) sur un film de l'historique. Délégué sur
+// le conteneur (pas un listener par carte) : fonctionne aussi pour les films
+// ajoutés après coup, sans re-câblage. Annulé si le doigt bouge trop (= scroll)
+// ou si l'appui vise déjà un bouton (édition/suppression directe).
+(function initHistoryLongPress() {
+  const LONG_PRESS_MS = 500;
+  const MOVE_CANCEL_PX = 10;
+  let pressTimer = null;
+  let startX = 0, startY = 0;
+  let pressedItem = null;
+
+  const container = document.getElementById('history-list');
+  if (!container) return;
+
+  function cancelPress() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    pressedItem = null;
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    pressedItem = item;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pressTimer = setTimeout(() => {
+      if (!pressedItem) return;
+      if (navigator.vibrate) navigator.vibrate(20);
+      openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
+      pressedItem = null;
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressTimer) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) cancelPress();
+  }, { passive: true });
+
+  container.addEventListener('touchend', cancelPress);
+  container.addEventListener('touchcancel', cancelPress);
+})();
 
 function createRadarSVG(averages) {
   if (averages.every(a => a === 0)) return null;
+
+  // Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de
+  // CRITERIA). Déclaré ICI (local à la fonction) et non en haut du fichier :
+  // un `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution du script n'a pas atteint cette ligne — or `renderAll()` est
+  // appelée une première fois de façon précoce (voir 03-foundation.js), avant
+  // que 06-history.js n'ait fini de s'exécuter, ce qui provoquait un plantage
+  // total de l'app au chargement pour tout utilisateur ayant déjà un historique.
+  const CRITERIA_SHORT_LABELS = {
+    scenario: 'Scén.',
+    realisation: 'Réal.',
+    photo: 'Photo',
+    acteurs: 'Casting',
+    ambiance: 'Ambiance',
+    rythme: 'Rythme',
+    affect: 'Affect',
+  };
 
   const s = 180, c = s/2, r = s*0.42;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
@@ -273,10 +433,12 @@ function createRadarSVG(averages) {
   });
 
   const dataPts = angles.map((a, i) => `${c + (averages[i]/10)*r*Math.cos(a)},${c + (averages[i]/10)*r*Math.sin(a)}`).join(' ');
-  svg += `<polygon points="${dataPts}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" style="transition:all 0.5s ease" />`;
+  // Anime la forme depuis le centre (effet "scan") plutôt que de l'afficher
+  // d'un coup — transform-origin fixé sur le centre exact du cercle (c,c).
+  svg += `<polygon points="${dataPts}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" class="radar-fill-anim" style="transform-origin:${c}px ${c}px;" />`;
   
   angles.forEach((a, i) => {
-    svg += `<circle cx="${c + (averages[i]/10)*r*Math.cos(a)}" cy="${c + (averages[i]/10)*r*Math.sin(a)}" r="3" fill="var(--blue)" />`;
+    svg += `<circle cx="${c + (averages[i]/10)*r*Math.cos(a)}" cy="${c + (averages[i]/10)*r*Math.sin(a)}" r="3" fill="var(--blue)" class="radar-dot-anim" style="animation-delay:${0.5 + i*0.05}s" />`;
   });
 
   svg += `</svg>`;
@@ -312,9 +474,35 @@ function createTimelineSVG(history) {
   return svg;
 }
 
+// Anime un chiffre de 0 (ou de sa valeur affichée actuelle) jusqu'à sa valeur
+// finale, avec un ralentissement en fin de course (ease-out) pour un rendu
+// plus "premium" qu'un simple changement instantané. Respecte la préférence
+// système "réduire les animations" : dans ce cas, affiche direct la valeur finale.
+function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const format = (v) => decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
+
+  if (reduceMotion) {
+    el.textContent = format(endValue);
+    return;
+  }
+
+  const startValue = 0;
+  const startTime = performance.now();
+
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = format(startValue + (endValue - startValue) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = format(endValue);
+  }
+  requestAnimationFrame(step);
+}
+
 function renderStats() {
   const history = loadHistory();
-  document.getElementById('kpi-total').textContent = history.length;
+  animateCountUp(document.getElementById('kpi-total'), history.length);
   
   if (history.length === 0) {
     document.getElementById('kpi-avg').textContent = '-'; 
@@ -328,11 +516,11 @@ function renderStats() {
   }
 
   const avg = history.reduce((sum, h) => sum + parseFloat(h.score), 0) / history.length;
-  document.getElementById('kpi-avg').textContent = avg.toFixed(1);
+  animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
 
   const currentYear = new Date().getFullYear().toString();
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
-  document.getElementById('kpi-year').textContent = yearCount;
+  animateCountUp(document.getElementById('kpi-year'), yearCount);
 
   // Réutilise la même fonction que le repère de moyenne perso sur les sliders
   // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.

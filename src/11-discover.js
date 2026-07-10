@@ -125,7 +125,7 @@ function buildDiscoverCardEl(m, isTop) {
     <div class="discover-card-poster-wrap">
       ${posterUrl
         ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="discover-card-poster-ph">🎬</div>`}
+        : `<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}
       ${isTop ? `<div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>` : ''}
     </div>
     <div class="discover-card-info">

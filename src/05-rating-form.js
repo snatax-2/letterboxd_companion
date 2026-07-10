@@ -317,9 +317,9 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 
   navigator.clipboard.writeText(text).then(() => {
     const btn = document.getElementById('copy-btn');
-    btn.textContent = '✓ Copié !';
+    btn.innerHTML = `${ICONS.check} Copié !`;
     btn.classList.add('copied');
-    setTimeout(() => { btn.innerHTML = '📋 Texte'; btn.classList.remove('copied'); }, 2000);
+    setTimeout(() => { btn.innerHTML = `${ICONS.copy} Texte`; btn.classList.remove('copied'); }, 2000);
     showToast('Critique copiée dans le presse-papier');
   });
 });
@@ -385,7 +385,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     showToast(`"${title}" enregistré`);
     const saveBtn = document.getElementById('save-btn');
     const origSave = saveBtn.innerHTML;
-    saveBtn.innerHTML = '✓ Sauvé !';
+    saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
     saveBtn.style.background = 'var(--green)';
     saveBtn.style.color = '#0d1117';
     setTimeout(() => { saveBtn.innerHTML = origSave; saveBtn.style.background = ''; saveBtn.style.color = ''; }, 1800);

@@ -84,3 +84,20 @@ updateWeightBadges();
 calculateScore();
 updateAllSliders();
 renderCriteriaAverageMarkers();
+
+// ─── Écran de démarrage (splash) ─────────────────────────────────────────────
+// Masqué une fois l'app initialisée, avec une durée minimale d'affichage pour
+// que ce soit perçu comme un vrai temps de chargement plutôt qu'un flash
+// imperceptible (notamment quand tout est déjà en cache et charge quasi
+// instantanément).
+(function hideSplash() {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  const MIN_DISPLAY_MS = 400;
+  const elapsed = performance.now();
+  const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+  setTimeout(() => {
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500); // laisse le temps au fondu de finir avant de retirer le nœud
+  }, remaining);
+})();

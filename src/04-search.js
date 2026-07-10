@@ -90,14 +90,14 @@ async function fetchSuggestions(q) {
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
         ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="suggestion-poster-placeholder">🎬</div>`;
+        : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
       suggestEl.appendChild(item);
     });
     const manualItem = document.createElement('div');
     manualItem.className = 'suggestion-item suggestion-manual';
-    manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">✏️</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
+    manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
     manualItem.addEventListener('click', () => { suggestEl.style.display = 'none'; selectManual(q); });
     suggestEl.appendChild(manualItem);
   } catch { 

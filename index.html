@@ -30,9 +30,26 @@
 <meta name="twitter:description" content="Note tes films, garde un historique détaillé de tes critiques et gère ta watchlist avec les dispos streaming en Belgique.">
 <meta name="twitter:image" content="https://ludex-rating-companion-seven.vercel.app/favicon.png">
 
+<!-- CSS critique de l'écran de démarrage : en inline (pas dans styles.css) pour
+     s'appliquer instantanément, sans attendre le chargement de la feuille de
+     style externe. Couleur de fond en dur (celle du thème par défaut) : avant
+     que le JS ne s'exécute, on ne sait pas encore quel thème l'utilisateur a
+     choisi — comme pour un écran de démarrage natif, un rendu par défaut fixe
+     est la norme (l'app applique le vrai thème dès que le JS a tourné). -->
+<style>
+  #app-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#14181c;transition:opacity .4s ease,visibility .4s ease;}
+  #app-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  #app-splash img{width:88px;height:88px;border-radius:20px;animation:splashPulse 1.4s ease-in-out infinite;}
+  #app-splash .app-splash-title{font-family:'Titillium Web',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.15em;color:#fff;}
+  @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:.85;}}
+</style>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div id="app-splash" aria-hidden="true">
+  <img src="favicon.png" alt="">
+  <div class="app-splash-title">LUDEX</div>
+</div>
 
 
 <div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -48,7 +65,7 @@
 
 <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
   <div class="modal-box">
-    <div class="modal-title" id="settings-modal-title">🎨 Personnalisation</div>
+    <div class="modal-title" id="settings-modal-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.3c1.8 0 3.2-1.4 3.2-3.2C21 6.6 17 2 12 2z"/><circle cx="7" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg> Personnalisation</div>
     <div class="modal-body">
       <label class="settings-label">Nom de l'application</label>
       <input type="text" id="setting-app-name" class="settings-input" placeholder="Ex: Ludex Film Journal">
@@ -90,7 +107,7 @@
         </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
           <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
-             <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;">🌓</div>
+             <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
           </div>
           <div class="theme-label" style="background:#1f2935;color:#fff;font-family:var(--font-heading)">Auto (Système)</div>
         </div>
@@ -103,8 +120,8 @@
       </p>
       <input type="text" id="setting-sync-code" class="settings-input" placeholder="Ton code de synchronisation (ex: mon-code-secret)" style="margin-bottom:10px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-        <button class="modal-btn" id="sync-save-btn" style="flex:1;min-width:140px">☁️ Sauvegarder maintenant</button>
-        <button class="modal-btn" id="sync-restore-btn" style="flex:1;min-width:140px">⬇️ Restaurer depuis le cloud</button>
+        <button class="modal-btn" id="sync-save-btn" style="flex:1;min-width:140px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg> Sauvegarder maintenant</button>
+        <button class="modal-btn" id="sync-restore-btn" style="flex:1;min-width:140px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Restaurer depuis le cloud</button>
       </div>
       <div id="sync-status" style="font-size:0.78rem;color:var(--text-mid);min-height:1.2em"></div>
     </div>
@@ -115,12 +132,21 @@
   </div>
 </div>
 
+<!-- Menu d'actions rapides (appui long sur un film de l'historique) -->
+<div class="modal-overlay" id="action-sheet" role="dialog" aria-modal="true" aria-labelledby="action-sheet-title">
+  <div class="modal-box action-sheet-box">
+    <div class="modal-title" id="action-sheet-title">Film</div>
+    <div class="action-sheet-list" id="action-sheet-list"></div>
+    <button class="modal-btn" id="action-sheet-cancel" style="width:100%;margin-top:8px;">Annuler</button>
+  </div>
+</div>
+
 <header class="app-header">
   <h1 class="app-title" id="main-app-title"><em>Ludex</em> Rating Companion</h1>
   <div class="header-actions">
-    <button class="icon-btn" id="settings-btn" title="Personnaliser" aria-label="Personnaliser l'apparence">⚙️</button>
-    <button class="icon-btn" id="export-btn" title="Sauvegarder les données">↑ Exporter</button>
-    <button class="icon-btn" id="import-trigger" title="Restaurer les données">↓ Importer</button>
+    <button class="icon-btn" id="settings-btn" title="Personnaliser" aria-label="Personnaliser l'apparence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg></button>
+    <button class="icon-btn" id="export-btn" title="Sauvegarder les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Exporter</button>
+    <button class="icon-btn" id="import-trigger" title="Restaurer les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Importer</button>
     <input type="file" id="import-file" accept=".json" style="display:none">
   </div>
 </header>
@@ -131,14 +157,14 @@
     <div class="card">
       <div class="card-title">
         Film
-        <button class="btn-new-review" id="new-btn">➕ Nouvelle critique</button>
+        <button class="btn-new-review" id="new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nouvelle critique</button>
       </div>
 
       <div class="search-wrap">
         <div class="search-row">
           <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
           <input type="date" class="date-input" id="view-date">
-          <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false">♥</button>
+          <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 5 5.5 5c2 0 3.5 1.2 4.5 3 1-1.8 2.5-3 4.5-3C18 5 19.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg></button>
         </div>
         <div class="search-status" id="search-status"></div>
         <div class="suggestions" id="suggestions"></div>
@@ -192,7 +218,7 @@
       <div class="detailed-section">
 
         <div class="weights-toggle" id="weights-toggle" onclick="toggleWeights()">
-          ⚙ Personnaliser les pondérations
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg> Personnaliser les pondérations
         </div>
         <div class="weights-panel" id="weights-panel">
           <div class="weights-grid">
@@ -205,11 +231,11 @@
             <div class="weight-item"><label>Affect ❤️</label><input type="number" id="w-affect" value="1" min="0" max="5" step="0.5"></div>
           </div>
           <button class="weight-reset" onclick="resetWeights()">Remettre à égalité</button>
-          <button class="weight-reset" id="genre-weight-suggest" style="display:none;">🎯 Suggestion</button>
+          <button class="weight-reset" id="genre-weight-suggest" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg> Suggestion</button>
         </div>
 
         <div class="criteria-list-controls">
-          <button type="button" class="focus-mode-toggle" id="focus-mode-toggle" aria-pressed="false">🔍 Mode focus (un critère à la fois)</button>
+          <button type="button" class="focus-mode-toggle" id="focus-mode-toggle" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Mode focus (un critère à la fois)</button>
         </div>
 
         <div class="criteria-list" id="criteria-list">
@@ -224,6 +250,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-scenario" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="scenario" data-step="0.5" aria-label="Augmenter Scénario & Écriture de 0,5">+</button>
             </div>
@@ -240,6 +267,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-realisation" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="realisation" data-step="0.5" aria-label="Augmenter Réalisation & Mise en scène de 0,5">+</button>
             </div>
@@ -256,6 +284,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-photo" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="photo" data-step="0.5" aria-label="Augmenter Photographie & Esthétique de 0,5">+</button>
             </div>
@@ -272,6 +301,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-acteurs" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="0.5" aria-label="Augmenter Interprétation & Acteurs de 0,5">+</button>
             </div>
@@ -288,6 +318,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-ambiance" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="0.5" aria-label="Augmenter Ambiance & Son de 0,5">+</button>
             </div>
@@ -304,6 +335,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" id="rythme" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-rythme" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="rythme" data-step="0.5" aria-label="Augmenter Rythme & Montage de 0,5">+</button>
             </div>
@@ -320,6 +352,7 @@
               <div class="criterion-range-wrap">
                 <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
                 <div class="criterion-avg-marker" id="avg-marker-affect" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+                <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
               <button type="button" class="criterion-step-btn" data-target="affect" data-step="0.5" aria-label="Augmenter ❤️ Impact Affectif de 0,5">+</button>
             </div>
@@ -364,8 +397,8 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn btn-copy" id="copy-btn">📋 Texte</button>
-          <button class="btn btn-save" id="save-btn">💾 Sauver</button>
+          <button class="btn btn-copy" id="copy-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg> Texte</button>
+          <button class="btn btn-save" id="save-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="20 6 9 17 4 12"/></svg> Sauver</button>
         </div>
       </div>
     </div>
@@ -374,9 +407,9 @@
   <div class="col-right" id="col-right-views">
 
     <div class="right-tabs-container" role="tablist" aria-label="Historique, Watchlist ou Découvrir">
-      <button class="right-tab active" id="tab-right-history" role="tab" aria-selected="true">📊 Historique & Stats</button>
-      <button class="right-tab" id="tab-right-watchlist" role="tab" aria-selected="false">🎯 Watchlist</button>
-      <button class="right-tab" id="tab-right-discover" role="tab" aria-selected="false">🔥 Découvrir</button>
+      <button class="right-tab active" id="tab-right-history" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg> Historique & Stats</button>
+      <button class="right-tab" id="tab-right-watchlist" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg> Watchlist</button>
+      <button class="right-tab" id="tab-right-discover" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir</button>
     </div>
 
     <div class="right-view active" id="view-history">
@@ -463,7 +496,7 @@
           <div class="wl-suggestions" id="wl-suggestions"></div>
         </div>
         <div class="watchlist-scroller" id="watchlist-list">
-          <div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>
+          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Aucun film dans la liste.</div>
         </div>
       </div>
     </div>
@@ -471,15 +504,15 @@
     <div class="right-view" id="view-discover">
       <div class="card" id="discover-card-wrap">
         <div class="card-title">
-          🔥 Découvrir
-          <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions">↻</button>
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir
+          <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
         </div>
         <div class="discover-stack" id="discover-stack" aria-live="polite">
           <div class="discover-loading" id="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>
         </div>
         <div class="discover-actions" id="discover-actions" style="display:none">
-          <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer">✕</button>
-          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist">❤️</button>
+          <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 5 5.5 5c2 0 3.5 1.2 4.5 3 1-1.8 2.5-3 4.5-3C18 5 19.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg></button>
         </div>
       </div>
     </div>
@@ -489,16 +522,16 @@
 
 <nav class="mobile-nav" id="mobile-nav">
   <button class="nav-btn active" id="nav-rating" aria-current="page">
-    <span class="nav-btn-icon">🎬</span> Noter
+    <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg></span> Noter
   </button>
   <button class="nav-btn" id="nav-history">
-    <span class="nav-btn-icon">📊</span> Historique
+    <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg></span> Historique
   </button>
   <button class="nav-btn" id="nav-watchlist">
-    <span class="nav-btn-icon">🎯</span> À voir
+    <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></span> À voir
   </button>
   <button class="nav-btn" id="nav-discover">
-    <span class="nav-btn-icon">🔥</span> Découvrir
+    <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg></span> Découvrir
   </button>
 </nav>
 

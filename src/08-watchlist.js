@@ -18,7 +18,7 @@ function renderWatchlist() {
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
   if (list.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎯</div>Aucun film dans la liste.</div>';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
     return;
   }
 
@@ -30,7 +30,7 @@ function renderWatchlist() {
 
     const posterHtml = item.poster
       ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
-      : `<div class="wl-poster">🎬</div>`;
+      : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
       ${posterHtml}
@@ -42,8 +42,8 @@ function renderWatchlist() {
         </div>
       </div>
       <div class="wl-actions">
-        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">⭐</button>
-        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">✕</button>
+        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
+        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
       </div>`;
 
     container.appendChild(div);
@@ -181,7 +181,7 @@ wlInput.addEventListener('input', () => {
         el.innerHTML = `
           ${m.poster_path
             ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">🎬</div>`}
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
             <div class="wl-suggest-title">${m.title}</div>
             <div class="wl-suggest-year">${year}</div>
