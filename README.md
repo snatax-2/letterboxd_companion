@@ -107,6 +107,8 @@ npm test
 Ce que ça couvre :
 - **`tests/score.test.js`** — calcul du score en mode rapide et en mode détaillé (moyenne pondérée), conversion en étoiles.
 - **`tests/merge-logic.test.js`** — fusion de l'historique/watchlist entre deux appareils : union de films différents, résolution de conflit sur le même film (le plus récent gagne), respect des suppressions (tombstones), purge automatique après 90 jours.
+- **`tests/description-tiers.test.js`** — textes descriptifs par palier + qualificatif "bas/haut de la fourchette" pour chaque valeur de 0 à 10.
+- **`tests/criteria-averages.test.js`** — moyennes personnelles par critère (repère sur les sliders + radar), gestion des anciens films sans un critère donné.
 - **`tests/rate-limit.test.js`** — limite de requêtes par IP et par identifiant, isolation entre IP différentes.
 
 Ces tests tournent aussi automatiquement dans le CI/CD (GitHub Actions) à chaque `push`. La logique testée vit dans `src/03b-pure-logic.js` : un fichier volontairement sans DOM ni `localStorage`, pour pouvoir être exécuté tel quel par Node (voir le commentaire en tête de ce fichier pour le détail du fonctionnement).

@@ -307,105 +307,6 @@ function setTodayDate() {
 const STORE_KEY = "lbx_v2";
 const CRITERIA = ['scenario','realisation','photo','acteurs','ambiance','rythme','affect'];
 
-const DESCS = {
-  scenario: [
-    [9.5,"Un chef-d'œuvre narratif absolu. Écriture brillante, dialogues ciselés, structure parfaite et thèmes d'une profondeur rare qui hantent longtemps après le visionnage."],
-    [8.5,"Scénario magistral. Une construction d'une intelligence rare, des personnages d'une richesse peu commune, presque aucune fausse note."],
-    [7.5,"Excellent scénario. Récit captivant, personnages bien écrits et rebondissements intelligents qui maintiennent un fort engagement."],
-    [6.5,"Bonne écriture, quelques idées qui sortent du lot, mais sans jamais atteindre une vraie fulgurance."],
-    [5.5,"Une histoire classique et fonctionnelle. Fait le travail correctement, mais suit des sentiers battus ou manque d'une vraie prise de risque."],
-    [4.5,"Des maladresses évidentes. Rythme narratif inconstant, facilités scénaristiques ou dialogues un peu artificiels qui sortent du récit."],
-    [3.5,"Scénario poussif. Les ficelles se voient, certains personnages sonnent creux, l'ensemble peine à convaincre."],
-    [2.5,"Récit laborieux. De graves incohérences, des intrigues secondaires inutiles ou des personnages aux réactions incompréhensibles."],
-    [1.5,"Écriture quasi inexistante. Le fil narratif se perd, les enjeux ne tiennent debout à aucun moment."],
-    [0,  "Un naufrage scénaristique total. Dénué de sens, ennuyeux à mourir ou insultant pour l'intelligence du spectateur."]
-  ],
-  realisation: [
-    [9.5,"Une masterclass de mise en scène. Une vision d'auteur absolue où chaque plan respire l'intelligence, la maîtrise et l'audace visuelle."],
-    [8.5,"Réalisation éblouissante. Un vrai geste de cinéma, ambitieux et maîtrisé de bout en bout."],
-    [7.5,"Réalisation forte et inspirée. Le réalisateur a un vrai point de vue, avec une caméra dynamique qui sublime le propos du film."],
-    [6.5,"Mise en scène assurée, quelques idées visuelles marquantes, sans toutefois transcender le sujet."],
-    [5.5,"Mise en scène artisanale et propre. Efficace, lisible, mais qui s'efface souvent derrière son sujet sans fulgurance visuelle."],
-    [4.5,"Une réalisation impersonnelle. Ressemble plus à un produit de commande ou à un téléfilm manquant cruellement de caractère."],
-    [3.5,"Mise en scène poussive, découpage parfois maladroit, peu d'idées de mise en image."],
-    [2.5,"Mise en scène paresseuse ou confuse. Découpage hasardeux, absence de rythme visuel ou tics qui fatiguent l'œil."],
-    [1.5,"Réalisation à peine fonctionnelle. Cadres bancals, mise en scène qui dessert constamment le récit."],
-    [0,  "Catastrophique. Incompétence technique crasse, montage épileptique ou plans littéralement illisibles."]
-  ],
-  photo: [
-    [9.5,"Une claque visuelle absolue. Chaque plan est un tableau. Gestion de la lumière, colorimétrie et cadrages atteignent le sublime."],
-    [8.5,"Photographie somptueuse, une signature visuelle forte et cohérente du début à la fin."],
-    [7.5,"Superbe photographie. Une identité visuelle très marquée qui participe activement à l'ambiance et flatte constamment la rétine."],
-    [6.5,"Belle image, quelques plans qui sortent du lot, sans être une œuvre visuellement unique."],
-    [5.5,"Esthétique soignée mais standardisée. L'image est belle et propre, mais reste académique ou familière."],
-    [4.5,"Visuellement terne ou inégal. Éclairages plats, étalonnage douteux (trop gris/sombre) ou effets spéciaux qui jurent."],
-    [3.5,"Image assez pauvre, cadrages sans inspiration, colorimétrie qui manque de cohérence."],
-    [2.5,"Laideur visuelle manifeste. Cadrages ratés, image numérique sans texture, ou filtres appliqués sans aucune cohérence artistique."],
-    [1.5,"Image quasiment illisible ou dénuée de tout soin, très en dessous des standards attendus."],
-    [0,  "Une agression oculaire. Illisible, bouillie de pixels ou éclairage d'une pauvreté affligeante."]
-  ],
-  acteurs: [
-    [9.5,"Des performances magistrales et habitées. Des acteurs en état de grâce qui transcendent leurs personnages et crèvent l'écran."],
-    [8.5,"Casting exceptionnel, des interprétations d'une justesse rare qui portent le film à elles seules."],
-    [7.5,"Un casting redoutable. Des interprétations justes, intenses et nuancées qui portent le film avec un grand charisme."],
-    [6.5,"Bonnes performances dans l'ensemble, une ou deux têtes d'affiche particulièrement convaincantes."],
-    [5.5,"Jeu solide et convaincant. Les acteurs font le job honnêtement, sans pour autant livrer la performance de leur carrière."],
-    [4.5,"Interprétations inégales. Certains tirent leur épingle du jeu, mais d'autres surjouent ou manquent cruellement d'alchimie."],
-    [3.5,"Jeu d'acteur assez faible dans l'ensemble, direction d'acteurs peu convaincante."],
-    [2.5,"Casting en roue libre. Mauvaise direction d'acteurs, expressions forcées, ou têtes d'affiche visiblement venues pour le chèque."],
-    [1.5,"Interprétations quasi risibles, aucune alchimie ni conviction à l'écran."],
-    [0,  "Un festival de jeu monolithique ou d'hystérie ridicule. Impossible de croire une seule seconde aux personnages."]
-  ],
-  ambiance: [
-    [9.5,"Une immersion sensorielle totale. Bande originale mythique et sound design viscéral qui prennent littéralement aux tripes."],
-    [8.5,"Atmosphère sonore exceptionnelle, musique et sound design qui deviennent indissociables du film."],
-    [7.5,"Excellente atmosphère. La musique et les effets sonores enveloppent le spectateur et renforcent magistralement l'impact émotionnel."],
-    [6.5,"Bon accompagnement sonore, quelques thèmes marquants, sans devenir mémorable dans son ensemble."],
-    [5.5,"Ambiance réussie. Accompagnement sonore fonctionnel et agréable, qui soutient l'action sans pour autant marquer les esprits."],
-    [4.5,"Sonorité générique. Musique d'ascenseur, thèmes oubliables ou mixage sonore parfois douteux en retrait."],
-    [3.5,"Ambiance sonore faible, musique qui peine à installer une atmosphère cohérente."],
-    [2.5,"Bande-son envahissante ou hors sujet. Musique omniprésente qui dicte les émotions, ou sound design artificiel qui brise l'immersion."],
-    [1.5,"Son quasiment raté, mixage désagréable, aucune identité sonore."],
-    [0,  "Supplice auditif. Bruitages ratés, doublages asynchrones, ou bande originale qui ruine littéralement les scènes clés."]
-  ],
-  rythme: [
-    [9.5,"Un rythme d'une précision chirurgicale. Chaque scène a exactement la durée qu'il faut, montage d'orfèvre, pas une seconde de trop ni de manque."],
-    [8.5,"Montage excellent, un tempo qui épouse parfaitement les intentions du film du début à la fin."],
-    [7.5,"Très bon rythme. Le film se regarde sans effort, les transitions sont fluides et le montage sert bien le récit."],
-    [6.5,"Rythme globalement maîtrisé, quelques longueurs ponctuelles qui n'entament pas trop l'ensemble."],
-    [5.5,"Rythme correct mais irrégulier. Certains passages traînent un peu, d'autres filent trop vite, sans que ça gâche l'expérience."],
-    [4.5,"Rythme mal calibré. Des longueurs qui se sentent, un montage qui casse parfois l'élan du film."],
-    [3.5,"Film qui traîne clairement en longueur ou au contraire semble haché, avec des ruptures de rythme gênantes."],
-    [2.5,"Rythme poussif ou décousu sur une bonne partie du film, l'attention décroche régulièrement."],
-    [1.5,"Montage confus, tempo constamment à côté de la plaque, on regarde sa montre."],
-    [0,  "Rythme complètement raté. Interminable, ou monté de façon si chaotique que le film en devient illisible."]
-  ],
-  affect: [
-    [9.5,"Coup de foudre absolu. Un film qui bouleverse, obsède, et trouve une place immédiate dans mon panthéon personnel."],
-    [8.5,"Immense claque émotionnelle. Un film qui restera gravé longtemps, que je recommande sans réserve."],
-    [7.5,"Énorme coup de cœur. Une œuvre marquante qui m'a fait vibrer, rire ou pleurer, et que je reverrai avec grand plaisir."],
-    [6.5,"Beau moment, quelques scènes qui marquent vraiment, une expérience que j'ai appréciée sincèrement."],
-    [5.5,"Un très bon moment de cinéma. J'ai pris du plaisir devant ce film, même s'il ne me laissera pas un souvenir impérissable."],
-    [4.5,"Sentiment mitigé. Pas désagréable, mais je reste totalement sur ma faim. Vite vu, assez vite oublié."],
-    [3.5,"Peu d'accroche émotionnelle, le film m'a globalement laissé de marbre."],
-    [2.5,"Ennui ou agacement profond. Une expérience pénible, où le temps a semblé particulièrement long. Très peu d'accroche."],
-    [1.5,"Rejet quasi total, très peu de moments qui ont suscité un intérêt réel."],
-    [0,  "Rejet viscéral. Une perte de temps absolue, un film que j'ai détesté de bout en bout et que je veux effacer de ma mémoire."]
-  ]
-};
-
-const _descCache = {};
-function getDesc(criterion, val) {
-  const key = criterion + val;
-  if (_descCache[key]) return _descCache[key];
-  const tiers = DESCS[criterion];
-  for (const [thresh, text] of tiers) {
-    if (val >= thresh) { _descCache[key] = text; return text; }
-  }
-  const fallback = tiers[tiers.length - 1][1];
-  _descCache[key] = fallback;
-  return fallback;
-}
 
 // ═══════════════════════════════════════════
 //  HELPERS
@@ -550,6 +451,7 @@ function loadDraft() {
     }
     calculateScore();
     updateAllSliders();
+    renderCriteriaAverageMarkers();
 
   } catch(e) { console.error("Erreur de chargement du brouillon", e); }
 }
@@ -694,6 +596,159 @@ function mergeWatchlist(local, remote, tombstones) {
   return result;
 }
 
+// ─── Descriptions qualitatives par critère (paliers + qualificatif fin) ────
+
+const DESCS = {
+  scenario: [
+    [9.5,"Un chef-d'œuvre narratif absolu. Écriture brillante, dialogues ciselés, structure parfaite et thèmes d'une profondeur rare qui hantent longtemps après le visionnage."],
+    [8.5,"Scénario magistral. Une construction d'une intelligence rare, des personnages d'une richesse peu commune, presque aucune fausse note."],
+    [7.5,"Excellent scénario. Récit captivant, personnages bien écrits et rebondissements intelligents qui maintiennent un fort engagement."],
+    [6.5,"Bonne écriture, quelques idées qui sortent du lot, mais sans jamais atteindre une vraie fulgurance."],
+    [5.5,"Une histoire classique et fonctionnelle. Fait le travail correctement, mais suit des sentiers battus ou manque d'une vraie prise de risque."],
+    [4.5,"Des maladresses évidentes. Rythme narratif inconstant, facilités scénaristiques ou dialogues un peu artificiels qui sortent du récit."],
+    [3.5,"Scénario poussif. Les ficelles se voient, certains personnages sonnent creux, l'ensemble peine à convaincre."],
+    [2.5,"Récit laborieux. De graves incohérences, des intrigues secondaires inutiles ou des personnages aux réactions incompréhensibles."],
+    [1.5,"Écriture quasi inexistante. Le fil narratif se perd, les enjeux ne tiennent debout à aucun moment."],
+    [0,  "Un naufrage scénaristique total. Dénué de sens, ennuyeux à mourir ou insultant pour l'intelligence du spectateur."]
+  ],
+  realisation: [
+    [9.5,"Une masterclass de mise en scène. Une vision d'auteur absolue où chaque plan respire l'intelligence, la maîtrise et l'audace visuelle."],
+    [8.5,"Réalisation éblouissante. Un vrai geste de cinéma, ambitieux et maîtrisé de bout en bout."],
+    [7.5,"Réalisation forte et inspirée. Le réalisateur a un vrai point de vue, avec une caméra dynamique qui sublime le propos du film."],
+    [6.5,"Mise en scène assurée, quelques idées visuelles marquantes, sans toutefois transcender le sujet."],
+    [5.5,"Mise en scène artisanale et propre. Efficace, lisible, mais qui s'efface souvent derrière son sujet sans fulgurance visuelle."],
+    [4.5,"Une réalisation impersonnelle. Ressemble plus à un produit de commande ou à un téléfilm manquant cruellement de caractère."],
+    [3.5,"Mise en scène poussive, découpage parfois maladroit, peu d'idées de mise en image."],
+    [2.5,"Mise en scène paresseuse ou confuse. Découpage hasardeux, absence de rythme visuel ou tics qui fatiguent l'œil."],
+    [1.5,"Réalisation à peine fonctionnelle. Cadres bancals, mise en scène qui dessert constamment le récit."],
+    [0,  "Catastrophique. Incompétence technique crasse, montage épileptique ou plans littéralement illisibles."]
+  ],
+  photo: [
+    [9.5,"Une claque visuelle absolue. Chaque plan est un tableau. Gestion de la lumière, colorimétrie et cadrages atteignent le sublime."],
+    [8.5,"Photographie somptueuse, une signature visuelle forte et cohérente du début à la fin."],
+    [7.5,"Superbe photographie. Une identité visuelle très marquée qui participe activement à l'ambiance et flatte constamment la rétine."],
+    [6.5,"Belle image, quelques plans qui sortent du lot, sans être une œuvre visuellement unique."],
+    [5.5,"Esthétique soignée mais standardisée. L'image est belle et propre, mais reste académique ou familière."],
+    [4.5,"Visuellement terne ou inégal. Éclairages plats, étalonnage douteux (trop gris/sombre) ou effets spéciaux qui jurent."],
+    [3.5,"Image assez pauvre, cadrages sans inspiration, colorimétrie qui manque de cohérence."],
+    [2.5,"Laideur visuelle manifeste. Cadrages ratés, image numérique sans texture, ou filtres appliqués sans aucune cohérence artistique."],
+    [1.5,"Image quasiment illisible ou dénuée de tout soin, très en dessous des standards attendus."],
+    [0,  "Une agression oculaire. Illisible, bouillie de pixels ou éclairage d'une pauvreté affligeante."]
+  ],
+  acteurs: [
+    [9.5,"Des performances magistrales et habitées. Des acteurs en état de grâce qui transcendent leurs personnages et crèvent l'écran."],
+    [8.5,"Casting exceptionnel, des interprétations d'une justesse rare qui portent le film à elles seules."],
+    [7.5,"Un casting redoutable. Des interprétations justes, intenses et nuancées qui portent le film avec un grand charisme."],
+    [6.5,"Bonnes performances dans l'ensemble, une ou deux têtes d'affiche particulièrement convaincantes."],
+    [5.5,"Jeu solide et convaincant. Les acteurs font le job honnêtement, sans pour autant livrer la performance de leur carrière."],
+    [4.5,"Interprétations inégales. Certains tirent leur épingle du jeu, mais d'autres surjouent ou manquent cruellement d'alchimie."],
+    [3.5,"Jeu d'acteur assez faible dans l'ensemble, direction d'acteurs peu convaincante."],
+    [2.5,"Casting en roue libre. Mauvaise direction d'acteurs, expressions forcées, ou têtes d'affiche visiblement venues pour le chèque."],
+    [1.5,"Interprétations quasi risibles, aucune alchimie ni conviction à l'écran."],
+    [0,  "Un festival de jeu monolithique ou d'hystérie ridicule. Impossible de croire une seule seconde aux personnages."]
+  ],
+  ambiance: [
+    [9.5,"Une immersion sensorielle totale. Bande originale mythique et sound design viscéral qui prennent littéralement aux tripes."],
+    [8.5,"Atmosphère sonore exceptionnelle, musique et sound design qui deviennent indissociables du film."],
+    [7.5,"Excellente atmosphère. La musique et les effets sonores enveloppent le spectateur et renforcent magistralement l'impact émotionnel."],
+    [6.5,"Bon accompagnement sonore, quelques thèmes marquants, sans devenir mémorable dans son ensemble."],
+    [5.5,"Ambiance réussie. Accompagnement sonore fonctionnel et agréable, qui soutient l'action sans pour autant marquer les esprits."],
+    [4.5,"Sonorité générique. Musique d'ascenseur, thèmes oubliables ou mixage sonore parfois douteux en retrait."],
+    [3.5,"Ambiance sonore faible, musique qui peine à installer une atmosphère cohérente."],
+    [2.5,"Bande-son envahissante ou hors sujet. Musique omniprésente qui dicte les émotions, ou sound design artificiel qui brise l'immersion."],
+    [1.5,"Son quasiment raté, mixage désagréable, aucune identité sonore."],
+    [0,  "Supplice auditif. Bruitages ratés, doublages asynchrones, ou bande originale qui ruine littéralement les scènes clés."]
+  ],
+  rythme: [
+    [9.5,"Un rythme d'une précision chirurgicale. Chaque scène a exactement la durée qu'il faut, montage d'orfèvre, pas une seconde de trop ni de manque."],
+    [8.5,"Montage excellent, un tempo qui épouse parfaitement les intentions du film du début à la fin."],
+    [7.5,"Très bon rythme. Le film se regarde sans effort, les transitions sont fluides et le montage sert bien le récit."],
+    [6.5,"Rythme globalement maîtrisé, quelques longueurs ponctuelles qui n'entament pas trop l'ensemble."],
+    [5.5,"Rythme correct mais irrégulier. Certains passages traînent un peu, d'autres filent trop vite, sans que ça gâche l'expérience."],
+    [4.5,"Rythme mal calibré. Des longueurs qui se sentent, un montage qui casse parfois l'élan du film."],
+    [3.5,"Film qui traîne clairement en longueur ou au contraire semble haché, avec des ruptures de rythme gênantes."],
+    [2.5,"Rythme poussif ou décousu sur une bonne partie du film, l'attention décroche régulièrement."],
+    [1.5,"Montage confus, tempo constamment à côté de la plaque, on regarde sa montre."],
+    [0,  "Rythme complètement raté. Interminable, ou monté de façon si chaotique que le film en devient illisible."]
+  ],
+  affect: [
+    [9.5,"Coup de foudre absolu. Un film qui bouleverse, obsède, et trouve une place immédiate dans mon panthéon personnel."],
+    [8.5,"Immense claque émotionnelle. Un film qui restera gravé longtemps, que je recommande sans réserve."],
+    [7.5,"Énorme coup de cœur. Une œuvre marquante qui m'a fait vibrer, rire ou pleurer, et que je reverrai avec grand plaisir."],
+    [6.5,"Beau moment, quelques scènes qui marquent vraiment, une expérience que j'ai appréciée sincèrement."],
+    [5.5,"Un très bon moment de cinéma. J'ai pris du plaisir devant ce film, même s'il ne me laissera pas un souvenir impérissable."],
+    [4.5,"Sentiment mitigé. Pas désagréable, mais je reste totalement sur ma faim. Vite vu, assez vite oublié."],
+    [3.5,"Peu d'accroche émotionnelle, le film m'a globalement laissé de marbre."],
+    [2.5,"Ennui ou agacement profond. Une expérience pénible, où le temps a semblé particulièrement long. Très peu d'accroche."],
+    [1.5,"Rejet quasi total, très peu de moments qui ont suscité un intérêt réel."],
+    [0,  "Rejet viscéral. Une perte de temps absolue, un film que j'ai détesté de bout en bout et que je veux effacer de ma mémoire."]
+  ]
+};
+
+const _descCache = {};
+function getDesc(criterion, val) {
+  const key = criterion + val;
+  if (_descCache[key]) return _descCache[key];
+  const tiers = DESCS[criterion];
+
+  for (let i = 0; i < tiers.length; i++) {
+    const [thresh, text] = tiers[i];
+    if (val < thresh) continue;
+
+    // Chaque palier couvre en général 2 valeurs voisines (ex: 8.5 et 9.0 pour
+    // le seuil 8.5), sauf le dernier qui en couvre 3 (0, 0.5, 1.0). On ajoute
+    // un court qualificatif selon la position exacte dans cette fourchette,
+    // pour un retour plus fin que le seul texte du palier (qui, lui, ne
+    // change qu'environ tous les 1 point) — sans avoir à réécrire 147 textes
+    // différents pour un gain de nuance souvent minime entre deux valeurs
+    // voisines.
+    const nextThresh = i > 0 ? tiers[i - 1][0] : thresh + 1; // borne haute (exclue) du palier actuel
+    const rangeSpan = nextThresh - thresh;
+    const posInRange = val - thresh;
+
+    let qualifier = '';
+    if (rangeSpan > 0.5) {
+      if (Math.abs(posInRange) < 0.01) {
+        qualifier = ' (plutôt bas dans cette tranche)';
+      } else if (Math.abs(posInRange - (rangeSpan - 0.5)) < 0.01) {
+        qualifier = ' (plutôt haut dans cette tranche)';
+      }
+      // Valeur médiane (uniquement pour le dernier palier, qui couvre 3
+      // valeurs) : pas de qualificatif, elle est déjà bien au centre.
+    }
+
+    const result = text + qualifier;
+    _descCache[key] = result;
+    return result;
+  }
+
+  const fallback = tiers[tiers.length - 1][1];
+  _descCache[key] = fallback;
+  return fallback;
+}
+
+// ─── Moyennes personnelles par critère (repère sur les sliders + radar) ─────
+// Retourne { scenario: 7.2, realisation: null, ... } — null si aucune entrée
+// de l'historique n'a de valeur pour ce critère (ex: 'rythme' avant son ajout).
+function computeCriteriaAverages(history, criteria) {
+  const sums = {};
+  const counts = {};
+  criteria.forEach(c => { sums[c] = 0; counts[c] = 0; });
+
+  history.forEach(h => {
+    if (h.mode === 'detail' && h.values) {
+      criteria.forEach(c => {
+        const val = parseFloat(h.values[c]);
+        if (!isNaN(val)) { sums[c] += val; counts[c]++; }
+      });
+    }
+  });
+
+  const avgs = {};
+  criteria.forEach(c => { avgs[c] = counts[c] > 0 ? sums[c] / counts[c] : null; });
+  return avgs;
+}
+
 // ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -707,6 +762,9 @@ if (typeof module !== 'undefined' && module.exports) {
     mergeHistory,
     mergeWatchlist,
     TOMBSTONE_MAX_AGE_MS,
+    getDesc,
+    DESCS,
+    computeCriteriaAverages,
   };
 }
 
@@ -1118,6 +1176,26 @@ function updateAllSliders() {
   });
 }
 
+// Positionne le repère de moyenne perso sur chaque slider (voir CSS
+// .criterion-avg-marker). Calculé une fois depuis l'historique existant : la
+// moyenne "passée" ne change pas pendant qu'on note le film en cours, pas
+// besoin de la recalculer à chaque glissement de curseur.
+function renderCriteriaAverageMarkers() {
+  const avgs = computeCriteriaAverages(loadHistory(), CRITERIA);
+  CRITERIA.forEach(c => {
+    const marker = document.getElementById(`avg-marker-${c}`);
+    if (!marker) return;
+    const avg = avgs[c];
+    if (avg === null) {
+      marker.style.display = 'none';
+      return;
+    }
+    marker.style.left = `${(avg / 10) * 100}%`;
+    marker.title = `Ta moyenne habituelle sur ce critère : ${avg.toFixed(1)}`;
+    marker.style.display = 'block';
+  });
+}
+
 CRITERIA.forEach(c => {
   document.getElementById(c).addEventListener('input', () => {
     updateSliderPct(document.getElementById(c));
@@ -1300,6 +1378,7 @@ function resetForm() {
   
   setMode('detail'); 
   updateAllSliders();
+  renderCriteriaAverageMarkers();
   updateQuickLabel();
 }
 
@@ -1359,11 +1438,95 @@ window.loadItem = function(idx) {
   }
 
   calculateScore();
+  renderCriteriaAverageMarkers();
   saveDraft(); 
   
   if (window.innerWidth <= 860) switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+
+// ═══════════════════════════════════════════
+//  MODE FOCUS (un critère à la fois)
+// ═══════════════════════════════════════════
+// Alternative à la liste empilée : n'affiche qu'un critère à la fois, avec
+// navigation dédiée (boutons ‹ › ou swipe). Le score, les descriptions, le
+// repère de moyenne perso et la piste colorée continuent de fonctionner
+// normalement — seule la mise en page (quel bloc est visible) change.
+const FOCUS_MODE_KEY = 'lbx_focus_mode';
+let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) === 'true';
+let focusIndex = 0;
+
+const criteriaListEl = document.getElementById('criteria-list');
+const focusModeToggle = document.getElementById('focus-mode-toggle');
+const focusNavEl = document.getElementById('focus-nav');
+const focusPrevBtn = document.getElementById('focus-prev-btn');
+const focusNextBtn = document.getElementById('focus-next-btn');
+const focusProgressEl = document.getElementById('focus-progress');
+
+function renderFocusStep() {
+  CRITERIA.forEach((c, i) => {
+    const block = document.getElementById(c).closest('.criterion-block');
+    if (block) block.classList.toggle('focus-active', i === focusIndex);
+  });
+  focusProgressEl.textContent = `${focusIndex + 1} / ${CRITERIA.length}`;
+  focusPrevBtn.disabled = focusIndex === 0;
+  focusNextBtn.disabled = focusIndex === CRITERIA.length - 1;
+}
+
+function applyFocusMode() {
+  criteriaListEl.classList.toggle('focus-mode', focusModeOn);
+  focusNavEl.style.display = focusModeOn ? 'flex' : 'none';
+  focusModeToggle.classList.toggle('active', focusModeOn);
+  focusModeToggle.setAttribute('aria-pressed', String(focusModeOn));
+  if (focusModeOn) renderFocusStep();
+}
+
+function goToFocusStep(newIndex) {
+  if (newIndex < 0 || newIndex >= CRITERIA.length || newIndex === focusIndex) return;
+  focusIndex = newIndex;
+  renderFocusStep();
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+focusModeToggle.addEventListener('click', () => {
+  focusModeOn = !focusModeOn;
+  localStorage.setItem(FOCUS_MODE_KEY, String(focusModeOn));
+  focusIndex = 0;
+  applyFocusMode();
+});
+
+focusPrevBtn.addEventListener('click', () => goToFocusStep(focusIndex - 1));
+focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
+
+// Swipe gauche/droite pour naviguer entre critères, actif seulement en mode
+// focus. stopPropagation() empêche ce geste de déclencher AUSSI le swipe
+// global de changement d'onglet mobile (voir 01-navigation.js).
+(function initFocusSwipe() {
+  const SWIPE_MIN_DISTANCE = 40;
+  const SWIPE_ANGLE_RATIO = 1.3;
+  let startX = 0, startY = 0, tracking = false;
+
+  criteriaListEl.addEventListener('touchstart', e => {
+    if (!focusModeOn) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  criteriaListEl.addEventListener('touchend', e => {
+    if (!tracking || !focusModeOn) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return;
+    e.stopPropagation();
+    if (dx < 0) goToFocusStep(focusIndex + 1); // gauche -> critère suivant
+    else goToFocusStep(focusIndex - 1);         // droite -> critère précédent
+  });
+})();
+
+applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
 
 // ═══════════════════════════════════════════
 //  TOAST & DELETE WITH UNDO
@@ -1701,26 +1864,13 @@ function renderStats() {
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
   document.getElementById('kpi-year').textContent = yearCount;
 
-  // Un tableau de taille fixe (6) ici serait faux dès qu'un 7e critère existe
-  // (ex: "Rythme" ajouté après coup) : on se base sur CRITERIA.length.
-  // On compte aussi les valeurs par critère séparément (pas un seul detailCount
-  // partagé), car un ancien film noté avant l'ajout d'un critère n'a pas cette
-  // valeur : il ne doit compter ni dans sa somme, ni dans son diviseur pour CE
-  // critère précis (sinon la moyenne de cet axe serait faussée, voire NaN).
-  let critSums = new Array(CRITERIA.length).fill(0);
-  let critCounts = new Array(CRITERIA.length).fill(0);
-  history.forEach(h => { 
-    if(h.mode === 'detail' && h.values && h.values.scenario !== undefined) { 
-      CRITERIA.forEach((c,i) => {
-        const val = parseFloat(h.values[c]);
-        if (!isNaN(val)) {
-          critSums[i] += val;
-          critCounts[i]++;
-        }
-      });
-    }
-  });
-  const avgs = critCounts.map((count, i) => count > 0 ? critSums[i] / count : 0);
+  // Réutilise la même fonction que le repère de moyenne perso sur les sliders
+  // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
+  // Gère nativement le cas d'un ancien film sans valeur pour un critère ajouté
+  // après coup (ex: "Rythme") : ne compte ni dans la somme ni dans le diviseur
+  // de CE critère précis pour cette entrée, plutôt que de fausser la moyenne.
+  const avgsByCriterion = computeCriteriaAverages(history, CRITERIA);
+  const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
   const radarSvg = createRadarSVG(avgs);
   if (radarSvg) { 
     document.getElementById('radar-chart-container').innerHTML = radarSvg; 
@@ -2171,6 +2321,7 @@ document.addEventListener('keydown', e => {
 updateWeightBadges();
 calculateScore();
 updateAllSliders();
+renderCriteriaAverageMarkers();
 
 // ═══════════════════════════════════════════
 //  SYNCHRONISATION CLOUD (Supabase, via /api/sync)

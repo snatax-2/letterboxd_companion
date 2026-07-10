@@ -83,3 +83,4 @@ document.addEventListener('keydown', e => {
 updateWeightBadges();
 calculateScore();
 updateAllSliders();
+renderCriteriaAverageMarkers();

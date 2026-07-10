@@ -185,7 +185,7 @@
       </div>
 
       <div class="mode-tabs">
-        <button class="mode-tab active" id="tab-detail" onclick="setMode('detail')">Détaillé (6 critères)</button>
+        <button class="mode-tab active" id="tab-detail" onclick="setMode('detail')">Détaillé (7 critères)</button>
         <button class="mode-tab" id="tab-quick" onclick="setMode('quick')">Rapide (étoiles)</button>
       </div>
 
@@ -208,7 +208,11 @@
           <button class="weight-reset" id="genre-weight-suggest" style="display:none;">🎯 Suggestion</button>
         </div>
 
-        <div class="criteria-list">
+        <div class="criteria-list-controls">
+          <button type="button" class="focus-mode-toggle" id="focus-mode-toggle" aria-pressed="false">🔍 Mode focus (un critère à la fois)</button>
+        </div>
+
+        <div class="criteria-list" id="criteria-list">
 
           <div class="criterion-block">
             <div class="criterion-head">
@@ -217,7 +221,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="scenario" data-step="-0.5" aria-label="Diminuer Scénario & Écriture de 0,5">−</button>
-              <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-scenario" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="scenario" data-step="0.5" aria-label="Augmenter Scénario & Écriture de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-scenario">—</div>
@@ -230,7 +237,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="realisation" data-step="-0.5" aria-label="Diminuer Réalisation & Mise en scène de 0,5">−</button>
-              <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-realisation" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="realisation" data-step="0.5" aria-label="Augmenter Réalisation & Mise en scène de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-realisation">—</div>
@@ -243,7 +253,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="photo" data-step="-0.5" aria-label="Diminuer Photographie & Esthétique de 0,5">−</button>
-              <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-photo" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="photo" data-step="0.5" aria-label="Augmenter Photographie & Esthétique de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-photo">—</div>
@@ -256,7 +269,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="-0.5" aria-label="Diminuer Interprétation & Acteurs de 0,5">−</button>
-              <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-acteurs" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="0.5" aria-label="Augmenter Interprétation & Acteurs de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-acteurs">—</div>
@@ -269,7 +285,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="-0.5" aria-label="Diminuer Ambiance & Son de 0,5">−</button>
-              <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-ambiance" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="0.5" aria-label="Augmenter Ambiance & Son de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-ambiance">—</div>
@@ -282,7 +301,10 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="rythme" data-step="-0.5" aria-label="Diminuer Rythme & Montage de 0,5">−</button>
-              <input type="range" id="rythme" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" id="rythme" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-rythme" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="rythme" data-step="0.5" aria-label="Augmenter Rythme & Montage de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-rythme">—</div>
@@ -295,12 +317,21 @@
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="affect" data-step="-0.5" aria-label="Diminuer ❤️ Impact Affectif de 0,5">−</button>
-              <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
+              <div class="criterion-range-wrap">
+                <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
+                <div class="criterion-avg-marker" id="avg-marker-affect" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
+              </div>
               <button type="button" class="criterion-step-btn" data-target="affect" data-step="0.5" aria-label="Augmenter ❤️ Impact Affectif de 0,5">+</button>
             </div>
             <div class="criterion-desc" id="desc-affect">—</div>
           </div>
 
+        </div>
+
+        <div class="focus-nav" id="focus-nav" style="display:none;">
+          <button type="button" id="focus-prev-btn" aria-label="Critère précédent">‹</button>
+          <span id="focus-progress">1 / 7</span>
+          <button type="button" id="focus-next-btn" aria-label="Critère suivant">›</button>
         </div>
       </div>
 

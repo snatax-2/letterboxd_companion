@@ -53,6 +53,27 @@ function main() {
     console.log('✓ app.js s\'exécute entièrement sans erreur (DOM simulé).');
   }
 
+  // Vérification fonctionnelle légère en plus du simple "ça ne plante pas" :
+  // le mode focus (bascule + navigation) doit réellement fonctionner.
+  if (!caughtError) {
+    try {
+      const doc = window.document;
+      const toggle = doc.getElementById('focus-mode-toggle');
+      const list = doc.getElementById('criteria-list');
+      toggle.dispatchEvent(new window.Event('click', { bubbles: true }));
+      const activeBlocks = doc.querySelectorAll('.criterion-block.focus-active');
+      if (!list.classList.contains('focus-mode') || activeBlocks.length !== 1) {
+        console.error('❌ Le mode focus ne fonctionne pas comme attendu après un clic sur la bascule.');
+        process.exitCode = 1;
+      } else {
+        console.log('✓ Mode focus : bascule et affichage d\'un seul critère fonctionnent.');
+      }
+    } catch (err) {
+      console.error('❌ Erreur en testant le mode focus :', err.message);
+      process.exitCode = 1;
+    }
+  }
+
   // Force la sortie : un setInterval actif (ex: auto-sync cloud) garderait
   // sinon le process Node éveillé indéfiniment en attendant le prochain tick.
   process.exit(process.exitCode || 0);

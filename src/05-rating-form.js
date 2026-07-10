@@ -220,6 +220,26 @@ function updateAllSliders() {
   });
 }
 
+// Positionne le repère de moyenne perso sur chaque slider (voir CSS
+// .criterion-avg-marker). Calculé une fois depuis l'historique existant : la
+// moyenne "passée" ne change pas pendant qu'on note le film en cours, pas
+// besoin de la recalculer à chaque glissement de curseur.
+function renderCriteriaAverageMarkers() {
+  const avgs = computeCriteriaAverages(loadHistory(), CRITERIA);
+  CRITERIA.forEach(c => {
+    const marker = document.getElementById(`avg-marker-${c}`);
+    if (!marker) return;
+    const avg = avgs[c];
+    if (avg === null) {
+      marker.style.display = 'none';
+      return;
+    }
+    marker.style.left = `${(avg / 10) * 100}%`;
+    marker.title = `Ta moyenne habituelle sur ce critère : ${avg.toFixed(1)}`;
+    marker.style.display = 'block';
+  });
+}
+
 CRITERIA.forEach(c => {
   document.getElementById(c).addEventListener('input', () => {
     updateSliderPct(document.getElementById(c));
@@ -402,6 +422,7 @@ function resetForm() {
   
   setMode('detail'); 
   updateAllSliders();
+  renderCriteriaAverageMarkers();
   updateQuickLabel();
 }
 
@@ -461,9 +482,93 @@ window.loadItem = function(idx) {
   }
 
   calculateScore();
+  renderCriteriaAverageMarkers();
   saveDraft(); 
   
   if (window.innerWidth <= 860) switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
+
+// ═══════════════════════════════════════════
+//  MODE FOCUS (un critère à la fois)
+// ═══════════════════════════════════════════
+// Alternative à la liste empilée : n'affiche qu'un critère à la fois, avec
+// navigation dédiée (boutons ‹ › ou swipe). Le score, les descriptions, le
+// repère de moyenne perso et la piste colorée continuent de fonctionner
+// normalement — seule la mise en page (quel bloc est visible) change.
+const FOCUS_MODE_KEY = 'lbx_focus_mode';
+let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) === 'true';
+let focusIndex = 0;
+
+const criteriaListEl = document.getElementById('criteria-list');
+const focusModeToggle = document.getElementById('focus-mode-toggle');
+const focusNavEl = document.getElementById('focus-nav');
+const focusPrevBtn = document.getElementById('focus-prev-btn');
+const focusNextBtn = document.getElementById('focus-next-btn');
+const focusProgressEl = document.getElementById('focus-progress');
+
+function renderFocusStep() {
+  CRITERIA.forEach((c, i) => {
+    const block = document.getElementById(c).closest('.criterion-block');
+    if (block) block.classList.toggle('focus-active', i === focusIndex);
+  });
+  focusProgressEl.textContent = `${focusIndex + 1} / ${CRITERIA.length}`;
+  focusPrevBtn.disabled = focusIndex === 0;
+  focusNextBtn.disabled = focusIndex === CRITERIA.length - 1;
+}
+
+function applyFocusMode() {
+  criteriaListEl.classList.toggle('focus-mode', focusModeOn);
+  focusNavEl.style.display = focusModeOn ? 'flex' : 'none';
+  focusModeToggle.classList.toggle('active', focusModeOn);
+  focusModeToggle.setAttribute('aria-pressed', String(focusModeOn));
+  if (focusModeOn) renderFocusStep();
+}
+
+function goToFocusStep(newIndex) {
+  if (newIndex < 0 || newIndex >= CRITERIA.length || newIndex === focusIndex) return;
+  focusIndex = newIndex;
+  renderFocusStep();
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+focusModeToggle.addEventListener('click', () => {
+  focusModeOn = !focusModeOn;
+  localStorage.setItem(FOCUS_MODE_KEY, String(focusModeOn));
+  focusIndex = 0;
+  applyFocusMode();
+});
+
+focusPrevBtn.addEventListener('click', () => goToFocusStep(focusIndex - 1));
+focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
+
+// Swipe gauche/droite pour naviguer entre critères, actif seulement en mode
+// focus. stopPropagation() empêche ce geste de déclencher AUSSI le swipe
+// global de changement d'onglet mobile (voir 01-navigation.js).
+(function initFocusSwipe() {
+  const SWIPE_MIN_DISTANCE = 40;
+  const SWIPE_ANGLE_RATIO = 1.3;
+  let startX = 0, startY = 0, tracking = false;
+
+  criteriaListEl.addEventListener('touchstart', e => {
+    if (!focusModeOn) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  criteriaListEl.addEventListener('touchend', e => {
+    if (!tracking || !focusModeOn) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return;
+    e.stopPropagation();
+    if (dx < 0) goToFocusStep(focusIndex + 1); // gauche -> critère suivant
+    else goToFocusStep(focusIndex - 1);         // droite -> critère précédent
+  });
+})();
+
+applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
 

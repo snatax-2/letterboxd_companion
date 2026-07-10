@@ -334,26 +334,13 @@ function renderStats() {
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
   document.getElementById('kpi-year').textContent = yearCount;
 
-  // Un tableau de taille fixe (6) ici serait faux dès qu'un 7e critère existe
-  // (ex: "Rythme" ajouté après coup) : on se base sur CRITERIA.length.
-  // On compte aussi les valeurs par critère séparément (pas un seul detailCount
-  // partagé), car un ancien film noté avant l'ajout d'un critère n'a pas cette
-  // valeur : il ne doit compter ni dans sa somme, ni dans son diviseur pour CE
-  // critère précis (sinon la moyenne de cet axe serait faussée, voire NaN).
-  let critSums = new Array(CRITERIA.length).fill(0);
-  let critCounts = new Array(CRITERIA.length).fill(0);
-  history.forEach(h => { 
-    if(h.mode === 'detail' && h.values && h.values.scenario !== undefined) { 
-      CRITERIA.forEach((c,i) => {
-        const val = parseFloat(h.values[c]);
-        if (!isNaN(val)) {
-          critSums[i] += val;
-          critCounts[i]++;
-        }
-      });
-    }
-  });
-  const avgs = critCounts.map((count, i) => count > 0 ? critSums[i] / count : 0);
+  // Réutilise la même fonction que le repère de moyenne perso sur les sliders
+  // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
+  // Gère nativement le cas d'un ancien film sans valeur pour un critère ajouté
+  // après coup (ex: "Rythme") : ne compte ni dans la somme ni dans le diviseur
+  // de CE critère précis pour cette entrée, plutôt que de fausser la moyenne.
+  const avgsByCriterion = computeCriteriaAverages(history, CRITERIA);
+  const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
   const radarSvg = createRadarSVG(avgs);
   if (radarSvg) { 
     document.getElementById('radar-chart-container').innerHTML = radarSvg; 
