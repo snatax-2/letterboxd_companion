@@ -9,6 +9,7 @@
     --orange: #ff8000; --gold: #ff8000; --blue: #40bcf4; --red: #ff4040; --green: #00e054;
     --radius: 4px; --radius-sm: 3px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%;
+    --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --font-heading: 'Titillium Web', sans-serif;
     --font-body: 'Titillium Web', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -33,7 +34,8 @@
     --blue: #FFF200;   
     --red: #cc0000; --green: #00cc00;
     --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 3px; --slider-thumb-radius: 0px; /* piste et curseur anguleux, esprit course */
+    --slider-track-radius: 3px; --slider-thumb-radius: 4px; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, esprit drapeau/chicane de course */
+    --control-radius: 6px; /* carré adouci pour les boutons +/- et de navigation, pas un carré franc */
     --font-heading: 'Oswald', sans-serif;
     --font-body: 'Source Sans 3', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -58,7 +60,8 @@
     --border-hi: #D1495B; --text: #555555; --text-hi: #333333; --text-mid: #666666;
     --orange: #D1495B; --gold: #E8A825; --blue: #476b6b; --red: #D1495B; --green: #568259;
     --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 3px; --slider-thumb-radius: 0px; /* cohérent avec les cartes/boutons déjà anguleux du thème */
+    --slider-track-radius: 3px; --slider-thumb-radius: 30%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* carré adouci ("squircle"), pas un carré franc */
+    --control-radius: 8px;
     --font-heading: 'Jost', sans-serif;
     --font-body: 'Jost', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -86,7 +89,9 @@
     --orange: #ffffff; 
     --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
     --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 0px; --slider-thumb-radius: 0px; /* géométrique et tranchant, esprit art déco */
+    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
+    --slider-thumb-clip: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); /* octogone, esprit iris/objectif de projecteur */
+    --control-radius: 0px; /* reste anguleux, cohérent avec le reste du thème */
     --font-heading: 'Cinzel', serif;
     --font-body: 'Inter', sans-serif;
     --font-mono: 'Space Mono', monospace;
@@ -117,7 +122,8 @@
     --blue: #5C6E58;    /* Olive Vintage */
     --red: #8B4226; --green: #5C6E58;
     --radius: 18px; --radius-sm: 12px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
+    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
+    --control-radius: 50%;
     --font-heading: 'Poppins', sans-serif;
     --font-body: 'Poppins', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -448,7 +454,7 @@
     margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border);
   }
   .focus-nav button {
-    width: 38px; height: 38px; border-radius: var(--slider-thumb-radius, 50%); border: 1px solid var(--border-hi);
+    width: 38px; height: 38px; border-radius: var(--control-radius, 50%); border: 1px solid var(--border-hi);
     background: var(--surface2); color: var(--text-hi); font-size: 1.1rem; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: transform .12s ease, background-color .15s ease, opacity .15s ease;
@@ -495,7 +501,7 @@
     pointer-events: none;
   }
   .criterion-step-btn {
-    flex-shrink: 0; width: 30px; height: 30px; border-radius: var(--slider-thumb-radius, 50%);
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: var(--control-radius, 50%);
     border: 1px solid var(--border-hi); background: var(--surface2); color: var(--text-hi);
     font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1; padding: 0;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
@@ -522,16 +528,21 @@
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%);
+    clip-path: var(--slider-thumb-clip, none);
+    transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); border: 2px solid var(--orange); cursor: pointer;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4);
     transition: transform .12s, box-shadow .12s;
   }
-  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
   input[type="range"]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%); background: var(--surface); cursor: pointer; border: 2px solid var(--orange);
+    width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%);
+    clip-path: var(--slider-thumb-clip, none);
+    transform: rotate(var(--slider-thumb-rotate, 0deg));
+    background: var(--surface); cursor: pointer; border: 2px solid var(--orange);
     box-shadow: 0 0 0 2px rgba(0,0,0,0.35); transition: transform .12s;
   }
-  input[type="range"]::-moz-range-thumb:hover { transform: scale(1.25); }
+  input[type="range"]::-moz-range-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
   
   .affect-range {
     background: linear-gradient(to right, var(--blue) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%));
