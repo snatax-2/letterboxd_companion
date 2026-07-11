@@ -26,7 +26,6 @@
     --star-font: Arial, sans-serif;
     --star-shadow: none;
     --star-symbol: '★';
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");
     --icon-stroke: 2;
     
     --header-bar: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
@@ -54,7 +53,6 @@
     --star-font: 'Oswald', sans-serif;
     --star-shadow: 0 0 4px rgba(255, 242, 0, 0.6);
     --star-symbol: '◆'; /* diamant plein, plus anguleux et agressif que l'étoile classique */
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202L22%2012L12%2022L2%2012Z%22/%3E%3C/svg%3E");
     --icon-stroke: 2.5; /* traits plus épais et tranchants, esprit course */
     
     --title-style: italic;
@@ -82,7 +80,6 @@
     --star-font: 'Jost', sans-serif;
     --star-shadow: 2px 2px 0px rgba(209, 73, 91, 0.3);
     --star-symbol: '✦'; /* étoile-diamant plus délicate, esprit papeterie vintage */
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202c0%205.5%204.5%2010%2010%2010-5.5%200-10%204.5-10%2010%200-5.5-4.5-10-10-10%205.5%200%2010-4.5%2010-10z%22/%3E%3C/svg%3E");
     --icon-stroke: 1.5; /* traits plus fins et délicats */
     
     --box-shadow-style: 4px 4px 0px rgba(209, 73, 91, 0.2); 
@@ -114,7 +111,6 @@
     --star-font: 'Cinzel', serif;
     --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
     --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20fill-rule%3D%22evenodd%22%20d%3D%22M12%202a10%2010%200%20100%2020%2010%2010%200%20000-20zm0%204.5a5.5%205.5%200%20110%2011%205.5%205.5%200%20010-11z%22/%3E%3C/svg%3E");
     --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
     
     --review-font: var(--font-mono); 
@@ -148,7 +144,6 @@
     --star-font: 'Poppins', sans-serif;
     --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
     --star-symbol: '◉';
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20fill%3D%22white%22%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%2210%22/%3E%3C/svg%3E");
     --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
     --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
 
@@ -182,7 +177,6 @@
 
     --star-color: #000000; --star-empty-color: #cccccc; --star-font: 'Playfair Display', serif;
     --star-shadow: none; --star-symbol: '★';
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");
     --icon-stroke: 1.25; /* traits très fins, minimalistes, laissent respirer le contenu */
     --solid-fill-text: var(--bg); /* accent noir pur : texte blanc sur fond plein */
 
@@ -238,7 +232,6 @@
 
     --star-color: #E07A5F; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
     --star-shadow: none; --star-symbol: '■'; /* bloc plein, esprit affiche graphique */
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Crect%20fill%3D%22white%22%20x%3D%223%22%20y%3D%223%22%20width%3D%2218%22%20height%3D%2218%22/%3E%3C/svg%3E");
     --icon-stroke: 2.25;
 
     --box-shadow-style: 5px 5px 0px rgba(40,84,154,0.15);
@@ -269,7 +262,6 @@
 
     --star-color: #8D6E52; --star-empty-color: #D9C7AE; --star-font: 'Courier Prime', monospace;
     --star-shadow: none; --star-symbol: '✎'; /* stylo, esprit carnet manuscrit */
-    --quick-star-mask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202L22%2020H2Z%22/%3E%3C/svg%3E");
     --icon-stroke: 1.5;
     --solid-fill-text: var(--bg); /* accent brun sombre : texte clair plus lisible que #0d1117 */
 
@@ -747,7 +739,8 @@
   .rating-stars label.left-half::before,
   .rating-stars label.left-half::after {
       content: ''; position: absolute; top: 0; left: 0; width: 1em; height: 1em;
-      -webkit-mask-image: var(--quick-star-mask); mask-image: var(--quick-star-mask);
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");
       -webkit-mask-size: 80% 80%; mask-size: 80% 80%;
       -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
       -webkit-mask-position: center; mask-position: center;
@@ -1312,15 +1305,31 @@
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
   }
-  .trending-carousel { overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); }
+  .trending-carousel-row { display: flex; align-items: center; gap: 4px; }
+  .trending-nav-btn {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--surface2); border: 1px solid var(--border-hi); color: var(--text-hi);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: transform .12s ease, background-color .15s ease;
+  }
+  .trending-nav-btn:hover { background: var(--border-hi); }
+  .trending-nav-btn:active { transform: scale(.9); }
+  .trending-nav-btn .icon { width: 14px; height: 14px; }
+  .trending-carousel {
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* cache la barre de défilement (desktop) */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  }
+  .trending-carousel::-webkit-scrollbar { display: none; }
   .trending-carousel-track {
     display: flex; gap: 10px; width: max-content;
-    animation: trendingScroll 35s linear infinite;
-  }
-  .trending-carousel-track.paused { animation-play-state: paused; }
-  @keyframes trendingScroll {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); } /* la liste est dupliquée une fois : -50% = une boucle complète, sans à-coup */
+    /* Pas d'animation CSS ici : le défilement automatique est piloté en JS
+       (voir loadTrendingCarousel dans 11-discover.js), spécifiquement pour
+       pouvoir cohabiter avec un défilement manuel natif (glisser du doigt,
+       molette, trackpad) — une animation CSS pure bloque toute interaction
+       manuelle pendant qu'elle tourne. */
   }
   .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; }
   .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }

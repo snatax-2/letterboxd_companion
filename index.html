@@ -520,7 +520,11 @@
 
         <div class="trending-carousel-wrap" id="trending-carousel-wrap" style="display:none">
           <div class="trending-carousel-title">Tendances du moment</div>
-          <div class="trending-carousel" id="trending-carousel"></div>
+          <div class="trending-carousel-row">
+            <button type="button" class="trending-nav-btn prev" id="trending-prev-btn" aria-label="Précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <div class="trending-carousel" id="trending-carousel"></div>
+            <button type="button" class="trending-nav-btn next" id="trending-next-btn" aria-label="Suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M9 18l6-6-6-6"/></svg></button>
+          </div>
         </div>
 
         <div class="discover-stack" id="discover-stack" aria-live="polite">

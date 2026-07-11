@@ -4134,9 +4134,9 @@ function renderTrendingCarousel(movies) {
       </div>`;
   }).join('');
 
-  // La piste contient la liste EN DOUBLE : l'animation glisse de 0 à -50%,
-  // ce qui retombe exactement sur une copie identique de la première moitié
-  // — boucle infinie sans à-coup ni "retour au début" visible.
+  // La piste contient la liste EN DOUBLE pour permettre une boucle infinie
+  // sans à-coup (voir plus bas : on revient à 0 dès qu'on a défilé au-delà
+  // d'une copie complète, ce qui retombe pile sur un contenu identique).
   outer.innerHTML = `<div class="trending-carousel-track">${itemsHtml}${itemsHtml}</div>`;
   const track = outer.querySelector('.trending-carousel-track');
 
@@ -4144,11 +4144,48 @@ function renderTrendingCarousel(movies) {
     const item = e.target.closest('.trending-item');
     if (item) openMovieDetailSheet(item.dataset.movieId);
   });
-  // Pause pendant l'interaction (survol souris, ou doigt posé sur mobile) —
-  // sinon le défilement continue de bouger sous le doigt pendant qu'on essaie
-  // de taper précisément sur une affiche.
-  outer.addEventListener('touchstart', () => track.classList.add('paused'), { passive: true });
-  outer.addEventListener('touchend', () => track.classList.remove('paused'));
+
+  // Défilement automatique piloté en JS (pas une animation CSS) : ça permet
+  // de le mettre en pause pendant une interaction manuelle (glisser du doigt,
+  // molette, flèches) tout en laissant le défilement NATIF du navigateur
+  // gérer cette interaction lui-même — plutôt que de devoir réimplémenter un
+  // suivi de glissement à la main.
+  const AUTO_SCROLL_SPEED = 0.5; // px par frame
+  const RESUME_DELAY_MS = 3000; // reprise du défilement auto 3s après la dernière interaction
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('touchmove', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+
+  // Flèches de navigation (utiles surtout au clavier/souris sur desktop, où
+  // glisser à la souris est moins naturel qu'au doigt sur mobile).
+  document.getElementById('trending-prev-btn').addEventListener('click', () => {
+    pauseThenScheduleResume();
+    outer.scrollBy({ left: -200, behavior: 'smooth' });
+  });
+  document.getElementById('trending-next-btn').addEventListener('click', () => {
+    pauseThenScheduleResume();
+    outer.scrollBy({ left: 200, behavior: 'smooth' });
+  });
 }
 
 const discoverStack = document.getElementById('discover-stack');
