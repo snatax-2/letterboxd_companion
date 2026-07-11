@@ -364,6 +364,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   let pressTimer = null;
   let startX = 0, startY = 0;
   let pressedItem = null;
+  let longPressJustFired = false; // évite qu'un tap (click) ne se déclenche juste après un appui long déjà traité
 
   const container = document.getElementById('history-list');
   if (!container) return;
@@ -385,6 +386,8 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
       if (navigator.vibrate) navigator.vibrate(20);
       openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
       pressedItem = null;
+      longPressJustFired = true;
+      setTimeout(() => { longPressJustFired = false; }, 300);
     }, LONG_PRESS_MS);
   }, { passive: true });
 
@@ -397,6 +400,18 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchend', cancelPress);
   container.addEventListener('touchcancel', cancelPress);
+
+  // Tap (court) sur un film : ouvre sa fiche détaillée. L'appui long (menu
+  // d'actions) a priorité — s'il vient de se déclencher, on ignore ce tap.
+  container.addEventListener('click', (e) => {
+    if (longPressJustFired) return;
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const history = loadHistory();
+    const movieItem = history[idx];
+    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
+  });
 })();
 
 function createRadarSVG(averages) {

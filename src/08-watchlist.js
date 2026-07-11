@@ -231,5 +231,15 @@ wlInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { wlSuggestEl.style.display = 'none'; }
 });
 
+// Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
+document.getElementById('watchlist-list').addEventListener('click', e => {
+  const card = e.target.closest('.wl-card');
+  if (!card || e.target.closest('.wl-btn')) return;
+  const idx = parseInt(card.id.replace('wl-item-', ''), 10);
+  const list = loadWatchlist();
+  const item = list[idx];
+  if (item) openMovieDetailSheet(item.tmdbId);
+});
+
 renderWatchlist();
 

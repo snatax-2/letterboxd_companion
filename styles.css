@@ -824,6 +824,64 @@
   .action-sheet-item:active { transform: scale(.98); background: var(--surface2); }
   .action-sheet-item.danger { color: var(--red); }
   .action-sheet-item .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
+
+  /* ── FICHE FILM DÉTAILLÉE ── */
+  .mds-box { max-width: 440px; position: relative; padding-top: 44px; }
+  .mds-close {
+    position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
+    border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
+    color: var(--text-hi); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 2;
+  }
+  .mds-close:hover { background: var(--border-hi); }
+  .mds-close:active { transform: scale(.9); }
+
+  .mds-header { display: flex; gap: 14px; align-items: flex-start; }
+  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+  .mds-poster-ph {
+    width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
+    background: var(--surface2); font-size: 2rem; color: var(--text-mid);
+  }
+  .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; }
+  .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; }
+  .mds-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; }
+  .mds-tmdb-score { font-size: 0.8rem; color: var(--gold); margin-top: 8px; font-weight: 700; }
+
+  .mds-section-title {
+    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
+  }
+  .mds-overview { font-size: 0.88rem; line-height: 1.55; color: var(--text); }
+  .mds-row { display: flex; gap: 8px; font-size: 0.85rem; padding: 4px 0; color: var(--text); }
+  .mds-label { color: var(--text-mid); min-width: 90px; flex-shrink: 0; }
+
+  .mds-personal {
+    background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px;
+    border-left: 3px solid var(--orange);
+  }
+  .mds-personal-score { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--text-hi); }
+  .mds-personal-stars { color: var(--star-color); font-size: 0.9rem; }
+  .mds-personal-review { font-size: 0.84rem; color: var(--text); font-style: italic; margin-top: 6px; line-height: 1.4; }
+
+  .mds-error { font-size: 0.88rem; color: var(--text-mid); text-align: center; padding: 20px 0; }
+
+  /* Chaque section apparaît en cascade (délai croissant fixé en inline style
+     par buildMdsContent), plutôt que tout le contenu d'un bloc. */
+  .mds-header, .mds-section {
+    animation: mdsSectionIn .35s cubic-bezier(.2,.8,.2,1) both;
+    margin-top: 16px;
+  }
+  .mds-header { margin-top: 0; }
+  @keyframes mdsSectionIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Squelette de chargement, le temps que la fiche TMDb arrive */
+  .mds-skeleton { display: flex; gap: 14px; }
+  .mds-skeleton-poster { width: 100px; height: 148px; border-radius: var(--radius-sm); flex-shrink: 0; }
+  .mds-skeleton-lines { flex: 1; padding-top: 4px; }
+  .mds-skeleton-lines .skeleton-text { height: 12px; }
   .modal-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .modal-btn.danger { background: rgba(255, 64, 64, 0.15); border-color: var(--red); color: var(--red); }
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }

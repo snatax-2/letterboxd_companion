@@ -123,7 +123,7 @@ function renderDiscoverStack() {
   // Carte active, au premier plan
   const topCard = buildDiscoverCardEl(discoverQueue[0], true);
   discoverStack.appendChild(topCard);
-  attachSwipeHandlers(topCard);
+  attachSwipeHandlers(topCard, discoverQueue[0]);
 }
 
 function buildDiscoverCardEl(m, isTop) {
@@ -173,8 +173,9 @@ function resolveDiscoverSwipe(direction) {
   renderDiscoverStack();
 }
 
-function attachSwipeHandlers(cardEl) {
+function attachSwipeHandlers(cardEl, movie) {
   let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  const TAP_MAX_MOVE = 6; // en dessous de ce seuil de mouvement, on considère que c'est un tap, pas un swipe
   const stampLike = cardEl.querySelector('.discover-stamp.like');
   const stampPass = cardEl.querySelector('.discover-stamp.pass');
 
@@ -203,6 +204,13 @@ function attachSwipeHandlers(cardEl) {
       cardEl.style.transform = `translate(${dx > 0 ? 900 : -900}px, ${dy * 0.4}px) rotate(${dx / 10}deg)`;
       cardEl.style.opacity = '0';
       setTimeout(() => resolveDiscoverSwipe(direction), 280);
+    } else if (Math.abs(dx) < TAP_MAX_MOVE && Math.abs(dy) < TAP_MAX_MOVE) {
+      // Tap (quasi aucun mouvement) : ouvre la fiche détaillée du film plutôt
+      // que de traiter ça comme un swipe avorté.
+      cardEl.style.transform = '';
+      stampLike.style.opacity = 0;
+      stampPass.style.opacity = 0;
+      if (movie) openMovieDetailSheet(movie.id);
     } else {
       cardEl.classList.add('snap-back');
       cardEl.style.transform = '';
