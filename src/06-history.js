@@ -404,7 +404,8 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   const container = document.getElementById('history-list');
   if (!container) return;
 
-  function resetGesture() {
+  function resetGesture(e) {
+    if (e && pressedItem) e.stopPropagation();
     clearTimeout(pressTimer);
     pressTimer = null;
     pressedItem = null;
@@ -416,6 +417,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
     pressedItem = item;
     pressedContent = item.querySelector('.hist-item-content');
     startX = e.touches[0].clientX;
@@ -435,6 +437,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchmove', (e) => {
     if (!pressedItem) return;
+    e.stopPropagation();
     const curX = e.touches[0].clientX;
     const curY = e.touches[0].clientY;
     const rawDx = curX - startX;
@@ -459,8 +462,9 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     pressedItem.classList.toggle('hist-swipe-right', dx > 10);
   }, { passive: true });
 
-  function resolveGesture() {
+  function resolveGesture(e) {
     if (!pressedItem) return;
+    if (e) e.stopPropagation();
     clearTimeout(pressTimer);
 
     if (swipeMode === 'swipe') {
