@@ -47,12 +47,14 @@ function buildMdsContent(data, localMatch) {
 
   let personalHtml = '';
   if (localMatch) {
+    const critBreakdown = buildCriteriaBreakdown(localMatch);
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
         <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
+      ${critBreakdown}
     `;
   }
 
@@ -88,6 +90,36 @@ function buildMdsContent(data, localMatch) {
       <div class="mds-row"><span class="mds-label">Sortie</span><span>${releaseDateStr}</span></div>
       <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(data.budget)}</span></div>
       <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(data.revenue)}</span></div>
+    </div>
+  `;
+}
+
+// Ventilation par critère (barres, pas un radar — déjà utilisé sur le
+// dashboard, on veut ici quelque chose de plus direct à lire pour un seul
+// film) : uniquement si le film a été noté en mode détaillé.
+const MDS_CRITERIA_LABELS = {
+  scenario: 'Scénario', realisation: 'Réalisation', photo: 'Photo',
+  acteurs: 'Acteurs', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect',
+};
+function buildCriteriaBreakdown(localMatch) {
+  if (localMatch.mode !== 'detail' || !localMatch.values) return '';
+
+  const rows = CRITERIA.map((key, i) => {
+    const val = parseFloat(localMatch.values[key]);
+    if (isNaN(val)) return '';
+    const pct = (val / 10) * 100;
+    return `
+      <div class="mds-crit-row" style="animation-delay:${0.05 * i}s">
+        <span class="mds-crit-label">${MDS_CRITERIA_LABELS[key] || key}</span>
+        <div class="mds-crit-track"><div class="mds-crit-fill" style="--mds-crit-pct:${pct}%"></div></div>
+        <span class="mds-crit-value">${val.toFixed(1)}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="mds-section mds-crit-breakdown" style="animation-delay:.08s">
+      <div class="mds-section-title">Détail par critère</div>
+      ${rows}
     </div>
   `;
 }

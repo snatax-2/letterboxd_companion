@@ -311,7 +311,7 @@
 
   /* ── MOVIE SEARCH ── */
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }
-  .search-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 8px; width: 100%; }
+  .search-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 12px; width: 100%; }
   .search-input {
     background: var(--bg); border: 1px solid var(--blue);
     border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 14px;
@@ -325,14 +325,14 @@
   .date-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--text-mid); padding: 10px 12px; font-family: var(--font-heading);
-    font-size: 0.85rem; outline: none; width: 100%;
+    font-size: 0.85rem; outline: none; width: 100%; box-shadow: none;
   }
   .date-input:focus { border-color: var(--border-hi); }
 
   .heart-btn {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all .2s;
-    display: flex; align-items: center; justify-content: center; min-width: 44px;
+    display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
 
@@ -949,6 +949,19 @@
   .mds-skeleton-poster { width: 100px; height: 148px; border-radius: var(--radius-sm); flex-shrink: 0; }
   .mds-skeleton-lines { flex: 1; padding-top: 4px; }
   .mds-skeleton-lines .skeleton-text { height: 12px; }
+
+  /* Ventilation par critère (barres) dans la fiche film — volontairement
+     différent du radar déjà utilisé sur le dashboard : plus direct à lire
+     pour un seul film précis. */
+  .mds-crit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.8rem; animation: mdsSectionIn .3s ease-out both; }
+  .mds-crit-label { width: 82px; flex-shrink: 0; color: var(--text-mid); }
+  .mds-crit-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .mds-crit-fill {
+    height: 100%; background: var(--orange); border-radius: 999px;
+    width: 0; animation: mdsCritGrow .5s ease-out .15s both;
+  }
+  .mds-crit-value { width: 30px; text-align: right; color: var(--text-hi); font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
+  @keyframes mdsCritGrow { to { width: var(--mds-crit-pct); } }
   .modal-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .modal-btn.danger { background: rgba(255, 64, 64, 0.15); border-color: var(--red); color: var(--red); }
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
@@ -1188,7 +1201,7 @@
     }
     .search-input { grid-column: 1 / -1; }
     .date-input { width: 100%; }
-    .heart-btn { min-width: 50px; }
+    .heart-btn { min-width: 50px; margin-left: 4px; }
     
     .film-strip { padding: 10px; gap: 10px; }
     .film-strip-info { min-width: 0; }
