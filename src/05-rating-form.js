@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════
 document.getElementById('heart-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate(50);
+  hapticPulse(document.getElementById('heart-btn'), 'medium');
   isLiked = !isLiked;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
   document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
@@ -283,6 +284,9 @@ CRITERIA.forEach(c => {
     // vibration ici suffit à donner un vrai "cranté" tactile au glissement,
     // sans logique supplémentaire de détection de palier.
     if (navigator.vibrate) navigator.vibrate(8);
+    // Pulse sur le chiffre affiché (pas le curseur lui-même, pour ne pas
+    // interférer avec sa propre transform native pendant le glissement).
+    hapticPulse(document.getElementById(`val-${c}`), 'light');
   });
 });
 
@@ -380,6 +384,7 @@ function playSaveConfirmation() {
 
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  hapticPulse(document.getElementById('save-btn'), 'strong');
   
   const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
   if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
@@ -585,6 +590,7 @@ function goToFocusStep(newIndex) {
   focusIndex = newIndex;
   renderFocusStep();
   if (navigator.vibrate) navigator.vibrate(10);
+  hapticPulse(document.getElementById('focus-progress'), 'light');
 }
 
 focusModeToggle.addEventListener('click', () => {

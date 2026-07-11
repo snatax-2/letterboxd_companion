@@ -1143,6 +1143,22 @@
     100% { opacity: 0; transform: scale(1); }
   }
 
+  /* Retour visuel "pseudo-haptique" (voir hapticPulse() dans 03-foundation.js)
+     — compense l'absence de l'API Vibration sur Safari iOS. Trois intensités,
+     du simple tick de slider au clic d'action plus marqué. */
+  @keyframes hapticLight { 0% { transform: scale(1); } 40% { transform: scale(0.93); } 100% { transform: scale(1); } }
+  @keyframes hapticMedium { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 65% { transform: scale(0.96); } 100% { transform: scale(1); } }
+  @keyframes hapticStrong {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.18); }
+    50% { transform: scale(0.94); }
+    75% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  .haptic-pulse-light { animation: hapticLight 0.18s ease-out; }
+  .haptic-pulse-medium { animation: hapticMedium 0.28s ease-out; }
+  .haptic-pulse-strong { animation: hapticStrong 0.4s ease-out; }
+
   /* Le radar "se dessine" depuis le centre à l'affichage (effet scan), au lieu
      d'apparaître d'un bloc — petit détail qui donne une sensation plus
      travaillée à l'onglet Historique. */

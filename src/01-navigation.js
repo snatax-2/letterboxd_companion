@@ -161,9 +161,11 @@ if (window.innerWidth <= 860) {
     if (dx < 0 && idx < TAB_ORDER.length - 1) {
       switchMobileNav(TAB_ORDER[idx + 1]); // glissement vers la gauche -> onglet suivant
       if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
     } else if (dx > 0 && idx > 0) {
       switchMobileNav(TAB_ORDER[idx - 1]); // glissement vers la droite -> onglet précédent
       if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
     }
   }, { passive: true });
 })();

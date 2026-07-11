@@ -46,11 +46,13 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
       cardEl.classList.add('wl-swipe-out-left');
       contentEl.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
       setTimeout(() => removeWatchlist(idx), 200);
     } else if (dx >= SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-right');
       contentEl.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
       setTimeout(() => watchlistToForm(idx), 200);
     } else {
       contentEl.style.transform = '';

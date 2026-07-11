@@ -171,6 +171,7 @@ function resolveDiscoverSwipe(direction) {
     markDiscoverPassed(movie.id);
     if (navigator.vibrate) navigator.vibrate(15);
   }
+  hapticPulse(discoverStack, 'medium');
   renderDiscoverStack();
 }
 

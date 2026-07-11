@@ -163,6 +163,25 @@ function loadDraft() {
   } catch(e) { console.error("Erreur de chargement du brouillon", e); }
 }
 
+// ═══════════════════════════════════════════
+//  RETOUR VISUEL "PSEUDO-HAPTIQUE"
+// ═══════════════════════════════════════════
+// Safari iOS n'implémente l'API Vibration sur AUCUNE version (choix
+// délibéré d'Apple, pas un bug) — `navigator.vibrate` y est simplement
+// absent, donc tous les `if (navigator.vibrate) navigator.vibrate(...)` de
+// l'app s'y taisent silencieusement, sans erreur mais aussi sans aucun
+// retour. Cette fonction ajoute un petit à-coup visuel (léger/moyen/fort)
+// sur l'élément concerné, en complément de chaque appel à vibrate() — pour
+// que la sensation de "clic" reste présente même sans vraie vibration.
+function hapticPulse(el, intensity = 'light') {
+  if (!el) return;
+  const cls = `haptic-pulse-${intensity}`;
+  el.classList.remove('haptic-pulse-light', 'haptic-pulse-medium', 'haptic-pulse-strong');
+  void el.offsetWidth; // force le reflow : permet de rejouer l'anim si elle vient d'être retirée
+  el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+}
+
 renderAll();
 loadDraft();
 

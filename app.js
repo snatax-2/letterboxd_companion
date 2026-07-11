@@ -303,9 +303,11 @@ if (window.innerWidth <= 860) {
     if (dx < 0 && idx < TAB_ORDER.length - 1) {
       switchMobileNav(TAB_ORDER[idx + 1]); // glissement vers la gauche -> onglet suivant
       if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
     } else if (dx > 0 && idx > 0) {
       switchMobileNav(TAB_ORDER[idx - 1]); // glissement vers la droite -> onglet précédent
       if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
     }
   }, { passive: true });
 })();
@@ -595,6 +597,25 @@ function loadDraft() {
     renderCriteriaAverageMarkers();
 
   } catch(e) { console.error("Erreur de chargement du brouillon", e); }
+}
+
+// ═══════════════════════════════════════════
+//  RETOUR VISUEL "PSEUDO-HAPTIQUE"
+// ═══════════════════════════════════════════
+// Safari iOS n'implémente l'API Vibration sur AUCUNE version (choix
+// délibéré d'Apple, pas un bug) — `navigator.vibrate` y est simplement
+// absent, donc tous les `if (navigator.vibrate) navigator.vibrate(...)` de
+// l'app s'y taisent silencieusement, sans erreur mais aussi sans aucun
+// retour. Cette fonction ajoute un petit à-coup visuel (léger/moyen/fort)
+// sur l'élément concerné, en complément de chaque appel à vibrate() — pour
+// que la sensation de "clic" reste présente même sans vraie vibration.
+function hapticPulse(el, intensity = 'light') {
+  if (!el) return;
+  const cls = `haptic-pulse-${intensity}`;
+  el.classList.remove('haptic-pulse-light', 'haptic-pulse-medium', 'haptic-pulse-strong');
+  void el.offsetWidth; // force le reflow : permet de rejouer l'anim si elle vient d'être retirée
+  el.classList.add(cls);
+  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
 }
 
 renderAll();
@@ -1100,6 +1121,7 @@ document.addEventListener('click', e => {
 // ═══════════════════════════════════════════
 document.getElementById('heart-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate(50);
+  hapticPulse(document.getElementById('heart-btn'), 'medium');
   isLiked = !isLiked;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
   document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
@@ -1380,6 +1402,9 @@ CRITERIA.forEach(c => {
     // vibration ici suffit à donner un vrai "cranté" tactile au glissement,
     // sans logique supplémentaire de détection de palier.
     if (navigator.vibrate) navigator.vibrate(8);
+    // Pulse sur le chiffre affiché (pas le curseur lui-même, pour ne pas
+    // interférer avec sa propre transform native pendant le glissement).
+    hapticPulse(document.getElementById(`val-${c}`), 'light');
   });
 });
 
@@ -1477,6 +1502,7 @@ function playSaveConfirmation() {
 
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  hapticPulse(document.getElementById('save-btn'), 'strong');
   
   const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
   if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
@@ -1682,6 +1708,7 @@ function goToFocusStep(newIndex) {
   focusIndex = newIndex;
   renderFocusStep();
   if (navigator.vibrate) navigator.vibrate(10);
+  hapticPulse(document.getElementById('focus-progress'), 'light');
 }
 
 focusModeToggle.addEventListener('click', () => {
@@ -2151,6 +2178,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     pressTimer = setTimeout(() => {
       if (!pressedItem || swipeMode === 'swipe') return; // déjà en train de glisser : pas d'appui long
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(pressedItem, 'medium');
       openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
       longPressJustFired = true;
       setTimeout(() => { longPressJustFired = false; }, 300);
@@ -2194,11 +2222,13 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         pressedItem.classList.add('hist-swipe-out-left');
         pressedContent.style.transform = 'translateX(-110%)';
         if (navigator.vibrate) navigator.vibrate(20);
+        hapticPulse(pressedItem, 'strong');
         setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
       } else if (dx >= SWIPE_THRESHOLD) {
         pressedItem.classList.add('hist-swipe-out-right');
         pressedContent.style.transform = 'translateX(110%)';
         if (navigator.vibrate) navigator.vibrate(20);
+        hapticPulse(pressedItem, 'strong');
         setTimeout(() => loadItem(idx), 200);
       } else {
         pressedContent.style.transform = '';
@@ -2612,11 +2642,13 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
       cardEl.classList.add('wl-swipe-out-left');
       contentEl.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
       setTimeout(() => removeWatchlist(idx), 200);
     } else if (dx >= SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-right');
       contentEl.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
       setTimeout(() => watchlistToForm(idx), 200);
     } else {
       contentEl.style.transform = '';
@@ -3428,6 +3460,7 @@ function resolveDiscoverSwipe(direction) {
     markDiscoverPassed(movie.id);
     if (navigator.vibrate) navigator.vibrate(15);
   }
+  hapticPulse(discoverStack, 'medium');
   renderDiscoverStack();
 }
 

@@ -425,6 +425,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     pressTimer = setTimeout(() => {
       if (!pressedItem || swipeMode === 'swipe') return; // déjà en train de glisser : pas d'appui long
       if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(pressedItem, 'medium');
       openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
       longPressJustFired = true;
       setTimeout(() => { longPressJustFired = false; }, 300);
@@ -468,11 +469,13 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         pressedItem.classList.add('hist-swipe-out-left');
         pressedContent.style.transform = 'translateX(-110%)';
         if (navigator.vibrate) navigator.vibrate(20);
+        hapticPulse(pressedItem, 'strong');
         setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
       } else if (dx >= SWIPE_THRESHOLD) {
         pressedItem.classList.add('hist-swipe-out-right');
         pressedContent.style.transform = 'translateX(110%)';
         if (navigator.vibrate) navigator.vibrate(20);
+        hapticPulse(pressedItem, 'strong');
         setTimeout(() => loadItem(idx), 200);
       } else {
         pressedContent.style.transform = '';
