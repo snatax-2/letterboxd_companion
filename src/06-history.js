@@ -400,9 +400,47 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   let wasSwipe = false; // idem, juste après un swipe
   let swipeMode = null; // null = pas encore décidé, 'swipe' = glissement horizontal engagé, 'scroll' = mouvement vertical (on laisse faire nativement)
   let dx = 0;
+  // Un swipe qui atteint le seuil n'exécute plus l'action tout de suite : il
+  // "arme" l'item (piste révélée, en attente d'un tap de confirmation sur
+  // l'indice) plutôt que de supprimer/modifier immédiatement — évite les
+  // suppressions accidentelles lors d'un simple scroll un peu appuyé.
+  let armedItem = null;
+  let armedDirection = null; // 'left' (supprimer) ou 'right' (modifier)
 
   const container = document.getElementById('history-list');
   if (!container) return;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.hist-item-content');
+    if (content) { content.style.transition = 'transform .25s ease'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
+    armedItem = null;
+    armedDirection = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const item = armedItem;
+    const dir = armedDirection;
+    const content = item.querySelector('.hist-item-content');
+    const idx = parseInt(item.dataset.idx, 10);
+    armedItem = null;
+    armedDirection = null;
+    if (dir === 'left') {
+      item.classList.add('hist-swipe-out-left');
+      content.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+    } else {
+      item.classList.add('hist-swipe-out-right');
+      content.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => loadItem(idx), 200);
+    }
+  }
 
   function resetGesture(e) {
     if (e && pressedItem) e.stopPropagation();
@@ -468,19 +506,22 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     clearTimeout(pressTimer);
 
     if (swipeMode === 'swipe') {
-      const idx = parseInt(pressedItem.dataset.idx, 10);
       if (dx <= -SWIPE_THRESHOLD) {
-        pressedItem.classList.add('hist-swipe-out-left');
-        pressedContent.style.transform = 'translateX(-110%)';
-        if (navigator.vibrate) navigator.vibrate(20);
-        hapticPulse(pressedItem, 'strong');
-        setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+        cancelArmed(); // un seul item armé à la fois
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        armedDirection = 'left';
+        hapticPulse(pressedItem, 'medium');
       } else if (dx >= SWIPE_THRESHOLD) {
-        pressedItem.classList.add('hist-swipe-out-right');
-        pressedContent.style.transform = 'translateX(110%)';
-        if (navigator.vibrate) navigator.vibrate(20);
-        hapticPulse(pressedItem, 'strong');
-        setTimeout(() => loadItem(idx), 200);
+        cancelArmed();
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = 'translateX(120px)';
+        pressedItem.classList.add('hist-swipe-armed-right');
+        armedItem = pressedItem;
+        armedDirection = 'right';
+        hapticPulse(pressedItem, 'medium');
       } else {
         pressedContent.style.transform = '';
         pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
@@ -536,6 +577,22 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   // d'actions) et le swipe (supprimer/modifier) ont priorité — s'ils viennent
   // de se déclencher, on ignore ce tap.
   container.addEventListener('click', (e) => {
+    // Confirmation/annulation d'un item armé (swipe qui a atteint son seuil) :
+    // prioritaire sur tout le reste, y compris le garde-fou "wasSwipe" — sinon
+    // on ne pourrait jamais confirmer juste après avoir swipé.
+    if (armedItem) {
+      const hint = e.target.closest('.hist-swipe-hint');
+      const clickedItem = e.target.closest('.hist-item');
+      if (hint && clickedItem === armedItem) {
+        confirmArmed();
+        return;
+      }
+      const wasArmedItself = clickedItem === armedItem;
+      cancelArmed();
+      if (wasArmedItself) return; // juste annulé : ne rien faire de plus avec ce tap
+      // sinon : le tap visait autre chose (un autre film, le CTA...), on continue normalement
+    }
+
     if (e.target.closest('#empty-state-history-cta')) {
       if (window.innerWidth <= 860) switchMobileNav('rating');
       const searchInput = document.getElementById('movie-search');
@@ -550,6 +607,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const movieItem = history[idx];
     if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
   });
+
+  // Filet de sécurité : un tap n'importe où EN DEHORS de la liste (changer
+  // d'onglet, ouvrir les réglages...) annule aussi un item resté armé.
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
 })();
 
 function createRadarSVG(averages) {
@@ -691,6 +754,7 @@ function renderStats() {
     document.getElementById('timeline-chart-container').innerHTML = '';
     document.getElementById('top-directors-list').innerHTML = '<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>';
     buildHistogram({});
+    resetProfileExtras();
     return;
   }
 
@@ -744,7 +808,159 @@ function renderStats() {
     if (dist[key] !== undefined) dist[key]++;
   });
   buildHistogram(dist);
+  renderProfileExtras(history);
 }
+
+// ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
+function resetProfileExtras() {
+  document.getElementById('profile-member-since').textContent = '—';
+  document.getElementById('profile-watch-time').textContent = '—';
+  document.getElementById('profile-fav-actor').textContent = '—';
+  document.getElementById('profile-streak').textContent = 'Pas de série en cours';
+  renderBadges(computeBadges([], {}));
+  drawProfileShareCard(null);
+}
+
+function renderProfileExtras(history) {
+  // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
+  const dates = history
+    .map(h => h.savedAt || h.date)
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .filter(d => !isNaN(d));
+  let memberSinceStr = '—';
+  if (dates.length > 0) {
+    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
+    memberSinceStr = earliest.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  document.getElementById('profile-member-since').textContent = memberSinceStr;
+
+  // Temps total visionné : somme des durées (le champ runtime est stocké en
+  // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
+  // numérique, donc ça fonctionne aussi bien avec juste "142").
+  const totalMinutes = history.reduce((sum, h) => {
+    const mins = parseInt(h.runtime, 10);
+    return sum + (isNaN(mins) ? 0 : mins);
+  }, 0);
+  document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
+
+  // Acteur favori : même principe que le top réalisateurs (compte + note
+  // moyenne), mais un seul nom affiché ici.
+  const actorStats = {};
+  history.forEach(h => {
+    if (h.actors) {
+      h.actors.split(',').forEach(a => {
+        const t = a.trim(); if (!t) return;
+        if (!actorStats[t]) actorStats[t] = { count: 0, sum: 0 };
+        actorStats[t].count++; actorStats[t].sum += parseFloat(h.score) || 0;
+      });
+    }
+  });
+  const topActors = Object.entries(actorStats)
+    .map(([name, d]) => ({ name, count: d.count, avg: d.sum / d.count }))
+    .sort((a, b) => b.count - a.count || b.avg - a.avg);
+  document.getElementById('profile-fav-actor').textContent =
+    topActors.length > 0 ? `${topActors[0].name} (${topActors[0].count} film${topActors[0].count > 1 ? 's' : ''})` : '—';
+
+  // Série en cours (streak) : semaines ISO consécutives avec au moins un film.
+  const streak = computeWeekStreak(history);
+  document.getElementById('profile-streak').textContent =
+    streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
+
+  renderBadges(computeBadges(history, { totalMinutes, streak }));
+  drawProfileShareCard({ history, totalMinutes, memberSinceStr, topActor: topActors[0]?.name });
+}
+
+function renderBadges(badges) {
+  const grid = document.getElementById('badges-grid');
+  if (!grid) return;
+  grid.innerHTML = badges.map(b => `
+    <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
+      <div class="badge-icon">${ICONS.star}</div>
+      <div class="badge-label">${b.label}</div>
+    </div>
+  `).join('');
+}
+
+// Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs
+// et la police du thème actif (lues via getComputedStyle), pour que l'image
+// exportée corresponde à l'identité visuelle choisie plutôt qu'un rendu
+// générique. Pas de librairie externe — dessin manuel, comme pour
+// l'extraction de couleur dominante (00c-poster-color.js).
+function drawProfileShareCard(data) {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return; // certains environnements restrictifs renvoient null plutôt que de lever une erreur
+  const w = canvas.width, h = canvas.height;
+
+  const styles = getComputedStyle(document.documentElement);
+  const bg = styles.getPropertyValue('--surface').trim() || '#1f2935';
+  const textHi = styles.getPropertyValue('--text-hi').trim() || '#fff';
+  const textMid = styles.getPropertyValue('--text-mid').trim() || '#9ab';
+  const accent = styles.getPropertyValue('--orange').trim() || '#ff8000';
+  const fontHeading = (styles.getPropertyValue('--font-heading').trim() || 'sans-serif').split(',')[0].replace(/['"]/g, '');
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, w - 4, h - 4);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accent;
+  ctx.font = `900 30px "${fontHeading}", sans-serif`;
+  ctx.fillText('LUDEX', w / 2, 60);
+
+  ctx.fillStyle = textMid;
+  ctx.font = `13px "${fontHeading}", sans-serif`;
+  ctx.fillText('MON PROFIL CINÉPHILE', w / 2, 84);
+
+  if (!data || !data.history || data.history.length === 0) {
+    ctx.fillStyle = textMid;
+    ctx.font = '15px sans-serif';
+    ctx.fillText('Note quelques films pour', w / 2, h / 2 - 8);
+    ctx.fillText('débloquer ta carte de profil', w / 2, h / 2 + 16);
+    return;
+  }
+
+  const { history, totalMinutes, memberSinceStr, topActor } = data;
+  const avg = history.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0) / history.length;
+
+  const rows = [
+    ['Films notés', String(history.length)],
+    ['Note moyenne', avg.toFixed(1) + '/10'],
+    ['Temps visionné', formatWatchTime(totalMinutes)],
+    ['Membre depuis', memberSinceStr || '—'],
+    ['Acteur favori', topActor || '—'],
+  ];
+
+  let y = 150;
+  rows.forEach(([label, val]) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = textMid;
+    ctx.font = '12px sans-serif';
+    ctx.fillText(label.toUpperCase(), 30, y);
+    ctx.fillStyle = textHi;
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText(val, 30, y + 26);
+    y += 62;
+  });
+}
+
+document.getElementById('profile-share-btn').addEventListener('click', () => {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext || !canvas.getContext('2d')) {
+    showToast("Ton navigateur ne permet pas de générer cette image.");
+    return;
+  }
+  const link = document.createElement('a');
+  link.download = 'ludex-profil.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Image téléchargée.');
+});
 
 function buildHistogram(dist) {
   const container = document.getElementById('histogram');

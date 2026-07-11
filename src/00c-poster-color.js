@@ -11,7 +11,16 @@
 // "L'Affiche d'Art Moderne". Se dégrade silencieusement (aucune erreur
 // visible) en cas de restriction CORS ou toute autre erreur : la carte garde
 // alors simplement la couleur d'accent par défaut du thème.
+// Cache en mémoire (URL -> couleur, ou null si l'extraction a échoué) : sans
+// lui, la MÊME affiche serait ré-analysée (chargement d'image + dessin canvas
+// + boucle sur les pixels) à chaque nouveau rendu de la liste — y compris pour
+// des films dont l'affiche n'a pas changé, juste parce qu'un AUTRE film de la
+// liste a été modifié/supprimé (ce qui redessine tout). Un vrai coût de
+// performance répété inutilement, maintenant évité.
+const posterAccentCache = new Map();
+
 function extractPosterAccentColorFromUrl(url) {
+  if (posterAccentCache.has(url)) return Promise.resolve(posterAccentCache.get(url));
   return new Promise((resolve) => {
     try {
       const img = new Image();
@@ -33,13 +42,15 @@ function extractPosterAccentColorFromUrl(url) {
             r += data[i]; g += data[i + 1]; b += data[i + 2];
             count++;
           }
-          if (count === 0) { resolve(null); return; }
-          resolve(`rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`);
+          const color = count === 0 ? null : `rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`;
+          posterAccentCache.set(url, color);
+          resolve(color);
         } catch (e) {
-          resolve(null); // canvas "tainted" (CORS) : dégradation silencieuse
+          posterAccentCache.set(url, null); // canvas "tainted" (CORS) : dégradation silencieuse
+          resolve(null);
         }
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => { posterAccentCache.set(url, null); resolve(null); };
       img.src = url;
     } catch (e) {
       resolve(null);

@@ -26,6 +26,54 @@ function markDiscoverPassed(tmdbId) {
   localStorage.setItem(DISCOVER_PASSED_KEY, JSON.stringify(list.slice(-DISCOVER_PASSED_MAX)));
 }
 
+// Films déjà utilisés récemment comme BASE de recommandation (pas les
+// suggestions elles-mêmes, les films de l'historique dont on est parti) —
+// permet de tourner à travers l'historique plutôt que retomber sur les mêmes
+// 2-3 films à chaque rechargement, pour des suggestions qui se diversifient
+// au fur et à mesure que l'historique s'enrichit.
+const DISCOVER_BASIS_USED_KEY = 'lbx_discover_basis_used';
+function loadBasisUsed() {
+  try { return JSON.parse(localStorage.getItem(DISCOVER_BASIS_USED_KEY)) || []; } catch { return []; }
+}
+function markBasisUsed(tmdbIds) {
+  const used = loadBasisUsed();
+  used.push(...tmdbIds.map(String));
+  localStorage.setItem(DISCOVER_BASIS_USED_KEY, JSON.stringify(used.slice(-30)));
+}
+
+// Choisit `count` films de l'historique pour servir de base aux
+// recommandations : privilégie les films PAS récemment utilisés (rotation),
+// et répartit sur des genres différents quand c'est possible plutôt que de
+// piocher au hasard dans tout le pool (qui sur-représenterait le genre le
+// plus souvent noté). Basé sur TOUS les films vus, pas seulement les mieux
+// notés — même un film moyen renseigne sur les goûts (genre, casting...).
+function pickDiverseBasisFilms(pool, count) {
+  const used = new Set(loadBasisUsed());
+  const fresh = pool.filter(f => !used.has(String(f.tmdbId)));
+  const candidates = fresh.length >= count ? fresh : pool; // pas assez de films "frais" : retombe sur tout le pool
+
+  const byGenre = {};
+  candidates.forEach(f => {
+    const primaryGenre = (f.genre || '').split(',')[0].trim() || 'Autre';
+    (byGenre[primaryGenre] = byGenre[primaryGenre] || []).push(f);
+  });
+
+  const genres = Object.keys(byGenre).sort(() => 0.5 - Math.random());
+  const picked = [];
+  for (const g of genres) {
+    if (picked.length >= count) break;
+    const arr = byGenre[g];
+    picked.push(arr[Math.floor(Math.random() * arr.length)]);
+  }
+  // Moins de genres distincts que `count` : complète au hasard dans le reste.
+  const remaining = candidates.filter(f => !picked.includes(f));
+  while (picked.length < count && remaining.length > 0) {
+    const idx = Math.floor(Math.random() * remaining.length);
+    picked.push(remaining.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
 let discoverQueue = [];
 let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
 
@@ -55,39 +103,36 @@ async function loadDiscoverQueueInner() {
 
   const history = loadHistory();
   const watchlist = loadWatchlist();
-  const topFilms = history.filter(h => parseFloat(h.score) >= 8.0);
+  const watchedWithId = history.filter(h => h.tmdbId);
 
-  if (topFilms.length === 0) {
-    discoverStack.innerHTML = '<div class="discover-empty">Note quelques films à 8/10 ou plus pour débloquer des suggestions personnalisées ici.</div>';
+  if (watchedWithId.length === 0) {
+    discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
     return;
   }
 
-  // Seuls les films liés à une fiche TMDb (tmdbId) peuvent servir de base à des
-  // recommandations. On filtre AVANT de tirer au sort, sinon un tirage
-  // malchanceux (uniquement des films ajoutés en "saisie manuelle") viderait la
-  // file sans raison apparente, avec un message trompeur ("tout vu").
-  const topFilmsWithId = topFilms.filter(f => f.tmdbId);
-  if (topFilmsWithId.length === 0) {
-    discoverStack.innerHTML = '<div class="discover-empty">Tes films notés 8/10 ou plus ont été ajoutés en saisie manuelle (sans fiche TMDb) : impossible d\'en tirer des suggestions. Essaie de renoter un film en le sélectionnant depuis les résultats de recherche.</div>';
-    return;
-  }
-
-  const shuffledTop = [...topFilmsWithId].sort(() => 0.5 - Math.random()).slice(0, 3);
+  const shuffledTop = pickDiverseBasisFilms(watchedWithId, 3);
+  markBasisUsed(shuffledTop.map(f => f.tmdbId));
   const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
   const passedIds = new Set(loadDiscoverPassed());
 
   let allRecs = [];
-  for (const film of shuffledTop) {
-    try {
-      const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
-      const data = await res.json();
+  // Les 3 requêtes sont indépendantes : en parallèle (Promise.all) plutôt que
+  // l'une après l'autre, le temps d'attente total tombe à celui de la plus
+  // lente des trois au lieu de la somme des trois — l'onglet Découvrir
+  // s'affiche nettement plus vite.
+  const results = await Promise.allSettled(
+    shuffledTop.map(film => fetch(`/api/search?id=${film.tmdbId}&recommendations=true`).then(res => res.json()))
+  );
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const data = result.value;
       const moviesArray = data.results || (Array.isArray(data) ? data : null);
       if (moviesArray) allRecs.push(...moviesArray);
-    } catch (e) {
-      console.warn("Impossible de charger les suggestions pour l'ID " + film.tmdbId, e);
+    } else {
+      console.warn("Impossible de charger les suggestions pour l'ID " + shuffledTop[i].tmdbId, result.reason);
     }
-  }
+  });
 
   const uniqueRecs = [];
   const addedIds = new Set();

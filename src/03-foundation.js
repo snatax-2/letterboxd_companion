@@ -177,9 +177,16 @@ function hapticPulse(el, intensity = 'light') {
   if (!el) return;
   const cls = `haptic-pulse-${intensity}`;
   el.classList.remove('haptic-pulse-light', 'haptic-pulse-medium', 'haptic-pulse-strong');
-  void el.offsetWidth; // force le reflow : permet de rejouer l'anim si elle vient d'être retirée
-  el.classList.add(cls);
-  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  // requestAnimationFrame (plutôt qu'une lecture forcée de offsetWidth) pour
+  // rejouer l'animation : évite un reflow SYNCHRONE à chaque appel. Sur cette
+  // fonction en particulier, c'est important — elle est appelée à CHAQUE
+  // glissement de slider (potentiellement des dizaines de fois par seconde
+  // pendant un geste), et un reflow forcé à cette fréquence-là créait du
+  // saccadé pendant l'interaction la plus courante de l'app.
+  requestAnimationFrame(() => {
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  });
 }
 
 renderAll();

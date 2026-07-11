@@ -95,7 +95,16 @@ if (typeof module !== 'undefined' && module.exports) {
 // "L'Affiche d'Art Moderne". Se dégrade silencieusement (aucune erreur
 // visible) en cas de restriction CORS ou toute autre erreur : la carte garde
 // alors simplement la couleur d'accent par défaut du thème.
+// Cache en mémoire (URL -> couleur, ou null si l'extraction a échoué) : sans
+// lui, la MÊME affiche serait ré-analysée (chargement d'image + dessin canvas
+// + boucle sur les pixels) à chaque nouveau rendu de la liste — y compris pour
+// des films dont l'affiche n'a pas changé, juste parce qu'un AUTRE film de la
+// liste a été modifié/supprimé (ce qui redessine tout). Un vrai coût de
+// performance répété inutilement, maintenant évité.
+const posterAccentCache = new Map();
+
 function extractPosterAccentColorFromUrl(url) {
+  if (posterAccentCache.has(url)) return Promise.resolve(posterAccentCache.get(url));
   return new Promise((resolve) => {
     try {
       const img = new Image();
@@ -117,13 +126,15 @@ function extractPosterAccentColorFromUrl(url) {
             r += data[i]; g += data[i + 1]; b += data[i + 2];
             count++;
           }
-          if (count === 0) { resolve(null); return; }
-          resolve(`rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`);
+          const color = count === 0 ? null : `rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`;
+          posterAccentCache.set(url, color);
+          resolve(color);
         } catch (e) {
-          resolve(null); // canvas "tainted" (CORS) : dégradation silencieuse
+          posterAccentCache.set(url, null); // canvas "tainted" (CORS) : dégradation silencieuse
+          resolve(null);
         }
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => { posterAccentCache.set(url, null); resolve(null); };
       img.src = url;
     } catch (e) {
       resolve(null);
@@ -146,15 +157,18 @@ function applyPosterAccent(posterUrl, cardEl) {
 const tabHistBtn = document.getElementById('tab-right-history');
 const tabWlBtn = document.getElementById('tab-right-watchlist');
 const tabDiscoverBtn = document.getElementById('tab-right-discover');
+const tabProfileBtn = document.getElementById('tab-right-profile');
 const viewHist = document.getElementById('view-history');
 const viewWl = document.getElementById('view-watchlist');
 const viewDiscover = document.getElementById('view-discover');
+const viewProfile = document.getElementById('view-profile');
 
 function switchRightTab(tabName) {
   const tabs = {
     history:   { btn: tabHistBtn,     view: viewHist },
     watchlist: { btn: tabWlBtn,       view: viewWl },
     discover:  { btn: tabDiscoverBtn, view: viewDiscover },
+    profile:   { btn: tabProfileBtn,  view: viewProfile },
   };
   for (const [name, { btn, view }] of Object.entries(tabs)) {
     const isActive = name === tabName;
@@ -172,11 +186,13 @@ function switchRightTab(tabName) {
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
 tabWlBtn.addEventListener('click', () => switchRightTab('watchlist'));
 tabDiscoverBtn.addEventListener('click', () => switchRightTab('discover'));
+tabProfileBtn.addEventListener('click', () => switchRightTab('profile'));
 
 const navRating = document.getElementById('nav-rating');
 const navHistory = document.getElementById('nav-history');
 const navWatchlist = document.getElementById('nav-watchlist');
 const navDiscover = document.getElementById('nav-discover');
+const navProfile = document.getElementById('nav-profile');
 const colRating = document.getElementById('col-rating');
 const colRightViews = document.getElementById('col-right-views');
 
@@ -186,8 +202,7 @@ const colRightViews = document.getElementById('col-right-views');
 // déjà présente.
 function playMobileViewAnim(el) {
   el.classList.remove('mobile-view-anim');
-  void el.offsetWidth;
-  el.classList.add('mobile-view-anim');
+  requestAnimationFrame(() => el.classList.add('mobile-view-anim'));
 }
 
 function switchMobileNav(view) {
@@ -195,10 +210,12 @@ function switchMobileNav(view) {
   navHistory.classList.remove('active');
   navWatchlist.classList.remove('active');
   navDiscover.classList.remove('active');
+  navProfile.classList.remove('active');
   navRating.removeAttribute('aria-current');
   navHistory.removeAttribute('aria-current');
   navWatchlist.removeAttribute('aria-current');
   navDiscover.removeAttribute('aria-current');
+  navProfile.removeAttribute('aria-current');
 
   colRating.style.display = 'none';
   colRightViews.style.display = 'none';
@@ -226,6 +243,12 @@ function switchMobileNav(view) {
     colRightViews.style.display = 'flex';
     switchRightTab('discover');
     playMobileViewAnim(colRightViews);
+  } else if (view === 'profile') {
+    navProfile.classList.add('active');
+    navProfile.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('profile');
+    playMobileViewAnim(colRightViews);
   }
 }
 
@@ -233,6 +256,7 @@ navRating.addEventListener('click', () => switchMobileNav('rating'));
 navHistory.addEventListener('click', () => switchMobileNav('history'));
 navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
 navDiscover.addEventListener('click', () => switchMobileNav('discover'));
+navProfile.addEventListener('click', () => switchMobileNav('profile'));
 
 window.addEventListener('resize', () => {
   if (window.innerWidth > 860) {
@@ -243,6 +267,7 @@ window.addEventListener('resize', () => {
     if (activeNavId === 'nav-history') switchMobileNav('history');
     else if (activeNavId === 'nav-watchlist') switchMobileNav('watchlist');
     else if (activeNavId === 'nav-discover') switchMobileNav('discover');
+    else if (activeNavId === 'nav-profile') switchMobileNav('profile');
     else switchMobileNav('rating');
   }
 });
@@ -256,7 +281,7 @@ if (window.innerWidth <= 860) {
 // dans l'ordre affiché en bas de l'écran : Noter → Historique → À voir → Découvrir.
 // Complète les boutons de la barre de navigation, ne les remplace pas.
 (function initMobileSwipeNav() {
-  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover'];
+  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover', 'profile'];
   const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
   const SWIPE_ANGLE_RATIO = 1.5; // le geste doit être nettement plus horizontal que vertical
 
@@ -613,9 +638,16 @@ function hapticPulse(el, intensity = 'light') {
   if (!el) return;
   const cls = `haptic-pulse-${intensity}`;
   el.classList.remove('haptic-pulse-light', 'haptic-pulse-medium', 'haptic-pulse-strong');
-  void el.offsetWidth; // force le reflow : permet de rejouer l'anim si elle vient d'être retirée
-  el.classList.add(cls);
-  el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  // requestAnimationFrame (plutôt qu'une lecture forcée de offsetWidth) pour
+  // rejouer l'animation : évite un reflow SYNCHRONE à chaque appel. Sur cette
+  // fonction en particulier, c'est important — elle est appelée à CHAQUE
+  // glissement de slider (potentiellement des dizaines de fois par seconde
+  // pendant un geste), et un reflow forcé à cette fréquence-là créait du
+  // saccadé pendant l'interaction la plus courante de l'app.
+  requestAnimationFrame(() => {
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  });
 }
 
 renderAll();
@@ -911,6 +943,101 @@ function computeCriteriaAverages(history, criteria) {
   return avgs;
 }
 
+// ─── Onglet Profil : temps visionné, série en cours, badges ────────────────
+function formatWatchTime(totalMinutes) {
+  if (!totalMinutes || totalMinutes <= 0) return '—';
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const parts = [];
+  if (days > 0) parts.push(`${days} j`);
+  if (hours > 0 || days === 0) parts.push(`${hours} h`);
+  return parts.join(' ');
+}
+
+// Clé "année-semaine ISO" pour une date donnée — deux dates de la même semaine
+// ISO (lundi à dimanche) produisent la même clé, peu importe le jour exact.
+function getISOWeekKey(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${weekNo}`;
+}
+
+// Nombre de semaines ISO consécutives (en remontant depuis AUJOURD'HUI) avec
+// au moins un film noté — 0 si la semaine en cours n'a rien.
+function computeWeekStreak(history, referenceDate = new Date()) {
+  const weeksWithActivity = new Set();
+  history.forEach(h => {
+    const raw = h.savedAt || h.date;
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    weeksWithActivity.add(getISOWeekKey(d));
+  });
+
+  let streak = 0;
+  const cursor = new Date(referenceDate);
+  while (weeksWithActivity.has(getISOWeekKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+// Badges débloqués selon l'historique — chaque entrée est indépendante,
+// aucune ne dépend d'un ordre de déblocage particulier.
+function computeBadges(history, extras = {}) {
+  // Déclaré ICI (local, pas en haut du fichier) : même bug que
+  // CRITERIA_SHORT_LABELS et CONTEXT_TAG_ICONS rencontré précédemment — un
+  // `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution n'a pas atteint cette ligne, or `renderAll()` est appelée de
+  // façon précoce (03-foundation.js) avant même que 03b-pure-logic.js n'ait
+  // fini de s'exécuter.
+  const GENRE_BADGE_THRESHOLD = 5;
+  const totalMinutes = extras.totalMinutes || 0;
+  const streak = extras.streak || 0;
+  const genreSet = new Set();
+  const genreCounts = {};
+  history.forEach(h => {
+    if (h.genre) h.genre.split(',').forEach(g => {
+      const t = g.trim(); if (!t) return;
+      genreSet.add(t);
+      genreCounts[t] = (genreCounts[t] || 0) + 1;
+    });
+  });
+  const reviewCount = history.filter(h => h.review && h.review.trim().length > 0).length;
+
+  const defs = [
+    { id: 'films_10',  label: '10 films notés',        unlocked: history.length >= 10 },
+    { id: 'films_50',  label: '50 films notés',         unlocked: history.length >= 50 },
+    { id: 'films_100', label: '100 films notés',        unlocked: history.length >= 100 },
+    { id: 'genres_5',  label: '5 genres différents',    unlocked: genreSet.size >= 5 },
+    { id: 'genres_10', label: '10 genres différents',   unlocked: genreSet.size >= 10 },
+    { id: 'reviews_10',label: '10 critiques écrites',   unlocked: reviewCount >= 10 },
+    { id: 'streak_4',  label: '4 semaines de suite',    unlocked: streak >= 4 },
+    { id: 'marathon',  label: 'Marathon (24h de films)',unlocked: totalMinutes >= 24 * 60 },
+    { id: 'cinephile', label: 'Cinéphile (7j de films)',unlocked: totalMinutes >= 7 * 24 * 60 },
+  ];
+
+  // Un badge par genre RÉELLEMENT exploré (au moins un film), pas une liste
+  // figée de tous les genres TMDb possibles — évite d'afficher des dizaines
+  // de badges verrouillés pour des genres jamais regardés. Triés du plus au
+  // moins regardé, pour mettre en avant ce qui définit vraiment les goûts de
+  // l'utilisateur.
+  const genreBadges = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8) // les 8 genres les plus regardés seulement, pour ne pas surcharger la grille
+    .map(([genre, count]) => ({
+      id: 'genre_' + genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
+      label: `Fan de ${genre} (${Math.min(count, GENRE_BADGE_THRESHOLD)}/${GENRE_BADGE_THRESHOLD})`,
+      unlocked: count >= GENRE_BADGE_THRESHOLD,
+    }));
+
+  return defs.concat(genreBadges);
+}
+
 // ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -927,6 +1054,10 @@ if (typeof module !== 'undefined' && module.exports) {
     getDesc,
     DESCS,
     computeCriteriaAverages,
+    formatWatchTime,
+    getISOWeekKey,
+    computeWeekStreak,
+    computeBadges,
   };
 }
 
@@ -1617,6 +1748,7 @@ window.loadItem = function(idx) {
   document.getElementById('movie-director').value = item.director || '';
   document.getElementById('movie-actors').value   = item.actors || ''; 
   document.getElementById('movie-tmdb-id').value  = item.tmdbId || '';
+  document.getElementById('movie-tmdb-score').value = item.tmdbScore || '';
   
   searchEl.value = item.title;
   document.getElementById('view-date').value     = item.date  || '';
@@ -1639,6 +1771,12 @@ window.loadItem = function(idx) {
     genre: item.genre, runtime: item.runtime, year: item.year,
     director: item.director, actors: item.actors
   });
+
+  if (item.tmdbScore) {
+    document.getElementById('strip-tmdb-score').textContent = item.tmdbScore + '/10';
+  } else {
+    document.getElementById('strip-tmdb-score').textContent = '—';
+  }
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;
@@ -2153,9 +2291,47 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   let wasSwipe = false; // idem, juste après un swipe
   let swipeMode = null; // null = pas encore décidé, 'swipe' = glissement horizontal engagé, 'scroll' = mouvement vertical (on laisse faire nativement)
   let dx = 0;
+  // Un swipe qui atteint le seuil n'exécute plus l'action tout de suite : il
+  // "arme" l'item (piste révélée, en attente d'un tap de confirmation sur
+  // l'indice) plutôt que de supprimer/modifier immédiatement — évite les
+  // suppressions accidentelles lors d'un simple scroll un peu appuyé.
+  let armedItem = null;
+  let armedDirection = null; // 'left' (supprimer) ou 'right' (modifier)
 
   const container = document.getElementById('history-list');
   if (!container) return;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.hist-item-content');
+    if (content) { content.style.transition = 'transform .25s ease'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
+    armedItem = null;
+    armedDirection = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const item = armedItem;
+    const dir = armedDirection;
+    const content = item.querySelector('.hist-item-content');
+    const idx = parseInt(item.dataset.idx, 10);
+    armedItem = null;
+    armedDirection = null;
+    if (dir === 'left') {
+      item.classList.add('hist-swipe-out-left');
+      content.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+    } else {
+      item.classList.add('hist-swipe-out-right');
+      content.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => loadItem(idx), 200);
+    }
+  }
 
   function resetGesture(e) {
     if (e && pressedItem) e.stopPropagation();
@@ -2221,19 +2397,22 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     clearTimeout(pressTimer);
 
     if (swipeMode === 'swipe') {
-      const idx = parseInt(pressedItem.dataset.idx, 10);
       if (dx <= -SWIPE_THRESHOLD) {
-        pressedItem.classList.add('hist-swipe-out-left');
-        pressedContent.style.transform = 'translateX(-110%)';
-        if (navigator.vibrate) navigator.vibrate(20);
-        hapticPulse(pressedItem, 'strong');
-        setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+        cancelArmed(); // un seul item armé à la fois
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        armedDirection = 'left';
+        hapticPulse(pressedItem, 'medium');
       } else if (dx >= SWIPE_THRESHOLD) {
-        pressedItem.classList.add('hist-swipe-out-right');
-        pressedContent.style.transform = 'translateX(110%)';
-        if (navigator.vibrate) navigator.vibrate(20);
-        hapticPulse(pressedItem, 'strong');
-        setTimeout(() => loadItem(idx), 200);
+        cancelArmed();
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = 'translateX(120px)';
+        pressedItem.classList.add('hist-swipe-armed-right');
+        armedItem = pressedItem;
+        armedDirection = 'right';
+        hapticPulse(pressedItem, 'medium');
       } else {
         pressedContent.style.transform = '';
         pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
@@ -2289,6 +2468,22 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   // d'actions) et le swipe (supprimer/modifier) ont priorité — s'ils viennent
   // de se déclencher, on ignore ce tap.
   container.addEventListener('click', (e) => {
+    // Confirmation/annulation d'un item armé (swipe qui a atteint son seuil) :
+    // prioritaire sur tout le reste, y compris le garde-fou "wasSwipe" — sinon
+    // on ne pourrait jamais confirmer juste après avoir swipé.
+    if (armedItem) {
+      const hint = e.target.closest('.hist-swipe-hint');
+      const clickedItem = e.target.closest('.hist-item');
+      if (hint && clickedItem === armedItem) {
+        confirmArmed();
+        return;
+      }
+      const wasArmedItself = clickedItem === armedItem;
+      cancelArmed();
+      if (wasArmedItself) return; // juste annulé : ne rien faire de plus avec ce tap
+      // sinon : le tap visait autre chose (un autre film, le CTA...), on continue normalement
+    }
+
     if (e.target.closest('#empty-state-history-cta')) {
       if (window.innerWidth <= 860) switchMobileNav('rating');
       const searchInput = document.getElementById('movie-search');
@@ -2303,6 +2498,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const movieItem = history[idx];
     if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
   });
+
+  // Filet de sécurité : un tap n'importe où EN DEHORS de la liste (changer
+  // d'onglet, ouvrir les réglages...) annule aussi un item resté armé.
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
 })();
 
 function createRadarSVG(averages) {
@@ -2444,6 +2645,7 @@ function renderStats() {
     document.getElementById('timeline-chart-container').innerHTML = '';
     document.getElementById('top-directors-list').innerHTML = '<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>';
     buildHistogram({});
+    resetProfileExtras();
     return;
   }
 
@@ -2497,7 +2699,159 @@ function renderStats() {
     if (dist[key] !== undefined) dist[key]++;
   });
   buildHistogram(dist);
+  renderProfileExtras(history);
 }
+
+// ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
+function resetProfileExtras() {
+  document.getElementById('profile-member-since').textContent = '—';
+  document.getElementById('profile-watch-time').textContent = '—';
+  document.getElementById('profile-fav-actor').textContent = '—';
+  document.getElementById('profile-streak').textContent = 'Pas de série en cours';
+  renderBadges(computeBadges([], {}));
+  drawProfileShareCard(null);
+}
+
+function renderProfileExtras(history) {
+  // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
+  const dates = history
+    .map(h => h.savedAt || h.date)
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .filter(d => !isNaN(d));
+  let memberSinceStr = '—';
+  if (dates.length > 0) {
+    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
+    memberSinceStr = earliest.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  document.getElementById('profile-member-since').textContent = memberSinceStr;
+
+  // Temps total visionné : somme des durées (le champ runtime est stocké en
+  // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
+  // numérique, donc ça fonctionne aussi bien avec juste "142").
+  const totalMinutes = history.reduce((sum, h) => {
+    const mins = parseInt(h.runtime, 10);
+    return sum + (isNaN(mins) ? 0 : mins);
+  }, 0);
+  document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
+
+  // Acteur favori : même principe que le top réalisateurs (compte + note
+  // moyenne), mais un seul nom affiché ici.
+  const actorStats = {};
+  history.forEach(h => {
+    if (h.actors) {
+      h.actors.split(',').forEach(a => {
+        const t = a.trim(); if (!t) return;
+        if (!actorStats[t]) actorStats[t] = { count: 0, sum: 0 };
+        actorStats[t].count++; actorStats[t].sum += parseFloat(h.score) || 0;
+      });
+    }
+  });
+  const topActors = Object.entries(actorStats)
+    .map(([name, d]) => ({ name, count: d.count, avg: d.sum / d.count }))
+    .sort((a, b) => b.count - a.count || b.avg - a.avg);
+  document.getElementById('profile-fav-actor').textContent =
+    topActors.length > 0 ? `${topActors[0].name} (${topActors[0].count} film${topActors[0].count > 1 ? 's' : ''})` : '—';
+
+  // Série en cours (streak) : semaines ISO consécutives avec au moins un film.
+  const streak = computeWeekStreak(history);
+  document.getElementById('profile-streak').textContent =
+    streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
+
+  renderBadges(computeBadges(history, { totalMinutes, streak }));
+  drawProfileShareCard({ history, totalMinutes, memberSinceStr, topActor: topActors[0]?.name });
+}
+
+function renderBadges(badges) {
+  const grid = document.getElementById('badges-grid');
+  if (!grid) return;
+  grid.innerHTML = badges.map(b => `
+    <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
+      <div class="badge-icon">${ICONS.star}</div>
+      <div class="badge-label">${b.label}</div>
+    </div>
+  `).join('');
+}
+
+// Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs
+// et la police du thème actif (lues via getComputedStyle), pour que l'image
+// exportée corresponde à l'identité visuelle choisie plutôt qu'un rendu
+// générique. Pas de librairie externe — dessin manuel, comme pour
+// l'extraction de couleur dominante (00c-poster-color.js).
+function drawProfileShareCard(data) {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return; // certains environnements restrictifs renvoient null plutôt que de lever une erreur
+  const w = canvas.width, h = canvas.height;
+
+  const styles = getComputedStyle(document.documentElement);
+  const bg = styles.getPropertyValue('--surface').trim() || '#1f2935';
+  const textHi = styles.getPropertyValue('--text-hi').trim() || '#fff';
+  const textMid = styles.getPropertyValue('--text-mid').trim() || '#9ab';
+  const accent = styles.getPropertyValue('--orange').trim() || '#ff8000';
+  const fontHeading = (styles.getPropertyValue('--font-heading').trim() || 'sans-serif').split(',')[0].replace(/['"]/g, '');
+
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, w - 4, h - 4);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accent;
+  ctx.font = `900 30px "${fontHeading}", sans-serif`;
+  ctx.fillText('LUDEX', w / 2, 60);
+
+  ctx.fillStyle = textMid;
+  ctx.font = `13px "${fontHeading}", sans-serif`;
+  ctx.fillText('MON PROFIL CINÉPHILE', w / 2, 84);
+
+  if (!data || !data.history || data.history.length === 0) {
+    ctx.fillStyle = textMid;
+    ctx.font = '15px sans-serif';
+    ctx.fillText('Note quelques films pour', w / 2, h / 2 - 8);
+    ctx.fillText('débloquer ta carte de profil', w / 2, h / 2 + 16);
+    return;
+  }
+
+  const { history, totalMinutes, memberSinceStr, topActor } = data;
+  const avg = history.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0) / history.length;
+
+  const rows = [
+    ['Films notés', String(history.length)],
+    ['Note moyenne', avg.toFixed(1) + '/10'],
+    ['Temps visionné', formatWatchTime(totalMinutes)],
+    ['Membre depuis', memberSinceStr || '—'],
+    ['Acteur favori', topActor || '—'],
+  ];
+
+  let y = 150;
+  rows.forEach(([label, val]) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = textMid;
+    ctx.font = '12px sans-serif';
+    ctx.fillText(label.toUpperCase(), 30, y);
+    ctx.fillStyle = textHi;
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText(val, 30, y + 26);
+    y += 62;
+  });
+}
+
+document.getElementById('profile-share-btn').addEventListener('click', () => {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext || !canvas.getContext('2d')) {
+    showToast("Ton navigateur ne permet pas de générer cette image.");
+    return;
+  }
+  const link = document.createElement('a');
+  link.download = 'ludex-profil.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Image téléchargée.');
+});
 
 function buildHistogram(dist) {
   const container = document.getElementById('histogram');
@@ -2601,13 +2955,88 @@ document.getElementById('import-file').addEventListener('change', e => {
 // ═══════════════════════════════════════════
 //  WATCHLIST & DYNAMIC RECOMMENDATIONS
 // ═══════════════════════════════════════════
-const WATCHLIST_KEY = 'lbx_watchlist';
+// ═══════════════════════════════════════════
+//  WATCHLISTS MULTIPLES
+// ═══════════════════════════════════════════
+// Plusieurs listes nommées ("À voir", "Halloween", "Suggestions de Marie"...)
+// plutôt qu'une seule. loadWatchlist()/saveWatchlist() ciblent toujours
+// implicitement la liste ACTIVE — tout le code existant (rendu, swipe,
+// synchro cloud, Découvrir) continue de fonctionner sans modification, sans
+// savoir qu'il y a désormais plusieurs listes possibles.
+const WATCHLISTS_META_KEY = 'lbx_watchlists_meta';
+const ACTIVE_WATCHLIST_KEY = 'lbx_active_watchlist_id';
+const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique), migrée au premier chargement
+
+function loadWatchlistsMeta() {
+  try { return JSON.parse(localStorage.getItem(WATCHLISTS_META_KEY)) || []; } catch { return []; }
+}
+function saveWatchlistsMeta(meta) {
+  localStorage.setItem(WATCHLISTS_META_KEY, JSON.stringify(meta));
+}
+function watchlistStorageKey(id) { return `lbx_watchlist_${id}`; }
+function watchlistTombstonesKey(id) { return `lbx_watchlist_tombstones_${id}`; }
+const WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_watchlist_list_tombstones'; // listes ENTIÈRES supprimées (pas juste des items)
+const LEGACY_WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones'; // ancienne clé (liste unique), migrée avec le reste
+
+// Migration ponctuelle : si l'ancienne clé unique existe et qu'aucune liste
+// nommée n'a encore été créée, on la transforme en une première liste "À voir"
+// — aucune perte de données pour les utilisateurs déjà en place.
+(function migrateLegacyWatchlist() {
+  if (loadWatchlistsMeta().length > 0) return; // déjà migré
+  let legacyItems = [];
+  try { legacyItems = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_KEY)) || []; } catch {}
+  let legacyTombstones = [];
+  try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+  const defaultId = 'default';
+  saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }]);
+  localStorage.setItem(watchlistStorageKey(defaultId), JSON.stringify(legacyItems));
+  localStorage.setItem(watchlistTombstonesKey(defaultId), JSON.stringify(legacyTombstones));
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, defaultId);
+})();
+
+function getActiveWatchlistId() {
+  let id = localStorage.getItem(ACTIVE_WATCHLIST_KEY);
+  const meta = loadWatchlistsMeta();
+  if (!id || !meta.find(l => l.id === id)) {
+    id = meta[0]?.id || 'default';
+    localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+  }
+  return id;
+}
+function setActiveWatchlistId(id) {
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+}
+
+function createWatchlistList(name) {
+  const meta = loadWatchlistsMeta();
+  const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  meta.push({ id, name: name.trim() || 'Nouvelle liste' });
+  saveWatchlistsMeta(meta);
+  localStorage.setItem(watchlistStorageKey(id), JSON.stringify([]));
+  return id;
+}
+function renameWatchlistList(id, newName) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (entry) { entry.name = newName.trim() || entry.name; saveWatchlistsMeta(meta); }
+}
+function deleteWatchlistList(id) {
+  let meta = loadWatchlistsMeta();
+  if (meta.length <= 1) return false; // toujours garder au moins une liste
+  meta = meta.filter(l => l.id !== id);
+  saveWatchlistsMeta(meta);
+  localStorage.removeItem(watchlistStorageKey(id));
+  localStorage.removeItem(watchlistTombstonesKey(id));
+  recordTombstone(WATCHLIST_LIST_TOMBSTONES_KEY, id); // pour que la suppression de la LISTE elle-même se propage via la synchro
+  if (getActiveWatchlistId() === id) setActiveWatchlistId(meta[0].id);
+  return true;
+}
 
 function loadWatchlist() {
-  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY)) || []; } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(getActiveWatchlistId()))) || []; } catch { return []; }
 }
 function saveWatchlist(list) {
-  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+  localStorage.setItem(watchlistStorageKey(getActiveWatchlistId()), JSON.stringify(list));
 }
 
 
@@ -2837,7 +3266,7 @@ window.removeWatchlist = function(idx) {
   const title = item?.title;
   list.splice(idx, 1);
   saveWatchlist(list);
-  if (item) recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
+  if (item) recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   if (title) showToast(`"${title}" retiré`);
 };
@@ -2850,7 +3279,7 @@ window.watchlistToForm = function(idx) {
   searchEl.dispatchEvent(new Event('input'));
   list.splice(idx, 1);
   saveWatchlist(list);
-  recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
+  recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   
   if (window.innerWidth <= 860) switchMobileNav('rating');
@@ -2940,6 +3369,106 @@ document.getElementById('watchlist-list').addEventListener('click', e => {
   if (item) openMovieDetailSheet(item.tmdbId);
 });
 
+// ─── Sélecteur de listes (onglets) ───────────────────────────────────────────
+function renderWatchlistTabs() {
+  const meta = loadWatchlistsMeta();
+  const activeId = getActiveWatchlistId();
+  const activeMeta = meta.find(l => l.id === activeId) || meta[0];
+  const nameEl = document.getElementById('watchlist-active-name');
+  if (nameEl) nameEl.textContent = activeMeta ? activeMeta.name : 'À voir';
+
+  const row = document.getElementById('wl-lists-row');
+  if (!row) return;
+  row.innerHTML = meta.map(l =>
+    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${l.name.replace(/</g, '&lt;')}</button>`
+  ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
+}
+
+function openWlListManageMenu(id) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (!entry) return;
+
+  actionSheetTitleEl.textContent = entry.name;
+  const actions = [
+    { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id) },
+    {
+      label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
+      onClick: () => {
+        if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
+        openModal('Supprimer la liste', `Supprimer "${entry.name}" et tous ses films ? Cette action est définitive.`, () => {
+          deleteWatchlistList(id);
+          renderWatchlistTabs();
+          renderWatchlist();
+          showToast('Liste supprimée.');
+        }, true);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => { closeActionSheet(); onClick(); });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+}
+
+let wlModalMode = 'create';
+let wlModalTargetId = null;
+
+function openWlListModal(mode, targetId = null) {
+  wlModalMode = mode;
+  wlModalTargetId = targetId;
+  document.getElementById('wl-list-modal-title').textContent = mode === 'create' ? 'Nouvelle liste' : 'Renommer la liste';
+  document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
+  const input = document.getElementById('wl-list-name-input');
+  input.value = mode === 'rename' ? (loadWatchlistsMeta().find(l => l.id === targetId)?.name || '') : '';
+  lastFocusedBeforeModal = document.activeElement;
+  document.getElementById('wl-list-modal').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+document.getElementById('wl-lists-row').addEventListener('click', (e) => {
+  if (e.target.closest('#wl-list-add-btn')) { openWlListModal('create'); return; }
+  const pill = e.target.closest('.wl-list-pill');
+  if (!pill) return;
+  const id = pill.dataset.id;
+  if (id === getActiveWatchlistId()) {
+    openWlListManageMenu(id); // déjà active : un tap dessus propose de la gérer
+  } else {
+    setActiveWatchlistId(id);
+    renderWatchlistTabs();
+    renderWatchlist();
+  }
+});
+
+document.getElementById('wl-list-modal-confirm').addEventListener('click', () => {
+  const name = document.getElementById('wl-list-name-input').value.trim();
+  if (!name) { showToast('Donne un nom à la liste.'); return; }
+  if (wlModalMode === 'create') {
+    const id = createWatchlistList(name);
+    setActiveWatchlistId(id);
+    showToast(`Liste "${name}" créée.`);
+  } else {
+    renameWatchlistList(wlModalTargetId, name);
+    showToast('Liste renommée.');
+  }
+  closeModal(document.getElementById('wl-list-modal'));
+  renderWatchlistTabs();
+  renderWatchlist();
+});
+document.getElementById('wl-list-modal-cancel').addEventListener('click', () => {
+  closeModal(document.getElementById('wl-list-modal'));
+});
+
+renderWatchlistTabs();
 renderWatchlist();
 
 // ═══════════════════════════════════════════
@@ -3052,18 +3581,20 @@ renderCriteriaAverageMarkers();
 //
 // Principe : un "code de synchronisation" choisi par l'utilisateur (pas de vrai
 // compte) identifie ses données côté serveur. Le même code utilisé sur un autre
-// appareil permet de récupérer historique + watchlist + réglages.
+// appareil permet de récupérer historique + TOUTES les watchlists + réglages.
 //
 // FUSION (et non écrasement) : à chaque synchronisation (push ou pull), les
 // données locales et celles du cloud sont FUSIONNÉES plutôt que remplacées :
 // - Historique : par titre. Si un film a été noté sur les deux appareils, on
 //   garde la version la plus récente (`updatedAt`). Si un film n'existe que
 //   d'un côté, il est conservé (union).
-// - Watchlist : par tmdbId (ou titre si pas d'id). Union des deux listes.
-// - Suppressions : chaque suppression (historique ou watchlist) laisse une
-//   "tombstone" (trace horodatée) synchronisée elle aussi, pour qu'une entrée
-//   supprimée sur un appareil ne réapparaisse pas après une synchro depuis un
-//   autre appareil qui l'avait encore.
+// - Watchlists : chaque LISTE (id + nom) est fusionnée par id (union), puis le
+//   CONTENU de chaque liste est fusionné par tmdbId (ou titre), comme avant.
+// - Suppressions : chaque suppression (film d'historique, film d'une
+//   watchlist, OU une watchlist entière) laisse une "tombstone" (trace
+//   horodatée) synchronisée elle aussi, pour qu'une suppression sur un
+//   appareil ne soit pas annulée par une synchro depuis un autre appareil qui
+//   avait encore l'ancienne version.
 //
 // - Sauvegarde (push) : fusionne avec le cloud puis pousse le résultat, en
 //   automatique en arrière-plan toutes les 45s si un changement local est
@@ -3076,8 +3607,8 @@ const SYNC_CODE_KEY = 'lbx_sync_code';
 const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
-const WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones';
 // TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
+// watchlistTombstonesKey(id) et WATCHLIST_LIST_TOMBSTONES_KEY sont définis dans 08-watchlist.js
 
 const syncCodeInput = document.getElementById('setting-sync-code');
 const syncSaveBtn = document.getElementById('sync-save-btn');
@@ -3133,24 +3664,54 @@ function removeTombstone(storageKey, key) {
 // ré-uploadé si besoin (c'est ce que fait pushToCloud).
 function mergeWithRemote(remotePayload) {
   const localHistory = loadHistory();
-  const localWatchlist = loadWatchlist();
   const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
-  const localWlTomb = loadTombstones(WATCHLIST_TOMBSTONES_KEY);
-
   const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
-  const remoteWatchlist = Array.isArray(remotePayload?.watchlist) ? remotePayload.watchlist : [];
   const remoteHistTomb = Array.isArray(remotePayload?.historyTombstones) ? remotePayload.historyTombstones : [];
-  const remoteWlTomb = Array.isArray(remotePayload?.watchlistTombstones) ? remotePayload.watchlistTombstones : [];
-
   const mergedHistTomb = mergeTombstoneLists(localHistTomb, remoteHistTomb);
-  const mergedWlTomb = mergeTombstoneLists(localWlTomb, remoteWlTomb);
   const mergedHistory = mergeHistory(localHistory, remoteHistory, mergedHistTomb);
-  const mergedWatchlist = mergeWatchlist(localWatchlist, remoteWatchlist, mergedWlTomb);
-
   saveHistory(mergedHistory);
-  saveWatchlist(mergedWatchlist);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
-  saveTombstones(WATCHLIST_TOMBSTONES_KEY, mergedWlTomb);
+
+  // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
+  const localMeta = loadWatchlistsMeta();
+  const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
+  const localListTomb = loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY);
+  const remoteListTomb = Array.isArray(remotePayload?.watchlistListTombstones) ? remotePayload.watchlistListTombstones : [];
+  const mergedListTomb = mergeTombstoneLists(localListTomb, remoteListTomb);
+  saveTombstones(WATCHLIST_LIST_TOMBSTONES_KEY, mergedListTomb);
+  const deletedListIds = new Set(mergedListTomb.map(t => t.key));
+
+  // Union par id (le nom local l'emporte en cas de conflit sur le même id),
+  // en excluant les listes supprimées sur l'un ou l'autre appareil.
+  const metaById = {};
+  remoteMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  localMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  let mergedMeta = Object.values(metaById).filter(l => !deletedListIds.has(l.id));
+  if (mergedMeta.length === 0) mergedMeta = [{ id: 'default', name: 'À voir' }]; // garde-fou : jamais 0 liste
+
+  const activeId = getActiveWatchlistId(); // lu avant de sauvegarder la meta, au cas où la liste active aurait été supprimée ailleurs
+  saveWatchlistsMeta(mergedMeta);
+  if (!mergedMeta.find(l => l.id === activeId)) setActiveWatchlistId(mergedMeta[0].id);
+
+  const remoteWatchlists = remotePayload?.watchlists && typeof remotePayload.watchlists === 'object' ? remotePayload.watchlists : {};
+  const remoteWlTombs = remotePayload?.watchlistTombstones && typeof remotePayload.watchlistTombstones === 'object' ? remotePayload.watchlistTombstones : {};
+
+  const mergedWatchlists = {};
+  const mergedWlTombs = {};
+  mergedMeta.forEach(({ id }) => {
+    let localItems = [];
+    try { localItems = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch {}
+    const remoteItems = Array.isArray(remoteWatchlists[id]) ? remoteWatchlists[id] : [];
+    const localItemTomb = loadTombstones(watchlistTombstonesKey(id));
+    const remoteItemTomb = Array.isArray(remoteWlTombs[id]) ? remoteWlTombs[id] : [];
+    const mergedItemTomb = mergeTombstoneLists(localItemTomb, remoteItemTomb);
+    const mergedItems = mergeWatchlist(localItems, remoteItems, mergedItemTomb);
+
+    localStorage.setItem(watchlistStorageKey(id), JSON.stringify(mergedItems));
+    saveTombstones(watchlistTombstonesKey(id), mergedItemTomb);
+    mergedWatchlists[id] = mergedItems;
+    mergedWlTombs[id] = mergedItemTomb;
+  });
 
   // Réglages : pas vraiment "fusionnables" (un thème ou une préférence n'est pas
   // un tableau), on garde ceux du cloud seulement s'ils sont fournis et qu'on
@@ -3163,13 +3724,16 @@ function mergeWithRemote(remotePayload) {
   applySettings(settings || {});
 
   renderAll();
+  if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
   renderWatchlist();
 
   return {
     history: mergedHistory,
-    watchlist: mergedWatchlist,
     historyTombstones: mergedHistTomb,
-    watchlistTombstones: mergedWlTomb,
+    watchlistsMeta: mergedMeta,
+    watchlists: mergedWatchlists,
+    watchlistTombstones: mergedWlTombs,
+    watchlistListTombstones: mergedListTomb,
     settings,
   };
 }
@@ -3186,11 +3750,20 @@ function hashPayload(payload) {
 }
 
 function currentLocalSnapshot() {
+  const meta = loadWatchlistsMeta();
+  const watchlists = {};
+  const watchlistTombstones = {};
+  meta.forEach(({ id }) => {
+    try { watchlists[id] = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch { watchlists[id] = []; }
+    watchlistTombstones[id] = loadTombstones(watchlistTombstonesKey(id));
+  });
   return {
     history: loadHistory(),
-    watchlist: loadWatchlist(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
-    watchlistTombstones: loadTombstones(WATCHLIST_TOMBSTONES_KEY),
+    watchlistsMeta: meta,
+    watchlists,
+    watchlistTombstones,
+    watchlistListTombstones: loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY),
   };
 }
 
@@ -3319,6 +3892,54 @@ function markDiscoverPassed(tmdbId) {
   localStorage.setItem(DISCOVER_PASSED_KEY, JSON.stringify(list.slice(-DISCOVER_PASSED_MAX)));
 }
 
+// Films déjà utilisés récemment comme BASE de recommandation (pas les
+// suggestions elles-mêmes, les films de l'historique dont on est parti) —
+// permet de tourner à travers l'historique plutôt que retomber sur les mêmes
+// 2-3 films à chaque rechargement, pour des suggestions qui se diversifient
+// au fur et à mesure que l'historique s'enrichit.
+const DISCOVER_BASIS_USED_KEY = 'lbx_discover_basis_used';
+function loadBasisUsed() {
+  try { return JSON.parse(localStorage.getItem(DISCOVER_BASIS_USED_KEY)) || []; } catch { return []; }
+}
+function markBasisUsed(tmdbIds) {
+  const used = loadBasisUsed();
+  used.push(...tmdbIds.map(String));
+  localStorage.setItem(DISCOVER_BASIS_USED_KEY, JSON.stringify(used.slice(-30)));
+}
+
+// Choisit `count` films de l'historique pour servir de base aux
+// recommandations : privilégie les films PAS récemment utilisés (rotation),
+// et répartit sur des genres différents quand c'est possible plutôt que de
+// piocher au hasard dans tout le pool (qui sur-représenterait le genre le
+// plus souvent noté). Basé sur TOUS les films vus, pas seulement les mieux
+// notés — même un film moyen renseigne sur les goûts (genre, casting...).
+function pickDiverseBasisFilms(pool, count) {
+  const used = new Set(loadBasisUsed());
+  const fresh = pool.filter(f => !used.has(String(f.tmdbId)));
+  const candidates = fresh.length >= count ? fresh : pool; // pas assez de films "frais" : retombe sur tout le pool
+
+  const byGenre = {};
+  candidates.forEach(f => {
+    const primaryGenre = (f.genre || '').split(',')[0].trim() || 'Autre';
+    (byGenre[primaryGenre] = byGenre[primaryGenre] || []).push(f);
+  });
+
+  const genres = Object.keys(byGenre).sort(() => 0.5 - Math.random());
+  const picked = [];
+  for (const g of genres) {
+    if (picked.length >= count) break;
+    const arr = byGenre[g];
+    picked.push(arr[Math.floor(Math.random() * arr.length)]);
+  }
+  // Moins de genres distincts que `count` : complète au hasard dans le reste.
+  const remaining = candidates.filter(f => !picked.includes(f));
+  while (picked.length < count && remaining.length > 0) {
+    const idx = Math.floor(Math.random() * remaining.length);
+    picked.push(remaining.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
 let discoverQueue = [];
 let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
 
@@ -3348,39 +3969,36 @@ async function loadDiscoverQueueInner() {
 
   const history = loadHistory();
   const watchlist = loadWatchlist();
-  const topFilms = history.filter(h => parseFloat(h.score) >= 8.0);
+  const watchedWithId = history.filter(h => h.tmdbId);
 
-  if (topFilms.length === 0) {
-    discoverStack.innerHTML = '<div class="discover-empty">Note quelques films à 8/10 ou plus pour débloquer des suggestions personnalisées ici.</div>';
+  if (watchedWithId.length === 0) {
+    discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
     return;
   }
 
-  // Seuls les films liés à une fiche TMDb (tmdbId) peuvent servir de base à des
-  // recommandations. On filtre AVANT de tirer au sort, sinon un tirage
-  // malchanceux (uniquement des films ajoutés en "saisie manuelle") viderait la
-  // file sans raison apparente, avec un message trompeur ("tout vu").
-  const topFilmsWithId = topFilms.filter(f => f.tmdbId);
-  if (topFilmsWithId.length === 0) {
-    discoverStack.innerHTML = '<div class="discover-empty">Tes films notés 8/10 ou plus ont été ajoutés en saisie manuelle (sans fiche TMDb) : impossible d\'en tirer des suggestions. Essaie de renoter un film en le sélectionnant depuis les résultats de recherche.</div>';
-    return;
-  }
-
-  const shuffledTop = [...topFilmsWithId].sort(() => 0.5 - Math.random()).slice(0, 3);
+  const shuffledTop = pickDiverseBasisFilms(watchedWithId, 3);
+  markBasisUsed(shuffledTop.map(f => f.tmdbId));
   const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
   const passedIds = new Set(loadDiscoverPassed());
 
   let allRecs = [];
-  for (const film of shuffledTop) {
-    try {
-      const res = await fetch(`/api/search?id=${film.tmdbId}&recommendations=true`);
-      const data = await res.json();
+  // Les 3 requêtes sont indépendantes : en parallèle (Promise.all) plutôt que
+  // l'une après l'autre, le temps d'attente total tombe à celui de la plus
+  // lente des trois au lieu de la somme des trois — l'onglet Découvrir
+  // s'affiche nettement plus vite.
+  const results = await Promise.allSettled(
+    shuffledTop.map(film => fetch(`/api/search?id=${film.tmdbId}&recommendations=true`).then(res => res.json()))
+  );
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const data = result.value;
       const moviesArray = data.results || (Array.isArray(data) ? data : null);
       if (moviesArray) allRecs.push(...moviesArray);
-    } catch (e) {
-      console.warn("Impossible de charger les suggestions pour l'ID " + film.tmdbId, e);
+    } else {
+      console.warn("Impossible de charger les suggestions pour l'ID " + shuffledTop[i].tmdbId, result.reason);
     }
-  }
+  });
 
   const uniqueRecs = [];
   const addedIds = new Set();

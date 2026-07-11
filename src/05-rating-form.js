@@ -499,6 +499,7 @@ window.loadItem = function(idx) {
   document.getElementById('movie-director').value = item.director || '';
   document.getElementById('movie-actors').value   = item.actors || ''; 
   document.getElementById('movie-tmdb-id').value  = item.tmdbId || '';
+  document.getElementById('movie-tmdb-score').value = item.tmdbScore || '';
   
   searchEl.value = item.title;
   document.getElementById('view-date').value     = item.date  || '';
@@ -521,6 +522,12 @@ window.loadItem = function(idx) {
     genre: item.genre, runtime: item.runtime, year: item.year,
     director: item.director, actors: item.actors
   });
+
+  if (item.tmdbScore) {
+    document.getElementById('strip-tmdb-score').textContent = item.tmdbScore + '/10';
+  } else {
+    document.getElementById('strip-tmdb-score').textContent = '—';
+  }
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;

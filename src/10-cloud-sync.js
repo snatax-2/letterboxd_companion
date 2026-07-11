@@ -4,18 +4,20 @@
 //
 // Principe : un "code de synchronisation" choisi par l'utilisateur (pas de vrai
 // compte) identifie ses données côté serveur. Le même code utilisé sur un autre
-// appareil permet de récupérer historique + watchlist + réglages.
+// appareil permet de récupérer historique + TOUTES les watchlists + réglages.
 //
 // FUSION (et non écrasement) : à chaque synchronisation (push ou pull), les
 // données locales et celles du cloud sont FUSIONNÉES plutôt que remplacées :
 // - Historique : par titre. Si un film a été noté sur les deux appareils, on
 //   garde la version la plus récente (`updatedAt`). Si un film n'existe que
 //   d'un côté, il est conservé (union).
-// - Watchlist : par tmdbId (ou titre si pas d'id). Union des deux listes.
-// - Suppressions : chaque suppression (historique ou watchlist) laisse une
-//   "tombstone" (trace horodatée) synchronisée elle aussi, pour qu'une entrée
-//   supprimée sur un appareil ne réapparaisse pas après une synchro depuis un
-//   autre appareil qui l'avait encore.
+// - Watchlists : chaque LISTE (id + nom) est fusionnée par id (union), puis le
+//   CONTENU de chaque liste est fusionné par tmdbId (ou titre), comme avant.
+// - Suppressions : chaque suppression (film d'historique, film d'une
+//   watchlist, OU une watchlist entière) laisse une "tombstone" (trace
+//   horodatée) synchronisée elle aussi, pour qu'une suppression sur un
+//   appareil ne soit pas annulée par une synchro depuis un autre appareil qui
+//   avait encore l'ancienne version.
 //
 // - Sauvegarde (push) : fusionne avec le cloud puis pousse le résultat, en
 //   automatique en arrière-plan toutes les 45s si un changement local est
@@ -28,8 +30,8 @@ const SYNC_CODE_KEY = 'lbx_sync_code';
 const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
-const WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones';
 // TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
+// watchlistTombstonesKey(id) et WATCHLIST_LIST_TOMBSTONES_KEY sont définis dans 08-watchlist.js
 
 const syncCodeInput = document.getElementById('setting-sync-code');
 const syncSaveBtn = document.getElementById('sync-save-btn');
@@ -85,24 +87,54 @@ function removeTombstone(storageKey, key) {
 // ré-uploadé si besoin (c'est ce que fait pushToCloud).
 function mergeWithRemote(remotePayload) {
   const localHistory = loadHistory();
-  const localWatchlist = loadWatchlist();
   const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
-  const localWlTomb = loadTombstones(WATCHLIST_TOMBSTONES_KEY);
-
   const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
-  const remoteWatchlist = Array.isArray(remotePayload?.watchlist) ? remotePayload.watchlist : [];
   const remoteHistTomb = Array.isArray(remotePayload?.historyTombstones) ? remotePayload.historyTombstones : [];
-  const remoteWlTomb = Array.isArray(remotePayload?.watchlistTombstones) ? remotePayload.watchlistTombstones : [];
-
   const mergedHistTomb = mergeTombstoneLists(localHistTomb, remoteHistTomb);
-  const mergedWlTomb = mergeTombstoneLists(localWlTomb, remoteWlTomb);
   const mergedHistory = mergeHistory(localHistory, remoteHistory, mergedHistTomb);
-  const mergedWatchlist = mergeWatchlist(localWatchlist, remoteWatchlist, mergedWlTomb);
-
   saveHistory(mergedHistory);
-  saveWatchlist(mergedWatchlist);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
-  saveTombstones(WATCHLIST_TOMBSTONES_KEY, mergedWlTomb);
+
+  // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
+  const localMeta = loadWatchlistsMeta();
+  const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
+  const localListTomb = loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY);
+  const remoteListTomb = Array.isArray(remotePayload?.watchlistListTombstones) ? remotePayload.watchlistListTombstones : [];
+  const mergedListTomb = mergeTombstoneLists(localListTomb, remoteListTomb);
+  saveTombstones(WATCHLIST_LIST_TOMBSTONES_KEY, mergedListTomb);
+  const deletedListIds = new Set(mergedListTomb.map(t => t.key));
+
+  // Union par id (le nom local l'emporte en cas de conflit sur le même id),
+  // en excluant les listes supprimées sur l'un ou l'autre appareil.
+  const metaById = {};
+  remoteMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  localMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  let mergedMeta = Object.values(metaById).filter(l => !deletedListIds.has(l.id));
+  if (mergedMeta.length === 0) mergedMeta = [{ id: 'default', name: 'À voir' }]; // garde-fou : jamais 0 liste
+
+  const activeId = getActiveWatchlistId(); // lu avant de sauvegarder la meta, au cas où la liste active aurait été supprimée ailleurs
+  saveWatchlistsMeta(mergedMeta);
+  if (!mergedMeta.find(l => l.id === activeId)) setActiveWatchlistId(mergedMeta[0].id);
+
+  const remoteWatchlists = remotePayload?.watchlists && typeof remotePayload.watchlists === 'object' ? remotePayload.watchlists : {};
+  const remoteWlTombs = remotePayload?.watchlistTombstones && typeof remotePayload.watchlistTombstones === 'object' ? remotePayload.watchlistTombstones : {};
+
+  const mergedWatchlists = {};
+  const mergedWlTombs = {};
+  mergedMeta.forEach(({ id }) => {
+    let localItems = [];
+    try { localItems = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch {}
+    const remoteItems = Array.isArray(remoteWatchlists[id]) ? remoteWatchlists[id] : [];
+    const localItemTomb = loadTombstones(watchlistTombstonesKey(id));
+    const remoteItemTomb = Array.isArray(remoteWlTombs[id]) ? remoteWlTombs[id] : [];
+    const mergedItemTomb = mergeTombstoneLists(localItemTomb, remoteItemTomb);
+    const mergedItems = mergeWatchlist(localItems, remoteItems, mergedItemTomb);
+
+    localStorage.setItem(watchlistStorageKey(id), JSON.stringify(mergedItems));
+    saveTombstones(watchlistTombstonesKey(id), mergedItemTomb);
+    mergedWatchlists[id] = mergedItems;
+    mergedWlTombs[id] = mergedItemTomb;
+  });
 
   // Réglages : pas vraiment "fusionnables" (un thème ou une préférence n'est pas
   // un tableau), on garde ceux du cloud seulement s'ils sont fournis et qu'on
@@ -115,13 +147,16 @@ function mergeWithRemote(remotePayload) {
   applySettings(settings || {});
 
   renderAll();
+  if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
   renderWatchlist();
 
   return {
     history: mergedHistory,
-    watchlist: mergedWatchlist,
     historyTombstones: mergedHistTomb,
-    watchlistTombstones: mergedWlTomb,
+    watchlistsMeta: mergedMeta,
+    watchlists: mergedWatchlists,
+    watchlistTombstones: mergedWlTombs,
+    watchlistListTombstones: mergedListTomb,
     settings,
   };
 }
@@ -138,11 +173,20 @@ function hashPayload(payload) {
 }
 
 function currentLocalSnapshot() {
+  const meta = loadWatchlistsMeta();
+  const watchlists = {};
+  const watchlistTombstones = {};
+  meta.forEach(({ id }) => {
+    try { watchlists[id] = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch { watchlists[id] = []; }
+    watchlistTombstones[id] = loadTombstones(watchlistTombstonesKey(id));
+  });
   return {
     history: loadHistory(),
-    watchlist: loadWatchlist(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
-    watchlistTombstones: loadTombstones(WATCHLIST_TOMBSTONES_KEY),
+    watchlistsMeta: meta,
+    watchlists,
+    watchlistTombstones,
+    watchlistListTombstones: loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY),
   };
 }
 

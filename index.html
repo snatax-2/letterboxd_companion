@@ -181,6 +181,18 @@
   </div>
 </div>
 
+<!-- Créer / renommer une liste "À voir" -->
+<div class="modal-overlay" id="wl-list-modal" role="dialog" aria-modal="true" aria-labelledby="wl-list-modal-title">
+  <div class="modal-box">
+    <div class="modal-title" id="wl-list-modal-title">Nouvelle liste</div>
+    <input type="text" class="settings-input" id="wl-list-name-input" placeholder="Nom de la liste (ex : Halloween)" style="margin:14px 0;width:100%;" maxlength="40">
+    <div class="modal-actions">
+      <button class="modal-btn" id="wl-list-modal-cancel">Annuler</button>
+      <button class="modal-btn primary" id="wl-list-modal-confirm">Créer</button>
+    </div>
+  </div>
+</div>
+
 <header class="app-header">
   <h1 class="app-title" id="main-app-title"><em>Ludex</em> Rating Companion</h1>
   <div class="header-actions">
@@ -450,9 +462,72 @@
       <button class="right-tab active" id="tab-right-history" role="tab" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg> Historique & Stats</button>
       <button class="right-tab" id="tab-right-watchlist" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg> Watchlist</button>
       <button class="right-tab" id="tab-right-discover" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir</button>
+      <button class="right-tab" id="tab-right-profile" role="tab" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg> Profil</button>
     </div>
 
     <div class="right-view active" id="view-history">
+
+      <div class="card">
+        <div class="card-title">
+          Historique
+          <span class="card-title-badge" id="hist-count-badge">0 film</span>
+        </div>
+
+        <div class="search-wrap" style="margin-bottom: 14px;">
+          <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
+        </div>
+
+        <div class="filter-row" id="filter-row">
+          <button class="filter-btn active" data-sort="date">Récents</button>
+          <button class="filter-btn" data-sort="score-desc">Mieux notés</button>
+          <button class="filter-btn" data-sort="score-asc">Moins bien</button>
+          <button class="filter-btn" data-sort="title">A→Z</button>
+        </div>
+
+        <div class="genre-filter-row" id="genre-filter-row" style="display:none;">
+          <span class="genre-filter-label">Genre :</span>
+          <div class="genre-chips" id="genre-chips"></div>
+        </div>
+
+        <div class="history-scroller" id="history-list"></div>
+      </div>
+    </div> 
+    
+    <div class="right-view" id="view-watchlist">
+      <div class="card" id="watchlist-card">
+        <div class="card-title">
+          <span id="watchlist-active-name">À voir</span>
+          <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
+        </div>
+        <div class="wl-lists-row" id="wl-lists-row"></div>
+        <div class="watchlist-add-row wl-suggest-wrap">
+          <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
+          <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
+          <div class="wl-suggestions" id="wl-suggestions"></div>
+        </div>
+        <div class="watchlist-scroller" id="watchlist-list">
+          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Aucun film dans la liste.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-view" id="view-discover">
+      <div class="card" id="discover-card-wrap">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir
+          <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
+        </div>
+        <div class="discover-stack" id="discover-stack" aria-live="polite">
+          <div class="discover-loading" id="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>
+        </div>
+        <div class="discover-actions" id="discover-actions" style="display:none">
+          <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-view" id="view-profile">
       <div class="card" id="stats-card">
         <div class="card-title">Dashboard Analytique</div>
         
@@ -498,62 +573,37 @@
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">
-          Historique
-          <span class="card-title-badge" id="hist-count-badge">0 film</span>
-        </div>
-
-        <div class="search-wrap" style="margin-bottom: 14px;">
-          <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
-        </div>
-
-        <div class="filter-row" id="filter-row">
-          <button class="filter-btn active" data-sort="date">Récents</button>
-          <button class="filter-btn" data-sort="score-desc">Mieux notés</button>
-          <button class="filter-btn" data-sort="score-asc">Moins bien</button>
-          <button class="filter-btn" data-sort="title">A→Z</button>
-        </div>
-
-        <div class="genre-filter-row" id="genre-filter-row" style="display:none;">
-          <span class="genre-filter-label">Genre :</span>
-          <div class="genre-chips" id="genre-chips"></div>
-        </div>
-
-        <div class="history-scroller" id="history-list"></div>
-      </div>
-    </div> 
-    
-    <div class="right-view" id="view-watchlist">
-      <div class="card" id="watchlist-card">
-        <div class="card-title">
-          À voir
-          <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
-        </div>
-        <div class="watchlist-add-row wl-suggest-wrap">
-          <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
-          <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
-          <div class="wl-suggestions" id="wl-suggestions"></div>
-        </div>
-        <div class="watchlist-scroller" id="watchlist-list">
-          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Aucun film dans la liste.</div>
+      <div class="card" id="profile-info-card">
+        <div class="card-title">Ton profil</div>
+        <div class="profile-info-grid">
+          <div class="profile-info-item">
+            <div class="profile-info-label">Membre depuis</div>
+            <div class="profile-info-val" id="profile-member-since">—</div>
+          </div>
+          <div class="profile-info-item">
+            <div class="profile-info-label">Temps total visionné</div>
+            <div class="profile-info-val" id="profile-watch-time">—</div>
+          </div>
+          <div class="profile-info-item">
+            <div class="profile-info-label">Acteur favori</div>
+            <div class="profile-info-val" id="profile-fav-actor">—</div>
+          </div>
+          <div class="profile-info-item">
+            <div class="profile-info-label">Série en cours</div>
+            <div class="profile-info-val" id="profile-streak">—</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="right-view" id="view-discover">
-      <div class="card" id="discover-card-wrap">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir
-          <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
-        </div>
-        <div class="discover-stack" id="discover-stack" aria-live="polite">
-          <div class="discover-loading" id="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>
-        </div>
-        <div class="discover-actions" id="discover-actions" style="display:none">
-          <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-        </div>
+      <div class="card" id="profile-badges-card">
+        <div class="card-title">Badges</div>
+        <div class="badges-grid" id="badges-grid"></div>
+      </div>
+
+      <div class="card" id="profile-share-card">
+        <div class="card-title">Carte de profil</div>
+        <canvas id="profile-share-canvas" width="360" height="480" style="width:100%; max-width:360px; display:block; margin:0 auto; border-radius:var(--radius-sm);"></canvas>
+        <button class="btn-new-review" id="profile-share-btn" style="width:100%; margin-top:12px; justify-content:center;">Télécharger l'image</button>
       </div>
     </div>
   </div>
@@ -572,6 +622,9 @@
   </button>
   <button class="nav-btn" id="nav-discover">
     <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg></span> Découvrir
+  </button>
+  <button class="nav-btn" id="nav-profile">
+    <span class="nav-btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span> Profil
   </button>
 </nav>
 

@@ -717,19 +717,46 @@
       overflow: hidden; color: transparent; line-height: 1.1; margin: 0; min-height: 44px; touch-action: manipulation;
   }
   .rating-stars label.right-half:not(:first-child) { margin-right: 8px; }
-  
+
   /* APPLICATION DYNAMIQUE DU STYLE DES ÉTOILES PAR THÈME */
-  .rating-stars label::before { 
-      content: var(--star-symbol, '★'); position: absolute; top: 0; width: 1em; text-align: center; 
-      color: var(--star-empty-color); 
-      transition: color 0.1s, text-shadow 0.1s; 
-      font-family: var(--star-font); 
+  /* Un seul glyphe rendu par étoile (par le label "left-half"), révélé
+     progressivement via clip-path plutôt que deux moitiés indépendantes —
+     l'ancienne technique (chaque moitié = son propre glyphe tronqué à
+     l'overflow) créait une jointure visible au milieu de l'étoile (l'angle
+     réel d'une étoile ne tombe pas pile sur la ligne de coupe). Le label
+     "right-half" ne rend plus rien lui-même : il ne sert plus qu'à capter le
+     clic sur la moitié droite du glyphe voisin (position adjacente, sans
+     interstice). Effet à l'écran identique à Letterboxd. */
+  .rating-stars label.left-half { overflow: visible; }
+  .rating-stars label.left-half::before {
+      content: var(--star-symbol, '★'); position: absolute; top: 0; left: 0; width: 1em; text-align: center;
+      color: var(--star-empty-color);
+      font-family: var(--star-font);
   }
-  .rating-stars label.left-half::before { left: 0; }
-  .rating-stars label.right-half::before { left: -0.5em; } 
-  .rating-stars label:hover::before, .rating-stars label:hover ~ label::before, .rating-stars input:checked ~ label::before { 
-      color: var(--star-color); 
-      text-shadow: var(--star-shadow);
+  .rating-stars label.left-half::after {
+      content: var(--star-symbol, '★'); position: absolute; top: 0; left: 0; width: 1em; text-align: center;
+      color: var(--star-color); text-shadow: var(--star-shadow);
+      font-family: var(--star-font);
+      clip-path: inset(0 100% 0 0); /* rien de visible par défaut (étoile vide) */
+      transition: clip-path 0.1s;
+  }
+
+  /* Demi-étoile : le radio de CE left-half (valeur .5) ou un plus tôt/haut
+     est coché, ou survol de ce label ou d'un précédent. */
+  .rating-stars input:checked ~ label.left-half::after,
+  .rating-stars label:hover ~ label.left-half::after,
+  .rating-stars label.left-half:hover::after {
+      clip-path: inset(0 50% 0 0);
+  }
+
+  /* Étoile pleine : le radio du right-half associé (valeur entière) ou un
+     plus tôt/haut est coché, ou survol de ce right-half ou d'un précédent ->
+     le left-half qui suit immédiatement (même étoile, adjacent sibling) doit
+     passer en plein, pas juste à moitié. */
+  .rating-stars input:checked ~ label.right-half + label.left-half::after,
+  .rating-stars label:hover ~ label.right-half + label.left-half::after,
+  .rating-stars label.right-half:hover + label.left-half::after {
+      clip-path: inset(0 0 0 0);
   }
   
   .quick-rating-label { text-align: center; font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-mid); margin-top: 6px; min-height: 1.2em; }
@@ -777,10 +804,17 @@
      texte (sinon elles resteraient fixes derrière un texte qui scrolle). */
   [data-theme="journal"] .review-textarea {
     font-family: 'Caveat', cursive;
-    font-size: 1.35rem;
-    line-height: 28px;
-    padding-top: 8px;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--border) 27px, var(--border) 28px);
+    font-size: 1.4rem;
+    line-height: 30px;
+    padding-top: 6px;
+    /* background-origin: content-box aligne l'origine du dégradé sur le début
+       du texte (après le padding), pas sur le coin du champ — sinon le
+       padding-top créait un décalage entre les lignes et l'endroit où le
+       texte commence réellement à s'écrire. La ligne est positionnée à ~80%
+       de la hauteur de ligne, là où repose la base des lettres (une police
+       manuscrite comme Caveat a des jambages qui descendent sous la ligne). */
+    background-origin: content-box;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--border) 23px, var(--border) 24px, transparent 24px, transparent 30px);
     background-attachment: local;
   }
 
@@ -855,6 +889,20 @@
   .hist-item.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
   .hist-item.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
 
+  /* Un swipe qui a atteint son seuil "s'arme" (piste révélée) au lieu
+     d'exécuter l'action tout de suite — un tap sur l'indice, maintenant
+     cliquable, confirme ; taper ailleurs annule. Le halo pulsé indique que
+     l'indice attend une confirmation. */
+  .hist-item.hist-swipe-armed-left .hist-swipe-hint-left,
+  .hist-item.hist-swipe-armed-right .hist-swipe-hint-right {
+    cursor: pointer;
+    animation: armedHintPulse 1s ease-in-out infinite;
+  }
+  @keyframes armedHintPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.18); }
+  }
+
   /* Anime l'entrée du film qu'on vient de sauvegarder/ajouter (historique et
      watchlist), pour un rendu plus vivant qu'une simple apparition instantanée
      — voir 05-rating-form.js / 08-watchlist.js pour le marquage de l'élément
@@ -916,6 +964,19 @@
   .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--solid-fill-text, #0d1117); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity .15s; white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
   .watchlist-add-btn:hover { opacity: 0.85; }
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
+
+  /* Sélecteur de listes "À voir" multiples (pastilles, scroll horizontal) */
+  .wl-lists-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; }
+  .wl-list-pill {
+    flex-shrink: 0; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
+    font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    display: flex; align-items: center; gap: 4px; transition: all .15s;
+  }
+  .wl-list-pill:hover { border-color: var(--border-hi); color: var(--text-hi); }
+  .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--solid-fill-text, #0d1117); }
+  .wl-list-pill.wl-list-add { background: none; border-style: dashed; }
+  .wl-list-pill .icon { width: 1em; height: 1em; }
 
   .wl-card {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -1117,6 +1178,24 @@
   
   .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; width: 100%; }
   .dash-box { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; display:flex; flex-direction: column; width: 100%; }
+
+  /* ── ONGLET PROFIL ── */
+  .profile-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .profile-info-item { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+  .profile-info-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-mid); font-family: var(--font-heading); margin-bottom: 4px; }
+  .profile-info-val { font-size: 1rem; font-weight: 700; color: var(--text-hi); font-family: var(--font-heading); }
+
+  .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+  .badge-item {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+    padding: 12px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg);
+  }
+  .badge-item.unlocked { border-color: var(--gold); }
+  .badge-item.unlocked .badge-icon { color: var(--gold); }
+  .badge-item.locked { opacity: 0.35; filter: grayscale(1); }
+  .badge-icon { width: 28px; height: 28px; color: var(--text-mid); }
+  .badge-icon .icon { width: 100%; height: 100%; }
+  .badge-label { font-size: 0.7rem; color: var(--text-mid); line-height: 1.2; }
   .dash-box-title { font-size: 0.75rem; font-family: var(--font-heading); font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
   .dash-box.full-width { grid-column: 1 / -1; }
   

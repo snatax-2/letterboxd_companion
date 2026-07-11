@@ -288,6 +288,101 @@ function computeCriteriaAverages(history, criteria) {
   return avgs;
 }
 
+// ─── Onglet Profil : temps visionné, série en cours, badges ────────────────
+function formatWatchTime(totalMinutes) {
+  if (!totalMinutes || totalMinutes <= 0) return '—';
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const parts = [];
+  if (days > 0) parts.push(`${days} j`);
+  if (hours > 0 || days === 0) parts.push(`${hours} h`);
+  return parts.join(' ');
+}
+
+// Clé "année-semaine ISO" pour une date donnée — deux dates de la même semaine
+// ISO (lundi à dimanche) produisent la même clé, peu importe le jour exact.
+function getISOWeekKey(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${weekNo}`;
+}
+
+// Nombre de semaines ISO consécutives (en remontant depuis AUJOURD'HUI) avec
+// au moins un film noté — 0 si la semaine en cours n'a rien.
+function computeWeekStreak(history, referenceDate = new Date()) {
+  const weeksWithActivity = new Set();
+  history.forEach(h => {
+    const raw = h.savedAt || h.date;
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    weeksWithActivity.add(getISOWeekKey(d));
+  });
+
+  let streak = 0;
+  const cursor = new Date(referenceDate);
+  while (weeksWithActivity.has(getISOWeekKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+// Badges débloqués selon l'historique — chaque entrée est indépendante,
+// aucune ne dépend d'un ordre de déblocage particulier.
+function computeBadges(history, extras = {}) {
+  // Déclaré ICI (local, pas en haut du fichier) : même bug que
+  // CRITERIA_SHORT_LABELS et CONTEXT_TAG_ICONS rencontré précédemment — un
+  // `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution n'a pas atteint cette ligne, or `renderAll()` est appelée de
+  // façon précoce (03-foundation.js) avant même que 03b-pure-logic.js n'ait
+  // fini de s'exécuter.
+  const GENRE_BADGE_THRESHOLD = 5;
+  const totalMinutes = extras.totalMinutes || 0;
+  const streak = extras.streak || 0;
+  const genreSet = new Set();
+  const genreCounts = {};
+  history.forEach(h => {
+    if (h.genre) h.genre.split(',').forEach(g => {
+      const t = g.trim(); if (!t) return;
+      genreSet.add(t);
+      genreCounts[t] = (genreCounts[t] || 0) + 1;
+    });
+  });
+  const reviewCount = history.filter(h => h.review && h.review.trim().length > 0).length;
+
+  const defs = [
+    { id: 'films_10',  label: '10 films notés',        unlocked: history.length >= 10 },
+    { id: 'films_50',  label: '50 films notés',         unlocked: history.length >= 50 },
+    { id: 'films_100', label: '100 films notés',        unlocked: history.length >= 100 },
+    { id: 'genres_5',  label: '5 genres différents',    unlocked: genreSet.size >= 5 },
+    { id: 'genres_10', label: '10 genres différents',   unlocked: genreSet.size >= 10 },
+    { id: 'reviews_10',label: '10 critiques écrites',   unlocked: reviewCount >= 10 },
+    { id: 'streak_4',  label: '4 semaines de suite',    unlocked: streak >= 4 },
+    { id: 'marathon',  label: 'Marathon (24h de films)',unlocked: totalMinutes >= 24 * 60 },
+    { id: 'cinephile', label: 'Cinéphile (7j de films)',unlocked: totalMinutes >= 7 * 24 * 60 },
+  ];
+
+  // Un badge par genre RÉELLEMENT exploré (au moins un film), pas une liste
+  // figée de tous les genres TMDb possibles — évite d'afficher des dizaines
+  // de badges verrouillés pour des genres jamais regardés. Triés du plus au
+  // moins regardé, pour mettre en avant ce qui définit vraiment les goûts de
+  // l'utilisateur.
+  const genreBadges = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8) // les 8 genres les plus regardés seulement, pour ne pas surcharger la grille
+    .map(([genre, count]) => ({
+      id: 'genre_' + genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
+      label: `Fan de ${genre} (${Math.min(count, GENRE_BADGE_THRESHOLD)}/${GENRE_BADGE_THRESHOLD})`,
+      unlocked: count >= GENRE_BADGE_THRESHOLD,
+    }));
+
+  return defs.concat(genreBadges);
+}
+
 // ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
@@ -304,5 +399,9 @@ if (typeof module !== 'undefined' && module.exports) {
     getDesc,
     DESCS,
     computeCriteriaAverages,
+    formatWatchTime,
+    getISOWeekKey,
+    computeWeekStreak,
+    computeBadges,
   };
 }

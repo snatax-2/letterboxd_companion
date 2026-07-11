@@ -1,13 +1,88 @@
 // ═══════════════════════════════════════════
 //  WATCHLIST & DYNAMIC RECOMMENDATIONS
 // ═══════════════════════════════════════════
-const WATCHLIST_KEY = 'lbx_watchlist';
+// ═══════════════════════════════════════════
+//  WATCHLISTS MULTIPLES
+// ═══════════════════════════════════════════
+// Plusieurs listes nommées ("À voir", "Halloween", "Suggestions de Marie"...)
+// plutôt qu'une seule. loadWatchlist()/saveWatchlist() ciblent toujours
+// implicitement la liste ACTIVE — tout le code existant (rendu, swipe,
+// synchro cloud, Découvrir) continue de fonctionner sans modification, sans
+// savoir qu'il y a désormais plusieurs listes possibles.
+const WATCHLISTS_META_KEY = 'lbx_watchlists_meta';
+const ACTIVE_WATCHLIST_KEY = 'lbx_active_watchlist_id';
+const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique), migrée au premier chargement
+
+function loadWatchlistsMeta() {
+  try { return JSON.parse(localStorage.getItem(WATCHLISTS_META_KEY)) || []; } catch { return []; }
+}
+function saveWatchlistsMeta(meta) {
+  localStorage.setItem(WATCHLISTS_META_KEY, JSON.stringify(meta));
+}
+function watchlistStorageKey(id) { return `lbx_watchlist_${id}`; }
+function watchlistTombstonesKey(id) { return `lbx_watchlist_tombstones_${id}`; }
+const WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_watchlist_list_tombstones'; // listes ENTIÈRES supprimées (pas juste des items)
+const LEGACY_WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones'; // ancienne clé (liste unique), migrée avec le reste
+
+// Migration ponctuelle : si l'ancienne clé unique existe et qu'aucune liste
+// nommée n'a encore été créée, on la transforme en une première liste "À voir"
+// — aucune perte de données pour les utilisateurs déjà en place.
+(function migrateLegacyWatchlist() {
+  if (loadWatchlistsMeta().length > 0) return; // déjà migré
+  let legacyItems = [];
+  try { legacyItems = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_KEY)) || []; } catch {}
+  let legacyTombstones = [];
+  try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+  const defaultId = 'default';
+  saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }]);
+  localStorage.setItem(watchlistStorageKey(defaultId), JSON.stringify(legacyItems));
+  localStorage.setItem(watchlistTombstonesKey(defaultId), JSON.stringify(legacyTombstones));
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, defaultId);
+})();
+
+function getActiveWatchlistId() {
+  let id = localStorage.getItem(ACTIVE_WATCHLIST_KEY);
+  const meta = loadWatchlistsMeta();
+  if (!id || !meta.find(l => l.id === id)) {
+    id = meta[0]?.id || 'default';
+    localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+  }
+  return id;
+}
+function setActiveWatchlistId(id) {
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+}
+
+function createWatchlistList(name) {
+  const meta = loadWatchlistsMeta();
+  const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  meta.push({ id, name: name.trim() || 'Nouvelle liste' });
+  saveWatchlistsMeta(meta);
+  localStorage.setItem(watchlistStorageKey(id), JSON.stringify([]));
+  return id;
+}
+function renameWatchlistList(id, newName) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (entry) { entry.name = newName.trim() || entry.name; saveWatchlistsMeta(meta); }
+}
+function deleteWatchlistList(id) {
+  let meta = loadWatchlistsMeta();
+  if (meta.length <= 1) return false; // toujours garder au moins une liste
+  meta = meta.filter(l => l.id !== id);
+  saveWatchlistsMeta(meta);
+  localStorage.removeItem(watchlistStorageKey(id));
+  localStorage.removeItem(watchlistTombstonesKey(id));
+  recordTombstone(WATCHLIST_LIST_TOMBSTONES_KEY, id); // pour que la suppression de la LISTE elle-même se propage via la synchro
+  if (getActiveWatchlistId() === id) setActiveWatchlistId(meta[0].id);
+  return true;
+}
 
 function loadWatchlist() {
-  try { return JSON.parse(localStorage.getItem(WATCHLIST_KEY)) || []; } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(getActiveWatchlistId()))) || []; } catch { return []; }
 }
 function saveWatchlist(list) {
-  localStorage.setItem(WATCHLIST_KEY, JSON.stringify(list));
+  localStorage.setItem(watchlistStorageKey(getActiveWatchlistId()), JSON.stringify(list));
 }
 
 
@@ -237,7 +312,7 @@ window.removeWatchlist = function(idx) {
   const title = item?.title;
   list.splice(idx, 1);
   saveWatchlist(list);
-  if (item) recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
+  if (item) recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   if (title) showToast(`"${title}" retiré`);
 };
@@ -250,7 +325,7 @@ window.watchlistToForm = function(idx) {
   searchEl.dispatchEvent(new Event('input'));
   list.splice(idx, 1);
   saveWatchlist(list);
-  recordTombstone(WATCHLIST_TOMBSTONES_KEY, watchlistItemKey(item));
+  recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   
   if (window.innerWidth <= 860) switchMobileNav('rating');
@@ -340,5 +415,105 @@ document.getElementById('watchlist-list').addEventListener('click', e => {
   if (item) openMovieDetailSheet(item.tmdbId);
 });
 
+// ─── Sélecteur de listes (onglets) ───────────────────────────────────────────
+function renderWatchlistTabs() {
+  const meta = loadWatchlistsMeta();
+  const activeId = getActiveWatchlistId();
+  const activeMeta = meta.find(l => l.id === activeId) || meta[0];
+  const nameEl = document.getElementById('watchlist-active-name');
+  if (nameEl) nameEl.textContent = activeMeta ? activeMeta.name : 'À voir';
+
+  const row = document.getElementById('wl-lists-row');
+  if (!row) return;
+  row.innerHTML = meta.map(l =>
+    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${l.name.replace(/</g, '&lt;')}</button>`
+  ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
+}
+
+function openWlListManageMenu(id) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (!entry) return;
+
+  actionSheetTitleEl.textContent = entry.name;
+  const actions = [
+    { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id) },
+    {
+      label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
+      onClick: () => {
+        if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
+        openModal('Supprimer la liste', `Supprimer "${entry.name}" et tous ses films ? Cette action est définitive.`, () => {
+          deleteWatchlistList(id);
+          renderWatchlistTabs();
+          renderWatchlist();
+          showToast('Liste supprimée.');
+        }, true);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => { closeActionSheet(); onClick(); });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+}
+
+let wlModalMode = 'create';
+let wlModalTargetId = null;
+
+function openWlListModal(mode, targetId = null) {
+  wlModalMode = mode;
+  wlModalTargetId = targetId;
+  document.getElementById('wl-list-modal-title').textContent = mode === 'create' ? 'Nouvelle liste' : 'Renommer la liste';
+  document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
+  const input = document.getElementById('wl-list-name-input');
+  input.value = mode === 'rename' ? (loadWatchlistsMeta().find(l => l.id === targetId)?.name || '') : '';
+  lastFocusedBeforeModal = document.activeElement;
+  document.getElementById('wl-list-modal').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+document.getElementById('wl-lists-row').addEventListener('click', (e) => {
+  if (e.target.closest('#wl-list-add-btn')) { openWlListModal('create'); return; }
+  const pill = e.target.closest('.wl-list-pill');
+  if (!pill) return;
+  const id = pill.dataset.id;
+  if (id === getActiveWatchlistId()) {
+    openWlListManageMenu(id); // déjà active : un tap dessus propose de la gérer
+  } else {
+    setActiveWatchlistId(id);
+    renderWatchlistTabs();
+    renderWatchlist();
+  }
+});
+
+document.getElementById('wl-list-modal-confirm').addEventListener('click', () => {
+  const name = document.getElementById('wl-list-name-input').value.trim();
+  if (!name) { showToast('Donne un nom à la liste.'); return; }
+  if (wlModalMode === 'create') {
+    const id = createWatchlistList(name);
+    setActiveWatchlistId(id);
+    showToast(`Liste "${name}" créée.`);
+  } else {
+    renameWatchlistList(wlModalTargetId, name);
+    showToast('Liste renommée.');
+  }
+  closeModal(document.getElementById('wl-list-modal'));
+  renderWatchlistTabs();
+  renderWatchlist();
+});
+document.getElementById('wl-list-modal-cancel').addEventListener('click', () => {
+  closeModal(document.getElementById('wl-list-modal'));
+});
+
+renderWatchlistTabs();
 renderWatchlist();
 

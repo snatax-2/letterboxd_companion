@@ -4,15 +4,18 @@
 const tabHistBtn = document.getElementById('tab-right-history');
 const tabWlBtn = document.getElementById('tab-right-watchlist');
 const tabDiscoverBtn = document.getElementById('tab-right-discover');
+const tabProfileBtn = document.getElementById('tab-right-profile');
 const viewHist = document.getElementById('view-history');
 const viewWl = document.getElementById('view-watchlist');
 const viewDiscover = document.getElementById('view-discover');
+const viewProfile = document.getElementById('view-profile');
 
 function switchRightTab(tabName) {
   const tabs = {
     history:   { btn: tabHistBtn,     view: viewHist },
     watchlist: { btn: tabWlBtn,       view: viewWl },
     discover:  { btn: tabDiscoverBtn, view: viewDiscover },
+    profile:   { btn: tabProfileBtn,  view: viewProfile },
   };
   for (const [name, { btn, view }] of Object.entries(tabs)) {
     const isActive = name === tabName;
@@ -30,11 +33,13 @@ function switchRightTab(tabName) {
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
 tabWlBtn.addEventListener('click', () => switchRightTab('watchlist'));
 tabDiscoverBtn.addEventListener('click', () => switchRightTab('discover'));
+tabProfileBtn.addEventListener('click', () => switchRightTab('profile'));
 
 const navRating = document.getElementById('nav-rating');
 const navHistory = document.getElementById('nav-history');
 const navWatchlist = document.getElementById('nav-watchlist');
 const navDiscover = document.getElementById('nav-discover');
+const navProfile = document.getElementById('nav-profile');
 const colRating = document.getElementById('col-rating');
 const colRightViews = document.getElementById('col-right-views');
 
@@ -44,8 +49,7 @@ const colRightViews = document.getElementById('col-right-views');
 // déjà présente.
 function playMobileViewAnim(el) {
   el.classList.remove('mobile-view-anim');
-  void el.offsetWidth;
-  el.classList.add('mobile-view-anim');
+  requestAnimationFrame(() => el.classList.add('mobile-view-anim'));
 }
 
 function switchMobileNav(view) {
@@ -53,10 +57,12 @@ function switchMobileNav(view) {
   navHistory.classList.remove('active');
   navWatchlist.classList.remove('active');
   navDiscover.classList.remove('active');
+  navProfile.classList.remove('active');
   navRating.removeAttribute('aria-current');
   navHistory.removeAttribute('aria-current');
   navWatchlist.removeAttribute('aria-current');
   navDiscover.removeAttribute('aria-current');
+  navProfile.removeAttribute('aria-current');
 
   colRating.style.display = 'none';
   colRightViews.style.display = 'none';
@@ -84,6 +90,12 @@ function switchMobileNav(view) {
     colRightViews.style.display = 'flex';
     switchRightTab('discover');
     playMobileViewAnim(colRightViews);
+  } else if (view === 'profile') {
+    navProfile.classList.add('active');
+    navProfile.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('profile');
+    playMobileViewAnim(colRightViews);
   }
 }
 
@@ -91,6 +103,7 @@ navRating.addEventListener('click', () => switchMobileNav('rating'));
 navHistory.addEventListener('click', () => switchMobileNav('history'));
 navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
 navDiscover.addEventListener('click', () => switchMobileNav('discover'));
+navProfile.addEventListener('click', () => switchMobileNav('profile'));
 
 window.addEventListener('resize', () => {
   if (window.innerWidth > 860) {
@@ -101,6 +114,7 @@ window.addEventListener('resize', () => {
     if (activeNavId === 'nav-history') switchMobileNav('history');
     else if (activeNavId === 'nav-watchlist') switchMobileNav('watchlist');
     else if (activeNavId === 'nav-discover') switchMobileNav('discover');
+    else if (activeNavId === 'nav-profile') switchMobileNav('profile');
     else switchMobileNav('rating');
   }
 });
@@ -114,7 +128,7 @@ if (window.innerWidth <= 860) {
 // dans l'ordre affiché en bas de l'écran : Noter → Historique → À voir → Découvrir.
 // Complète les boutons de la barre de navigation, ne les remplace pas.
 (function initMobileSwipeNav() {
-  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover'];
+  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover', 'profile'];
   const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
   const SWIPE_ANGLE_RATIO = 1.5; // le geste doit être nettement plus horizontal que vertical
 
