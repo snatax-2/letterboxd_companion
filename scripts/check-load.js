@@ -86,7 +86,8 @@ function freshDom() {
     title: 'Film de test', score: '8.5', savedAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     mode: 'detail', date: '2026-01-01',
     values: { scenario: 8, realisation: 8, photo: 8, acteurs: 8, ambiance: 8, rythme: 8, affect: 8 },
-    poster: '', tmdbId: '123',
+    poster: '', tmdbId: '123', liked: true, review: 'Une critique de test',
+    contextTags: ['🍿 Cinéma', '🔄 Re-visionnage', '📝 Analyse / Étude', '🛋️ À la maison'],
   }];
   window.localStorage.setItem('lbx_v2', JSON.stringify(fakeHistory));
   window.localStorage.setItem('lbx_watchlist', JSON.stringify([

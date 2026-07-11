@@ -72,6 +72,10 @@ const ICONS = {
   close: `<svg ${ICON_ATTRS}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
 
   star: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>`,
+
+  popcorn: `<svg ${ICON_ATTRS}><path d="M6 8h12l-1.4 12.1a1 1 0 0 1-1 .9H8.4a1 1 0 0 1-1-.9L6 8z"/><path d="M9 8v13M12 8v13M15 8v13"/><path d="M5 8a2 2 0 0 1 2-3h10a2 2 0 0 1 2 3"/></svg>`,
+
+  sofa: `<svg ${ICON_ATTRS}><path d="M5 12a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3H5v-3z"/><path d="M4 15v4M20 15v4"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>`,
 };
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -1665,6 +1669,29 @@ applyFocusMode(); // état initial au chargement, selon la préférence sauvegar
 // ═══════════════════════════════════════════
 //  TOAST & DELETE WITH UNDO
 // ═══════════════════════════════════════════
+
+// Associe chaque tag de contexte stocké (avec son emoji d'origine, jamais
+// changé pour ne pas casser les films déjà notés) à son icône SVG équivalente,
+// utilisée uniquement à l'affichage — voir tagsHTML plus bas.
+// Déclaré ICI (local à la fonction), pas en haut du fichier : un `const`
+// top-level serait dans sa "zone morte temporelle" tant que l'exécution du
+// script n'a pas atteint cette ligne — or `renderAll()` est appelée une
+// première fois de façon précoce (voir 03-foundation.js), avant que
+// 06-history.js n'ait fini de s'exécuter (même bug que rencontré et corrigé
+// pour CRITERIA_SHORT_LABELS dans createRadarSVG).
+function renderTagLabel(tagText) {
+  const CONTEXT_TAG_ICONS = {
+    '🍿': ICONS.popcorn,
+    '🔄': ICONS.refresh,
+    '📝': ICONS.edit,
+    '🛋️': ICONS.sofa,
+    '🛋': ICONS.sofa,
+  };
+  const [emoji, ...rest] = tagText.split(' ');
+  const icon = CONTEXT_TAG_ICONS[emoji];
+  return icon ? `${icon} ${rest.join(' ')}` : tagText;
+}
+
 let toastTimer;
 let deletedItemCache = null; 
 let deletedItemIndex = null;
@@ -1878,7 +1905,7 @@ function renderHistory() {
 
     let tagsHTML = '';
     if (item.contextTags && item.contextTags.length > 0) {
-      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${t}</span>`).join('')}</div>`;
+      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('')}</div>`;
     }
 
     let reviewHTML = '';

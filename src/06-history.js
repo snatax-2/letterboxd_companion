@@ -1,6 +1,29 @@
 // ═══════════════════════════════════════════
 //  TOAST & DELETE WITH UNDO
 // ═══════════════════════════════════════════
+
+// Associe chaque tag de contexte stocké (avec son emoji d'origine, jamais
+// changé pour ne pas casser les films déjà notés) à son icône SVG équivalente,
+// utilisée uniquement à l'affichage — voir tagsHTML plus bas.
+// Déclaré ICI (local à la fonction), pas en haut du fichier : un `const`
+// top-level serait dans sa "zone morte temporelle" tant que l'exécution du
+// script n'a pas atteint cette ligne — or `renderAll()` est appelée une
+// première fois de façon précoce (voir 03-foundation.js), avant que
+// 06-history.js n'ait fini de s'exécuter (même bug que rencontré et corrigé
+// pour CRITERIA_SHORT_LABELS dans createRadarSVG).
+function renderTagLabel(tagText) {
+  const CONTEXT_TAG_ICONS = {
+    '🍿': ICONS.popcorn,
+    '🔄': ICONS.refresh,
+    '📝': ICONS.edit,
+    '🛋️': ICONS.sofa,
+    '🛋': ICONS.sofa,
+  };
+  const [emoji, ...rest] = tagText.split(' ');
+  const icon = CONTEXT_TAG_ICONS[emoji];
+  return icon ? `${icon} ${rest.join(' ')}` : tagText;
+}
+
 let toastTimer;
 let deletedItemCache = null; 
 let deletedItemIndex = null;
@@ -214,7 +237,7 @@ function renderHistory() {
 
     let tagsHTML = '';
     if (item.contextTags && item.contextTags.length > 0) {
-      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${t}</span>`).join('')}</div>`;
+      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('')}</div>`;
     }
 
     let reviewHTML = '';
