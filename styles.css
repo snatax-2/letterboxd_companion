@@ -729,12 +729,12 @@
      interstice). Effet à l'écran identique à Letterboxd. */
   .rating-stars label.left-half { overflow: visible; }
   .rating-stars label.left-half::before {
-      content: var(--star-symbol, '★'); position: absolute; top: 0; left: 0; width: 1em; text-align: center;
+      content: '★'; position: absolute; top: 0; left: 0; width: 1em; text-align: center;
       color: var(--star-empty-color);
       font-family: var(--star-font);
   }
   .rating-stars label.left-half::after {
-      content: var(--star-symbol, '★'); position: absolute; top: 0; left: 0; width: 1em; text-align: center;
+      content: '★'; position: absolute; top: 0; left: 0; width: 1em; text-align: center;
       color: var(--star-color); text-shadow: var(--star-shadow);
       font-family: var(--star-font);
       clip-path: inset(0 100% 0 0); /* rien de visible par défaut (étoile vide) */

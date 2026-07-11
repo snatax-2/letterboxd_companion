@@ -38,6 +38,47 @@ document.getElementById('quick-stars-container').addEventListener('change', (e) 
     saveDraft();
 });
 
+// Glisser le doigt/la souris sur les étoiles les remplit progressivement, au
+// lieu de devoir taper précisément sur chacune — plus fluide et satisfaisant,
+// surtout au tap initial où on peut directement glisser jusqu'à la bonne
+// valeur sans relâcher. S'appuie sur elementFromPoint (pas un calcul de
+// position manuel) : robuste face à la mise en page row-reverse et à toute
+// variation de tailles/espacements entre thèmes.
+(function initStarDrag() {
+  const container = document.getElementById('quick-stars-container');
+  if (!container) return;
+  let dragging = false;
+
+  function selectLabelAt(clientX, clientY) {
+    const el = document.elementFromPoint(clientX, clientY);
+    const label = el && el.closest('#quick-stars-container label');
+    if (!label || !label.htmlFor) return;
+    const radio = document.getElementById(label.htmlFor);
+    if (radio && !radio.checked) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    dragging = true;
+    const t = e.touches[0];
+    selectLabelAt(t.clientX, t.clientY);
+  }, { passive: true });
+  container.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const t = e.touches[0];
+    selectLabelAt(t.clientX, t.clientY);
+  }, { passive: true });
+  container.addEventListener('touchend', () => { dragging = false; });
+  container.addEventListener('touchcancel', () => { dragging = false; });
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  container.addEventListener('mousedown', (e) => { dragging = true; selectLabelAt(e.clientX, e.clientY); });
+  document.addEventListener('mousemove', (e) => { if (dragging) selectLabelAt(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', () => { dragging = false; });
+})();
+
 function updateQuickLabel() {
   const label = document.getElementById('quick-rating-label');
   if (!label) return;

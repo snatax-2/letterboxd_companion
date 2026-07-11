@@ -145,30 +145,64 @@ async function loadDiscoverQueueInner() {
     }
   });
 
+  // Mélange véritable (Fisher-Yates), pas le raccourci .sort(Math.random())
+  // habituel (biaisé et peu fiable) : sans lui, les suggestions restaient
+  // groupées par film source (donc souvent par genre), puisque allRecs les
+  // accumule film de base par film de base, dans l'ordre.
+  for (let i = uniqueRecs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniqueRecs[i], uniqueRecs[j]] = [uniqueRecs[j], uniqueRecs[i]];
+  }
+
   discoverQueue = uniqueRecs.slice(0, 15);
   discoverLoaded = true;
   renderDiscoverStack();
 }
 
 function renderDiscoverStack() {
-  discoverStack.innerHTML = '';
-
   if (discoverQueue.length === 0) {
+    discoverStack.innerHTML = '';
     discoverActionsEl.style.display = 'none';
     discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
     return;
   }
-
   discoverActionsEl.style.display = 'flex';
 
-  // Aperçu de la carte suivante, en arrière-plan (purement visuel, non interactive)
-  if (discoverQueue[1]) {
-    discoverStack.appendChild(buildDiscoverCardEl(discoverQueue[1], false));
+  // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
+  // swipe) — son animation de sortie est déjà terminée à ce stade
+  // (resolveDiscoverSwipe n'est appelé qu'après le délai de l'animation).
+  const oldTop = discoverStack.querySelector('.discover-card.top');
+  if (oldTop) oldTop.remove();
+
+  const existingBehind = discoverStack.querySelector('.discover-card.behind');
+  const behindMatchesNewTop = existingBehind && existingBehind.dataset.movieId === String(discoverQueue[0].id);
+
+  if (behindMatchesNewTop) {
+    // Réutilise la carte déjà chargée et posée derrière (affiche déjà
+    // récupérée, couleur d'accent déjà extraite) plutôt que de tout
+    // reconstruire — c'était la principale source du délai ressenti entre
+    // deux cartes : chaque swipe relançait un chargement d'image et une
+    // extraction de couleur pour une carte qui était déjà prête juste avant.
+    existingBehind.classList.remove('behind');
+    existingBehind.classList.add('top');
+    existingBehind.setAttribute('tabindex', '0');
+    existingBehind.setAttribute('role', 'group');
+    existingBehind.setAttribute('aria-label', `Suggestion : ${discoverQueue[0].title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+    attachSwipeHandlers(existingBehind, discoverQueue[0]);
+  } else {
+    // Pas de correspondance (première ouverture de l'onglet, ou file
+    // rechargée manuellement) : construit la carte du haut de zéro.
+    if (existingBehind) existingBehind.remove();
+    const topCard = buildDiscoverCardEl(discoverQueue[0], true);
+    discoverStack.appendChild(topCard);
+    attachSwipeHandlers(topCard, discoverQueue[0]);
   }
-  // Carte active, au premier plan
-  const topCard = buildDiscoverCardEl(discoverQueue[0], true);
-  discoverStack.appendChild(topCard);
-  attachSwipeHandlers(topCard, discoverQueue[0]);
+
+  // Construit la nouvelle carte "derrière" (aperçu du film suivant).
+  if (discoverQueue[1]) {
+    const newBehind = buildDiscoverCardEl(discoverQueue[1], false);
+    discoverStack.insertBefore(newBehind, discoverStack.firstChild);
+  }
 }
 
 function buildDiscoverCardEl(m, isTop) {
@@ -180,12 +214,13 @@ function buildDiscoverCardEl(m, isTop) {
 
   const el = document.createElement('div');
   el.className = 'discover-card ' + (isTop ? 'top' : 'behind');
+  el.dataset.movieId = String(m.id);
   el.innerHTML = `
     <div class="discover-card-poster-wrap">
       ${posterUrl
         ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}
-      ${isTop ? `<div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>` : ''}
+      <div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>
     </div>
     <div class="discover-card-info">
       <div class="discover-card-title">${escAttr(m.title)}</div>
@@ -250,7 +285,7 @@ function attachSwipeHandlers(cardEl, movie) {
       cardEl.classList.add('flying');
       cardEl.style.transform = `translate(${dx > 0 ? 900 : -900}px, ${dy * 0.4}px) rotate(${dx / 10}deg)`;
       cardEl.style.opacity = '0';
-      setTimeout(() => resolveDiscoverSwipe(direction), 280);
+      setTimeout(() => resolveDiscoverSwipe(direction), 200);
     } else if (Math.abs(dx) < TAP_MAX_MOVE && Math.abs(dy) < TAP_MAX_MOVE) {
       // Tap (quasi aucun mouvement) : ouvre la fiche détaillée du film plutôt
       // que de traiter ça comme un swipe avorté.
