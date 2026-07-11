@@ -698,7 +698,30 @@
 
   /* ── HISTORY ── */
   .history-scroller { max-height: 550px; overflow-y: auto; overflow-x: hidden;}
-  .hist-item { display: flex; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 8px; position: relative; transition: border-color .15s, transform .15s, box-shadow .15s, opacity 0.3s ease; width: 100%; }
+  .hist-item {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 8px; position: relative; transition: border-color .15s, box-shadow .15s, transform .15s, opacity .3s ease;
+    width: 100%; overflow: hidden; touch-action: pan-y;
+  }
+  .hist-item-content { display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%; }
+  .hist-item:not(.hist-dragging) .hist-item-content { transition: transform .25s ease; }
+  .hist-item.hist-swipe-out-left .hist-item-content,
+  .hist-item.hist-swipe-out-right .hist-item-content { transition: transform .2s ease, opacity .2s ease; opacity: 0; }
+
+  /* Indices révélés en glissant (rouge = supprimer, bleu = modifier), fixes
+     pendant que .hist-item-content glisse par-dessus — même mécanique que la
+     watchlist (voir .wl-swipe-hint). */
+  .hist-swipe-hint {
+    position: absolute; top: 0; bottom: 0; width: 120px; z-index: 0;
+    display: flex; align-items: center; gap: 6px; padding: 0 16px;
+    font-family: var(--font-heading); font-weight: 800; font-size: 0.78rem; color: #fff;
+    opacity: 0; transition: opacity .15s ease;
+  }
+  .hist-swipe-hint .icon { width: 1.1em; height: 1.1em; }
+  .hist-swipe-hint-left { right: 0; background: var(--red); justify-content: flex-end; }
+  .hist-swipe-hint-right { left: 0; background: var(--blue); }
+  .hist-item.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
+  .hist-item.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
 
   /* Anime l'entrée du film qu'on vient de sauvegarder/ajouter (historique et
      watchlist), pour un rendu plus vivant qu'une simple apparition instantanée
@@ -766,6 +789,7 @@
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
     margin-bottom: 8px; transition: border-color .15s; position: relative; width: 100%;
     overflow: hidden; /* cache les indices de swipe tant qu'on ne glisse pas */
+    touch-action: pan-y; /* le scroll vertical de la liste reste natif, le swipe horizontal reste géré par notre JS */
   }
   .wl-card-content {
     display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%;
@@ -1049,7 +1073,7 @@
     overflow: hidden;
     box-shadow: 0 10px 28px rgba(0,0,0,0.45);
     display: flex; flex-direction: column;
-    touch-action: pan-y; /* laisse le scroll vertical de la page passer, on gère le swipe horizontal nous-même */
+    touch-action: none; /* rien à faire défiler ici : on gère tout nous-mêmes, sans laisser le navigateur "voler" le geste (c'était la cause du décalage d'affichage pendant le swipe) */
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
@@ -1062,8 +1086,11 @@
   .discover-card.flying { transition: transform .35s ease-out, opacity .35s ease-out; }
 
   .discover-card-poster-wrap { position: relative; width: 100%; height: 62%; flex-shrink: 0; background: var(--bg); }
-  .discover-card-poster { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .discover-card-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+  .discover-card-poster {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    touch-action: none; -webkit-user-drag: none; pointer-events: none;
+  }
+  .discover-card-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; pointer-events: none; }
 
   .discover-card-info { padding: 10px 14px; flex: 1; overflow-y: auto; }
   .discover-card-title { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-hi); line-height: 1.25; }

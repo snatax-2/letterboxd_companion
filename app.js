@@ -1919,18 +1919,22 @@ function renderHistory() {
     }
 
     div.innerHTML = `
-      ${imgHtml}
-      <div class="hist-body">
-        <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-        <div class="hist-meta">${metaHTML}</div>
-        ${tagsHTML}
-        <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
-        <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
-        ${reviewHTML}
-      </div>
-      <div class="hist-actions">
-        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">${ICONS.edit}</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
+      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
+      <div class="hist-item-content">
+        ${imgHtml}
+        <div class="hist-body">
+          <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+          <div class="hist-meta">${metaHTML}</div>
+          ${tagsHTML}
+          <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
+          <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
+          ${reviewHTML}
+        </div>
+        <div class="hist-actions">
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
+        </div>
       </div>`;
     container.appendChild(div);
   });
@@ -2049,51 +2053,148 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 // le conteneur (pas un listener par carte) : fonctionne aussi pour les films
 // ajoutés après coup, sans re-câblage. Annulé si le doigt bouge trop (= scroll)
 // ou si l'appui vise déjà un bouton (édition/suppression directe).
-(function initHistoryLongPress() {
+(function initHistoryGestures() {
   const LONG_PRESS_MS = 500;
   const MOVE_CANCEL_PX = 10;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
   let pressTimer = null;
   let startX = 0, startY = 0;
   let pressedItem = null;
+  let pressedContent = null;
   let longPressJustFired = false; // évite qu'un tap (click) ne se déclenche juste après un appui long déjà traité
+  let wasSwipe = false; // idem, juste après un swipe
+  let swipeMode = null; // null = pas encore décidé, 'swipe' = glissement horizontal engagé, 'scroll' = mouvement vertical (on laisse faire nativement)
+  let dx = 0;
 
   const container = document.getElementById('history-list');
   if (!container) return;
 
-  function cancelPress() {
+  function resetGesture() {
     clearTimeout(pressTimer);
     pressTimer = null;
     pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
   }
 
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
-    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     pressedItem = item;
+    pressedContent = item.querySelector('.hist-item-content');
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
     pressTimer = setTimeout(() => {
-      if (!pressedItem) return;
+      if (!pressedItem || swipeMode === 'swipe') return; // déjà en train de glisser : pas d'appui long
       if (navigator.vibrate) navigator.vibrate(20);
       openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
-      pressedItem = null;
       longPressJustFired = true;
       setTimeout(() => { longPressJustFired = false; }, 300);
+      resetGesture();
     }, LONG_PRESS_MS);
   }, { passive: true });
 
   container.addEventListener('touchmove', (e) => {
-    if (!pressTimer) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-    if (Math.abs(dx) > MOVE_CANCEL_PX || Math.abs(dy) > MOVE_CANCEL_PX) cancelPress();
+    if (!pressedItem) return;
+    const curX = e.touches[0].clientX;
+    const curY = e.touches[0].clientY;
+    const rawDx = curX - startX;
+    const rawDy = curY - startY;
+
+    // Décide UNE FOIS, dès qu'il y a assez de mouvement, si c'est un swipe
+    // horizontal (glissement de la carte) ou un scroll vertical (on laisse
+    // faire nativement, on ne touche à rien).
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
   }, { passive: true });
 
-  container.addEventListener('touchend', cancelPress);
-  container.addEventListener('touchcancel', cancelPress);
+  function resolveGesture() {
+    if (!pressedItem) return;
+    clearTimeout(pressTimer);
+
+    if (swipeMode === 'swipe') {
+      const idx = parseInt(pressedItem.dataset.idx, 10);
+      if (dx <= -SWIPE_THRESHOLD) {
+        pressedItem.classList.add('hist-swipe-out-left');
+        pressedContent.style.transform = 'translateX(-110%)';
+        if (navigator.vibrate) navigator.vibrate(20);
+        setTimeout(() => deleteItem(idx), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+      } else if (dx >= SWIPE_THRESHOLD) {
+        pressedItem.classList.add('hist-swipe-out-right');
+        pressedContent.style.transform = 'translateX(110%)';
+        if (navigator.vibrate) navigator.vibrate(20);
+        setTimeout(() => loadItem(idx), 200);
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+      }
+      wasSwipe = true;
+      setTimeout(() => { wasSwipe = false; }, 300);
+    }
+    resetGesture();
+  }
+
+  container.addEventListener('touchend', resolveGesture);
+
+  container.addEventListener('touchcancel', resetGesture);
+
+  // Souris (pratique pour tester sur desktop / vercel dev) : même logique que
+  // le tactile, juste déclenchée par mousedown/mousemove/mouseup.
+  let mouseActive = false;
+  container.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    mouseActive = true;
+    pressedItem = item;
+    pressedContent = item.querySelector('.hist-item-content');
+    startX = e.clientX;
+    startY = e.clientY;
+    swipeMode = null;
+    dx = 0;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!mouseActive || !pressedItem) return;
+    const rawDx = e.clientX - startX;
+    const rawDy = e.clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!mouseActive) return;
+    mouseActive = false;
+    resolveGesture();
+  });
 
   // Tap (court) sur un film : ouvre sa fiche détaillée. L'appui long (menu
-  // d'actions) a priorité — s'il vient de se déclencher, on ignore ce tap.
+  // d'actions) et le swipe (supprimer/modifier) ont priorité — s'ils viennent
+  // de se déclencher, on ignore ce tap.
   container.addEventListener('click', (e) => {
     if (e.target.closest('#empty-state-history-cta')) {
       if (window.innerWidth <= 860) switchMobileNav('rating');
@@ -2101,7 +2202,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
       if (searchInput) searchInput.focus();
       return;
     }
-    if (longPressJustFired) return;
+    if (longPressJustFired || wasSwipe) return;
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
     const idx = parseInt(item.dataset.idx, 10);
@@ -3317,12 +3418,16 @@ function attachSwipeHandlers(cardEl, movie) {
 
   cardEl.addEventListener('touchstart', e => {
     e.stopPropagation(); // évite que le geste remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
+    e.preventDefault(); // renfort : touch-action:none (CSS) suffit en théorie, mais certaines versions de
+                         // Safari/PWA en mode "installé" l'appliquent de façon incohérente — d'où le décalage
+                         // d'affichage rapporté pendant le swipe. preventDefault() est la garantie la plus sûre.
     onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
+  }, { passive: false });
   cardEl.addEventListener('touchmove', e => {
     e.stopPropagation();
+    e.preventDefault();
     onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
+  }, { passive: false });
   cardEl.addEventListener('touchend', e => {
     e.stopPropagation();
     onEnd();

@@ -221,12 +221,16 @@ function attachSwipeHandlers(cardEl, movie) {
 
   cardEl.addEventListener('touchstart', e => {
     e.stopPropagation(); // évite que le geste remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
+    e.preventDefault(); // renfort : touch-action:none (CSS) suffit en théorie, mais certaines versions de
+                         // Safari/PWA en mode "installé" l'appliquent de façon incohérente — d'où le décalage
+                         // d'affichage rapporté pendant le swipe. preventDefault() est la garantie la plus sûre.
     onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
+  }, { passive: false });
   cardEl.addEventListener('touchmove', e => {
     e.stopPropagation();
+    e.preventDefault();
     onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
+  }, { passive: false });
   cardEl.addEventListener('touchend', e => {
     e.stopPropagation();
     onEnd();
