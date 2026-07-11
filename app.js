@@ -251,6 +251,19 @@ if (window.innerWidth <= 860) {
 // ═══════════════════════════════════════════
 //  THEMING & SETTINGS
 // ═══════════════════════════════════════════
+
+// Applique une classe temporaire qui active une transition douce sur (quasi)
+// tous les éléments pendant un changement de thème, plutôt qu'un changement
+// de couleurs instantané et net. Limité à une courte fenêtre (350ms) pour ne
+// pas garder ces transitions actives en permanence (coût de perf inutile,
+// et risque d'interférer avec d'autres animations ponctuelles de l'app).
+function withThemeTransition(applyFn) {
+  const root = document.documentElement;
+  root.classList.add('theme-transitioning');
+  applyFn();
+  setTimeout(() => root.classList.remove('theme-transitioning'), 350);
+}
+
 function loadSettings() {
   const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "default" };
   try {
@@ -309,12 +322,14 @@ function selectThemeCard(card) {
   });
   card.classList.add('selected');
   card.setAttribute('aria-checked', 'true');
-  if (card.dataset.theme !== "system") {
-      document.documentElement.setAttribute('data-theme', card.dataset.theme);
-  } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
-  }
+  withThemeTransition(() => {
+    if (card.dataset.theme !== "system") {
+        document.documentElement.setAttribute('data-theme', card.dataset.theme);
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
+    }
+  });
   renderAll();
 }
 
@@ -1191,6 +1206,39 @@ document.getElementById('genre-weight-suggest').addEventListener('click', () => 
 // scoreToStars / getStarStr) vit dans 03b-pure-logic.js, pour pouvoir être
 // testé automatiquement sans DOM. Cette fonction-ci reste la fine couche qui
 // lit les sliders et écrit le résultat à l'écran.
+// Anime le score vers sa nouvelle valeur à chaque ajustement, plutôt qu'un
+// changement de chiffre instantané. Contrairement à animateCountUp() (utilisée
+// une fois par affichage pour les KPI du dashboard), celle-ci part de la
+// valeur ACTUELLEMENT affichée (pas de 0) et s'annule/relance proprement si
+// une nouvelle valeur arrive avant la fin — indispensable ici car un
+// glissement de slider déclenche beaucoup de mises à jour rapprochées.
+function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
+  const startValue = parseFloat(el.textContent) || 0;
+  if (Math.abs(endValue - startValue) < 0.01) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 2); // ease-out quad : plus vif que l'ease-out cubic des KPI
+    el.textContent = (startValue + (endValue - startValue) * eased).toFixed(decimals);
+    if (progress < 1) {
+      el._scoreAnimId = requestAnimationFrame(step);
+    } else {
+      el.textContent = endValue.toFixed(decimals);
+      el._scoreAnimId = null;
+    }
+  }
+  el._scoreAnimId = requestAnimationFrame(step);
+}
+
 function calculateScore() {
   let score;
 
@@ -1216,7 +1264,7 @@ function calculateScore() {
   const scoreEl = document.getElementById('score-big');
   const denomEl = document.querySelector('.score-denom');
 
-  scoreEl.textContent = score.toFixed(1);
+  animateValueTowards(scoreEl, score, 1, 200);
   denomEl.textContent = '/10';
   scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
 
@@ -1392,6 +1440,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
         saveHistory(history);
         localStorage.removeItem('lbx_draft');
         resetForm();
+        window._justSavedHistoryTitle = title.toLowerCase();
         renderAll();
         showToast(`"${title}" mis à jour`);
       }
@@ -1401,6 +1450,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     saveHistory(history);
     localStorage.removeItem('lbx_draft'); 
     resetForm();
+    window._justSavedHistoryTitle = title.toLowerCase();
     renderAll();
     showToast(`"${title}" enregistré`);
     const saveBtn = document.getElementById('save-btn');
@@ -1763,11 +1813,13 @@ function renderHistory() {
 
   if (history.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
+    window._justSavedHistoryTitle = null;
     return;
   }
 
@@ -1777,6 +1829,12 @@ function renderHistory() {
     const div = document.createElement('div');
     div.className = 'hist-item';
     div.dataset.idx = realIdx;
+    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
+    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
+    // l'animation à chaque re-rendu (changement de filtre, etc.).
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    }
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
@@ -1829,6 +1887,7 @@ function renderHistory() {
       </div>`;
     container.appendChild(div);
   });
+  window._justSavedHistoryTitle = null;
 }
 
 // ═══════════════════════════════════════════
@@ -2281,6 +2340,7 @@ function renderWatchlist() {
 
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
+    window._justSavedWatchlistTitle = null;
     return;
   }
 
@@ -2289,6 +2349,9 @@ function renderWatchlist() {
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
+    if (window._justSavedWatchlistTitle && item.title.toLowerCase() === window._justSavedWatchlistTitle) {
+      div.classList.add('wl-card-entering');
+    }
 
     const posterHtml = item.poster
       ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
@@ -2317,6 +2380,7 @@ function renderWatchlist() {
       if (pd) pd.innerHTML = '';
     }
   });
+  window._justSavedWatchlistTitle = null;
 }
 
 async function fetchProviders(tmdbId, idx) {
@@ -2389,6 +2453,7 @@ async function addToWatchlistFromTMDb(movie, year) {
     addedAt: new Date().toISOString()
   });
   saveWatchlist(list);
+  window._justSavedWatchlistTitle = movie.title.toLowerCase();
   renderWatchlist();
   showToast(`"${movie.title}" ajouté à la liste 🎯`);
 }
@@ -2477,6 +2542,7 @@ document.getElementById('watchlist-add-btn').addEventListener('click', () => {
   if (list.find(i => i.title.toLowerCase() === key)) { showToast('Déjà dans la liste.'); wlInput.value = ''; return; }
   list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
   saveWatchlist(list);
+  window._justSavedWatchlistTitle = val.toLowerCase();
   renderWatchlist();
   showToast(`"${val}" ajouté à la liste 🎯`);
   wlInput.value = '';
@@ -2874,7 +2940,21 @@ const discoverReloadBtn = document.getElementById('discover-reload-btn');
 const discoverPassBtn = document.getElementById('discover-pass-btn');
 const discoverLikeBtn = document.getElementById('discover-like-btn');
 
+// Enveloppe fine autour de la vraie logique de chargement : démarre la
+// rotation de l'icône ↻ avant, l'arrête après — via try/finally, pour être sûr
+// qu'elle s'arrête quel que soit le chemin de sortie de la fonction (plusieurs
+// "return" précoces existent selon les cas : aucun film 8+/10, aucun avec
+// fiche TMDb, etc.).
 async function loadDiscoverQueue() {
+  discoverReloadBtn.classList.add('spinning');
+  try {
+    await loadDiscoverQueueInner();
+  } finally {
+    discoverReloadBtn.classList.remove('spinning');
+  }
+}
+
+async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
   discoverStack.innerHTML = '<div class="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>';
 

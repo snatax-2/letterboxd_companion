@@ -171,6 +171,39 @@ document.getElementById('genre-weight-suggest').addEventListener('click', () => 
 // scoreToStars / getStarStr) vit dans 03b-pure-logic.js, pour pouvoir être
 // testé automatiquement sans DOM. Cette fonction-ci reste la fine couche qui
 // lit les sliders et écrit le résultat à l'écran.
+// Anime le score vers sa nouvelle valeur à chaque ajustement, plutôt qu'un
+// changement de chiffre instantané. Contrairement à animateCountUp() (utilisée
+// une fois par affichage pour les KPI du dashboard), celle-ci part de la
+// valeur ACTUELLEMENT affichée (pas de 0) et s'annule/relance proprement si
+// une nouvelle valeur arrive avant la fin — indispensable ici car un
+// glissement de slider déclenche beaucoup de mises à jour rapprochées.
+function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
+  const startValue = parseFloat(el.textContent) || 0;
+  if (Math.abs(endValue - startValue) < 0.01) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 2); // ease-out quad : plus vif que l'ease-out cubic des KPI
+    el.textContent = (startValue + (endValue - startValue) * eased).toFixed(decimals);
+    if (progress < 1) {
+      el._scoreAnimId = requestAnimationFrame(step);
+    } else {
+      el.textContent = endValue.toFixed(decimals);
+      el._scoreAnimId = null;
+    }
+  }
+  el._scoreAnimId = requestAnimationFrame(step);
+}
+
 function calculateScore() {
   let score;
 
@@ -196,7 +229,7 @@ function calculateScore() {
   const scoreEl = document.getElementById('score-big');
   const denomEl = document.querySelector('.score-denom');
 
-  scoreEl.textContent = score.toFixed(1);
+  animateValueTowards(scoreEl, score, 1, 200);
   denomEl.textContent = '/10';
   scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
 
@@ -372,6 +405,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
         saveHistory(history);
         localStorage.removeItem('lbx_draft');
         resetForm();
+        window._justSavedHistoryTitle = title.toLowerCase();
         renderAll();
         showToast(`"${title}" mis à jour`);
       }
@@ -381,6 +415,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     saveHistory(history);
     localStorage.removeItem('lbx_draft'); 
     resetForm();
+    window._justSavedHistoryTitle = title.toLowerCase();
     renderAll();
     showToast(`"${title}" enregistré`);
     const saveBtn = document.getElementById('save-btn');

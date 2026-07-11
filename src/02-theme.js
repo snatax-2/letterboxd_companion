@@ -1,6 +1,19 @@
 // ═══════════════════════════════════════════
 //  THEMING & SETTINGS
 // ═══════════════════════════════════════════
+
+// Applique une classe temporaire qui active une transition douce sur (quasi)
+// tous les éléments pendant un changement de thème, plutôt qu'un changement
+// de couleurs instantané et net. Limité à une courte fenêtre (350ms) pour ne
+// pas garder ces transitions actives en permanence (coût de perf inutile,
+// et risque d'interférer avec d'autres animations ponctuelles de l'app).
+function withThemeTransition(applyFn) {
+  const root = document.documentElement;
+  root.classList.add('theme-transitioning');
+  applyFn();
+  setTimeout(() => root.classList.remove('theme-transitioning'), 350);
+}
+
 function loadSettings() {
   const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "default" };
   try {
@@ -59,12 +72,14 @@ function selectThemeCard(card) {
   });
   card.classList.add('selected');
   card.setAttribute('aria-checked', 'true');
-  if (card.dataset.theme !== "system") {
-      document.documentElement.setAttribute('data-theme', card.dataset.theme);
-  } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
-  }
+  withThemeTransition(() => {
+    if (card.dataset.theme !== "system") {
+        document.documentElement.setAttribute('data-theme', card.dataset.theme);
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
+    }
+  });
   renderAll();
 }
 

@@ -19,6 +19,7 @@ function renderWatchlist() {
 
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
+    window._justSavedWatchlistTitle = null;
     return;
   }
 
@@ -27,6 +28,9 @@ function renderWatchlist() {
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
+    if (window._justSavedWatchlistTitle && item.title.toLowerCase() === window._justSavedWatchlistTitle) {
+      div.classList.add('wl-card-entering');
+    }
 
     const posterHtml = item.poster
       ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
@@ -55,6 +59,7 @@ function renderWatchlist() {
       if (pd) pd.innerHTML = '';
     }
   });
+  window._justSavedWatchlistTitle = null;
 }
 
 async function fetchProviders(tmdbId, idx) {
@@ -127,6 +132,7 @@ async function addToWatchlistFromTMDb(movie, year) {
     addedAt: new Date().toISOString()
   });
   saveWatchlist(list);
+  window._justSavedWatchlistTitle = movie.title.toLowerCase();
   renderWatchlist();
   showToast(`"${movie.title}" ajouté à la liste 🎯`);
 }
@@ -215,6 +221,7 @@ document.getElementById('watchlist-add-btn').addEventListener('click', () => {
   if (list.find(i => i.title.toLowerCase() === key)) { showToast('Déjà dans la liste.'); wlInput.value = ''; return; }
   list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
   saveWatchlist(list);
+  window._justSavedWatchlistTitle = val.toLowerCase();
   renderWatchlist();
   showToast(`"${val}" ajouté à la liste 🎯`);
   wlInput.value = '';

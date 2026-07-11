@@ -35,7 +35,21 @@ const discoverReloadBtn = document.getElementById('discover-reload-btn');
 const discoverPassBtn = document.getElementById('discover-pass-btn');
 const discoverLikeBtn = document.getElementById('discover-like-btn');
 
+// Enveloppe fine autour de la vraie logique de chargement : démarre la
+// rotation de l'icône ↻ avant, l'arrête après — via try/finally, pour être sûr
+// qu'elle s'arrête quel que soit le chemin de sortie de la fonction (plusieurs
+// "return" précoces existent selon les cas : aucun film 8+/10, aucun avec
+// fiche TMDb, etc.).
 async function loadDiscoverQueue() {
+  discoverReloadBtn.classList.add('spinning');
+  try {
+    await loadDiscoverQueueInner();
+  } finally {
+    discoverReloadBtn.classList.remove('spinning');
+  }
+}
+
+async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
   discoverStack.innerHTML = '<div class="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>';
 

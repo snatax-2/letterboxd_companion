@@ -169,11 +169,13 @@ function renderHistory() {
 
   if (history.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
+    window._justSavedHistoryTitle = null;
     return;
   }
 
@@ -183,6 +185,12 @@ function renderHistory() {
     const div = document.createElement('div');
     div.className = 'hist-item';
     div.dataset.idx = realIdx;
+    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
+    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
+    // l'animation à chaque re-rendu (changement de filtre, etc.).
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    }
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
@@ -235,6 +243,7 @@ function renderHistory() {
       </div>`;
     container.appendChild(div);
   });
+  window._justSavedHistoryTitle = null;
 }
 
 // ═══════════════════════════════════════════

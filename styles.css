@@ -166,6 +166,14 @@
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
   }
 
+  /* Transition de thème plus large que la règle ci-dessus (boutons, icônes,
+     sliders...), activée seulement pendant la brève fenêtre du changement de
+     thème (voir withThemeTransition() dans 02-theme.js) — pas en permanence. */
+  html.theme-transitioning, html.theme-transitioning * {
+    transition: background-color .3s ease, color .3s ease, border-color .3s ease,
+                fill .3s ease, stroke .3s ease, box-shadow .3s ease !important;
+  }
+
   /* ── RETOUR TACTILE (feedback au clic/tap) ──
      Un écran tactile n'a pas de :hover ; sans ce retour visuel immédiat, l'app
      donne l'impression de "ne pas réagir" au toucher. On applique une légère
@@ -408,8 +416,13 @@
     font-size: 0.78rem; color: var(--text); cursor: pointer; margin-bottom: 14px; user-select: none;
   }
   .weights-toggle:hover { color: var(--text-mid); }
-  .weights-panel { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 16px; display: none; }
-  .weights-panel.open { display: block; }
+  .weights-panel {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    border-width: 0; margin-bottom: 0; padding: 0 14px;
+    max-height: 0; opacity: 0; overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease, margin-bottom 0.3s ease, border-width 0.3s ease;
+  }
+  .weights-panel.open { max-height: 600px; opacity: 1; padding: 14px; margin-bottom: 16px; border-width: 1px; }
   .weights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .weight-item label { display: block; font-size: 0.78rem; color: var(--text); margin-bottom: 4px; }
   .weight-item input[type="number"] {
@@ -678,6 +691,16 @@
   /* ── HISTORY ── */
   .history-scroller { max-height: 550px; overflow-y: auto; overflow-x: hidden;}
   .hist-item { display: flex; gap: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 8px; position: relative; transition: border-color .15s, transform .15s, box-shadow .15s, opacity 0.3s ease; width: 100%; }
+
+  /* Anime l'entrée du film qu'on vient de sauvegarder/ajouter (historique et
+     watchlist), pour un rendu plus vivant qu'une simple apparition instantanée
+     — voir 05-rating-form.js / 08-watchlist.js pour le marquage de l'élément
+     concerné (un seul par rendu, pas toute la liste). */
+  @keyframes itemEnterIn {
+    from { opacity: 0; transform: translateY(-10px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .hist-item-entering, .wl-card-entering { animation: itemEnterIn .35s cubic-bezier(.2,.8,.2,1) both; }
   .hist-item.deleting { opacity: 0; transform: translateX(-30px); } 
   .hist-item:hover { border-color: var(--border-hi); transform: translateX(2px); box-shadow: -3px 0 0 var(--orange); }
   .hist-poster { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
@@ -867,6 +890,8 @@
   }
   .discover-reload-btn:hover { color: var(--text-hi); }
   .discover-reload-btn:active { transform: scale(.9) rotate(-30deg); }
+  @keyframes discoverSpin { to { transform: rotate(360deg); } }
+  .discover-reload-btn.spinning { animation: discoverSpin 0.8s linear infinite; color: var(--orange); }
 
   .discover-stack {
     position: relative;
