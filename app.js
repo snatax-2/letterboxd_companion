@@ -302,7 +302,7 @@ if (window.innerWidth <= 860) {
   // "Découvrir"...) : on n'y déclenche pas de changement d'onglet.
   function isExcludedTarget(target) {
     return !!target.closest(
-      '#carousel-container, .discover-card, .wl-card, .hist-item, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+      '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
     );
   }
 
@@ -1311,12 +1311,14 @@ document.getElementById('quick-stars-container').addEventListener('change', (e) 
   }
 
   container.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
     dragging = true;
     const t = e.touches[0];
     selectLabelAt(t.clientX, t.clientY);
   }, { passive: true });
   container.addEventListener('touchmove', (e) => {
     if (!dragging) return;
+    e.stopPropagation();
     const t = e.touches[0];
     selectLabelAt(t.clientX, t.clientY);
   }, { passive: true });
@@ -4171,8 +4173,8 @@ function renderTrendingCarousel(movies) {
   }
   requestAnimationFrame(tick);
 
-  outer.addEventListener('touchstart', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('touchmove', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
   outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
   outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
 

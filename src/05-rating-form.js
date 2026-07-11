@@ -61,12 +61,14 @@ document.getElementById('quick-stars-container').addEventListener('change', (e) 
   }
 
   container.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
     dragging = true;
     const t = e.touches[0];
     selectLabelAt(t.clientX, t.clientY);
   }, { passive: true });
   container.addEventListener('touchmove', (e) => {
     if (!dragging) return;
+    e.stopPropagation();
     const t = e.touches[0];
     selectLabelAt(t.clientX, t.clientY);
   }, { passive: true });

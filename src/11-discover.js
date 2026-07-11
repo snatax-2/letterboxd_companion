@@ -149,8 +149,8 @@ function renderTrendingCarousel(movies) {
   }
   requestAnimationFrame(tick);
 
-  outer.addEventListener('touchstart', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('touchmove', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
   outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
   outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
 
