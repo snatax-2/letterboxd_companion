@@ -135,6 +135,17 @@
     --header-bar: linear-gradient(to right, #4A2E1B 33%, #DAC0A3 33%, #DAC0A3 66%, #5C6E58 66%);
   }
 
+  /* Le texte "#0d1117" (quasi noir) des boutons actifs (.mode-tab.active,
+     .focus-mode-toggle.active) est pensé pour un accent CLAIR/vif (orange,
+     rouge, blanc...) sur les autres thèmes. Ici --orange est un brun déjà
+     sombre (Terre de Sienne) : du texte presque noir dessus manque de
+     contraste et paraît terne. On repasse en crème (couleur du fond du
+     thème), qui se détache clairement du brun plein. */
+  [data-theme="cinephile"] .mode-tab.active,
+  [data-theme="cinephile"] .focus-mode-toggle.active {
+    color: var(--bg);
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   /* Icônes SVG (remplacent les emoji dans l'interface — voir 00b-icons.js).
@@ -511,20 +522,22 @@
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%);
-    background: #fff; cursor: pointer;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.5);
+    background: var(--surface); border: 2px solid var(--orange); cursor: pointer;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4);
     transition: transform .12s, box-shadow .12s;
   }
   input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
   input[type="range"]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%); background: #fff; cursor: pointer; border: none;
-    box-shadow: 0 0 0 3px rgba(0,0,0,0.4); transition: transform .12s;
+    width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%); background: var(--surface); cursor: pointer; border: 2px solid var(--orange);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.35); transition: transform .12s;
   }
   input[type="range"]::-moz-range-thumb:hover { transform: scale(1.25); }
   
   .affect-range {
     background: linear-gradient(to right, var(--blue) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%));
   }
+  .affect-range::-webkit-slider-thumb { border-color: var(--blue); }
+  .affect-range::-moz-range-thumb { border-color: var(--blue); }
 
   .criterion-desc {
     font-size: 0.79rem; color: var(--text); background: var(--surface2);
