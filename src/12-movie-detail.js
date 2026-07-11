@@ -50,7 +50,7 @@ function buildMdsContent(data, localMatch) {
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
-        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ' ❤️' : ''}</div>
+        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
     `;

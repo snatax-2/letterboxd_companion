@@ -134,7 +134,7 @@ if (window.innerWidth <= 860) {
   // "Découvrir"...) : on n'y déclenche pas de changement d'onglet.
   function isExcludedTarget(target) {
     return !!target.closest(
-      '#carousel-container, .discover-card, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+      '#carousel-container, .discover-card, .wl-card, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
     );
   }
 

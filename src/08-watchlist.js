@@ -11,6 +11,92 @@ function saveWatchlist(list) {
 }
 
 
+// Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
+// "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
+// que les boutons ✕/⭐ — juste un chemin de déclenchement en plus, pas de
+// nouvelle logique). stopPropagation() évite que ce geste horizontal ne
+// déclenche AUSSI le swipe global de changement d'onglet.
+function attachWatchlistSwipeHandlers(cardEl, idx) {
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+  const contentEl = cardEl.querySelector('.wl-card-content');
+  let startX = 0, startY = 0, dx = 0, dragging = false, wasSwipe = false;
+
+  function onStart(x, y) {
+    startX = x; startY = y; dx = 0; dragging = true; wasSwipe = false;
+    cardEl.classList.add('wl-dragging');
+  }
+  function onMove(x, y) {
+    if (!dragging) return;
+    const rawDx = x - startX;
+    const dy = y - startY;
+    if (Math.abs(dy) > Math.abs(rawDx) * 1.2) return; // trop vertical : probablement un scroll, pas un swipe
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    if (Math.abs(dx) > 8) wasSwipe = true;
+    contentEl.style.transform = `translateX(${dx}px)`;
+    cardEl.classList.toggle('wl-swipe-left', dx < -10);
+    cardEl.classList.toggle('wl-swipe-right', dx > 10);
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('wl-dragging');
+
+    if (dx <= -SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-left');
+      contentEl.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      setTimeout(() => removeWatchlist(idx), 200);
+    } else if (dx >= SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-right');
+      contentEl.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      setTimeout(() => watchlistToForm(idx), 200);
+    } else {
+      contentEl.style.transform = '';
+      cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');
+    }
+    // Empêche le tap-pour-ouvrir-la-fiche de se déclencher juste après un
+    // swipe avorté (retour à zéro) — seul un vrai tap sans mouvement l'ouvre.
+    if (wasSwipe) {
+      setTimeout(() => { wasSwipe = false; }, 50);
+    }
+  }
+
+  cardEl.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchmove', e => {
+    e.stopPropagation();
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchend', e => {
+    e.stopPropagation();
+    onEnd();
+  });
+  cardEl.addEventListener('touchcancel', onEnd);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  cardEl.addEventListener('mousedown', e => {
+    onStart(e.clientX, e.clientY);
+    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
+    const upHandler = () => {
+      onEnd();
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+
+  // Empêche le tap-pour-détail de s'ouvrir juste après un swipe (voir le
+  // listener délégué de watchlist-list plus bas).
+  cardEl.addEventListener('click', e => {
+    if (wasSwipe) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+
 function renderWatchlist() {
   const list = loadWatchlist();
   const container = document.getElementById('watchlist-list');
@@ -18,7 +104,7 @@ function renderWatchlist() {
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
     window._justSavedWatchlistTitle = null;
     return;
   }
@@ -37,20 +123,25 @@ function renderWatchlist() {
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
-      ${posterHtml}
-      <div class="wl-body">
-        <div class="wl-title">${item.title}</div>
-        <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
-        <div class="wl-providers" id="wl-providers-${i}">
-          <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+      <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
+      <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
+      <div class="wl-card-content">
+        ${posterHtml}
+        <div class="wl-body">
+          <div class="wl-title">${item.title}</div>
+          <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+          <div class="wl-providers" id="wl-providers-${i}">
+            <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+          </div>
         </div>
-      </div>
-      <div class="wl-actions">
-        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
-        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
+        <div class="wl-actions">
+          <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
+          <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
+        </div>
       </div>`;
 
     container.appendChild(div);
+    attachWatchlistSwipeHandlers(div, i);
 
     if (item.tmdbId) {
       fetchProviders(item.tmdbId, i);
@@ -233,6 +324,11 @@ wlInput.addEventListener('keydown', e => {
 
 // Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
 document.getElementById('watchlist-list').addEventListener('click', e => {
+  if (e.target.closest('#empty-state-watchlist-cta')) {
+    if (window.innerWidth <= 860) switchMobileNav('discover');
+    else switchRightTab('discover');
+    return;
+  }
   const card = e.target.closest('.wl-card');
   if (!card || e.target.closest('.wl-btn')) return;
   const idx = parseInt(card.id.replace('wl-item-', ''), 10);

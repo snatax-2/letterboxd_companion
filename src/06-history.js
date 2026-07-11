@@ -168,7 +168,7 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -230,7 +230,7 @@ function renderHistory() {
     div.innerHTML = `
       ${imgHtml}
       <div class="hist-body">
-        <div class="hist-title">${item.title}${item.liked ? ' ❤️' : ''}</div>
+        <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         <div class="hist-meta">${metaHTML}</div>
         ${tagsHTML}
         <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
@@ -404,6 +404,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   // Tap (court) sur un film : ouvre sa fiche détaillée. L'appui long (menu
   // d'actions) a priorité — s'il vient de se déclencher, on ignore ce tap.
   container.addEventListener('click', (e) => {
+    if (e.target.closest('#empty-state-history-cta')) {
+      if (window.innerWidth <= 860) switchMobileNav('rating');
+      const searchInput = document.getElementById('movie-search');
+      if (searchInput) searchInput.focus();
+      return;
+    }
     if (longPressJustFired) return;
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
@@ -523,6 +529,23 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
   }
   requestAnimationFrame(step);
 }
+
+// Le radar ne se dessine (animation) que lorsqu'il entre réellement dans le
+// viewport — divulgation progressive : pas d'effet gâché hors écran, et un
+// petit "moment" à découvrir en scrollant jusqu'à lui plutôt qu'un dessin
+// déjà terminé avant même de le voir. Un seul observer, mis en place une fois
+// (le conteneur lui-même persiste ; seul son contenu est remplacé à chaque
+// rendu — la classe .in-view s'applique alors dynamiquement au nouveau SVG).
+(function initRadarScrollReveal() {
+  const container = document.getElementById('radar-chart-container');
+  if (!container || !window.IntersectionObserver) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) container.classList.add('in-view');
+    });
+  }, { threshold: 0.3 });
+  observer.observe(container);
+})();
 
 function renderStats() {
   const history = loadHistory();

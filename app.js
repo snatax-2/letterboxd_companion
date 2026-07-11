@@ -214,7 +214,7 @@ if (window.innerWidth <= 860) {
   // "Découvrir"...) : on n'y déclenche pas de changement d'onglet.
   function isExcludedTarget(target) {
     return !!target.closest(
-      '#carousel-container, .discover-card, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+      '#carousel-container, .discover-card, .wl-card, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
     );
   }
 
@@ -1395,6 +1395,24 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 //  SAVE
 // ═══════════════════════════════════════════
+// Animation de validation façon "clap de cinéma" à chaque critique
+// enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
+// sans bloquer l'interface (pointer-events: none, se retire toute seule).
+function playSaveConfirmation() {
+  const overlay = document.createElement('div');
+  overlay.className = 'save-confirm-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.innerHTML = `
+    <div class="save-confirm-board">
+      <div class="save-confirm-board-top"></div>
+      <div class="save-confirm-board-bottom"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
+  setTimeout(() => overlay.remove(), 700);
+}
+
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   
@@ -1443,6 +1461,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
         window._justSavedHistoryTitle = title.toLowerCase();
         renderAll();
         showToast(`"${title}" mis à jour`);
+        playSaveConfirmation();
       }
     );
   } else {
@@ -1453,6 +1472,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     window._justSavedHistoryTitle = title.toLowerCase();
     renderAll();
     showToast(`"${title}" enregistré`);
+    playSaveConfirmation();
     const saveBtn = document.getElementById('save-btn');
     const origSave = saveBtn.innerHTML;
     saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
@@ -1812,7 +1832,7 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -1874,7 +1894,7 @@ function renderHistory() {
     div.innerHTML = `
       ${imgHtml}
       <div class="hist-body">
-        <div class="hist-title">${item.title}${item.liked ? ' ❤️' : ''}</div>
+        <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         <div class="hist-meta">${metaHTML}</div>
         ${tagsHTML}
         <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
@@ -2048,6 +2068,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   // Tap (court) sur un film : ouvre sa fiche détaillée. L'appui long (menu
   // d'actions) a priorité — s'il vient de se déclencher, on ignore ce tap.
   container.addEventListener('click', (e) => {
+    if (e.target.closest('#empty-state-history-cta')) {
+      if (window.innerWidth <= 860) switchMobileNav('rating');
+      const searchInput = document.getElementById('movie-search');
+      if (searchInput) searchInput.focus();
+      return;
+    }
     if (longPressJustFired) return;
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
@@ -2167,6 +2193,23 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
   }
   requestAnimationFrame(step);
 }
+
+// Le radar ne se dessine (animation) que lorsqu'il entre réellement dans le
+// viewport — divulgation progressive : pas d'effet gâché hors écran, et un
+// petit "moment" à découvrir en scrollant jusqu'à lui plutôt qu'un dessin
+// déjà terminé avant même de le voir. Un seul observer, mis en place une fois
+// (le conteneur lui-même persiste ; seul son contenu est remplacé à chaque
+// rendu — la classe .in-view s'applique alors dynamiquement au nouveau SVG).
+(function initRadarScrollReveal() {
+  const container = document.getElementById('radar-chart-container');
+  if (!container || !window.IntersectionObserver) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) container.classList.add('in-view');
+    });
+  }, { threshold: 0.3 });
+  observer.observe(container);
+})();
 
 function renderStats() {
   const history = loadHistory();
@@ -2347,6 +2390,92 @@ function saveWatchlist(list) {
 }
 
 
+// Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
+// "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
+// que les boutons ✕/⭐ — juste un chemin de déclenchement en plus, pas de
+// nouvelle logique). stopPropagation() évite que ce geste horizontal ne
+// déclenche AUSSI le swipe global de changement d'onglet.
+function attachWatchlistSwipeHandlers(cardEl, idx) {
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+  const contentEl = cardEl.querySelector('.wl-card-content');
+  let startX = 0, startY = 0, dx = 0, dragging = false, wasSwipe = false;
+
+  function onStart(x, y) {
+    startX = x; startY = y; dx = 0; dragging = true; wasSwipe = false;
+    cardEl.classList.add('wl-dragging');
+  }
+  function onMove(x, y) {
+    if (!dragging) return;
+    const rawDx = x - startX;
+    const dy = y - startY;
+    if (Math.abs(dy) > Math.abs(rawDx) * 1.2) return; // trop vertical : probablement un scroll, pas un swipe
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    if (Math.abs(dx) > 8) wasSwipe = true;
+    contentEl.style.transform = `translateX(${dx}px)`;
+    cardEl.classList.toggle('wl-swipe-left', dx < -10);
+    cardEl.classList.toggle('wl-swipe-right', dx > 10);
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('wl-dragging');
+
+    if (dx <= -SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-left');
+      contentEl.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      setTimeout(() => removeWatchlist(idx), 200);
+    } else if (dx >= SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-right');
+      contentEl.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      setTimeout(() => watchlistToForm(idx), 200);
+    } else {
+      contentEl.style.transform = '';
+      cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');
+    }
+    // Empêche le tap-pour-ouvrir-la-fiche de se déclencher juste après un
+    // swipe avorté (retour à zéro) — seul un vrai tap sans mouvement l'ouvre.
+    if (wasSwipe) {
+      setTimeout(() => { wasSwipe = false; }, 50);
+    }
+  }
+
+  cardEl.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchmove', e => {
+    e.stopPropagation();
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchend', e => {
+    e.stopPropagation();
+    onEnd();
+  });
+  cardEl.addEventListener('touchcancel', onEnd);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  cardEl.addEventListener('mousedown', e => {
+    onStart(e.clientX, e.clientY);
+    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
+    const upHandler = () => {
+      onEnd();
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+
+  // Empêche le tap-pour-détail de s'ouvrir juste après un swipe (voir le
+  // listener délégué de watchlist-list plus bas).
+  cardEl.addEventListener('click', e => {
+    if (wasSwipe) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+
 function renderWatchlist() {
   const list = loadWatchlist();
   const container = document.getElementById('watchlist-list');
@@ -2354,7 +2483,7 @@ function renderWatchlist() {
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
     window._justSavedWatchlistTitle = null;
     return;
   }
@@ -2373,20 +2502,25 @@ function renderWatchlist() {
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
-      ${posterHtml}
-      <div class="wl-body">
-        <div class="wl-title">${item.title}</div>
-        <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
-        <div class="wl-providers" id="wl-providers-${i}">
-          <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+      <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
+      <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
+      <div class="wl-card-content">
+        ${posterHtml}
+        <div class="wl-body">
+          <div class="wl-title">${item.title}</div>
+          <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+          <div class="wl-providers" id="wl-providers-${i}">
+            <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+          </div>
         </div>
-      </div>
-      <div class="wl-actions">
-        <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
-        <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
+        <div class="wl-actions">
+          <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter">${ICONS.star}</button>
+          <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer">${ICONS.close}</button>
+        </div>
       </div>`;
 
     container.appendChild(div);
+    attachWatchlistSwipeHandlers(div, i);
 
     if (item.tmdbId) {
       fetchProviders(item.tmdbId, i);
@@ -2569,6 +2703,11 @@ wlInput.addEventListener('keydown', e => {
 
 // Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
 document.getElementById('watchlist-list').addEventListener('click', e => {
+  if (e.target.closest('#empty-state-watchlist-cta')) {
+    if (window.innerWidth <= 860) switchMobileNav('discover');
+    else switchRightTab('discover');
+    return;
+  }
   const card = e.target.closest('.wl-card');
   if (!card || e.target.closest('.wl-btn')) return;
   const idx = parseInt(card.id.replace('wl-item-', ''), 10);
@@ -3239,7 +3378,7 @@ function buildMdsContent(data, localMatch) {
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
-        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ' ❤️' : ''}</div>
+        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
     `;

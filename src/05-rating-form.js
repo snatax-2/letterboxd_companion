@@ -360,6 +360,24 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 //  SAVE
 // ═══════════════════════════════════════════
+// Animation de validation façon "clap de cinéma" à chaque critique
+// enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
+// sans bloquer l'interface (pointer-events: none, se retire toute seule).
+function playSaveConfirmation() {
+  const overlay = document.createElement('div');
+  overlay.className = 'save-confirm-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.innerHTML = `
+    <div class="save-confirm-board">
+      <div class="save-confirm-board-top"></div>
+      <div class="save-confirm-board-bottom"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
+  setTimeout(() => overlay.remove(), 700);
+}
+
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   
@@ -408,6 +426,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
         window._justSavedHistoryTitle = title.toLowerCase();
         renderAll();
         showToast(`"${title}" mis à jour`);
+        playSaveConfirmation();
       }
     );
   } else {
@@ -418,6 +437,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     window._justSavedHistoryTitle = title.toLowerCase();
     renderAll();
     showToast(`"${title}" enregistré`);
+    playSaveConfirmation();
     const saveBtn = document.getElementById('save-btn');
     const origSave = saveBtn.innerHTML;
     saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
