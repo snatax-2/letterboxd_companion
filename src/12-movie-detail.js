@@ -144,6 +144,8 @@ async function openMovieDetailSheet(tmdbId) {
     const localMatch = history.find(h => String(h.tmdbId) === String(tmdbId));
 
     mdsContentEl.innerHTML = buildMdsContent(data, localMatch);
+    const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+    applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
   } catch (e) {
     mdsContentEl.innerHTML = `<div class="mds-error">Impossible de charger les détails pour l'instant. Vérifie ta connexion et réessaie.</div>`;
   }

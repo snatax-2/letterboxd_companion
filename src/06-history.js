@@ -269,6 +269,7 @@ function renderHistory() {
         </div>
       </div>`;
     container.appendChild(div);
+    applyPosterAccent(item.poster, div);
   });
   window._justSavedHistoryTitle = null;
 }

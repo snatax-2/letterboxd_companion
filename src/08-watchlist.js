@@ -141,6 +141,7 @@ function renderWatchlist() {
       </div>`;
 
     container.appendChild(div);
+    applyPosterAccent(item.poster, div);
     attachWatchlistSwipeHandlers(div, i);
 
     if (item.tmdbId) {

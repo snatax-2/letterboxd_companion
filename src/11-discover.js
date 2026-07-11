@@ -153,6 +153,7 @@ function buildDiscoverCardEl(m, isTop) {
     el.setAttribute('role', 'group');
     el.setAttribute('aria-label', `Suggestion : ${m.title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
   }
+  applyPosterAccent(posterUrl, el);
   return el;
 }
 

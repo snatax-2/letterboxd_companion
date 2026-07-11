@@ -1,5 +1,5 @@
   /* Importation complète de toutes les polices nécessaires */
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
 
   /* ── VARIABLES GLOBALES ET THÈMES ── */
   :root {
@@ -150,6 +150,111 @@
   [data-theme="cinephile"] .mode-tab.active,
   [data-theme="cinephile"] .focus-mode-toggle.active {
     color: var(--bg);
+  }
+
+  [data-theme="classique"] {
+    /* Le Cinéma Classique — monochrome, éditorial, aucune distraction visuelle.
+       Contraste absolu noir/blanc, typographie de revue de critique. */
+    --bg: #FFFFFF; --surface: #F7F7F7; --surface2: #EFEFEF; --border: #000000;
+    --border-hi: #000000; --text: #333333; --text-hi: #000000; --text-mid: #555555;
+    --orange: #000000; --gold: #333333; --blue: #000000; --red: #000000; --green: #333333;
+    --radius: 0px; --radius-sm: 0px;
+    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 0px;
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --star-color: #000000; --star-empty-color: #cccccc; --star-font: 'Playfair Display', serif;
+    --star-shadow: none; --star-symbol: '★';
+    --icon-stroke: 1.25; /* traits très fins, minimalistes, laissent respirer le contenu */
+
+    --box-shadow-style: none;
+    --header-bar: #000000; /* simple ligne noire, pas de dégradé — pas de fioriture */
+  }
+  /* Aucune ombre portée nulle part : garantie large plutôt que de traquer
+     chaque déclaration individuelle de box-shadow dans la feuille de style. */
+  [data-theme="classique"] * { box-shadow: none !important; }
+
+  /* Astuce signature du thème : les affiches sont en noir et blanc par défaut,
+     et reprennent leurs couleurs au survol (souris) ou au tap (mobile, via
+     :active) — l'interface s'efface, l'image ne "parle" qu'à l'interaction. */
+  [data-theme="classique"] .hist-poster,
+  [data-theme="classique"] .wl-poster img,
+  [data-theme="classique"] .wl-suggest-poster img,
+  [data-theme="classique"] .discover-card-poster,
+  [data-theme="classique"] .mds-poster,
+  [data-theme="classique"] .suggestion-poster,
+  [data-theme="classique"] .film-strip-poster {
+    filter: grayscale(100%);
+    transition: filter .35s ease;
+  }
+  [data-theme="classique"] .hist-poster:hover,
+  [data-theme="classique"] .hist-item:active .hist-poster,
+  [data-theme="classique"] .wl-poster:hover img,
+  [data-theme="classique"] .wl-card:active .wl-poster img,
+  [data-theme="classique"] .discover-card-poster:hover,
+  [data-theme="classique"] .discover-card:active .discover-card-poster,
+  [data-theme="classique"] .mds-poster:hover,
+  [data-theme="classique"] .suggestion-poster:hover,
+  [data-theme="classique"] .suggestion-item:active .suggestion-poster,
+  [data-theme="classique"] .film-strip-poster:hover {
+    filter: grayscale(0%);
+  }
+
+  [data-theme="moderne"] {
+    /* L'Affiche d'Art Moderne — blocs de couleurs franches façon affiche de
+       festival, typographie massive et assumée. */
+    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #28549A;
+    --border-hi: #28549A; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
+    --orange: #E07A5F; /* Terracotta */
+    --gold: #C9A66B;   /* Moutarde */
+    --blue: #28549A;   /* Cobalt */
+    --red: #E07A5F; --green: #28549A;
+    --radius: 10px; --radius-sm: 6px;
+    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 50%;
+    --font-heading: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --star-color: #E07A5F; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
+    --star-shadow: none; --star-symbol: '■'; /* bloc plein, esprit affiche graphique */
+    --icon-stroke: 2.25;
+
+    --box-shadow-style: 5px 5px 0px rgba(40,84,154,0.15);
+    --header-bar: linear-gradient(to right, #28549A 33%, #E07A5F 33%, #E07A5F 66%, #C9A66B 66%);
+  }
+  /* Accent tiré de la couleur dominante de l'affiche (voir 00c-poster-color.js)
+     — signature du thème "Moderne". Se rabat sur la bordure normale du thème
+     si l'extraction a échoué (CORS, image non chargée, etc.). */
+  [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
+  [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
+  [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
+  [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
+
+  [data-theme="journal"] {
+    /* Le Journal de Bord — chaleureux et intime, esprit machine à écrire et
+       carnet manuscrit, comme un objet physique plutôt qu'une app. */
+    --bg: #FAF0E6; --surface: #F5E9DA; --surface2: #EFDFC8; --border: #C9B79C;
+    --border-hi: #8D6E52; --text: #5D4037; --text-hi: #3E2723; --text-mid: #7A5C4C;
+    --orange: #8D6E52; --gold: #A67C52; --blue: #6B7A5E; --red: #A0522D; --green: #6B7A5E;
+    --radius: 2px; --radius-sm: 2px;
+    --slider-track-radius: 4px; --slider-thumb-radius: 2px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 2px;
+    --font-heading: 'Courier Prime', monospace;
+    --font-body: 'Courier Prime', monospace;
+    --font-mono: 'Courier Prime', monospace;
+    --review-font: 'Caveat', cursive; /* la zone de critique prend un vrai style manuscrit */
+
+    --star-color: #8D6E52; --star-empty-color: #D9C7AE; --star-font: 'Courier Prime', monospace;
+    --star-shadow: none; --star-symbol: '✎'; /* stylo, esprit carnet manuscrit */
+    --icon-stroke: 1.5;
+
+    --box-shadow-style: 2px 2px 0px rgba(93,64,55,0.12);
+    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(141,110,82,0.13) 27px, rgba(141,110,82,0.13) 28px);
+    --bg-size: 100% 28px;
+    --header-bar: repeating-linear-gradient(to right, #8D6E52 0, #8D6E52 8px, transparent 8px, transparent 16px); /* pointillés, esprit carnet */
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -651,6 +756,19 @@
   }
   .review-textarea:focus { border-color: var(--orange); box-shadow: var(--box-shadow-style, 0 0 0 2px rgba(255,128,0,0.1)); }
   .review-textarea::placeholder { color: var(--text-mid); opacity: 0.5;}
+
+  /* Signature du thème "Journal de Bord" : la zone de critique devient une
+     vraie page de carnet lignée, écriture manuscrite alignée précisément sur
+     les lignes. background-attachment:local fait défiler les lignes AVEC le
+     texte (sinon elles resteraient fixes derrière un texte qui scrolle). */
+  [data-theme="journal"] .review-textarea {
+    font-family: 'Caveat', cursive;
+    font-size: 1.35rem;
+    line-height: 28px;
+    padding-top: 8px;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, var(--border) 27px, var(--border) 28px);
+    background-attachment: local;
+  }
 
   /* ── ACTION BUTTONS ── */
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
