@@ -105,6 +105,14 @@
           </div>
           <div class="theme-label" style="background:#000;color:#e0e0e0;font-family:'Cinzel',serif;letter-spacing:.08em;border-top:1px solid #333;">FILM NOIR</div>
         </div>
+        <div class="theme-card" data-theme="cinephile" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Néo-Rétro 70s Cinéphile">
+          <div class="theme-preview" style="background:#F9F6F0">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#4A2E1B;flex:1;border-radius:8px"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#DAC0A3;width:65%;border-radius:8px"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#4A2E1B"></div><div class="theme-preview-dot" style="background:#DAC0A3"></div><div class="theme-preview-dot" style="background:#5C6E58"></div></div>
+          </div>
+          <div class="theme-label" style="background:#EDE2D0;color:#2e1d12;font-family:'Poppins',sans-serif;font-weight:700;">CINÉPHILE 70s</div>
+        </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
           <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
              <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
@@ -164,7 +172,7 @@
         <div class="search-row">
           <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
           <input type="date" class="date-input" id="view-date">
-          <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 5 5.5 5c2 0 3.5 1.2 4.5 3 1-1.8 2.5-3 4.5-3C18 5 19.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg></button>
+          <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
         </div>
         <div class="search-status" id="search-status"></div>
         <div class="suggestions" id="suggestions"></div>
@@ -512,7 +520,7 @@
         </div>
         <div class="discover-actions" id="discover-actions" style="display:none">
           <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.4 2 5 5.5 5c2 0 3.5 1.2 4.5 3 1-1.8 2.5-3 4.5-3C18 5 19.5 8.4 22 11.7 19.5 16.4 12 21 12 21z"/></svg></button>
+          <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
         </div>
       </div>
     </div>

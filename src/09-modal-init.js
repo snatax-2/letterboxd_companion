@@ -93,7 +93,7 @@ renderCriteriaAverageMarkers();
 (function hideSplash() {
   const splash = document.getElementById('app-splash');
   if (!splash) return;
-  const MIN_DISPLAY_MS = 400;
+  const MIN_DISPLAY_MS = 1200;
   const elapsed = performance.now();
   const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
   setTimeout(() => {

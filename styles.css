@@ -1,5 +1,5 @@
   /* Importation complète de toutes les polices nécessaires */
-  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
 
   /* ── VARIABLES GLOBALES ET THÈMES ── */
   :root {
@@ -103,6 +103,36 @@
     --review-bg: #000000;
     /* Faisceau de projecteur qui s'estompe, plutôt qu'une ligne franche */
     --header-bar: linear-gradient(to right, transparent, #ffffff 50%, transparent);
+  }
+
+  [data-theme="cinephile"] {
+    /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
+       bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
+       sur des angles nets : ici tout est délibérément arrondi et sépia,
+       esprit vieux fauteuils de cinéma et pellicule argentique. */
+    --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
+    --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #8a7460;
+    --orange: #4A2E1B; /* Terre de Sienne */
+    --gold: #DAC0A3;    /* Ambre Brûlé */
+    --blue: #5C6E58;    /* Olive Vintage */
+    --red: #8B4226; --green: #5C6E58;
+    --radius: 18px; --radius-sm: 12px;
+    --slider-track-radius: 999px; --slider-thumb-radius: 50%; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Poppins', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Étoiles : sépia chaud, forme "objectif de projecteur" */
+    --star-color: #4A2E1B;
+    --star-empty-color: #DAC0A3;
+    --star-font: 'Poppins', sans-serif;
+    --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
+    --star-symbol: '◉';
+    --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
+
+    --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
+    /* Bande sépia tri-tons, dans la palette du moodboard */
+    --header-bar: linear-gradient(to right, #4A2E1B 33%, #DAC0A3 33%, #DAC0A3 66%, #5C6E58 66%);
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -877,7 +907,7 @@
   /* ── OPTIMISATION RESPONSIVE COMPLETE (ZÉRO DÉCALAGE) ── */
   @media (max-width: 860px) {
     body { 
-      padding: 12px 10px 80px 10px; 
+      padding: 12px 10px 92px 10px; 
     }
 
     /* Modales façon "bottom sheet" sur mobile : ancrées en bas, glissent vers le
@@ -951,12 +981,16 @@
     
     .weights-grid { grid-template-columns: 1fr; gap: 8px; }
     
-    /* Menu de navigation mobile persistant */
+    /* Menu de navigation mobile persistant : flotte au-dessus du bas de
+       l'écran (marge + coins arrondis + ombre) plutôt qu'une barre plaquée
+       bord à bord, pour un rendu plus "app native" moderne. */
     .mobile-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
-      background: var(--surface); border-top: 1px solid var(--border);
-      z-index: 1000; padding-bottom: env(safe-area-inset-bottom);
-      box-shadow: 0 -4px 16px rgba(0,0,0,0.5);
+      margin: 0 12px calc(12px + env(safe-area-inset-bottom)) 12px;
+      background: var(--surface); border: 1px solid var(--border-hi);
+      border-radius: 22px;
+      z-index: 1000;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
     }
     .nav-btn {
       flex: 1; padding: 12px 4px; background: transparent; border: none;
@@ -965,8 +999,14 @@
       cursor: pointer; display: flex; flex-direction: column;
       align-items: center; gap: 4px; transition: color 0.2s; letter-spacing: 0.05em;
     }
+    .nav-btn:first-child { border-radius: 22px 0 0 22px; }
+    .nav-btn:last-child { border-radius: 0 22px 22px 0; }
     .nav-btn.active { color: var(--blue); }
     .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
+
+    /* Le toast doit maintenant dégager la barre de nav flottante (marge +
+       hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */
+    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
     
     /* Hitboxes tactiles agrandies pour les curseurs de notation */
     input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
