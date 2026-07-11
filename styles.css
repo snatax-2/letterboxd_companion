@@ -7,6 +7,12 @@
     --bg: #14181c; --surface: #1f2935; --surface2: #263240; --border: #283040;
     --border-hi: #445566; --text: #89a; --text-hi: #fff; --text-mid: #9ab;
     --orange: #ff8000; --gold: #ff8000; --blue: #40bcf4; --red: #ff4040; --green: #00e054;
+    /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
+       de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
+       bon choix (blanc ou noir) varie selon la couleur ET selon le thème,
+       parfois même à l'intérieur d'un même thème (ex: rouge très saturé mais
+       bleu clair). Voir l'audit complet dans la conversation. */
+    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 4px; --radius-sm: 3px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%;
     --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
@@ -33,6 +39,7 @@
     --gold: #FFF200;   /* Giallo Modena */
     --blue: #FFF200;   
     --red: #cc0000; --green: #00cc00;
+    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est un jaune vif ici */
     --radius: 0px; --radius-sm: 0px;
     --slider-track-radius: 3px; --slider-thumb-radius: 4px; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, esprit drapeau/chicane de course */
     --control-radius: 6px; /* carré adouci pour les boutons +/- et de navigation, pas un carré franc */
@@ -59,6 +66,7 @@
     --bg: #FDF6E3; --surface: #FAF3E0; --surface2: #F0E6CD; --border: #D1495B; 
     --border-hi: #D1495B; --text: #555555; --text-hi: #333333; --text-mid: #666666;
     --orange: #D1495B; --gold: #E8A825; --blue: #476b6b; --red: #D1495B; --green: #568259;
+    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #fff;
     --radius: 0px; --radius-sm: 0px;
     --slider-track-radius: 3px; --slider-thumb-radius: 30%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* carré adouci ("squircle"), pas un carré franc */
     --control-radius: 8px;
@@ -88,6 +96,7 @@
     --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
     --orange: #ffffff; 
     --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
+    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est blanc ici : texte clair impossible */
     --radius: 0px; --radius-sm: 0px;
     --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
     --slider-thumb-clip: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); /* octogone, esprit iris/objectif de projecteur */
@@ -121,6 +130,7 @@
     --gold: #DAC0A3;    /* Ambre Brûlé */
     --blue: #5C6E58;    /* Olive Vintage */
     --red: #8B4226; --green: #5C6E58;
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 18px; --radius-sm: 12px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
     --control-radius: 50%;
@@ -157,6 +167,7 @@
     --bg: #FFFFFF; --surface: #F7F7F7; --surface2: #EFEFEF; --border: #000000;
     --border-hi: #000000; --text: #333333; --text-hi: #000000; --text-mid: #555555;
     --orange: #000000; --gold: #333333; --blue: #000000; --red: #000000; --green: #333333;
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 0px; --radius-sm: 0px;
     --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 0px;
@@ -211,6 +222,7 @@
     --gold: #C9A66B;   /* Moutarde */
     --blue: #28549A;   /* Cobalt */
     --red: #E07A5F; --green: #28549A;
+    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 10px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 50%;
@@ -239,6 +251,7 @@
     --bg: #FAF0E6; --surface: #F5E9DA; --surface2: #EFDFC8; --border: #C9B79C;
     --border-hi: #8D6E52; --text: #5D4037; --text-hi: #3E2723; --text-mid: #7A5C4C;
     --orange: #8D6E52; --gold: #A67C52; --blue: #6B7A5E; --red: #A0522D; --green: #6B7A5E;
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 2px; --radius-sm: 2px;
     --slider-track-radius: 4px; --slider-thumb-radius: 2px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 2px;
@@ -837,8 +850,8 @@
     opacity: 0; transition: opacity .15s ease;
   }
   .hist-swipe-hint .icon { width: 1.1em; height: 1.1em; }
-  .hist-swipe-hint-left { right: 0; background: var(--red); justify-content: flex-end; }
-  .hist-swipe-hint-right { left: 0; background: var(--blue); }
+  .hist-swipe-hint-left { right: 0; background: var(--red); color: var(--red-fill-text, #fff); justify-content: flex-end; }
+  .hist-swipe-hint-right { left: 0; background: var(--blue); color: var(--blue-fill-text, #fff); }
   .hist-item.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
   .hist-item.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
 
@@ -927,8 +940,8 @@
     opacity: 0; transition: opacity .15s ease;
   }
   .wl-swipe-hint .icon { width: 1.1em; height: 1.1em; }
-  .wl-swipe-hint-left { right: 0; background: var(--red); justify-content: flex-end; }
-  .wl-swipe-hint-right { left: 0; background: var(--green); }
+  .wl-swipe-hint-left { right: 0; background: var(--red); color: var(--red-fill-text, #fff); justify-content: flex-end; }
+  .wl-swipe-hint-right { left: 0; background: var(--green); color: var(--green-fill-text, #fff); }
   .wl-card.wl-swipe-left .wl-swipe-hint-left { opacity: 1; }
   .wl-card.wl-swipe-right .wl-swipe-hint-right { opacity: 1; }
   .wl-card:hover { border-color: var(--border-hi); }
@@ -1249,6 +1262,11 @@
     position: absolute; top: 20px; padding: 5px 12px; border: 3px solid; border-radius: 8px;
     font-family: var(--font-heading); font-weight: 900; font-size: 1.05rem; text-transform: uppercase;
     opacity: 0; pointer-events: none;
+    /* Légère ombre + fond semi-opaque : le texte reste lisible quelle que soit
+       la couleur de l'affiche derrière (contrairement à un fond plein, une
+       image varie énormément d'un film à l'autre). */
+    background: rgba(0,0,0,0.35);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
   }
   .discover-stamp.like { left: 16px; color: var(--green); border-color: var(--green); transform: rotate(-12deg); }
   .discover-stamp.pass { right: 16px; color: var(--red); border-color: var(--red); transform: rotate(12deg); }
