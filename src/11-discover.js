@@ -77,6 +77,58 @@ function pickDiverseBasisFilms(pool, count) {
 let discoverQueue = [];
 let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
 
+// ═══════════════════════════════════════════
+//  CARROUSEL "TENDANCES DU MOMENT"
+// ═══════════════════════════════════════════
+// Séparé du jeu de cartes à swiper : pas basé sur l'historique de
+// l'utilisateur, juste ce qui buzz sur TMDb cette semaine. Défilement
+// automatique en boucle (CSS, pas de JS dans la boucle d'animation), mis en
+// pause au survol/toucher pour laisser le temps de taper sur une affiche.
+let trendingLoaded = false;
+
+async function loadTrendingCarousel() {
+  if (trendingLoaded) return;
+  trendingLoaded = true;
+  try {
+    const res = await fetch('/api/search?trending=true');
+    const data = await res.json();
+    const movies = (data.results || []).filter(m => m.poster_path).slice(0, 15);
+    if (movies.length === 0) return;
+    renderTrendingCarousel(movies);
+    document.getElementById('trending-carousel-wrap').style.display = 'block';
+  } catch (e) {
+    console.warn('Impossible de charger les tendances du moment', e);
+  }
+}
+
+function renderTrendingCarousel(movies) {
+  const outer = document.getElementById('trending-carousel');
+  const itemsHtml = movies.map(m => {
+    const posterUrl = `https://image.tmdb.org/t/p/w200${m.poster_path}`;
+    return `
+      <div class="trending-item" data-movie-id="${m.id}">
+        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+        <div class="trending-item-title">${escAttr(m.title)}</div>
+      </div>`;
+  }).join('');
+
+  // La piste contient la liste EN DOUBLE : l'animation glisse de 0 à -50%,
+  // ce qui retombe exactement sur une copie identique de la première moitié
+  // — boucle infinie sans à-coup ni "retour au début" visible.
+  outer.innerHTML = `<div class="trending-carousel-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.trending-carousel-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.trending-item');
+    if (item) openMovieDetailSheet(item.dataset.movieId);
+  });
+  // Pause pendant l'interaction (survol souris, ou doigt posé sur mobile) —
+  // sinon le défilement continue de bouger sous le doigt pendant qu'on essaie
+  // de taper précisément sur une affiche.
+  outer.addEventListener('touchstart', () => track.classList.add('paused'), { passive: true });
+  outer.addEventListener('touchend', () => track.classList.remove('paused'));
+}
+
 const discoverStack = document.getElementById('discover-stack');
 const discoverActionsEl = document.getElementById('discover-actions');
 const discoverReloadBtn = document.getElementById('discover-reload-btn');

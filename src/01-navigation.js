@@ -27,6 +27,7 @@ function switchRightTab(tabName) {
   // re-fetch à chaque fois qu'on revient sur l'onglet).
   if (tabName === 'discover' && !discoverLoaded) {
     loadDiscoverQueue();
+    loadTrendingCarousel();
   }
 }
 

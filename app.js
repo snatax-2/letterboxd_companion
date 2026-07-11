@@ -180,6 +180,7 @@ function switchRightTab(tabName) {
   // re-fetch à chaque fois qu'on revient sur l'onglet).
   if (tabName === 'discover' && !discoverLoaded) {
     loadDiscoverQueue();
+    loadTrendingCarousel();
   }
 }
 
@@ -2799,8 +2800,27 @@ function renderProfileExtras(history) {
   document.getElementById('profile-streak').textContent =
     streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
 
-  renderBadges(computeBadges(history, { totalMinutes, streak }));
-  drawProfileShareCard({ history, totalMinutes, memberSinceStr, topActor: topActors[0]?.name });
+  const badges = computeBadges(history, { totalMinutes, streak });
+  renderBadges(badges);
+
+  // Genre favori (pour la carte de profil) : même logique que le top
+  // réalisateurs/acteur favori, sur le champ genre.
+  const genreCounts = {};
+  history.forEach(h => { if (h.genre) h.genre.split(',').forEach(g => { const t = g.trim(); if (t) genreCounts[t] = (genreCounts[t] || 0) + 1; }); });
+  const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  // Moyennes par critère (mode détaillé) : pour le mini-radar de la carte de
+  // profil. null si l'utilisateur n'a jamais utilisé le mode détaillé.
+  const criteriaAverages = computeCriteriaAverages(history, CRITERIA);
+  const hasCriteriaData = Object.values(criteriaAverages).some(v => v !== null);
+
+  drawProfileShareCard({
+    history, totalMinutes, memberSinceStr,
+    topActor: topActors[0]?.name,
+    topGenre,
+    criteriaAverages: hasCriteriaData ? criteriaAverages : null,
+    badges,
+  });
 }
 
 function renderBadges(badges) {
@@ -2819,6 +2839,53 @@ function renderBadges(badges) {
 // exportée corresponde à l'identité visuelle choisie plutôt qu'un rendu
 // générique. Pas de librairie externe — dessin manuel, comme pour
 // l'extraction de couleur dominante (00c-poster-color.js).
+// Dessine un petit radar (moyennes par critère) sur le canvas — même principe
+// que createRadarSVG (06-history.js) mais en dessin canvas natif, pas du SVG.
+function drawMiniRadarOnCanvas(ctx, cx, cy, radius, criteriaAverages, color, gridColor) {
+  const keys = CRITERIA;
+  const angleStep = (Math.PI * 2) / keys.length;
+
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  keys.forEach((k, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.beginPath();
+  keys.forEach((k, i) => {
+    const val = criteriaAverages[k] || 0;
+    const r = (val / 10) * radius;
+    const angle = i * angleStep - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// Bande de perforations façon pellicule de film — juste décoratif, en haut et
+// en bas de la carte, pour ancrer visuellement le thème "cinéma".
+function drawFilmStripBand(ctx, y, w, color) {
+  const holeW = 10, holeH = 6, gap = 8;
+  ctx.fillStyle = color;
+  for (let x = gap; x < w - gap; x += holeW + gap) {
+    ctx.fillRect(x, y, holeW, holeH);
+  }
+}
+
 function drawProfileShareCard(data) {
   const canvas = document.getElementById('profile-share-canvas');
   if (!canvas || !canvas.getContext) return;
@@ -2828,57 +2895,105 @@ function drawProfileShareCard(data) {
 
   const styles = getComputedStyle(document.documentElement);
   const bg = styles.getPropertyValue('--surface').trim() || '#1f2935';
+  const bg2 = styles.getPropertyValue('--bg').trim() || '#14181c';
   const textHi = styles.getPropertyValue('--text-hi').trim() || '#fff';
   const textMid = styles.getPropertyValue('--text-mid').trim() || '#9ab';
   const accent = styles.getPropertyValue('--orange').trim() || '#ff8000';
+  const gold = styles.getPropertyValue('--gold').trim() || accent;
+  const border = styles.getPropertyValue('--border').trim() || '#333';
   const fontHeading = (styles.getPropertyValue('--font-heading').trim() || 'sans-serif').split(',')[0].replace(/['"]/g, '');
 
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = bg;
+  // Fond en léger dégradé (pas un simple aplat) pour donner un peu de profondeur.
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, bg);
+  grad.addColorStop(1, bg2);
+  ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = accent;
   ctx.lineWidth = 4;
   ctx.strokeRect(2, 2, w - 4, h - 4);
 
+  drawFilmStripBand(ctx, 10, w, accent);
+
   ctx.textAlign = 'center';
   ctx.fillStyle = accent;
-  ctx.font = `900 30px "${fontHeading}", sans-serif`;
-  ctx.fillText('LUDEX', w / 2, 60);
-
+  ctx.font = `900 26px "${fontHeading}", sans-serif`;
+  ctx.fillText('LUDEX', w / 2, 52);
   ctx.fillStyle = textMid;
-  ctx.font = `13px "${fontHeading}", sans-serif`;
-  ctx.fillText('MON PROFIL CINÉPHILE', w / 2, 84);
+  ctx.font = `12px "${fontHeading}", sans-serif`;
+  ctx.fillText('MON PROFIL CINÉPHILE', w / 2, 72);
 
   if (!data || !data.history || data.history.length === 0) {
     ctx.fillStyle = textMid;
     ctx.font = '15px sans-serif';
     ctx.fillText('Note quelques films pour', w / 2, h / 2 - 8);
     ctx.fillText('débloquer ta carte de profil', w / 2, h / 2 + 16);
+    drawFilmStripBand(ctx, h - 16, w, accent);
     return;
   }
 
-  const { history, totalMinutes, memberSinceStr, topActor } = data;
+  const { history, totalMinutes, memberSinceStr, topActor, topGenre, criteriaAverages, badges } = data;
   const avg = history.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0) / history.length;
 
-  const rows = [
-    ['Films notés', String(history.length)],
-    ['Note moyenne', avg.toFixed(1) + '/10'],
-    ['Temps visionné', formatWatchTime(totalMinutes)],
-    ['Membre depuis', memberSinceStr || '—'],
-    ['Acteur favori', topActor || '—'],
-  ];
+  // Chiffre "héros" : le nombre de films, en très grand, façon Wrapped.
+  ctx.fillStyle = textHi;
+  ctx.font = `900 68px "${fontHeading}", sans-serif`;
+  ctx.fillText(String(history.length), w / 2, 148);
+  ctx.fillStyle = textMid;
+  ctx.font = `bold 12px "${fontHeading}", sans-serif`;
+  ctx.fillText('FILMS NOTÉS', w / 2, 168);
 
-  let y = 150;
-  rows.forEach(([label, val]) => {
-    ctx.textAlign = 'left';
+  // Note moyenne, mise en avant juste en dessous.
+  ctx.fillStyle = gold;
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText(`★ ${avg.toFixed(1)}/10 de moyenne`, w / 2, 196);
+
+  // Mini-radar (mode détaillé utilisé) ou, à défaut, un genre/acteur mis en avant.
+  if (criteriaAverages) {
+    drawMiniRadarOnCanvas(ctx, w / 2, 275, 65, criteriaAverages, accent, border);
+  } else {
     ctx.fillStyle = textMid;
-    ctx.font = '12px sans-serif';
-    ctx.fillText(label.toUpperCase(), 30, y);
-    ctx.fillStyle = textHi;
-    ctx.font = 'bold 22px sans-serif';
-    ctx.fillText(val, 30, y + 26);
-    y += 62;
+    ctx.font = '13px sans-serif';
+    ctx.fillText('Utilise le mode Détaillé pour', w / 2, 260);
+    ctx.fillText('débloquer ton profil de goûts (radar)', w / 2, 280);
+  }
+
+  // Genre et acteur favoris, côte à côte.
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = textMid;
+  ctx.fillText('GENRE FAVORI', w * 0.28, 345);
+  ctx.fillText('ACTEUR FAVORI', w * 0.72, 345);
+  ctx.fillStyle = textHi;
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(topGenre || '—', w * 0.28, 365);
+  ctx.fillText(topActor || '—', w * 0.72, 365);
+
+  // Badges débloqués : jusqu'à 6 pastilles, pleines si débloquées.
+  const unlocked = (badges || []).filter(b => b.unlocked).slice(0, 6);
+  const badgeY = 400;
+  const badgeR = 14;
+  const totalBadgeWidth = unlocked.length * (badgeR * 2 + 10) - 10;
+  let bx = w / 2 - totalBadgeWidth / 2 + badgeR;
+  unlocked.forEach(() => {
+    ctx.beginPath();
+    ctx.arc(bx, badgeY, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = gold;
+    ctx.fill();
+    bx += badgeR * 2 + 10;
   });
+  if (unlocked.length > 0) {
+    ctx.fillStyle = textMid;
+    ctx.font = '10px sans-serif';
+    ctx.fillText(`${unlocked.length} badge${unlocked.length > 1 ? 's' : ''} débloqué${unlocked.length > 1 ? 's' : ''}`, w / 2, badgeY + 32);
+  }
+
+  // Pied de carte : membre depuis + temps visionné.
+  ctx.fillStyle = textMid;
+  ctx.font = '11px sans-serif';
+  ctx.fillText(`Membre depuis ${memberSinceStr || '—'} · ${formatWatchTime(totalMinutes)} de films`, w / 2, h - 26);
+
+  drawFilmStripBand(ctx, h - 16, w, accent);
 }
 
 document.getElementById('profile-share-btn').addEventListener('click', () => {
@@ -3983,6 +4098,58 @@ function pickDiverseBasisFilms(pool, count) {
 
 let discoverQueue = [];
 let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
+
+// ═══════════════════════════════════════════
+//  CARROUSEL "TENDANCES DU MOMENT"
+// ═══════════════════════════════════════════
+// Séparé du jeu de cartes à swiper : pas basé sur l'historique de
+// l'utilisateur, juste ce qui buzz sur TMDb cette semaine. Défilement
+// automatique en boucle (CSS, pas de JS dans la boucle d'animation), mis en
+// pause au survol/toucher pour laisser le temps de taper sur une affiche.
+let trendingLoaded = false;
+
+async function loadTrendingCarousel() {
+  if (trendingLoaded) return;
+  trendingLoaded = true;
+  try {
+    const res = await fetch('/api/search?trending=true');
+    const data = await res.json();
+    const movies = (data.results || []).filter(m => m.poster_path).slice(0, 15);
+    if (movies.length === 0) return;
+    renderTrendingCarousel(movies);
+    document.getElementById('trending-carousel-wrap').style.display = 'block';
+  } catch (e) {
+    console.warn('Impossible de charger les tendances du moment', e);
+  }
+}
+
+function renderTrendingCarousel(movies) {
+  const outer = document.getElementById('trending-carousel');
+  const itemsHtml = movies.map(m => {
+    const posterUrl = `https://image.tmdb.org/t/p/w200${m.poster_path}`;
+    return `
+      <div class="trending-item" data-movie-id="${m.id}">
+        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+        <div class="trending-item-title">${escAttr(m.title)}</div>
+      </div>`;
+  }).join('');
+
+  // La piste contient la liste EN DOUBLE : l'animation glisse de 0 à -50%,
+  // ce qui retombe exactement sur une copie identique de la première moitié
+  // — boucle infinie sans à-coup ni "retour au début" visible.
+  outer.innerHTML = `<div class="trending-carousel-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.trending-carousel-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.trending-item');
+    if (item) openMovieDetailSheet(item.dataset.movieId);
+  });
+  // Pause pendant l'interaction (survol souris, ou doigt posé sur mobile) —
+  // sinon le défilement continue de bouger sous le doigt pendant qu'on essaie
+  // de taper précisément sur une affiche.
+  outer.addEventListener('touchstart', () => track.classList.add('paused'), { passive: true });
+  outer.addEventListener('touchend', () => track.classList.remove('paused'));
+}
 
 const discoverStack = document.getElementById('discover-stack');
 const discoverActionsEl = document.getElementById('discover-actions');

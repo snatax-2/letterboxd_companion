@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations } = req.query;
+  const { query, id, providers, img, recommendations, trending } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -25,7 +25,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (img) {
+    if (trending) {
+      // Cas 6 : Tendances du moment (carrousel Découvrir), pas liées à
+      // l'historique de l'utilisateur — TMDb "trending/movie/week".
+      const trendRes = await fetch(
+        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}&language=fr-FR`
+      );
+      const trendData = await trendRes.json();
+      setCache(10800, 43200); // 3h, revalidation jusqu'à 12h (les tendances évoluent dans la journée)
+      return res.status(200).json(trendData);
+
+    } else if (img) {
       // Cas 4 : Proxy image (contourne CORS TMDb sur mobile Chrome)
       // Seules les URLs image.tmdb.org sont autorisées
       const decoded = decodeURIComponent(img);

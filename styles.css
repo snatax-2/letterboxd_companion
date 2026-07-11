@@ -769,11 +769,15 @@
 
   /* Étoile pleine : le radio du right-half associé (valeur entière) ou un
      plus tôt/haut est coché, ou survol de ce right-half ou d'un précédent ->
-     le left-half qui suit immédiatement (même étoile, adjacent sibling) doit
-     passer en plein, pas juste à moitié. */
-  .rating-stars input:checked ~ label.right-half + label.left-half::after,
-  .rating-stars label:hover ~ label.right-half + label.left-half::after,
-  .rating-stars label.right-half:hover + label.left-half::after {
+     le left-half qui suit (même étoile) doit passer en plein, pas juste à
+     moitié. Le sélecteur passe par l'input intercalé entre les deux labels
+     (label.right-half, PUIS son input, PUIS label.left-half dans le DOM
+     réel) : "label + label" ne matchait jamais, cet input entre les deux
+     empêchait toute correspondance — d'où les étoiles pleines qui
+     s'affichaient à moitié remplies quelle que soit la note. */
+  .rating-stars input:checked ~ label.right-half + input + label.left-half::after,
+  .rating-stars label:hover ~ label.right-half + input + label.left-half::after,
+  .rating-stars label.right-half:hover + input + label.left-half::after {
       clip-path: inset(0 0 0 0);
   }
   
@@ -1301,6 +1305,30 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text); }
+
+  /* ── DÉCOUVRIR : carrousel "Tendances du moment" ── */
+  .trending-carousel-wrap { margin-bottom: 14px; }
+  .trending-carousel-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+  }
+  .trending-carousel { overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); }
+  .trending-carousel-track {
+    display: flex; gap: 10px; width: max-content;
+    animation: trendingScroll 35s linear infinite;
+  }
+  .trending-carousel-track.paused { animation-play-state: paused; }
+  @keyframes trendingScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); } /* la liste est dupliquée une fois : -50% = une boucle complète, sans à-coup */
+  }
+  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; }
+  .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
+  .trending-item-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--text-mid); }
+  .trending-item-title {
+    font-size: 0.68rem; color: var(--text-mid); margin-top: 4px; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
 
   /* ── DÉCOUVRIR : pile de cartes façon "swipe" ── */
   .discover-reload-btn {
