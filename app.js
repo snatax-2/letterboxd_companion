@@ -3386,7 +3386,7 @@ function renderDiscoverStack() {
 function buildDiscoverCardEl(m, isTop) {
   const year = m.release_date?.slice(0, 4) || '????';
   const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w342${m.poster_path}` : '';
+  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '';
   let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
   if (overview.length > 160) overview = overview.slice(0, 160) + '…';
 

@@ -135,22 +135,21 @@
     --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
     --star-symbol: '◉';
     --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
+    --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
 
     --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
     /* Bande sépia tri-tons, dans la palette du moodboard */
     --header-bar: linear-gradient(to right, #4A2E1B 33%, #DAC0A3 33%, #DAC0A3 66%, #5C6E58 66%);
   }
 
-  /* Le texte "#0d1117" (quasi noir) des boutons actifs (.mode-tab.active,
-     .focus-mode-toggle.active) est pensé pour un accent CLAIR/vif (orange,
-     rouge, blanc...) sur les autres thèmes. Ici --orange est un brun déjà
-     sombre (Terre de Sienne) : du texte presque noir dessus manque de
-     contraste et paraît terne. On repasse en crème (couleur du fond du
-     thème), qui se détache clairement du brun plein. */
-  [data-theme="cinephile"] .mode-tab.active,
-  [data-theme="cinephile"] .focus-mode-toggle.active {
-    color: var(--bg);
-  }
+  /* Le texte "#0d1117" (quasi noir) utilisé sur les boutons à fond plein
+     (mode-tab.active, focus-mode-toggle.active, btn-save, empty-state-cta...)
+     est pensé pour un accent CLAIR/vif (orange, rouge, blanc...) sur la
+     plupart des thèmes. Certains thèmes (Cinéphile, Classique, Journal) ont
+     des accents sombres, voire noirs — du texte presque noir dessus est
+     illisible. Voir --solid-fill-text (déclarée par thème plus bas, utilisée
+     partout où ce même problème se posait) plutôt que de corriger chaque
+     bouton séparément au fil des retours. */
 
   [data-theme="classique"] {
     /* Le Cinéma Classique — monochrome, éditorial, aucune distraction visuelle.
@@ -168,6 +167,7 @@
     --star-color: #000000; --star-empty-color: #cccccc; --star-font: 'Playfair Display', serif;
     --star-shadow: none; --star-symbol: '★';
     --icon-stroke: 1.25; /* traits très fins, minimalistes, laissent respirer le contenu */
+    --solid-fill-text: var(--bg); /* accent noir pur : texte blanc sur fond plein */
 
     --box-shadow-style: none;
     --header-bar: #000000; /* simple ligne noire, pas de dégradé — pas de fioriture */
@@ -250,6 +250,7 @@
     --star-color: #8D6E52; --star-empty-color: #D9C7AE; --star-font: 'Courier Prime', monospace;
     --star-shadow: none; --star-symbol: '✎'; /* stylo, esprit carnet manuscrit */
     --icon-stroke: 1.5;
+    --solid-fill-text: var(--bg); /* accent brun sombre : texte clair plus lisible que #0d1117 */
 
     --box-shadow-style: 2px 2px 0px rgba(93,64,55,0.12);
     --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(141,110,82,0.13) 27px, rgba(141,110,82,0.13) 28px);
@@ -513,7 +514,7 @@
     flex: 1; text-align: center; padding: 7px; border: none; border-radius: var(--radius-sm); cursor: pointer;
     font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent; transition: all .15s;
   }
-  .mode-tab.active { background: var(--orange); color: #0d1117; border: 1px solid var(--orange); font-weight: 800; }
+  .mode-tab.active { background: var(--orange); color: var(--solid-fill-text, #0d1117); border: 1px solid var(--orange); font-weight: 800; }
 
   /* ── WEIGHTS PANEL ── */
   .weights-toggle {
@@ -554,7 +555,7 @@
     transition: background-color .15s ease, border-color .15s ease, color .15s ease, transform .12s ease;
   }
   .focus-mode-toggle:hover { border-color: var(--orange); color: var(--text-hi); }
-  .focus-mode-toggle.active { background: var(--orange); border-color: var(--orange); color: #0d1117; }
+  .focus-mode-toggle.active { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); }
   .focus-mode-toggle:active { transform: scale(.95); }
 
   .criteria-list.focus-mode .criterion-block { display: none; }
@@ -782,8 +783,8 @@
   .btn:hover { opacity: 1; transform: translateY(-1px); }
   .btn:active { transform: scale(.96); }
   .btn-copy { background: var(--surface2); color: var(--text-hi); border: 1px solid var(--border-hi); }
-  .btn-copy.copied { background: var(--green); color: #0d1117; border-color: var(--green); }
-  .btn-save { background: var(--blue); color: #0d1117; font-weight: 800; }
+  .btn-copy.copied { background: var(--green); color: var(--solid-fill-text, #0d1117); border-color: var(--green); }
+  .btn-save { background: var(--blue); color: var(--solid-fill-text, #0d1117); font-weight: 800; }
 
   /* ── STATS COLUMN ── */
   .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; border: 1px solid var(--border); margin-bottom: 10px; transition: border-color .12s; }
@@ -888,7 +889,7 @@
   .empty-state-icon { font-size: 2rem; margin-bottom: 8px; }
   .empty-state-cta {
     display: block; margin: 16px auto 0; padding: 10px 20px; border: none; border-radius: var(--radius-sm);
-    background: var(--orange); color: #0d1117; font-family: var(--font-heading); font-weight: 800;
+    background: var(--orange); color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading); font-weight: 800;
     font-size: 0.8rem; letter-spacing: 0.03em; cursor: pointer;
     transition: transform .12s ease, opacity .15s ease;
   }
@@ -899,7 +900,7 @@
   .watchlist-add-row { display: flex; gap: 8px; margin-bottom: 14px; width: 100%; }
   .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color .15s; box-shadow: var(--box-shadow-style, none); min-width: 0; }
   .watchlist-add-input:focus { border-color: var(--blue); }
-  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: #0d1117; padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity .15s; white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
+  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--solid-fill-text, #0d1117); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity .15s; white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
   .watchlist-add-btn:hover { opacity: 0.85; }
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
 
@@ -1188,7 +1189,7 @@
 
   .discover-stack {
     position: relative;
-    height: 420px;
+    height: 500px;
     max-width: 300px;
     margin: 10px auto 0;
   }
@@ -1216,9 +1217,9 @@
   .discover-card.snap-back { transition: transform .25s cubic-bezier(.2,.8,.2,1); }
   .discover-card.flying { transition: transform .35s ease-out, opacity .35s ease-out; }
 
-  .discover-card-poster-wrap { position: relative; width: 100%; height: 62%; flex-shrink: 0; background: var(--bg); }
+  .discover-card-poster-wrap { position: relative; width: 100%; height: 74%; flex-shrink: 0; background: var(--surface2); }
   .discover-card-poster {
-    width: 100%; height: 100%; object-fit: cover; display: block;
+    width: 100%; height: 100%; object-fit: contain; display: block;
     touch-action: none; -webkit-user-drag: none; pointer-events: none;
   }
   .discover-card-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; pointer-events: none; }
@@ -1269,7 +1270,7 @@
 
     /* Carte "Découvrir" plus grande sur mobile : la version desktop (300px de
        large) laisserait beaucoup d'espace vide sur un écran de téléphone. */
-    .discover-stack { max-width: 100%; height: min(64vh, 520px); }
+    .discover-stack { max-width: 100%; height: min(70vh, 580px); }
     .discover-action-btn { width: 62px; height: 62px; font-size: 1.5rem; }
 
     .layout { 
