@@ -50,6 +50,44 @@
   <img src="favicon.png" alt="">
   <div class="app-splash-title">LUDEX</div>
 </div>
+<script>
+// Colore l'écran de démarrage selon le thème choisi, AVANT le premier
+// rendu — sinon un flash des couleurs par défaut serait visible le temps que
+// le reste du CSS/JS ne charge et applique le vrai thème. Petite table de
+// couleurs dupliquée ici volontairement (pas d'accès aux variables CSS du
+// thème à ce stade, la feuille de style externe n'a pas encore fini de
+// charger) : seulement fond + accent, pas besoin de plus pour ce court instant.
+(function themeSplash() {
+  try {
+    var settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+    var theme = settings.theme || 'default';
+    if (theme === 'system') {
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      theme = prefersDark ? 'default' : 'filmnoir';
+    }
+    var palettes = {
+      default:   { bg: '#14181c', accent: '#ff8000' },
+      scuderia:  { bg: '#0a0a0a', accent: '#e32636' },
+      anderson:  { bg: '#FDF6E3', accent: '#D1495B' },
+      filmnoir:  { bg: '#050505', accent: '#ffffff' },
+      cinephile: { bg: '#F9F6F0', accent: '#4A2E1B' },
+      classique: { bg: '#FFFFFF', accent: '#000000' },
+      moderne:   { bg: '#F9F6F0', accent: '#E07A5F' },
+      journal:   { bg: '#FAF0E6', accent: '#8D6E52' },
+      meridien:  { bg: '#F7F3EA', bgNight: '#171410', accent: '#B08D57' },
+    };
+    var p = palettes[theme] || palettes.default;
+    var bg = p.bg;
+    if (theme === 'meridien') {
+      var hour = new Date().getHours();
+      if (hour < 7 || hour >= 20) bg = p.bgNight;
+    }
+    var splash = document.getElementById('app-splash');
+    splash.style.background = bg;
+    splash.querySelector('.app-splash-title').style.color = p.accent;
+  } catch (e) { /* si ça échoue, on garde les couleurs par défaut du splash — jamais bloquant */ }
+})();
+</script>
 
 
 <div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
