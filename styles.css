@@ -1165,9 +1165,9 @@
   .action-sheet-item .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
 
   /* ── FICHE FILM DÉTAILLÉE ── */
-  .mds-box { max-width: 440px; position: relative; padding-top: 44px; }
+  .mds-box { max-width: 440px; position: relative; padding-top: 34px; }
   .mds-close {
-    position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
+    position: absolute; top: 10px; right: 10px; width: 28px; height: 28px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 6;
@@ -1177,15 +1177,15 @@
 
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
-    position: sticky; top: -44px; z-index: 5; background: var(--bg);
-    margin: -44px -24px 0; padding: 44px 24px 12px; transition: padding .2s ease, gap .2s ease;
+    position: sticky; top: -34px; z-index: 5; background: var(--bg);
+    margin: -34px -24px 0; padding: 34px 24px 12px; transition: padding .2s ease, gap .2s ease;
     border-bottom: 1px solid var(--border);
   }
   /* En-tête compact : appliqué en JS passé un certain seuil de défilement
      (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
      le titre passe à côté d'elle sur une seule ligne, façon "now playing" qui
      se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
-  .mds-header.compact { padding-top: 50px; padding-bottom: 8px; gap: 10px; align-items: center; }
+  .mds-header.compact { padding-top: 40px; padding-bottom: 8px; gap: 10px; align-items: center; }
   .mds-header.compact .mds-header-left { width: 40px; }
   .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
