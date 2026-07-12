@@ -1178,7 +1178,7 @@
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
     position: sticky; top: -44px; z-index: 5; background: var(--bg);
-    margin: -44px -24px 0; padding: 44px 24px 12px; transition: padding .2s ease;
+    margin: -44px -24px 0; padding: 44px 24px 12px; transition: padding .2s ease, gap .2s ease;
     border-bottom: 1px solid var(--border);
   }
   /* En-tête compact : appliqué en JS passé un certain seuil de défilement
@@ -1192,14 +1192,14 @@
   .mds-header.compact .mds-meta,
   .mds-header.compact .mds-tmdb-score { display: none; }
   .mds-header.compact .mds-title { font-size: 0.95rem; }
-  .mds-header-left { width: 100px; flex-shrink: 0; }
-  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+  .mds-header-left { width: 100px; flex-shrink: 0; transition: width .25s cubic-bezier(.2,.8,.2,1); }
+  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: width .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
     background: var(--surface2); font-size: 2rem; color: var(--text-mid);
   }
   .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; }
-  .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; }
+  .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; transition: font-size .25s ease; }
   .mds-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; }
   .mds-header-director { font-size: 0.78rem; color: var(--text-mid); margin-top: 4px; }
   .mds-header-director b { color: var(--text-hi); }
@@ -1302,7 +1302,7 @@
     margin-top: 16px;
   }
   .mds-header { margin-top: 0; }
-  .mds-header + .mds-section { margin-top: 12px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
+  .mds-header + .mds-section { margin-top: 6px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
   @keyframes mdsSectionIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
