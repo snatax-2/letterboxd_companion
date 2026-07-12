@@ -4968,9 +4968,29 @@ function buildPdsSkeleton(personName) {
 function buildPersonFilmography(data) {
   const history = loadHistory();
   const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+
+  // Limite la filmographie au rôle PRINCIPAL de la personne plutôt que de tout
+  // mélanger (un réalisateur crédité comme producteur ou scénariste sur un
+  // film n'a, à nos yeux ici, pas "réalisé" ce film-là — c'est ce qui gonflait
+  // la filmographie de films produits/écrits en plus de ceux réalisés).
+  const dept = data.known_for_department;
+  let source;
+  if (dept === 'Directing') {
+    source = (data.movie_credits?.crew || []).filter(m => m.job === 'Director');
+  } else if (dept === 'Writing') {
+    source = (data.movie_credits?.crew || []).filter(m => m.department === 'Writing');
+  } else if (dept === 'Acting') {
+    source = data.movie_credits?.cast || [];
+  } else {
+    // Département moins courant (Production, Camera...) : pas de règle
+    // spécifique établie, on garde le mélange complet plutôt que de risquer
+    // de cacher des films pertinents pour ces cas plus rares.
+    source = [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])];
+  }
+
   const seen = new Set();
   const films = [];
-  [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])].forEach(m => {
+  source.forEach(m => {
     if (!m.id || seen.has(m.id)) return;
     seen.add(m.id);
     films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path, isSeen: seenIds.has(String(m.id)) });
