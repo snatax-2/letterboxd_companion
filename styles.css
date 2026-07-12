@@ -1202,6 +1202,20 @@
 
   .mds-error { font-size: 0.88rem; color: var(--text-mid); text-align: center; padding: 20px 0; }
 
+  .mds-cast-carousel {
+    overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  }
+  .mds-cast-carousel::-webkit-scrollbar { display: none; }
+  .mds-cast-track { display: flex; gap: 12px; width: max-content; }
+  .mds-cast-item { flex-shrink: 0; width: 72px; cursor: pointer; text-align: center; }
+  .mds-cast-photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto; background: var(--surface2); border: 2px solid var(--border); transition: border-color .15s; }
+  .mds-cast-item:hover .mds-cast-photo { border-color: var(--orange); }
+  .mds-cast-photo-ph { display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-mid); }
+  .mds-cast-name { font-size: 0.68rem; font-weight: 700; color: var(--text-hi); margin-top: 5px; line-height: 1.2; }
+  .mds-cast-character { font-size: 0.63rem; color: var(--text-mid); line-height: 1.2; }
+
   /* Nom de réalisateur/acteur cliquable, ouvre sa fiche personne */
   .mds-person-link { color: var(--orange); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color .15s; }
   .mds-person-link:hover { text-decoration-color: var(--orange); }

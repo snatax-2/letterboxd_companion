@@ -108,6 +108,12 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(data.budget)}</span></div>
       <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(data.revenue)}</span></div>
     </div>
+
+    ${(data.credits?.cast || []).length > 0 ? `
+      <div class="mds-section" style="animation-delay:.25s">
+        <div class="mds-section-title">Casting</div>
+        <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
+      </div>` : ''}
   `;
 }
 
@@ -141,6 +147,68 @@ function buildCriteriaBreakdown(localMatch) {
   `;
 }
 
+// Carrousel du casting complet, en bas de la fiche film — même mécanique que
+// le carrousel "Tendances" de Découvrir (défilement auto piloté en JS, pas
+// une animation CSS qui bloquerait le glissement manuel natif), à vitesse
+// volontairement plus lente ici (plus de monde à voir défiler, moins de
+// pression pour choisir/lire rapidement).
+function renderCastCarousel(castArray) {
+  const outer = document.getElementById('mds-cast-carousel');
+  if (!outer) return;
+  const cast = castArray.filter(c => c.id).slice(0, 20);
+  if (cast.length === 0) return;
+
+  const itemsHtml = cast.map(actor => {
+    const photoUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : '';
+    return `
+      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}">
+        ${photoUrl
+          ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
+          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
+        <div class="mds-cast-name">${escAttr(actor.name)}</div>
+        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
+  // qu'il a parcouru l'équivalent d'une copie complète.
+  outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.mds-cast-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.mds-cast-item');
+    if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
+  });
+
+  const AUTO_SCROLL_SPEED = 0.3; // plus lent que le carrousel tendances (0.5) : plus de monde à voir défiler
+  const RESUME_DELAY_MS = 3000;
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused && mdsEl.classList.contains('open')) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    // Arrête la boucle si la fiche a été fermée (évite de faire tourner un
+    // requestAnimationFrame indéfiniment pour un carrousel qu'on ne voit plus).
+    if (mdsEl.classList.contains('open')) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+}
+
 let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
 
 async function openMovieDetailSheet(tmdbId) {
@@ -165,6 +233,7 @@ async function openMovieDetailSheet(tmdbId) {
 
     mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
     mdsCurrentData = data;
+    renderCastCarousel(data.credits?.cast || []);
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
   } catch (e) {
