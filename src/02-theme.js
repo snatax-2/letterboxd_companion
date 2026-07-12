@@ -24,6 +24,26 @@ function loadSettings() {
   }
 }
 
+// Bascule jour/nuit du thème Méridien, basée sur l'heure RÉELLE (pas les
+// préférences système comme le thème "Auto") — nuit de 20h à 7h. Le laiton
+// (accent) reste identique dans les deux cas ; seuls fond et texte s'inversent
+// (voir [data-theme="meridien"].meridien-night dans styles.css).
+function applyMeridienDayNight() {
+  const hour = new Date().getHours();
+  const isNight = hour < 7 || hour >= 20;
+  document.documentElement.classList.toggle('meridien-night', isNight);
+}
+let meridienIntervalStarted = false;
+function ensureMeridienInterval() {
+  if (meridienIntervalStarted) return;
+  meridienIntervalStarted = true;
+  // Revérifie toutes les 10 minutes : suffisant pour basculer au bon moment
+  // même si l'app reste ouverte sans être rechargée à travers la frontière jour/nuit.
+  setInterval(() => {
+    if (document.documentElement.getAttribute('data-theme') === 'meridien') applyMeridienDayNight();
+  }, 10 * 60 * 1000);
+}
+
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
@@ -42,8 +62,17 @@ function applySettings(settings) {
   }
   
   document.documentElement.setAttribute('data-theme', themeToApply);
+  if (themeToApply === 'meridien') {
+    applyMeridienDayNight();
+    ensureMeridienInterval();
+  }
   
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
+  document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
+  const owned = loadOwnedProviders();
+  document.querySelectorAll('.platform-chip').forEach(chip => {
+    chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
+  });
   const th = settings.theme || 'default';
   document.querySelectorAll('.theme-card').forEach(tc => {
     const isSelected = tc.dataset.theme === th;
@@ -75,6 +104,10 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     if (card.dataset.theme !== "system") {
         document.documentElement.setAttribute('data-theme', card.dataset.theme);
+        if (card.dataset.theme === 'meridien') {
+          applyMeridienDayNight();
+          ensureMeridienInterval();
+        }
     } else {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
@@ -100,6 +133,20 @@ document.getElementById('theme-grid').addEventListener('keydown', e => {
   }
 });
 
+const OWNED_PROVIDERS_KEY = 'lbx_owned_providers';
+function loadOwnedProviders() {
+  try { return JSON.parse(localStorage.getItem(OWNED_PROVIDERS_KEY)) || []; } catch { return []; }
+}
+function saveOwnedProviders(list) {
+  localStorage.setItem(OWNED_PROVIDERS_KEY, JSON.stringify(list));
+}
+
+document.getElementById('platform-chips-grid').addEventListener('click', (e) => {
+  const chip = e.target.closest('.platform-chip');
+  if (!chip) return;
+  chip.classList.toggle('selected');
+});
+
 document.getElementById('settings-save').addEventListener('click', () => {
   let rawName = document.getElementById('setting-app-name').value.trim();
   if(!rawName) rawName = "Ludex Rating Companion";
@@ -108,10 +155,13 @@ document.getElementById('settings-save').addEventListener('click', () => {
   
   const newSettings = {
     appName: formattedName,
-    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme
+    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
+    genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
   
   localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
+  const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
+  saveOwnedProviders(selectedProviders);
   applySettings(newSettings);
   renderAll();
   document.getElementById('settings-modal').classList.remove('open');

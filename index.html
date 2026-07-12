@@ -137,12 +137,49 @@
           </div>
           <div class="theme-label" style="background:#EFDFC8;color:#3E2723;font-family:'Courier Prime',monospace;font-weight:700;">JOURNAL DE BORD</div>
         </div>
+        <div class="theme-card" data-theme="meridien" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Méridien (jour/nuit automatique)">
+          <div class="theme-preview" style="background:linear-gradient(135deg, #F7F3EA 50%, #171410 50%)">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#B08D57;flex:1;border-radius:2px"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#B08D57;width:65%;border-radius:2px;opacity:0.7"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px"></div><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px;opacity:0.6"></div><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px;opacity:0.3"></div></div>
+          </div>
+          <div class="theme-label" style="background:#B08D57;color:#0d1117;font-family:'Cormorant Garamond',serif;font-weight:700;letter-spacing:.04em;">MÉRIDIEN</div>
+        </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
           <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
              <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
           </div>
           <div class="theme-label" style="background:#1f2935;color:#fff;font-family:var(--font-heading)">Auto (Système)</div>
         </div>
+      </div>
+
+      <label class="settings-label">Personnalisation</label>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title">Pondération automatique selon le genre</div>
+          <div class="settings-toggle-desc">Ajuste les curseurs par défaut selon le genre du film sélectionné (ex : plus de poids sur "Ambiance" pour un film d'horreur).</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-genre-weights-enabled" checked>
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+
+      <label class="settings-label">Mes plateformes de streaming</label>
+      <p style="font-size:0.8rem;color:var(--text-mid);margin:0 0 8px;line-height:1.4">
+        Sélectionne celles que tu possèdes : la watchlist n'affichera que ces plateformes-là pour chaque film.
+        Rien coché = toutes les plateformes disponibles sont affichées (comportement par défaut).
+      </p>
+      <div class="platform-chips-grid" id="platform-chips-grid">
+        <button type="button" class="platform-chip" data-provider="netflix">Netflix</button>
+        <button type="button" class="platform-chip" data-provider="amazon prime video">Prime Video</button>
+        <button type="button" class="platform-chip" data-provider="disney plus">Disney+</button>
+        <button type="button" class="platform-chip" data-provider="apple tv">Apple TV+</button>
+        <button type="button" class="platform-chip" data-provider="max">Max</button>
+        <button type="button" class="platform-chip" data-provider="paramount plus">Paramount+</button>
+        <button type="button" class="platform-chip" data-provider="canal+">Canal+</button>
+        <button type="button" class="platform-chip" data-provider="mubi">MUBI</button>
+        <button type="button" class="platform-chip" data-provider="crunchyroll">Crunchyroll</button>
       </div>
 
       <label class="settings-label">Synchronisation cloud</label>

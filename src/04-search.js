@@ -146,7 +146,10 @@ async function selectMovie(m, year) {
     document.getElementById('movie-director').value = director;
     document.getElementById('movie-actors').value = actors; 
 
-    suggestGenreWeights(genreNames);
+    const settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+    if (settings.genreWeightsEnabled !== false) {
+      suggestGenreWeights(genreNames);
+    }
 
     document.getElementById('strip-genre').innerHTML = buildStripMeta({
       genre: genres, runtime, year, director, actors

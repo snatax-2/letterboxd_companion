@@ -635,10 +635,15 @@ function createRadarSVG(averages) {
     affect: 'Affect',
   };
 
-  const s = 180, c = s/2, r = s*0.42;
+  const s = 220, c = s/2, r = 72;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
   // ce nombre en dur, sinon l'ajout d'un critère (ex: "Rythme") désaligne le
   // graphique ou perd un axe silencieusement.
+  // NB : s (220) est volontairement plus grand que 2×r (144) — la différence
+  // (38px de chaque côté) est la marge réservée aux libellés des axes.
+  // Avant, s=180 et r=0.42×s=76 plaçaient l'ancre du texte PILE sur le bord du
+  // viewBox (aucune marge), ce qui faisait déborder "Réal." et "Photo" (le
+  // texte s'étend depuis son ancre, pas autour) hors du cadre visible.
   const angleStep = 360 / CRITERIA.length;
   const angles = CRITERIA.map((_, i) => (i * angleStep - 90) * Math.PI / 180);
   const labels = CRITERIA.map(critKey => CRITERIA_SHORT_LABELS[critKey] || critKey);

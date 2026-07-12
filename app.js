@@ -364,6 +364,26 @@ function loadSettings() {
   }
 }
 
+// Bascule jour/nuit du thème Méridien, basée sur l'heure RÉELLE (pas les
+// préférences système comme le thème "Auto") — nuit de 20h à 7h. Le laiton
+// (accent) reste identique dans les deux cas ; seuls fond et texte s'inversent
+// (voir [data-theme="meridien"].meridien-night dans styles.css).
+function applyMeridienDayNight() {
+  const hour = new Date().getHours();
+  const isNight = hour < 7 || hour >= 20;
+  document.documentElement.classList.toggle('meridien-night', isNight);
+}
+let meridienIntervalStarted = false;
+function ensureMeridienInterval() {
+  if (meridienIntervalStarted) return;
+  meridienIntervalStarted = true;
+  // Revérifie toutes les 10 minutes : suffisant pour basculer au bon moment
+  // même si l'app reste ouverte sans être rechargée à travers la frontière jour/nuit.
+  setInterval(() => {
+    if (document.documentElement.getAttribute('data-theme') === 'meridien') applyMeridienDayNight();
+  }, 10 * 60 * 1000);
+}
+
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
@@ -382,8 +402,17 @@ function applySettings(settings) {
   }
   
   document.documentElement.setAttribute('data-theme', themeToApply);
+  if (themeToApply === 'meridien') {
+    applyMeridienDayNight();
+    ensureMeridienInterval();
+  }
   
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
+  document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
+  const owned = loadOwnedProviders();
+  document.querySelectorAll('.platform-chip').forEach(chip => {
+    chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
+  });
   const th = settings.theme || 'default';
   document.querySelectorAll('.theme-card').forEach(tc => {
     const isSelected = tc.dataset.theme === th;
@@ -415,6 +444,10 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     if (card.dataset.theme !== "system") {
         document.documentElement.setAttribute('data-theme', card.dataset.theme);
+        if (card.dataset.theme === 'meridien') {
+          applyMeridienDayNight();
+          ensureMeridienInterval();
+        }
     } else {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
@@ -440,6 +473,20 @@ document.getElementById('theme-grid').addEventListener('keydown', e => {
   }
 });
 
+const OWNED_PROVIDERS_KEY = 'lbx_owned_providers';
+function loadOwnedProviders() {
+  try { return JSON.parse(localStorage.getItem(OWNED_PROVIDERS_KEY)) || []; } catch { return []; }
+}
+function saveOwnedProviders(list) {
+  localStorage.setItem(OWNED_PROVIDERS_KEY, JSON.stringify(list));
+}
+
+document.getElementById('platform-chips-grid').addEventListener('click', (e) => {
+  const chip = e.target.closest('.platform-chip');
+  if (!chip) return;
+  chip.classList.toggle('selected');
+});
+
 document.getElementById('settings-save').addEventListener('click', () => {
   let rawName = document.getElementById('setting-app-name').value.trim();
   if(!rawName) rawName = "Ludex Rating Companion";
@@ -448,10 +495,13 @@ document.getElementById('settings-save').addEventListener('click', () => {
   
   const newSettings = {
     appName: formattedName,
-    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme
+    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
+    genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
   
   localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
+  const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
+  saveOwnedProviders(selectedProviders);
   applySettings(newSettings);
   renderAll();
   document.getElementById('settings-modal').classList.remove('open');
@@ -1210,7 +1260,10 @@ async function selectMovie(m, year) {
     document.getElementById('movie-director').value = director;
     document.getElementById('movie-actors').value = actors; 
 
-    suggestGenreWeights(genreNames);
+    const settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+    if (settings.genreWeightsEnabled !== false) {
+      suggestGenreWeights(genreNames);
+    }
 
     document.getElementById('strip-genre').innerHTML = buildStripMeta({
       genre: genres, runtime, year, director, actors
@@ -2570,10 +2623,15 @@ function createRadarSVG(averages) {
     affect: 'Affect',
   };
 
-  const s = 180, c = s/2, r = s*0.42;
+  const s = 220, c = s/2, r = 72;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
   // ce nombre en dur, sinon l'ajout d'un critère (ex: "Rythme") désaligne le
   // graphique ou perd un axe silencieusement.
+  // NB : s (220) est volontairement plus grand que 2×r (144) — la différence
+  // (38px de chaque côté) est la marge réservée aux libellés des axes.
+  // Avant, s=180 et r=0.42×s=76 plaçaient l'ancre du texte PILE sur le bord du
+  // viewBox (aucune marge), ce qui faisait déborder "Réal." et "Photo" (le
+  // texte s'étend depuis son ancre, pas autour) hors du cadre visible.
   const angleStep = 360 / CRITERIA.length;
   const angles = CRITERIA.map((_, i) => (i * angleStep - 90) * Math.PI / 180);
   const labels = CRITERIA.map(critKey => CRITERIA_SHORT_LABELS[critKey] || critKey);
@@ -3343,6 +3401,15 @@ function renderWatchlist() {
   window._justSavedWatchlistTitle = null;
 }
 
+// Normalise un nom de plateforme pour comparaison souple (ex: "Apple TV+" et
+// "apple tv" doivent se reconnaître comme la même chose malgré la casse et le
+// "+"/"Plus"), plutôt que d'exiger une correspondance exacte fragile face aux
+// variations de nommage entre ce qu'on propose dans les réglages et ce que
+// TMDb renvoie réellement.
+function normalizeProviderName(name) {
+  return (name || '').toLowerCase().replace(/\+/g, ' plus').replace(/\s+/g, ' ').trim();
+}
+
 async function fetchProviders(tmdbId, idx) {
   const el = document.getElementById(`wl-providers-${idx}`);
   if (!el) return;
@@ -3360,18 +3427,27 @@ async function fetchProviders(tmdbId, idx) {
       return;
     }
 
-    let html = '';
+    // Si l'utilisateur a précisé les plateformes qu'il possède (réglages), on
+    // ne garde que celles-là — sinon (rien coché), on affiche tout, comme
+    // avant l'ajout de cette fonctionnalité.
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
 
-    const flat = providerRoot.flatrate || [];
+    const allFlat = providerRoot.flatrate || [];
+    const allRent = providerRoot.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
         html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
-
-    const rent = providerRoot.rent || [];
-    const rentOnly = rent.filter(r => !flat.find(f => f.provider_id === r.provider_id));
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
@@ -3380,7 +3456,12 @@ async function fetchProviders(tmdbId, idx) {
     }
 
     if (!html) {
-      el.innerHTML = '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+      // Distingue "vraiment nulle part en streaming" de "disponible, mais pas
+      // sur TES plateformes" — les deux messages n'ont pas la même utilité.
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      el.innerHTML = availableElsewhere
+        ? '<span class="wl-no-streaming">Disponible, mais pas sur tes plateformes 📵</span>'
+        : '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
     } else {
       el.innerHTML = html;
     }

@@ -1,8 +1,9 @@
   /* Importation complète de toutes les polices nécessaires */
-  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Fragment+Mono:ital@0;1&family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Jost:ital,wght@0,400;0,600;0,700;1,400&family=Martian+Mono:wght@400;600;700&family=Overpass+Mono:wght@400;600;700&family=Oswald:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Poppins:wght@400;500;600;700;800&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Spline+Sans+Mono:wght@400;600;700&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
   /* ── VARIABLES GLOBALES ET THÈMES ── */
   :root {
+    --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
     /* 1. L'Original (Letterboxd) */
     --bg: #14181c; --surface: #1f2935; --surface2: #263240; --border: #283040;
     --border-hi: #445566; --text: #89a; --text-hi: #fff; --text-mid: #9ab;
@@ -45,7 +46,7 @@
     --control-radius: 6px; /* carré adouci pour les boutons +/- et de navigation, pas un carré franc */
     --font-heading: 'Oswald', sans-serif;
     --font-body: 'Source Sans 3', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'IBM Plex Mono', monospace;
     
     /* Étoiles Scuderia : Jaune Modène ultra-lumineux et agressif */
     --star-color: #FFF200;
@@ -72,7 +73,7 @@
     --control-radius: 8px;
     --font-heading: 'Jost', sans-serif;
     --font-body: 'Jost', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'Overpass Mono', monospace;
     
     /* Étoiles Anderson : Or rétro mat avec une ombre dure caractéristique */
     --star-color: #E8A825;
@@ -136,7 +137,7 @@
     --control-radius: 50%;
     --font-heading: 'Poppins', sans-serif;
     --font-body: 'Poppins', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'Fragment Mono', monospace;
 
     /* Étoiles : sépia chaud, forme "objectif de projecteur" */
     --star-color: #4A2E1B;
@@ -173,7 +174,7 @@
     --control-radius: 0px;
     --font-heading: 'Playfair Display', serif;
     --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'Spline Sans Mono', monospace;
 
     --star-color: #000000; --star-empty-color: #cccccc; --star-font: 'Playfair Display', serif;
     --star-shadow: none; --star-symbol: '★';
@@ -228,7 +229,7 @@
     --control-radius: 50%;
     --font-heading: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-mono: 'Martian Mono', monospace;
 
     --star-color: #E07A5F; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
     --star-shadow: none; --star-symbol: '■'; /* bloc plein, esprit affiche graphique */
@@ -269,6 +270,43 @@
     --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(141,110,82,0.13) 27px, rgba(141,110,82,0.13) 28px);
     --bg-size: 100% 28px;
     --header-bar: repeating-linear-gradient(to right, #8D6E52 0, #8D6E52 8px, transparent 8px, transparent 16px); /* pointillés, esprit carnet */
+  }
+
+  [data-theme="meridien"] {
+    /* Méridien — identité propre à Ludex, sans inspiration extérieure.
+       Esprit cadran solaire et almanach vintage : épuré, un seul accent
+       laiton qui reste IDENTIQUE de jour comme de nuit (seuls le fond et le
+       texte s'inversent, comme la même pièce d'horlogerie vue sous deux
+       lumières différentes). L'état jour/nuit (classe .meridien-night,
+       voir 02-theme.js) suit l'heure réelle, pas les préférences système. */
+    --bg: #F7F3EA; --surface: #FFFFFF; --surface2: #EDE7D8; --border: #D8CFB8;
+    --border-hi: #B08D57; --text: #4A4438; --text-hi: #241F17; --text-mid: #766C58;
+    --orange: #B08D57; --gold: #B08D57; --blue: #B08D57; /* le laiton, unique accent, ne varie jamais */
+    --red: #8B5E3C; --green: #6B7A5E;
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #0d1117;
+    --solid-fill-text: #0d1117; /* le laiton est un ton moyen : texte sombre plus lisible que clair */
+    --radius: 2px; --radius-sm: 2px;
+    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 50%;
+    --font-heading: 'Cormorant Garamond', serif;
+    --font-body: 'Work Sans', sans-serif;
+    --font-mono: 'Ubuntu Mono', monospace;
+
+    --star-color: #B08D57; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif;
+    --star-shadow: none; --star-symbol: '◇'; /* losange fin et discret, esprit marque de cadran solaire */
+    --icon-stroke: 1.25;
+
+    --box-shadow-style: none; /* minimalisme : aucune ombre portée */
+    --header-bar: var(--border-hi); /* simple ligne fine, pas de dégradé */
+  }
+  /* Bascule nuit : le fond et le texte s'inversent, le laiton (--orange,
+     --gold, --blue) reste identique — c'est ce qui donne l'impression d'un
+     seul et même objet vu de jour ou de nuit, pas deux thèmes différents. */
+  [data-theme="meridien"].meridien-night {
+    --bg: #171410; --surface: #201C16; --surface2: #2A251C; --border: #3A3327;
+    --text: #C9BFA8; --text-hi: #F2ECDD; --text-mid: #8F856E;
+    --red: #C48B5C; --green: #8A9A7D;
+    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -625,8 +663,20 @@
      pour viser rapidement une valeur du regard, sans remplacer le slider par
      des blocs tap-to-fill (qui casseraient l'accessibilité native — flèches
      clavier, lecteurs d'écran — et ne collent pas bien à une échelle en 0,5). */
+  /* Graduations aux valeurs entières (0 à 10), sous la piste : repère visuel
+     pour viser rapidement une valeur du regard, sans remplacer le slider par
+     des blocs tap-to-fill (qui casseraient l'accessibilité native — flèches
+     clavier, lecteurs d'écran — et ne collent pas bien à une échelle en 0,5).
+     IMPORTANT : left/right sont décalés de la MOITIÉ de la largeur du curseur
+     (--slider-thumb-size), pas 0 — un <input type="range"> natif ne fait pas
+     correspondre ses valeurs à 0-100% de la largeur du CONTENEUR, mais à
+     l'intervalle [rayon du curseur, largeur - rayon du curseur] (le curseur
+     ne peut pas dépasser les bords). Sans cet ajustement, les graduations
+     tombaient légèrement à côté de l'endroit réel où le curseur s'arrête,
+     surtout perceptible aux extrémités. */
   .criterion-ticks {
-    position: absolute; left: 0; right: 0; top: 100%; margin-top: 5px; height: 4px;
+    position: absolute; left: calc(var(--slider-thumb-size, 18px) / 2); right: calc(var(--slider-thumb-size, 18px) / 2);
+    top: 100%; margin-top: 5px; height: 4px;
     background-image: repeating-linear-gradient(
       to right, var(--border-hi) 0, var(--border-hi) 1px, transparent 1px, transparent calc(100% / 10)
     );
@@ -1175,6 +1225,35 @@
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
   
   .settings-label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-heading); }
+
+  .settings-toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px; margin-bottom: 16px;
+  }
+  .settings-toggle-title { font-size: 0.85rem; font-weight: 700; color: var(--text-hi); margin-bottom: 3px; }
+  .settings-toggle-desc { font-size: 0.75rem; color: var(--text-mid); line-height: 1.4; }
+  .settings-toggle-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; }
+  .settings-toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .settings-toggle-slider {
+    position: absolute; inset: 0; background: var(--border); border-radius: 999px;
+    cursor: pointer; transition: background-color .2s ease;
+  }
+  .settings-toggle-slider::before {
+    content: ''; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px;
+    background: #fff; border-radius: 50%; transition: transform .2s ease;
+  }
+  .settings-toggle-switch input:checked + .settings-toggle-slider { background: var(--orange); }
+  .settings-toggle-switch input:checked + .settings-toggle-slider::before { transform: translateX(18px); }
+
+  .platform-chips-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .platform-chip {
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
+    font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all .15s;
+  }
+  .platform-chip:hover { border-color: var(--border-hi); color: var(--text-hi); }
+  .platform-chip.selected { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); font-weight: 700; }
   .settings-input, .settings-select { width: 100%; padding: 10px; margin-bottom: 16px; background: var(--bg); border: 1px solid var(--border-hi); color: var(--text-hi); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9rem; outline: none; }
   .settings-input:focus, .settings-select:focus { border-color: var(--blue); }
 
@@ -1523,6 +1602,7 @@
     .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
     
     /* Hitboxes tactiles agrandies pour les curseurs de notation */
+    :root { --slider-thumb-size: 24px; } /* doit suivre la taille réelle du curseur ci-dessous, pour les graduations */
     input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
     input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; }
     

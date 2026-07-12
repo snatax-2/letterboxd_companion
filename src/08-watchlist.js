@@ -231,6 +231,15 @@ function renderWatchlist() {
   window._justSavedWatchlistTitle = null;
 }
 
+// Normalise un nom de plateforme pour comparaison souple (ex: "Apple TV+" et
+// "apple tv" doivent se reconnaître comme la même chose malgré la casse et le
+// "+"/"Plus"), plutôt que d'exiger une correspondance exacte fragile face aux
+// variations de nommage entre ce qu'on propose dans les réglages et ce que
+// TMDb renvoie réellement.
+function normalizeProviderName(name) {
+  return (name || '').toLowerCase().replace(/\+/g, ' plus').replace(/\s+/g, ' ').trim();
+}
+
 async function fetchProviders(tmdbId, idx) {
   const el = document.getElementById(`wl-providers-${idx}`);
   if (!el) return;
@@ -248,18 +257,27 @@ async function fetchProviders(tmdbId, idx) {
       return;
     }
 
-    let html = '';
+    // Si l'utilisateur a précisé les plateformes qu'il possède (réglages), on
+    // ne garde que celles-là — sinon (rien coché), on affiche tout, comme
+    // avant l'ajout de cette fonctionnalité.
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
 
-    const flat = providerRoot.flatrate || [];
+    const allFlat = providerRoot.flatrate || [];
+    const allRent = providerRoot.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
         html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
-
-    const rent = providerRoot.rent || [];
-    const rentOnly = rent.filter(r => !flat.find(f => f.provider_id === r.provider_id));
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
@@ -268,7 +286,12 @@ async function fetchProviders(tmdbId, idx) {
     }
 
     if (!html) {
-      el.innerHTML = '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+      // Distingue "vraiment nulle part en streaming" de "disponible, mais pas
+      // sur TES plateformes" — les deux messages n'ont pas la même utilité.
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      el.innerHTML = availableElsewhere
+        ? '<span class="wl-no-streaming">Disponible, mais pas sur tes plateformes 📵</span>'
+        : '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
     } else {
       el.innerHTML = html;
     }
