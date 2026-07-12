@@ -1378,6 +1378,32 @@
   ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 999px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
+  /* ── DÉCOUVRIR : Film du jour ── */
+  .fdj-wrap { margin-bottom: 14px; }
+  .fdj-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+  }
+  .fdj-card {
+    display: flex; gap: 12px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px; cursor: pointer; box-shadow: var(--box-shadow-style, none);
+    transition: border-color .15s;
+  }
+  .fdj-card:hover { border-color: var(--border-hi); }
+  .fdj-poster { width: 84px; height: 126px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+  .fdj-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid); }
+  .fdj-info { flex: 1; min-width: 0; }
+  .fdj-film-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; color: var(--text-hi); }
+  .fdj-year { font-weight: 400; color: var(--text-mid); }
+  .fdj-facts { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  .fdj-facts li {
+    font-size: 0.78rem; color: var(--text); line-height: 1.35; padding-left: 12px; position: relative;
+  }
+  .fdj-facts li::before { content: '—'; position: absolute; left: 0; color: var(--orange); }
+  .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; }
+  .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
+  .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
+
   /* ── DÉCOUVRIR : carrousel "Tendances du moment" ── */
   .trending-carousel-wrap { margin-bottom: 14px; }
   .trending-carousel-title {

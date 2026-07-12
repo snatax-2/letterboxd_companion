@@ -28,6 +28,7 @@ function switchRightTab(tabName) {
   if (tabName === 'discover' && !discoverLoaded) {
     loadDiscoverQueue();
     loadTrendingCarousel();
+    loadFilmDuJour();
   }
 }
 

@@ -181,6 +181,7 @@ function switchRightTab(tabName) {
   if (tabName === 'discover' && !discoverLoaded) {
     loadDiscoverQueue();
     loadTrendingCarousel();
+    loadFilmDuJour();
   }
 }
 
@@ -4181,6 +4182,166 @@ function pickDiverseBasisFilms(pool, count) {
 
 let discoverQueue = [];
 let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
+
+// ═══════════════════════════════════════════
+//  FILM DU JOUR
+// ═══════════════════════════════════════════
+// Un film choisi aléatoirement mais STABLE toute la journée (même choix du
+// matin au soir, change le lendemain), avec 3 informations générées à partir
+// de données TMDb réelles — pas de vraies "anecdotes" (trivia) : TMDb n'a pas
+// cet endpoint, on affiche donc des faits fiables (budget/recettes, tagline
+// officielle, équipe) plutôt que d'inventer du contenu.
+const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
+
+function formatMoneyShort(amount) {
+  if (!amount || amount <= 0) return null;
+  if (amount >= 1_000_000_000) return (amount / 1_000_000_000).toFixed(1).replace('.0', '') + ' Md$';
+  if (amount >= 1_000_000) return (amount / 1_000_000).toFixed(0) + ' M$';
+  return (amount / 1_000).toFixed(0) + ' k$';
+}
+
+function buildFilmDuJourFacts(m) {
+  const facts = [];
+
+  if (m.budget > 0 && m.revenue > 0) {
+    const ratio = m.revenue / m.budget;
+    facts.push(ratio >= 2
+      ? `A rapporté ${ratio.toFixed(1)}× son budget au box-office.`
+      : `Budget de ${formatMoneyShort(m.budget)} pour ${formatMoneyShort(m.revenue)} de recettes.`);
+  } else if (m.budget > 0) {
+    facts.push(`Produit avec un budget de ${formatMoneyShort(m.budget)}.`);
+  }
+
+  if (m.tagline) {
+    facts.push(`Tagline officielle : « ${m.tagline} »`);
+  }
+
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const mainActor = m.credits?.cast?.[0]?.name;
+  if (director && mainActor) {
+    facts.push(`Réalisé par ${director}, avec ${mainActor} en tête d'affiche.`);
+  } else if (director) {
+    facts.push(`Réalisé par ${director}.`);
+  } else if (mainActor) {
+    facts.push(`Avec ${mainActor} en tête d'affiche.`);
+  }
+
+  if (facts.length < 3 && m.release_date) {
+    const years = new Date().getFullYear() - parseInt(m.release_date.slice(0, 4), 10);
+    if (years > 0) facts.push(`Sorti il y a ${years} an${years > 1 ? 's' : ''}.`);
+  }
+  if (facts.length < 3 && m.vote_average) {
+    facts.push(`Noté ${m.vote_average.toFixed(1)}/10 par les spectateurs sur TMDb.`);
+  }
+  if (facts.length < 3 && m.production_countries?.length) {
+    facts.push(`Production ${m.production_countries.map(c => c.name).join(', ')}.`);
+  }
+  if (facts.length < 3 && m.runtime) {
+    facts.push(`Dure ${m.runtime} minutes.`);
+  }
+
+  return facts.slice(0, 3);
+}
+
+async function loadFilmDuJour() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
+
+  if (cached && cached.date === todayKey && cached.movie) {
+    renderFilmDuJour(cached.movie);
+    return;
+  }
+
+  try {
+    // Réutilise l'endpoint "tendances" déjà en place comme réservoir de films
+    // candidats — pas besoin d'un nouveau point d'accès dédié.
+    const res = await fetch('/api/search?trending=true');
+    const data = await res.json();
+    const pool = (data.results || []).filter(m => m.poster_path);
+    if (pool.length === 0) return;
+
+    // Choix déterministe basé sur la date (pas Math.random) : stable toute la
+    // journée sur TOUS les appareils de l'utilisateur, change automatiquement
+    // le lendemain, sans avoir besoin de stocker quoi que ce soit côté serveur.
+    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+    const pick = pool[daysSinceEpoch % pool.length];
+
+    const detailRes = await fetch(`/api/search?id=${pick.id}`);
+    const details = await detailRes.json();
+    if (!details || !details.title) return;
+
+    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details }));
+    renderFilmDuJour(details);
+  } catch (e) {
+    console.warn('Impossible de charger le film du jour', e);
+  }
+}
+
+function renderFilmDuJour(m) {
+  const wrap = document.getElementById('fdj-wrap');
+  const card = document.getElementById('fdj-card');
+  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
+  const year = m.release_date ? m.release_date.slice(0, 4) : '';
+  const facts = buildFilmDuJourFacts(m);
+
+  card.innerHTML = `
+    ${posterUrl ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">` : `<div class="fdj-poster fdj-poster-ph">${ICONS.clapper}</div>`}
+    <div class="fdj-info">
+      <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
+      <ul class="fdj-facts">
+        ${facts.map(f => `<li>${escAttr(f)}</li>`).join('')}
+      </ul>
+      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
+    </div>
+  `;
+  wrap.style.display = 'block';
+  card.dataset.movieId = String(m.id);
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.fdj-providers')) return; // évite de rouvrir la fiche si on vient de re-tenter le chargement des plateformes
+    openMovieDetailSheet(m.id);
+  });
+
+  fetchFilmDuJourProviders(m.id);
+}
+
+async function fetchFilmDuJourProviders(tmdbId) {
+  const el = document.getElementById('fdj-providers');
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE`);
+    const data = await res.json();
+    const providerRoot = data['watch/providers']?.results?.BE
+                      || data.providers?.results?.BE
+                      || data.watchProviders?.BE
+                      || null;
+
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
+
+    const allFlat = providerRoot?.flatrate || [];
+    const allRent = providerRoot?.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
+    [...flat, ...rentOnly].slice(0, 6).forEach(p => {
+      html += `<img class="fdj-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+    });
+
+    if (!html) {
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      el.innerHTML = `<span class="fdj-no-streaming">${availableElsewhere ? 'Disponible, mais pas sur tes plateformes' : 'Non disponible en streaming 🇧🇪'}</span>`;
+    } else {
+      el.innerHTML = html;
+    }
+  } catch {
+    el.innerHTML = '<span class="fdj-no-streaming">Plateformes indisponibles</span>';
+  }
+}
 
 // ═══════════════════════════════════════════
 //  CARROUSEL "TENDANCES DU MOMENT"
