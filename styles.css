@@ -1167,7 +1167,7 @@
   /* ── FICHE FILM DÉTAILLÉE ── */
   .mds-box { max-width: 440px; position: relative; padding-top: 34px; }
   .mds-close {
-    position: absolute; top: 10px; right: 10px; width: 28px; height: 28px;
+    position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 6;
@@ -1185,7 +1185,7 @@
      (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
      le titre passe à côté d'elle sur une seule ligne, façon "now playing" qui
      se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
-  .mds-header.compact { padding-top: 40px; padding-bottom: 8px; gap: 10px; align-items: center; }
+  .mds-header.compact { padding-top: 30px; padding-bottom: 8px; gap: 10px; align-items: center; }
   .mds-header.compact .mds-header-left { width: 40px; }
   .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
@@ -1302,7 +1302,7 @@
     margin-top: 16px;
   }
   .mds-header { margin-top: 0; }
-  .mds-header + .mds-section { margin-top: 6px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
+  .mds-header + .mds-section { margin-top: 16px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
   @keyframes mdsSectionIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
