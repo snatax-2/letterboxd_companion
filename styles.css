@@ -1177,8 +1177,9 @@
 
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
-    position: sticky; top: -44px; z-index: 5; background: var(--surface);
-    margin: -44px -24px 0; padding: 44px 24px 14px; transition: padding .2s ease;
+    position: sticky; top: -44px; z-index: 5; background: var(--bg);
+    margin: -44px -24px 0; padding: 44px 24px 12px; transition: padding .2s ease;
+    border-bottom: 1px solid var(--border);
   }
   /* En-tête compact : appliqué en JS passé un certain seuil de défilement
      (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
@@ -1301,6 +1302,7 @@
     margin-top: 16px;
   }
   .mds-header { margin-top: 0; }
+  .mds-header + .mds-section { margin-top: 12px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
   @keyframes mdsSectionIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
