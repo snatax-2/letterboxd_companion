@@ -39,11 +39,20 @@ function buildMdsContent(data, localMatch) {
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
-  const director = data.credits?.crew?.find(c => c.job === 'Director')?.name || '';
-  const cast = (data.credits?.cast || []).slice(0, 5).map(c => c.name).join(', ');
+  const directorObj = data.credits?.crew?.find(c => c.job === 'Director') || null;
+  const castList = (data.credits?.cast || []).slice(0, 5);
   const releaseDateStr = data.release_date
     ? new Date(data.release_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
     : 'Inconnue';
+
+  // Petit lien cliquable sur un nom de réalisateur/acteur : ouvre sa fiche
+  // personne (bio + filmographie + % déjà vu). data-person-id/data-person-name
+  // portés directement sur l'élément, lus par le clic délégué plus bas.
+  function personLink(p) {
+    return `<span class="mds-person-link" data-person-id="${p.id}" data-person-name="${escAttr(p.name)}">${escAttr(p.name)}</span>`;
+  }
+  const directorHtml = directorObj ? personLink(directorObj) : '';
+  const castHtml = castList.map(personLink).join(', ');
 
   let personalHtml = '';
   if (localMatch) {
@@ -80,9 +89,9 @@ function buildMdsContent(data, localMatch) {
 
     <div class="mds-section" style="animation-delay:.15s">
       <div class="mds-section-title">Équipe</div>
-      ${director ? `<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${director}</span></div>` : ''}
-      ${cast ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${cast}</span></div>` : ''}
-      ${!director && !cast ? `<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>` : ''}
+      ${directorHtml ? `<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${directorHtml}</span></div>` : ''}
+      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
+      ${!directorHtml && !castHtml ? `<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>` : ''}
     </div>
 
     <div class="mds-section" style="animation-delay:.2s">
@@ -156,4 +165,141 @@ function closeMovieDetailSheet() {
 }
 
 mdsCloseBtn.addEventListener('click', closeMovieDetailSheet);
-mdsEl.addEventListener('click', (e) => { if (e.target === mdsEl) closeMovieDetailSheet(); });
+mdsEl.addEventListener('click', (e) => {
+  if (e.target === mdsEl) { closeMovieDetailSheet(); return; }
+  const personLink = e.target.closest('.mds-person-link');
+  if (personLink) {
+    openPersonDetailSheet(personLink.dataset.personId, personLink.dataset.personName);
+  }
+});
+
+// ═══════════════════════════════════════════
+//  FICHE PERSONNE (réalisateur/acteur)
+// ═══════════════════════════════════════════
+// Bio + filmographie complète + pourcentage déjà vu (films de sa filmographie
+// présents dans l'historique de l'utilisateur). Ouverte en tapant un nom de
+// réalisateur/acteur dans la fiche film.
+const pdsEl = document.getElementById('person-detail-sheet');
+const pdsContentEl = document.getElementById('pds-content');
+const pdsCloseBtn = document.getElementById('pds-close-btn');
+
+function buildPdsSkeleton(personName) {
+  return `
+    <div class="mds-skeleton">
+      <div class="mds-skeleton-poster skeleton-bg"></div>
+      <div class="mds-skeleton-lines">
+        <div class="skeleton-text long skeleton-bg" style="height:18px;">${escAttr(personName || '')}</div>
+        <div class="skeleton-text short skeleton-bg"></div>
+      </div>
+    </div>
+    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>
+    <div class="skeleton-text long skeleton-bg"></div>
+  `;
+}
+
+// Combine cast + équipe technique en une filmographie dédoublonnée (une
+// personne peut apparaître à la fois comme actrice ET réalisatrice sur le
+// même film, ex: dans les deux listes renvoyées par TMDb).
+function buildPersonFilmography(data) {
+  const seen = new Set();
+  const films = [];
+  [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])].forEach(m => {
+    if (!m.id || seen.has(m.id)) return;
+    seen.add(m.id);
+    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path });
+  });
+  films.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
+  return films;
+}
+
+// Pourcentage de la filmographie déjà présent dans l'historique de
+// l'utilisateur (par tmdbId) — le petit "plus" ludique de cette fiche.
+function computeSeenPercentage(films) {
+  const history = loadHistory();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+  const seenCount = films.filter(f => seenIds.has(String(f.id))).length;
+  const pct = films.length > 0 ? Math.round((seenCount / films.length) * 100) : 0;
+  return { seenCount, total: films.length, pct };
+}
+
+function buildPdsContent(data) {
+  const films = buildPersonFilmography(data);
+  const { seenCount, total, pct } = computeSeenPercentage(films);
+  const photoUrl = data.profile_path ? `https://image.tmdb.org/t/p/w185${data.profile_path}` : '';
+  const bio = data.biography
+    ? (data.biography.length > 400 ? data.biography.slice(0, 400) + '…' : data.biography)
+    : '';
+
+  return `
+    <div class="mds-header" style="animation-delay:0s">
+      ${photoUrl
+        ? `<img class="mds-poster" src="${photoUrl}" alt="Photo de ${escAttr(data.name)}" loading="lazy">`
+        : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+      <div class="mds-header-info">
+        <div class="mds-title" id="pds-title">${escAttr(data.name)}</div>
+        <div class="mds-meta">${escAttr(data.known_for_department || '')}</div>
+      </div>
+    </div>
+
+    <div class="mds-section pds-completion" style="animation-delay:.05s">
+      <div class="mds-section-title">Films vus dans sa filmographie</div>
+      <div class="pds-completion-bar"><div class="pds-completion-fill" style="width:${pct}%"></div></div>
+      <div class="pds-completion-label">${seenCount} / ${total} film${total > 1 ? 's' : ''} vus (${pct}%)</div>
+    </div>
+
+    ${bio ? `
+      <div class="mds-section" style="animation-delay:.1s">
+        <div class="mds-section-title">Biographie</div>
+        <div class="mds-overview">${escAttr(bio)}</div>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.15s">
+      <div class="mds-section-title">Filmographie (${total})</div>
+      <div class="pds-filmography">
+        ${films.map(f => {
+          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : '';
+          const year = f.release_date ? f.release_date.slice(0, 4) : '';
+          return `
+            <div class="pds-film-item" data-movie-id="${f.id}">
+              ${posterUrl
+                ? `<img class="pds-film-poster" src="${posterUrl}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">`
+                : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
+              <div class="pds-film-title">${escAttr(f.title)}</div>
+              <div class="pds-film-year">${year}</div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function openPersonDetailSheet(personId, personName) {
+  if (!personId) return;
+  lastFocusedBeforeModal = document.activeElement;
+  pdsContentEl.innerHTML = buildPdsSkeleton(personName);
+  pdsEl.classList.add('open');
+
+  try {
+    const res = await fetch(`/api/search?personId=${personId}`);
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    if (!data || !data.name) throw new Error('no data');
+    pdsContentEl.innerHTML = buildPdsContent(data);
+  } catch (e) {
+    pdsContentEl.innerHTML = `<div class="mds-error">Impossible de charger cette fiche pour l'instant. Vérifie ta connexion et réessaie.</div>`;
+  }
+}
+
+function closePersonDetailSheet() {
+  closeModal(pdsEl);
+}
+
+pdsCloseBtn.addEventListener('click', closePersonDetailSheet);
+pdsEl.addEventListener('click', (e) => {
+  if (e.target === pdsEl) { closePersonDetailSheet(); return; }
+  const filmItem = e.target.closest('.pds-film-item');
+  if (filmItem) {
+    closePersonDetailSheet();
+    openMovieDetailSheet(filmItem.dataset.movieId);
+  }
+});

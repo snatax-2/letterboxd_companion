@@ -1190,6 +1190,22 @@
 
   .mds-error { font-size: 0.88rem; color: var(--text-mid); text-align: center; padding: 20px 0; }
 
+  /* Nom de réalisateur/acteur cliquable, ouvre sa fiche personne */
+  .mds-person-link { color: var(--orange); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color .15s; }
+  .mds-person-link:hover { text-decoration-color: var(--orange); }
+
+  /* ── FICHE PERSONNE : barre de complétion + grille de filmographie ── */
+  .pds-completion-bar { height: 8px; border-radius: 999px; background: var(--surface2); overflow: hidden; margin-bottom: 6px; }
+  .pds-completion-fill { height: 100%; background: var(--orange); border-radius: 999px; transition: width .4s ease; }
+  .pds-completion-label { font-size: 0.8rem; color: var(--text-mid); }
+
+  .pds-filmography { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+  .pds-film-item { cursor: pointer; }
+  .pds-film-poster { width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
+  .pds-film-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--text-mid); }
+  .pds-film-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 4px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pds-film-year { font-size: 0.65rem; color: var(--text-mid); }
+
   /* Chaque section apparaît en cascade (délai croissant fixé en inline style
      par buildMdsContent), plutôt que tout le contenu d'un bloc. */
   .mds-header, .mds-section {

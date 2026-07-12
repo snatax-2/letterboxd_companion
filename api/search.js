@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -25,7 +25,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (trending) {
+    if (personId) {
+      // Cas 7 : Fiche personne (réalisateur/acteur) — biographie + filmographie
+      // complète (cast + équipe technique) en un seul appel TMDb.
+      const personRes = await fetch(
+        `https://api.themoviedb.org/3/person/${encodeURIComponent(personId)}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=movie_credits`
+      );
+      const personData = await personRes.json();
+      setCache(86400, 172800); // 24h : une bio/filmographie change rarement d'un jour à l'autre
+      return res.status(200).json(personData);
+
+    } else if (trending) {
       // Cas 6 : Tendances du moment (carrousel Découvrir), pas liées à
       // l'historique de l'utilisateur — TMDb "trending/movie/week".
       const trendRes = await fetch(
