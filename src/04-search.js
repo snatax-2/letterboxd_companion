@@ -23,6 +23,38 @@ const suggestEl = document.getElementById('suggestions');
 const searchStatus = document.getElementById('search-status');
 let searchTimer;
 
+// Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
+// tapé — partagée entre la recherche du formulaire de notation et celle de la
+// watchlist. Retourne null si rien de pertinent, plutôt que le premier
+// résultat TMDb quel qu'il soit (évite de proposer une correspondance
+// approximative sans rapport avec ce qui a été tapé).
+async function fetchPersonMatch(q) {
+  try {
+    const res = await fetch(`/api/search?personSearch=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const person = (data.results || [])[0];
+    if (!person) return null;
+    const qNorm = q.trim().toLowerCase();
+    const nameNorm = (person.name || '').toLowerCase();
+    return nameNorm.includes(qNorm) ? person : null;
+  } catch { return null; }
+}
+
+function buildPersonSuggestionEl(person) {
+  const photoUrl = person.profile_path ? `https://image.tmdb.org/t/p/w92${person.profile_path}` : '';
+  const item = document.createElement('div');
+  item.className = 'suggestion-item suggestion-person';
+  const imgHtml = photoUrl
+    ? `<img class="suggestion-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(person.name)}" loading="lazy">`
+    : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
+  item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">🎬 ${escAttr(person.name)}</div><div class="suggestion-year">Voir sa filmographie</div></div>`;
+  item.addEventListener('click', () => {
+    suggestEl.style.display = 'none';
+    openPersonDetailSheet(person.id, person.name);
+  });
+  return item;
+}
+
 searchEl.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchEl.value.trim();
@@ -78,13 +110,21 @@ function selectManual(title) {
 
 async function fetchSuggestions(q) {
   try {
-    const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+    const [res, personMatch] = await Promise.all([
+      fetch(`/api/search?query=${encodeURIComponent(q)}`),
+      fetchPersonMatch(q),
+    ]);
     const data = await res.json();
     searchStatus.style.display = 'none';
-    if (!data.results?.length) { suggestEl.style.display = 'none'; return; }
+    if (!data.results?.length && !personMatch) { suggestEl.style.display = 'none'; return; }
     suggestEl.innerHTML = '';
     suggestEl.style.display = 'block';
-    data.results.slice(0, 6).forEach(m => {
+
+    // Le réalisateur/acteur trouvé (s'il y en a un) apparaît en premier — on
+    // tapait probablement un nom, pas un titre de film, dans ce cas.
+    if (personMatch) suggestEl.appendChild(buildPersonSuggestionEl(personMatch));
+
+    (data.results || []).slice(0, 6).forEach(m => {
       const year = m.release_date?.slice(0, 4) || '????';
       const item = document.createElement('div');
       item.className = 'suggestion-item';

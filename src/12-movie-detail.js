@@ -199,25 +199,27 @@ function buildPdsSkeleton(personName) {
 
 // Combine cast + équipe technique en une filmographie dédoublonnée (une
 // personne peut apparaître à la fois comme actrice ET réalisatrice sur le
-// même film, ex: dans les deux listes renvoyées par TMDb).
+// même film, ex: dans les deux listes renvoyées par TMDb). Marque aussi
+// chaque film comme "vu" ou non (par tmdbId dans l'historique) — utilisé à la
+// fois pour le pourcentage et pour griser les affiches déjà vues.
 function buildPersonFilmography(data) {
+  const history = loadHistory();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const seen = new Set();
   const films = [];
   [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])].forEach(m => {
     if (!m.id || seen.has(m.id)) return;
     seen.add(m.id);
-    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path });
+    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path, isSeen: seenIds.has(String(m.id)) });
   });
   films.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
   return films;
 }
 
 // Pourcentage de la filmographie déjà présent dans l'historique de
-// l'utilisateur (par tmdbId) — le petit "plus" ludique de cette fiche.
+// l'utilisateur — le petit "plus" ludique de cette fiche.
 function computeSeenPercentage(films) {
-  const history = loadHistory();
-  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
-  const seenCount = films.filter(f => seenIds.has(String(f.id))).length;
+  const seenCount = films.filter(f => f.isSeen).length;
   const pct = films.length > 0 ? Math.round((seenCount / films.length) * 100) : 0;
   return { seenCount, total: films.length, pct };
 }
@@ -257,10 +259,10 @@ function buildPdsContent(data) {
       <div class="mds-section-title">Filmographie (${total})</div>
       <div class="pds-filmography">
         ${films.map(f => {
-          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : '';
+          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w185${f.poster_path}` : '';
           const year = f.release_date ? f.release_date.slice(0, 4) : '';
           return `
-            <div class="pds-film-item" data-movie-id="${f.id}">
+            <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}">
               ${posterUrl
                 ? `<img class="pds-film-poster" src="${posterUrl}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">`
                 : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}

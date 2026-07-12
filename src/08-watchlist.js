@@ -367,11 +367,34 @@ wlInput.addEventListener('input', () => {
   
   wlSearchTimer = setTimeout(async () => {
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+      const [res, personMatch] = await Promise.all([
+        fetch(`/api/search?query=${encodeURIComponent(q)}`),
+        fetchPersonMatch(q),
+      ]);
       const data = await res.json();
-      if (!data.results?.length) { wlSuggestEl.style.display = 'none'; return; }
+      if (!data.results?.length && !personMatch) { wlSuggestEl.style.display = 'none'; return; }
       wlSuggestEl.innerHTML = '';
       wlSuggestEl.style.display = 'block';
+
+      if (personMatch) {
+        const photoUrl = personMatch.profile_path ? `https://image.tmdb.org/t/p/w92${personMatch.profile_path}` : '';
+        const personEl = document.createElement('div');
+        personEl.className = 'wl-suggest-item';
+        personEl.innerHTML = `
+          ${photoUrl
+            ? `<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(personMatch.name)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">🎬 ${escAttr(personMatch.name)}</div>
+            <div class="wl-suggest-year">Voir sa filmographie</div>
+          </div>`;
+        personEl.addEventListener('click', () => {
+          wlSuggestEl.style.display = 'none';
+          openPersonDetailSheet(personMatch.id, personMatch.name);
+        });
+        wlSuggestEl.appendChild(personEl);
+      }
+
       data.results.slice(0, 5).forEach(m => {
         const year = m.release_date?.slice(0, 4) || '';
         const el = document.createElement('div');

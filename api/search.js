@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -25,7 +25,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    if (personId) {
+    if (personSearch) {
+      // Cas 8 : Recherche de personne PAR NOM (ex: "tarantino") — différent de
+      // personId (fiche complète d'une personne déjà identifiée par son id) :
+      // ici on cherche à identifier LA personne à partir d'un texte tapé dans
+      // la barre de recherche, pour proposer sa filmographie.
+      const psRes = await fetch(
+        `https://api.themoviedb.org/3/search/person?api_key=${TMDB_KEY}&language=fr-FR&query=${encodeURIComponent(personSearch)}`
+      );
+      const psData = await psRes.json();
+      setCache(3600, 21600);
+      return res.status(200).json(psData);
+
+    } else if (personId) {
       // Cas 7 : Fiche personne (réalisateur/acteur) — biographie + filmographie
       // complète (cast + équipe technique) en un seul appel TMDb.
       const personRes = await fetch(

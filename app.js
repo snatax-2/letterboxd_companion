@@ -1138,6 +1138,38 @@ const suggestEl = document.getElementById('suggestions');
 const searchStatus = document.getElementById('search-status');
 let searchTimer;
 
+// Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
+// tapé — partagée entre la recherche du formulaire de notation et celle de la
+// watchlist. Retourne null si rien de pertinent, plutôt que le premier
+// résultat TMDb quel qu'il soit (évite de proposer une correspondance
+// approximative sans rapport avec ce qui a été tapé).
+async function fetchPersonMatch(q) {
+  try {
+    const res = await fetch(`/api/search?personSearch=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const person = (data.results || [])[0];
+    if (!person) return null;
+    const qNorm = q.trim().toLowerCase();
+    const nameNorm = (person.name || '').toLowerCase();
+    return nameNorm.includes(qNorm) ? person : null;
+  } catch { return null; }
+}
+
+function buildPersonSuggestionEl(person) {
+  const photoUrl = person.profile_path ? `https://image.tmdb.org/t/p/w92${person.profile_path}` : '';
+  const item = document.createElement('div');
+  item.className = 'suggestion-item suggestion-person';
+  const imgHtml = photoUrl
+    ? `<img class="suggestion-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(person.name)}" loading="lazy">`
+    : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
+  item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">🎬 ${escAttr(person.name)}</div><div class="suggestion-year">Voir sa filmographie</div></div>`;
+  item.addEventListener('click', () => {
+    suggestEl.style.display = 'none';
+    openPersonDetailSheet(person.id, person.name);
+  });
+  return item;
+}
+
 searchEl.addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = searchEl.value.trim();
@@ -1193,13 +1225,21 @@ function selectManual(title) {
 
 async function fetchSuggestions(q) {
   try {
-    const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+    const [res, personMatch] = await Promise.all([
+      fetch(`/api/search?query=${encodeURIComponent(q)}`),
+      fetchPersonMatch(q),
+    ]);
     const data = await res.json();
     searchStatus.style.display = 'none';
-    if (!data.results?.length) { suggestEl.style.display = 'none'; return; }
+    if (!data.results?.length && !personMatch) { suggestEl.style.display = 'none'; return; }
     suggestEl.innerHTML = '';
     suggestEl.style.display = 'block';
-    data.results.slice(0, 6).forEach(m => {
+
+    // Le réalisateur/acteur trouvé (s'il y en a un) apparaît en premier — on
+    // tapait probablement un nom, pas un titre de film, dans ce cas.
+    if (personMatch) suggestEl.appendChild(buildPersonSuggestionEl(personMatch));
+
+    (data.results || []).slice(0, 6).forEach(m => {
       const year = m.release_date?.slice(0, 4) || '????';
       const item = document.createElement('div');
       item.className = 'suggestion-item';
@@ -3538,11 +3578,34 @@ wlInput.addEventListener('input', () => {
   
   wlSearchTimer = setTimeout(async () => {
     try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+      const [res, personMatch] = await Promise.all([
+        fetch(`/api/search?query=${encodeURIComponent(q)}`),
+        fetchPersonMatch(q),
+      ]);
       const data = await res.json();
-      if (!data.results?.length) { wlSuggestEl.style.display = 'none'; return; }
+      if (!data.results?.length && !personMatch) { wlSuggestEl.style.display = 'none'; return; }
       wlSuggestEl.innerHTML = '';
       wlSuggestEl.style.display = 'block';
+
+      if (personMatch) {
+        const photoUrl = personMatch.profile_path ? `https://image.tmdb.org/t/p/w92${personMatch.profile_path}` : '';
+        const personEl = document.createElement('div');
+        personEl.className = 'wl-suggest-item';
+        personEl.innerHTML = `
+          ${photoUrl
+            ? `<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(personMatch.name)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">🎬 ${escAttr(personMatch.name)}</div>
+            <div class="wl-suggest-year">Voir sa filmographie</div>
+          </div>`;
+        personEl.addEventListener('click', () => {
+          wlSuggestEl.style.display = 'none';
+          openPersonDetailSheet(personMatch.id, personMatch.name);
+        });
+        wlSuggestEl.appendChild(personEl);
+      }
+
       data.results.slice(0, 5).forEach(m => {
         const year = m.release_date?.slice(0, 4) || '';
         const el = document.createElement('div');
@@ -4899,25 +4962,27 @@ function buildPdsSkeleton(personName) {
 
 // Combine cast + équipe technique en une filmographie dédoublonnée (une
 // personne peut apparaître à la fois comme actrice ET réalisatrice sur le
-// même film, ex: dans les deux listes renvoyées par TMDb).
+// même film, ex: dans les deux listes renvoyées par TMDb). Marque aussi
+// chaque film comme "vu" ou non (par tmdbId dans l'historique) — utilisé à la
+// fois pour le pourcentage et pour griser les affiches déjà vues.
 function buildPersonFilmography(data) {
+  const history = loadHistory();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
   const seen = new Set();
   const films = [];
   [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])].forEach(m => {
     if (!m.id || seen.has(m.id)) return;
     seen.add(m.id);
-    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path });
+    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path, isSeen: seenIds.has(String(m.id)) });
   });
   films.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
   return films;
 }
 
 // Pourcentage de la filmographie déjà présent dans l'historique de
-// l'utilisateur (par tmdbId) — le petit "plus" ludique de cette fiche.
+// l'utilisateur — le petit "plus" ludique de cette fiche.
 function computeSeenPercentage(films) {
-  const history = loadHistory();
-  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
-  const seenCount = films.filter(f => seenIds.has(String(f.id))).length;
+  const seenCount = films.filter(f => f.isSeen).length;
   const pct = films.length > 0 ? Math.round((seenCount / films.length) * 100) : 0;
   return { seenCount, total: films.length, pct };
 }
@@ -4957,10 +5022,10 @@ function buildPdsContent(data) {
       <div class="mds-section-title">Filmographie (${total})</div>
       <div class="pds-filmography">
         ${films.map(f => {
-          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w92${f.poster_path}` : '';
+          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w185${f.poster_path}` : '';
           const year = f.release_date ? f.release_date.slice(0, 4) : '';
           return `
-            <div class="pds-film-item" data-movie-id="${f.id}">
+            <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}">
               ${posterUrl
                 ? `<img class="pds-film-poster" src="${posterUrl}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">`
                 : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}

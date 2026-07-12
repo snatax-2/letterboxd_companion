@@ -1200,9 +1200,19 @@
   .pds-completion-label { font-size: 0.8rem; color: var(--text-mid); }
 
   .pds-filmography { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
-  .pds-film-item { cursor: pointer; }
-  .pds-film-poster { width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
+  .pds-film-item { cursor: pointer; position: relative; }
+  .pds-film-poster { width: 100%; aspect-ratio: 2/3; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); transition: filter .2s ease, opacity .2s ease; }
   .pds-film-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--text-mid); }
+  /* Grisées pour mettre en avant ce qu'il reste à découvrir, plutôt que de
+     ressasser ce qui est déjà vu — comme une liste de tâches où les cases
+     cochées s'estompent pour laisser ressortir ce qui reste à faire. */
+  .pds-film-item.seen .pds-film-poster { filter: grayscale(100%); opacity: 0.55; }
+  .pds-film-item.seen:hover .pds-film-poster { opacity: 0.85; }
+  .pds-film-item.seen::after {
+    content: '✓'; position: absolute; top: 4px; right: 4px; width: 18px; height: 18px;
+    background: var(--green); color: #fff; border-radius: 50%; font-size: 0.7rem; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+  }
   .pds-film-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 4px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .pds-film-year { font-size: 0.65rem; color: var(--text-mid); }
 
