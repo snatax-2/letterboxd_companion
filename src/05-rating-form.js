@@ -497,6 +497,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
 
 function resetForm() {
   searchEl.value = '';
+  setTodayDate(); // remet la date à aujourd'hui — sinon elle restait bloquée sur la dernière date utilisée
   document.getElementById('movie-title').value     = '';
   document.getElementById('movie-year').value      = '';
   document.getElementById('movie-poster').value    = '';

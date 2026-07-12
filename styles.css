@@ -487,7 +487,7 @@
   .date-input:focus { border-color: var(--border-hi); }
 
   .heart-btn {
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all .2s;
     display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
   }
@@ -1162,7 +1162,7 @@
   .mds-close:active { transform: scale(.9); }
 
   .mds-header { display: flex; gap: 14px; align-items: flex-start; }
-  .mds-header-left { display: flex; flex-direction: column; gap: 8px; width: 100px; flex-shrink: 0; }
+  .mds-header-left { width: 100px; flex-shrink: 0; }
   .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
@@ -1194,7 +1194,8 @@
 
   /* Regroupée sous l'affiche (colonne étroite) plutôt qu'en pleine largeur
      déconnectée — les boutons forment un seul bloc visuel avec l'affiche. */
-  .mds-actions { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+  .mds-actions { display: flex; gap: 8px; }
+  .mds-action-btn { flex: 1; }
   .mds-action-btn {
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 8px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
@@ -1658,8 +1659,8 @@
       grid-template-columns: 1fr auto; 
     }
     .search-input { grid-column: 1 / -1; }
-    .date-input { width: 100%; }
-    .heart-btn { min-width: 50px; margin-left: 4px; }
+    .date-input { width: 100%; max-width: 190px; justify-self: start; }
+    .heart-btn { min-width: 54px; margin-left: 8px; }
     
     .film-strip { padding: 10px; gap: 10px; }
     .film-strip-info { min-width: 0; }

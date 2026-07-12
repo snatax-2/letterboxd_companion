@@ -73,19 +73,20 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         ${posterUrl
           ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
           : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
-        <div class="mds-actions">
-          ${localMatch
-            ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note">${ICONS.edit} Modifier</button>`
-            : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
-               <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
-          }
-        </div>
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
         ${data.vote_average ? `<div class="mds-tmdb-score">★ ${data.vote_average.toFixed(1)} TMDb</div>` : ''}
       </div>
+    </div>
+
+    <div class="mds-actions" style="animation-delay:.02s">
+      ${localMatch
+        ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note">${ICONS.edit} Modifier ma note</button>`
+        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
+           <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
+      }
     </div>
 
     ${personalHtml}
