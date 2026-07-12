@@ -34,7 +34,7 @@ function buildMdsSkeleton() {
 // Chaque section reçoit un léger délai croissant (voir CSS .mds-section) pour
 // apparaître en cascade plutôt que d'un bloc — plus agréable à l'œil qu'un
 // simple remplacement de contenu.
-function buildMdsContent(data, localMatch) {
+function buildMdsContent(data, localMatch, localMatchIdx) {
   const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
@@ -77,6 +77,14 @@ function buildMdsContent(data, localMatch) {
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
         ${data.vote_average ? `<div class="mds-tmdb-score">★ ${data.vote_average.toFixed(1)} TMDb</div>` : ''}
       </div>
+    </div>
+
+    <div class="mds-actions" style="animation-delay:.02s">
+      ${localMatch
+        ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}">${ICONS.edit} Modifier ma note</button>`
+        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn">${ICONS.star} Noter ce film</button>
+           <button type="button" class="mds-action-btn" id="mds-watchlist-btn">${ICONS.target} Ajouter à la watchlist</button>`
+      }
     </div>
 
     ${personalHtml}
@@ -133,6 +141,8 @@ function buildCriteriaBreakdown(localMatch) {
   `;
 }
 
+let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
+
 async function openMovieDetailSheet(tmdbId) {
   if (!tmdbId) {
     showToast("Ce film n'a pas de fiche TMDb liée (ajouté en saisie manuelle).");
@@ -151,11 +161,14 @@ async function openMovieDetailSheet(tmdbId) {
 
     const history = loadHistory();
     const localMatch = history.find(h => String(h.tmdbId) === String(tmdbId));
+    const localMatchIdx = history.findIndex(h => String(h.tmdbId) === String(tmdbId));
 
-    mdsContentEl.innerHTML = buildMdsContent(data, localMatch);
+    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
+    mdsCurrentData = data;
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
   } catch (e) {
+    mdsCurrentData = null;
     mdsContentEl.innerHTML = `<div class="mds-error">Impossible de charger les détails pour l'instant. Vérifie ta connexion et réessaie.</div>`;
   }
 }
@@ -167,9 +180,38 @@ function closeMovieDetailSheet() {
 mdsCloseBtn.addEventListener('click', closeMovieDetailSheet);
 mdsEl.addEventListener('click', (e) => {
   if (e.target === mdsEl) { closeMovieDetailSheet(); return; }
+
   const personLink = e.target.closest('.mds-person-link');
   if (personLink) {
     openPersonDetailSheet(personLink.dataset.personId, personLink.dataset.personName);
+    return;
+  }
+
+  if (e.target.closest('#mds-rate-btn')) {
+    if (!mdsCurrentData) return;
+    const year = mdsCurrentData.release_date ? mdsCurrentData.release_date.slice(0, 4) : '????';
+    closeMovieDetailSheet();
+    selectMovie(mdsCurrentData, year);
+    if (window.innerWidth <= 860) switchMobileNav('rating');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  if (e.target.closest('#mds-watchlist-btn')) {
+    if (!mdsCurrentData) return;
+    const year = mdsCurrentData.release_date ? mdsCurrentData.release_date.slice(0, 4) : '';
+    addToWatchlistFromTMDb(mdsCurrentData, year);
+    closeMovieDetailSheet();
+    return;
+  }
+
+  const editBtn = e.target.closest('#mds-edit-btn');
+  if (editBtn) {
+    const idx = parseInt(editBtn.dataset.idx, 10);
+    closeMovieDetailSheet();
+    loadItem(idx);
+    if (window.innerWidth <= 860) switchMobileNav('rating');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
 

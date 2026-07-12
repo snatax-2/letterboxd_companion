@@ -1180,6 +1180,18 @@
   .mds-row { display: flex; gap: 8px; font-size: 0.85rem; padding: 4px 0; color: var(--text); }
   .mds-label { color: var(--text-mid); min-width: 90px; flex-shrink: 0; }
 
+  .mds-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mds-action-btn {
+    flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
+    background: var(--surface2); color: var(--text-hi); font-family: var(--font-heading);
+    font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all .15s;
+  }
+  .mds-action-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); }
+  .mds-action-btn.primary:hover { opacity: 0.9; color: var(--solid-fill-text, #0d1117); }
+  .mds-action-btn .icon { width: 1em; height: 1em; }
+
   .mds-personal {
     background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px;
     border-left: 3px solid var(--orange);
