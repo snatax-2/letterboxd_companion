@@ -1162,6 +1162,7 @@
   .mds-close:active { transform: scale(.9); }
 
   .mds-header { display: flex; gap: 14px; align-items: flex-start; }
+  .mds-header-left { display: flex; flex-direction: column; gap: 8px; width: 100px; flex-shrink: 0; }
   .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
@@ -1176,21 +1177,34 @@
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
   }
-  .mds-overview { font-size: 0.88rem; line-height: 1.55; color: var(--text); }
+  /* Synopsis en accordéon : tronqué à 4 lignes par défaut, déployé au tap sur
+     le bouton (masqué automatiquement si le texte tient déjà entièrement). */
+  .mds-overview {
+    font-size: 0.88rem; line-height: 1.55; color: var(--text);
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .mds-overview.expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  .mds-overview-toggle {
+    background: none; border: none; color: var(--orange); font-family: var(--font-heading);
+    font-size: 0.78rem; font-weight: 700; cursor: pointer; padding: 6px 0 0; display: block;
+  }
+  .mds-overview-toggle:hover { text-decoration: underline; }
   .mds-row { display: flex; gap: 8px; font-size: 0.85rem; padding: 4px 0; color: var(--text); }
   .mds-label { color: var(--text-mid); min-width: 90px; flex-shrink: 0; }
 
-  .mds-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  /* Regroupée sous l'affiche (colonne étroite) plutôt qu'en pleine largeur
+     déconnectée — les boutons forment un seul bloc visuel avec l'affiche. */
+  .mds-actions { display: flex; flex-direction: column; gap: 6px; width: 100%; }
   .mds-action-btn {
-    flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
     background: var(--surface2); color: var(--text-hi); font-family: var(--font-heading);
-    font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all .15s;
+    font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all .15s; white-space: nowrap;
   }
   .mds-action-btn:hover { border-color: var(--orange); color: var(--orange); }
   .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); }
   .mds-action-btn.primary:hover { opacity: 0.9; color: var(--solid-fill-text, #0d1117); }
-  .mds-action-btn .icon { width: 1em; height: 1em; }
+  .mds-action-btn .icon { width: 1em; height: 1em; flex-shrink: 0; }
 
   .mds-personal {
     background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px;

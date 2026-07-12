@@ -4832,9 +4832,18 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
 
   return `
     <div class="mds-header" style="animation-delay:0s">
-      ${posterUrl
-        ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
-        : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+      <div class="mds-header-left">
+        ${posterUrl
+          ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+          : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+        <div class="mds-actions">
+          ${localMatch
+            ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note">${ICONS.edit} Modifier</button>`
+            : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
+               <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
+          }
+        </div>
+      </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
@@ -4842,20 +4851,13 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       </div>
     </div>
 
-    <div class="mds-actions" style="animation-delay:.02s">
-      ${localMatch
-        ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}">${ICONS.edit} Modifier ma note</button>`
-        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn">${ICONS.star} Noter ce film</button>
-           <button type="button" class="mds-action-btn" id="mds-watchlist-btn">${ICONS.target} Ajouter à la watchlist</button>`
-      }
-    </div>
-
     ${personalHtml}
 
     ${data.overview ? `
       <div class="mds-section" style="animation-delay:.1s">
         <div class="mds-section-title">Synopsis</div>
-        <div class="mds-overview">${escAttr(data.overview)}</div>
+        <div class="mds-overview" id="mds-overview">${escAttr(data.overview)}</div>
+        <button type="button" class="mds-overview-toggle" id="mds-overview-toggle">Lire la suite ▾</button>
       </div>` : ''}
 
     <div class="mds-section" style="animation-delay:.15s">
@@ -4972,6 +4974,21 @@ function renderCastCarousel(castArray) {
   outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
 }
 
+// Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
+// les lignes visibles par défaut — pas la peine de proposer un accordéon pour
+// un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
+// requestAnimationFrame, le temps que le layout (avec le clamp CSS) se stabilise.
+function setupOverviewToggle() {
+  const overview = document.getElementById('mds-overview');
+  const toggle = document.getElementById('mds-overview-toggle');
+  if (!overview || !toggle) return;
+  requestAnimationFrame(() => {
+    if (overview.scrollHeight <= overview.clientHeight + 2) {
+      toggle.style.display = 'none';
+    }
+  });
+}
+
 let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
 
 async function openMovieDetailSheet(tmdbId) {
@@ -4997,6 +5014,7 @@ async function openMovieDetailSheet(tmdbId) {
     mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
     mdsCurrentData = data;
     renderCastCarousel(data.credits?.cast || []);
+    setupOverviewToggle();
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
   } catch (e) {
@@ -5016,6 +5034,14 @@ mdsEl.addEventListener('click', (e) => {
   const personLink = e.target.closest('.mds-person-link');
   if (personLink) {
     openPersonDetailSheet(personLink.dataset.personId, personLink.dataset.personName);
+    return;
+  }
+
+  const overviewToggle = e.target.closest('#mds-overview-toggle');
+  if (overviewToggle) {
+    const overview = document.getElementById('mds-overview');
+    const expanded = overview.classList.toggle('expanded');
+    overviewToggle.textContent = expanded ? 'Réduire ▴' : 'Lire la suite ▾';
     return;
   }
 
