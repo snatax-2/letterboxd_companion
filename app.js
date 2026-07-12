@@ -4909,6 +4909,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
+        ${directorObj ? `<div class="mds-header-director">Réalisé par <b>${escAttr(directorObj.name)}</b></div>` : ''}
         ${data.vote_average ? `<div class="mds-tmdb-score">★ ${data.vote_average.toFixed(1)} TMDb</div>` : ''}
       </div>
     </div>

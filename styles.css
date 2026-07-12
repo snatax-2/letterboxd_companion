@@ -1170,21 +1170,21 @@
     position: absolute; top: 12px; right: 12px; width: 32px; height: 32px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 2;
+    cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 6;
   }
   .mds-close:hover { background: var(--border-hi); }
   .mds-close:active { transform: scale(.9); }
 
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
-    position: sticky; top: 0; z-index: 5; background: var(--surface);
-    margin: 0 -24px; padding: 0 24px 14px; transition: padding .2s ease;
+    position: sticky; top: -44px; z-index: 5; background: var(--surface);
+    margin: -44px -24px 0; padding: 44px 24px 14px; transition: padding .2s ease;
   }
   /* En-tête compact : appliqué en JS passé un certain seuil de défilement
      (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
      le titre passe à côté d'elle sur une seule ligne, façon "now playing" qui
      se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
-  .mds-header.compact { padding-top: 8px; padding-bottom: 8px; gap: 10px; align-items: center; }
+  .mds-header.compact { padding-top: 50px; padding-bottom: 8px; gap: 10px; align-items: center; }
   .mds-header.compact .mds-header-left { width: 40px; }
   .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
@@ -1200,6 +1200,12 @@
   .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; }
   .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; }
   .mds-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; }
+  .mds-header-director { font-size: 0.78rem; color: var(--text-mid); margin-top: 4px; }
+  .mds-header-director b { color: var(--text-hi); }
+  /* Contrairement au reste (meta, score TMDb), le réalisateur reste visible en
+     mode compact — c'est justement l'info qu'on veut garder sous les yeux en
+     lisant le reste de la fiche (casting, synopsis...). */
+  .mds-header.compact .mds-header-director { margin-top: 0; font-size: 0.72rem; }
   .mds-tmdb-score { font-size: 0.8rem; color: var(--gold); margin-top: 8px; font-weight: 700; }
 
   .mds-section-title {
