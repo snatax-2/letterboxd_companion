@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const detailsRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits`
+        `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos&include_video_language=fr,en,null`
       );
       const detailsData = await detailsRes.json();
       setCache(21600, 604800); // 6h, revalidation jusqu'à 7 jours (infos très stables)

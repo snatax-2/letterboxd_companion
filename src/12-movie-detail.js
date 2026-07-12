@@ -91,6 +91,18 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
 
     ${personalHtml}
 
+    ${(() => {
+      const trailer = pickBestTrailer(data.videos?.results || []);
+      if (!trailer) return '';
+      return `
+      <div class="mds-section" style="animation-delay:.08s">
+        <div class="mds-section-title">Bande-annonce</div>
+        <div class="mds-trailer-wrap">
+          <iframe class="mds-trailer" src="https://www.youtube.com/embed/${trailer.key}" title="Bande-annonce de ${escAttr(data.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>`;
+    })()}
+
     ${data.overview ? `
       <div class="mds-section" style="animation-delay:.1s">
         <div class="mds-section-title">Synopsis</div>
@@ -227,6 +239,40 @@ function setupOverviewToggle() {
   });
 }
 
+// En-tête collant qui rétrécit : au-delà d'un seuil de défilement DANS la
+// fiche (.mds-box, le conteneur qui défile réellement), l'affiche+titre
+// passent en mode compact — l'inverse en repassant sous ce seuil. Un seul
+// écouteur de scroll par ouverture de fiche (retiré à la fermeture) pour ne
+// pas empiler des écouteurs orphelins à chaque nouvelle fiche ouverte.
+const STICKY_HEADER_THRESHOLD = 80;
+let stickyHeaderScrollHandler = null;
+function setupStickyHeader() {
+  const box = mdsEl.querySelector('.mds-box');
+  const header = document.querySelector('.mds-header');
+  if (!box || !header) return;
+  if (stickyHeaderScrollHandler) box.removeEventListener('scroll', stickyHeaderScrollHandler);
+  stickyHeaderScrollHandler = () => {
+    header.classList.toggle('compact', box.scrollTop > STICKY_HEADER_THRESHOLD);
+  };
+  box.addEventListener('scroll', stickyHeaderScrollHandler, { passive: true });
+}
+
+// Choisit la meilleure bande-annonce parmi les vidéos TMDb : uniquement
+// YouTube (seule plateforme embarquable simplement sans clé ni accord
+// spécifique), en priorisant une vraie "Trailer" officielle, puis en
+// préférant la version française si elle existe — sans quoi n'importe quelle
+// bande-annonce YouTube fait l'affaire plutôt que rien.
+function pickBestTrailer(videos) {
+  const yt = videos.filter(v => v.site === 'YouTube');
+  if (yt.length === 0) return null;
+  const trailers = yt.filter(v => v.type === 'Trailer');
+  const pool = trailers.length > 0 ? trailers : yt;
+  return pool.find(v => v.official && v.iso_639_1 === 'fr')
+      || pool.find(v => v.iso_639_1 === 'fr')
+      || pool.find(v => v.official)
+      || pool[0];
+}
+
 let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
 
 async function openMovieDetailSheet(tmdbId) {
@@ -238,6 +284,8 @@ async function openMovieDetailSheet(tmdbId) {
   lastFocusedBeforeModal = document.activeElement;
   mdsContentEl.innerHTML = buildMdsSkeleton();
   mdsEl.classList.add('open');
+  const mdsBoxEl = mdsEl.querySelector('.mds-box');
+  if (mdsBoxEl) mdsBoxEl.scrollTop = 0; // évite de démarrer en mode compact si une fiche precedente avait été scrollée
 
   try {
     const res = await fetch(`/api/search?id=${tmdbId}`);
@@ -253,6 +301,7 @@ async function openMovieDetailSheet(tmdbId) {
     mdsCurrentData = data;
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
+    setupStickyHeader();
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
   } catch (e) {

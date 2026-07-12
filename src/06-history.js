@@ -160,16 +160,16 @@ function getSorted(history) {
   }
 
   if (sortOrder === 'date') {
-    return h.sort((a, b) => {
+    return [...h].sort((a, b) => {
       const dateA = a.date || a.savedAt || "";
       const dateB = b.date || b.savedAt || "";
       return dateB.localeCompare(dateA); 
     });
   }
 
-  if (sortOrder === 'score-desc') return h.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-  if (sortOrder === 'score-asc')  return h.sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
-  if (sortOrder === 'title')      return h.sort((a, b) => a.title.localeCompare(b.title));
+  if (sortOrder === 'score-desc') return [...h].sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+  if (sortOrder === 'score-asc')  return [...h].sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
+  if (sortOrder === 'title')      return [...h].sort((a, b) => a.title.localeCompare(b.title));
   
   return h; 
 }

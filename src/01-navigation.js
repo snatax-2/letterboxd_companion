@@ -129,6 +129,17 @@ if (window.innerWidth <= 860) {
 // Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,
 // dans l'ordre affiché en bas de l'écran : Noter → Historique → À voir → Découvrir.
 // Complète les boutons de la barre de navigation, ne les remplace pas.
+// Zones où un glissement (horizontal ou vertical) a déjà un sens propre
+// (scroller un carrousel, déplacer un curseur, swiper une carte "Découvrir"...)
+// : ni le changement d'onglet, ni le tirer-pour-rafraîchir ne doivent s'y
+// déclencher. Fonction partagée (pas enfermée dans une IIFE) exprès — elle
+// sert à plusieurs mécanismes de geste distincts dans ce fichier.
+function isExcludedTarget(target) {
+  return !!target.closest(
+    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+  );
+}
+
 (function initMobileSwipeNav() {
   const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover', 'profile'];
   const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
@@ -143,15 +154,6 @@ if (window.innerWidth <= 860) {
     if (navWatchlist.classList.contains('active')) return 'watchlist';
     if (navDiscover.classList.contains('active')) return 'discover';
     return 'rating';
-  }
-
-  // Zones où un glissement horizontal a déjà un sens propre (scroller le
-  // carrousel, déplacer un curseur, sélectionner du texte, swiper une carte
-  // "Découvrir"...) : on n'y déclenche pas de changement d'onglet.
-  function isExcludedTarget(target) {
-    return !!target.closest(
-      '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
-    );
   }
 
   document.addEventListener('touchstart', e => {
@@ -184,4 +186,70 @@ if (window.innerWidth <= 860) {
       hapticPulse(document.getElementById('mobile-nav'), 'light');
     }
   }, { passive: true });
+})();
+
+// ═══════════════════════════════════════════
+//  TIRER VERS LE BAS POUR RAFRAÎCHIR
+// ═══════════════════════════════════════════
+// Uniquement quand la page est déjà tout en haut (rien à scroller au-dessus) —
+// sinon on interférerait avec un simple scroll vers le bas de contenu. Exclut
+// les mêmes zones que le swipe d'onglet (cartes, listes, carrousels...) qui
+// gèrent déjà leurs propres gestes tactiles.
+(function initPullToRefresh() {
+  const indicator = document.getElementById('ptr-indicator');
+  if (!indicator) return;
+
+  const THRESHOLD = 70;
+  const MAX_PULL = 100;
+  let startY = 0;
+  let pulling = false;
+  let refreshing = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (refreshing) return;
+    if (window.scrollY > 5) return;
+    if (isExcludedTarget(e.target)) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling || refreshing) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || window.scrollY > 5) { pulling = false; indicator.style.opacity = '0'; return; }
+    const capped = Math.min(deltaY, MAX_PULL);
+    indicator.style.transform = `translateX(-50%) translateY(${capped}px) rotate(${capped * 2.4}deg)`;
+    indicator.style.opacity = String(Math.min(capped / THRESHOLD, 1));
+    indicator.classList.toggle('ptr-ready', capped >= THRESHOLD);
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!pulling || refreshing) { pulling = false; return; }
+    pulling = false;
+    const wasReady = indicator.classList.contains('ptr-ready');
+
+    if (!wasReady) {
+      indicator.style.opacity = '0';
+      return;
+    }
+
+    refreshing = true;
+    indicator.classList.add('ptr-spinning');
+    indicator.style.transform = `translateX(-50%) translateY(${THRESHOLD}px)`;
+    try {
+      if (getSyncCode()) {
+        await pullFromCloud(); // affiche déjà son propre toast de confirmation
+      } else {
+        renderAll();
+        showToast('Actualisé.');
+      }
+    } catch {
+      showToast("Impossible d'actualiser pour l'instant.");
+    } finally {
+      refreshing = false;
+      indicator.classList.remove('ptr-spinning', 'ptr-ready');
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'translateX(-50%) translateY(0)';
+    }
+  });
 })();

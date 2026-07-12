@@ -1102,6 +1102,20 @@
 
   /* ── TOAST ── */
   .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all .25s; z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
+
+  /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
+     translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
+     opacité 0 par défaut donc invisible tant que rien n'est en cours. */
+  .ptr-indicator {
+    position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(0);
+    width: 34px; height: 34px; border-radius: 50%; background: var(--surface2); border: 1px solid var(--border-hi);
+    display: flex; align-items: center; justify-content: center; color: var(--orange);
+    opacity: 0; z-index: 9998; pointer-events: none; transition: opacity .15s ease;
+  }
+  .ptr-indicator.ptr-ready { color: var(--green); }
+  .ptr-indicator .icon { width: 18px; height: 18px; }
+  .ptr-indicator.ptr-spinning .icon { animation: ptrSpin .7s linear infinite; }
+  @keyframes ptrSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto;}
   .toast-undo-btn { margin-left: 14px; padding: 4px 10px; background: var(--bg); border: 1px solid var(--border-hi); border-radius: var(--radius-sm); color: var(--blue); cursor: pointer; font-weight: 700; font-family: var(--font-heading); text-transform: uppercase; font-size: 0.75rem; }
   .toast-undo-btn:hover { background: var(--surface2); color: var(--text-hi); }
@@ -1161,7 +1175,22 @@
   .mds-close:hover { background: var(--border-hi); }
   .mds-close:active { transform: scale(.9); }
 
-  .mds-header { display: flex; gap: 14px; align-items: flex-start; }
+  .mds-header {
+    display: flex; gap: 14px; align-items: flex-start;
+    position: sticky; top: 0; z-index: 5; background: var(--surface);
+    margin: 0 -24px; padding: 0 24px 14px; transition: padding .2s ease;
+  }
+  /* En-tête compact : appliqué en JS passé un certain seuil de défilement
+     (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
+     le titre passe à côté d'elle sur une seule ligne, façon "now playing" qui
+     se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
+  .mds-header.compact { padding-top: 8px; padding-bottom: 8px; gap: 10px; align-items: center; }
+  .mds-header.compact .mds-header-left { width: 40px; }
+  .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
+  .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
+  .mds-header.compact .mds-meta,
+  .mds-header.compact .mds-tmdb-score { display: none; }
+  .mds-header.compact .mds-title { font-size: 0.95rem; }
   .mds-header-left { width: 100px; flex-shrink: 0; }
   .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
   .mds-poster-ph {
@@ -1177,6 +1206,8 @@
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
   }
+  .mds-trailer-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius-sm); overflow: hidden; background: #000; }
+  .mds-trailer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
   /* Synopsis en accordéon : tronqué à 4 lignes par défaut, déployé au tap sur
      le bouton (masqué automatiquement si le texte tient déjà entièrement). */
   .mds-overview {
@@ -1446,10 +1477,15 @@
   ::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
   /* ── DÉCOUVRIR : Film du jour ── */
-  .fdj-wrap { margin-bottom: 14px; }
-  .fdj-title {
+  /* Chaque section (Film du jour / Tendances / Suggestions) est clairement
+     séparée visuellement des autres — un filet + un padding dédié, plutôt
+     que de simples titres qui s'enchaînent sans repère. */
+  .discover-section { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+  .discover-section:first-of-type { padding-top: 0; margin-top: 0; border-top: none; }
+  .discover-section-title {
     font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
   }
   .fdj-card {
     display: flex; gap: 12px; background: var(--bg); border: 1px solid var(--border);
@@ -1472,11 +1508,6 @@
   .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
 
   /* ── DÉCOUVRIR : carrousel "Tendances du moment" ── */
-  .trending-carousel-wrap { margin-bottom: 14px; }
-  .trending-carousel-title {
-    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
-  }
   .trending-carousel-row { display: flex; align-items: center; gap: 4px; }
   .trending-nav-btn {
     flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
