@@ -101,6 +101,7 @@ function freshDom() {
     dom.window.eval(APP_JS);
     window.renderHistory();
     window.renderWatchlist();
+    window.renderStats(); // renderAll() est différée (setTimeout 0) depuis le fix de la zone morte temporelle — appel explicite ici pour la même raison que renderHistory/renderWatchlist juste au-dessus
   } catch (err) {
     caughtError = err;
   }

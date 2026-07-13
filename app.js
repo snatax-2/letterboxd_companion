@@ -803,8 +803,22 @@ function hapticPulse(el, intensity = 'light') {
   });
 }
 
-renderAll();
-loadDraft();
+// Différé au tick suivant (setTimeout 0) plutôt qu'appelé immédiatement ici :
+// app.js est la concaténation de 16 fichiers exécutés dans l'ordre, et ce
+// fichier-ci (03-foundation.js) est encore tôt dans cet ordre. Un appel
+// immédiat à renderAll()/loadDraft() peut donc atteindre du code plus tard
+// dans le fichier (une const d'un fichier chargé après) qui n'a pas encore
+// été exécuté — c'est la cause de plusieurs bugs "Cannot access ... before
+// initialization" rencontrés dans ce projet (CRITERIA_SHORT_LABELS,
+// CONTEXT_TAG_ICONS, GENRE_BADGE_THRESHOLD, _descCache, DESCS...). En
+// repoussant l'appel au tick suivant, TOUT le script (les 16 fichiers) a fini
+// de s'exécuter avant que renderAll()/loadDraft() ne démarrent réellement —
+// plus aucune const ne peut alors être "pas encore initialisée", quel que
+// soit l'ordre des fichiers.
+setTimeout(() => {
+  renderAll();
+  loadDraft();
+}, 0);
 
 // ═══════════════════════════════════════════
 //  LOGIQUE PURE (testable) : calcul du score & fusion cloud
@@ -1032,8 +1046,19 @@ const DESCS = {
   ]
 };
 
-const _descCache = {};
+// Le cache est attaché à la fonction elle-même (pas une const top-level) et
+// initialisé au premier appel — ainsi aucune ligne de déclaration à atteindre
+// avant de pouvoir l'utiliser. C'est exactement la même classe de bug
+// rencontrée plusieurs fois dans ce projet (CRITERIA_SHORT_LABELS,
+// CONTEXT_TAG_ICONS, GENRE_BADGE_THRESHOLD) : une const top-level référencée
+// par une fonction appelée via le renderAll() précoce de 03-foundation.js,
+// AVANT que ce fichier-ci (qui charge après) n'ait fini de s'exécuter et
+// atteint sa propre déclaration. Cette fois le remède habituel ("rendre la
+// constante locale à la fonction") ne suffit pas seul, puisque ce cache doit
+// justement SURVIVRE entre les appels — d'où cette variante.
 function getDesc(criterion, val) {
+  if (!getDesc._cache) getDesc._cache = {};
+  const _descCache = getDesc._cache;
   const key = criterion + val;
   if (_descCache[key]) return _descCache[key];
   const tiers = DESCS[criterion];
