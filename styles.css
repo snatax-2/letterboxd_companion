@@ -1404,35 +1404,53 @@
   .svg-axis { stroke: var(--border); stroke-width: 1; }
   .svg-grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2,2; opacity: 0.5;}
 
-  /* Animation de validation "clap de cinéma" à chaque critique enregistrée
-     (voir playSaveConfirmation() dans 05-rating-form.js) : la partie haute du
-     clap "claque" contre la partie basse, l'ensemble apparaît puis s'efface. */
+  /* Animation de validation "billet de cinéma déchiré" à chaque critique
+     enregistrée (voir playSaveConfirmation() dans 05-rating-form.js) : le
+     billet apparaît intact, puis se déchire en deux le long de la
+     perforation centrale, chaque moitié partant de son côté en tombant. */
   .save-confirm-overlay {
     position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
     pointer-events: none; z-index: 10001;
   }
-  .save-confirm-board {
-    width: 74px; height: 58px; position: relative;
-    animation: saveConfirmPop .6s cubic-bezier(.34,1.56,.64,1) both;
+  .save-confirm-ticket {
+    display: flex; width: 168px; height: 62px; position: relative;
+    animation: ticketPop .4s cubic-bezier(.34,1.56,.64,1) both;
   }
-  .save-confirm-board-top, .save-confirm-board-bottom {
-    position: absolute; left: 0; right: 0; height: 50%;
-    background: var(--orange); border: 2px solid var(--text-hi); border-radius: 5px;
-    background-image: repeating-linear-gradient(-45deg, var(--text-hi) 0, var(--text-hi) 6px, transparent 6px, transparent 14px);
-    background-blend-mode: overlay; opacity: 0.95;
+  .save-confirm-ticket-half {
+    flex: 1; background: var(--orange); border: 2px solid var(--text-hi);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem; color: var(--solid-fill-text, #0d1117); font-weight: 900;
   }
-  .save-confirm-board-top { top: 0; transform-origin: bottom center; animation: saveConfirmClap .35s ease-out .12s both; }
-  .save-confirm-board-bottom { bottom: 0; }
-  @keyframes saveConfirmClap {
-    0%   { transform: rotate(-28deg); }
-    55%  { transform: rotate(6deg); }
-    100% { transform: rotate(0deg); }
+  .save-confirm-ticket-half .icon { width: 1.4rem; height: 1.4rem; }
+  .save-confirm-ticket-left {
+    border-radius: 8px 0 0 8px; border-right: none;
+    animation: ticketTearLeft .45s ease-in .38s both;
   }
-  @keyframes saveConfirmPop {
-    0%   { opacity: 0; transform: scale(.7); }
-    15%  { opacity: 1; transform: scale(1.05); }
-    78%  { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1); }
+  .save-confirm-ticket-right {
+    border-radius: 0 8px 8px 0; border-left: none;
+    animation: ticketTearRight .45s ease-in .38s both;
+  }
+  .save-confirm-ticket-perf {
+    position: absolute; top: 4px; bottom: 4px; left: 50%; width: 0;
+    border-left: 3px dashed var(--text-hi); opacity: 0.8;
+    animation: ticketPerfFade .1s ease .38s both;
+  }
+  @keyframes ticketPop {
+    0%   { opacity: 0; transform: scale(.7) rotate(-3deg); }
+    25%  { opacity: 1; transform: scale(1.05) rotate(2deg); }
+    55%  { transform: scale(1) rotate(0deg); }
+    100% { opacity: 1; }
+  }
+  @keyframes ticketTearLeft {
+    0%   { transform: rotate(0deg) translate(0, 0); opacity: 1; }
+    100% { transform: rotate(-22deg) translate(-18px, 30px); opacity: 0; }
+  }
+  @keyframes ticketTearRight {
+    0%   { transform: rotate(0deg) translate(0, 0); opacity: 1; }
+    100% { transform: rotate(22deg) translate(18px, 30px); opacity: 0; }
+  }
+  @keyframes ticketPerfFade {
+    to { opacity: 0; }
   }
 
   /* Retour visuel "pseudo-haptique" (voir hapticPulse() dans 03-foundation.js)

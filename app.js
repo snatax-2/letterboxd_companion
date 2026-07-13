@@ -306,6 +306,7 @@ function isExcludedTarget(target) {
     if (navHistory.classList.contains('active')) return 'history';
     if (navWatchlist.classList.contains('active')) return 'watchlist';
     if (navDiscover.classList.contains('active')) return 'discover';
+    if (navProfile.classList.contains('active')) return 'profile';
     return 'rating';
   }
 
@@ -1827,14 +1828,15 @@ function playSaveConfirmation() {
   overlay.className = 'save-confirm-overlay';
   overlay.setAttribute('aria-hidden', 'true');
   overlay.innerHTML = `
-    <div class="save-confirm-board">
-      <div class="save-confirm-board-top"></div>
-      <div class="save-confirm-board-bottom"></div>
+    <div class="save-confirm-ticket">
+      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>
+      <div class="save-confirm-ticket-perf"></div>
+      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>
     </div>
   `;
   document.body.appendChild(overlay);
   if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
-  setTimeout(() => overlay.remove(), 700);
+  setTimeout(() => overlay.remove(), 850);
 }
 
 document.getElementById('save-btn').addEventListener('click', () => {
@@ -2273,6 +2275,13 @@ function getSorted(history) {
 }
 
 function renderHistory() {
+  // Annule tout geste "armé" ou en cours AVANT de reconstruire le DOM —
+  // sinon ces références pointeraient vers des éléments détachés après le
+  // rebuild, causant le bug "le swipe ne montre rien" quand un re-rendu
+  // (synchro en arrière-plan, tirer-pour-rafraîchir...) s'intercale pendant
+  // le geste de l'utilisateur.
+  if (window.resetHistorySwipeState) window.resetHistorySwipeState();
+
   const history   = loadHistory();
   const sorted    = getSorted(history);
   const container = document.getElementById('history-list');
@@ -2486,7 +2495,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 // ou si l'appui vise déjà un bouton (édition/suppression directe).
 (function initHistoryGestures() {
   const LONG_PRESS_MS = 500;
-  const MOVE_CANCEL_PX = 10;
+  const MOVE_CANCEL_PX = 18; // marge avant de trancher swipe/scroll — augmentée : un doigt part rarement parfaitement droit, un seuil trop bas classait parfois un vrai swipe en "scroll" à tort à cause des tout premiers pixels un peu diagonaux
   const SWIPE_THRESHOLD = 80;
   const MAX_DRAG = 130;
 
@@ -2585,7 +2594,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
         clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
       } else {
         return;
       }
@@ -2654,7 +2663,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const rawDy = e.clientY - startY;
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
       } else {
         return;
       }
@@ -2711,6 +2720,18 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   document.addEventListener('click', (e) => {
     if (armedItem && !container.contains(e.target)) cancelArmed();
   }, true);
+
+  // Exposé pour renderHistory() : un re-rendu (déclenché par une synchro en
+  // arrière-plan, un tirer-pour-rafraîchir, etc.) reconstruit tout le DOM de
+  // la liste — si un item était "armé" ou en cours de geste au même moment,
+  // ces variables privées à cette fermeture pointeraient vers des éléments
+  // DÉTACHÉS du document (invisibles), sans que l'affichage ne redonne aucun
+  // signe d'un swipe "raté". D'où le bug observé : parfois, glisser un film
+  // ne montre ni Supprimer ni Modifier — un re-rendu venait de s'intercaler.
+  window.resetHistorySwipeState = function() {
+    cancelArmed();
+    resetGesture();
+  };
 })();
 
 function createRadarSVG(averages) {
@@ -5345,3 +5366,60 @@ pdsEl.addEventListener('click', (e) => {
     openMovieDetailSheet(filmItem.dataset.movieId);
   }
 });
+
+// ═══════════════════════════════════════════
+//  GLISSER VERS LE BAS POUR FERMER
+// ═══════════════════════════════════════════
+// En plus de la croix (gardée pour clavier/souris/lecteurs d'écran) : sur
+// mobile, glisser la fiche vers le bas la ferme, geste naturel et attendu
+// pour ce genre de panneau. Ne s'active que si la fiche est déjà tout en haut
+// de son propre défilement (sinon un glissement vers le bas doit d'abord
+// juste faire remonter le contenu) et pas depuis une zone qui gère déjà son
+// propre geste horizontal (carrousel de casting).
+function initSwipeToClose(overlayEl, closeFn) {
+  const box = overlayEl.querySelector('.mds-box');
+  if (!box) return;
+  const THRESHOLD = 110;
+  let startY = 0;
+  let dragging = false;
+  let currentDelta = 0;
+
+  box.addEventListener('touchstart', (e) => {
+    if (box.scrollTop > 5) return;
+    if (e.target.closest('.mds-cast-carousel, .mds-trailer-wrap')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    box.style.transition = 'none';
+  }, { passive: true });
+
+  box.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || box.scrollTop > 5) { dragging = false; box.style.transition = ''; box.style.transform = ''; return; }
+    currentDelta = deltaY;
+    box.style.transform = `translateY(${deltaY}px) scale(1)`;
+    overlayEl.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.8 - deltaY / 250)})`;
+  }, { passive: true });
+
+  box.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    box.style.transition = 'transform .22s ease';
+    if (currentDelta > THRESHOLD) {
+      box.style.transform = `translateY(100%) scale(1)`;
+      setTimeout(() => {
+        closeFn();
+        box.style.transform = '';
+        box.style.transition = '';
+        overlayEl.style.backgroundColor = '';
+      }, 180);
+    } else {
+      box.style.transform = '';
+      overlayEl.style.backgroundColor = '';
+    }
+    currentDelta = 0;
+  });
+}
+
+initSwipeToClose(mdsEl, closeMovieDetailSheet);
+initSwipeToClose(pdsEl, closePersonDetailSheet);

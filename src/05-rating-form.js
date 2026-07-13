@@ -415,14 +415,15 @@ function playSaveConfirmation() {
   overlay.className = 'save-confirm-overlay';
   overlay.setAttribute('aria-hidden', 'true');
   overlay.innerHTML = `
-    <div class="save-confirm-board">
-      <div class="save-confirm-board-top"></div>
-      <div class="save-confirm-board-bottom"></div>
+    <div class="save-confirm-ticket">
+      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>
+      <div class="save-confirm-ticket-perf"></div>
+      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>
     </div>
   `;
   document.body.appendChild(overlay);
   if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
-  setTimeout(() => overlay.remove(), 700);
+  setTimeout(() => overlay.remove(), 850);
 }
 
 document.getElementById('save-btn').addEventListener('click', () => {

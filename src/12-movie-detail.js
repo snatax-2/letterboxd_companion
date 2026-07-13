@@ -513,3 +513,60 @@ pdsEl.addEventListener('click', (e) => {
     openMovieDetailSheet(filmItem.dataset.movieId);
   }
 });
+
+// ═══════════════════════════════════════════
+//  GLISSER VERS LE BAS POUR FERMER
+// ═══════════════════════════════════════════
+// En plus de la croix (gardée pour clavier/souris/lecteurs d'écran) : sur
+// mobile, glisser la fiche vers le bas la ferme, geste naturel et attendu
+// pour ce genre de panneau. Ne s'active que si la fiche est déjà tout en haut
+// de son propre défilement (sinon un glissement vers le bas doit d'abord
+// juste faire remonter le contenu) et pas depuis une zone qui gère déjà son
+// propre geste horizontal (carrousel de casting).
+function initSwipeToClose(overlayEl, closeFn) {
+  const box = overlayEl.querySelector('.mds-box');
+  if (!box) return;
+  const THRESHOLD = 110;
+  let startY = 0;
+  let dragging = false;
+  let currentDelta = 0;
+
+  box.addEventListener('touchstart', (e) => {
+    if (box.scrollTop > 5) return;
+    if (e.target.closest('.mds-cast-carousel, .mds-trailer-wrap')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    box.style.transition = 'none';
+  }, { passive: true });
+
+  box.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || box.scrollTop > 5) { dragging = false; box.style.transition = ''; box.style.transform = ''; return; }
+    currentDelta = deltaY;
+    box.style.transform = `translateY(${deltaY}px) scale(1)`;
+    overlayEl.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.8 - deltaY / 250)})`;
+  }, { passive: true });
+
+  box.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    box.style.transition = 'transform .22s ease';
+    if (currentDelta > THRESHOLD) {
+      box.style.transform = `translateY(100%) scale(1)`;
+      setTimeout(() => {
+        closeFn();
+        box.style.transform = '';
+        box.style.transition = '';
+        overlayEl.style.backgroundColor = '';
+      }, 180);
+    } else {
+      box.style.transform = '';
+      overlayEl.style.backgroundColor = '';
+    }
+    currentDelta = 0;
+  });
+}
+
+initSwipeToClose(mdsEl, closeMovieDetailSheet);
+initSwipeToClose(pdsEl, closePersonDetailSheet);

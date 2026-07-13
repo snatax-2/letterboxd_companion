@@ -153,6 +153,7 @@ function isExcludedTarget(target) {
     if (navHistory.classList.contains('active')) return 'history';
     if (navWatchlist.classList.contains('active')) return 'watchlist';
     if (navDiscover.classList.contains('active')) return 'discover';
+    if (navProfile.classList.contains('active')) return 'profile';
     return 'rating';
   }
 

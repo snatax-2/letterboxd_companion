@@ -110,6 +110,29 @@ Ce que ça couvre :
 - **`tests/description-tiers.test.js`** — textes descriptifs par palier + qualificatif "bas/haut de la fourchette" pour chaque valeur de 0 à 10.
 - **`tests/criteria-averages.test.js`** — moyennes personnelles par critère (repère sur les sliders + radar), gestion des anciens films sans un critère donné.
 - **`tests/profile-stats.test.js`** — onglet Profil : formatage du temps visionné, calcul de série (streak) hebdomadaire, badges débloqués.
+
+## Tests de bout en bout (E2E, vrai navigateur)
+
+`npm test` teste la LOGIQUE (Node/jsdom, aucun rendu CSS réel). `npm run test:e2e` complète ça avec de vrais tests dans un vrai navigateur (Playwright/Chromium, viewport mobile, vrais événements tactiles) — c'est le seul moyen d'attraper les bugs de rendu/interaction que jsdom ne peut pas voir (mise en page CSS, gestes tactiles réels).
+
+**Première installation** :
+```powershell
+npm install
+npx playwright install chromium
+```
+
+**Lancer les tests** :
+```powershell
+npm run test:e2e
+```
+
+- **`tests/e2e/tab-swipe.spec.js`** — navigation par glissement entre les 5 onglets, dans les deux sens, pour toutes les paires adjacentes + les cas limites (glisser au-delà du premier/dernier onglet). Cible la classe de bug rencontrée plusieurs fois (un onglet non reconnu par `currentView()`).
+- **`tests/e2e/quick-rating.spec.js`** — widget d'étoiles : glissement pour sélectionner (et isolation du swipe d'onglet), + vérification du VRAI style calculé (`clip-path`) sur une étoile pleine — c'est le seul moyen d'attraper la classe de bug qu'on a eue (sélecteur CSS qui ne matchait jamais, étoiles pleines affichées à moitié).
+- **`tests/e2e/trending-carousel.spec.js`** — glisser sur le carrousel de tendances n'entraîne pas de changement d'onglet.
+- **`tests/e2e/sheet-swipe-close.spec.js`** — glisser vers le bas ferme la fiche film (seuil suffisant/insuffisant), et la croix de fermeture reste fonctionnelle.
+
+À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
+
 - **`tests/rate-limit.test.js`** — limite de requêtes par IP et par identifiant, isolation entre IP différentes.
 
 Ces tests tournent aussi automatiquement dans le CI/CD (GitHub Actions) à chaque `push`. La logique testée vit dans `src/03b-pure-logic.js` : un fichier volontairement sans DOM ni `localStorage`, pour pouvoir être exécuté tel quel par Node (voir le commentaire en tête de ce fichier pour le détail du fonctionnement).

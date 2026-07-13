@@ -175,6 +175,13 @@ function getSorted(history) {
 }
 
 function renderHistory() {
+  // Annule tout geste "armé" ou en cours AVANT de reconstruire le DOM —
+  // sinon ces références pointeraient vers des éléments détachés après le
+  // rebuild, causant le bug "le swipe ne montre rien" quand un re-rendu
+  // (synchro en arrière-plan, tirer-pour-rafraîchir...) s'intercale pendant
+  // le geste de l'utilisateur.
+  if (window.resetHistorySwipeState) window.resetHistorySwipeState();
+
   const history   = loadHistory();
   const sorted    = getSorted(history);
   const container = document.getElementById('history-list');
@@ -388,7 +395,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 // ou si l'appui vise déjà un bouton (édition/suppression directe).
 (function initHistoryGestures() {
   const LONG_PRESS_MS = 500;
-  const MOVE_CANCEL_PX = 10;
+  const MOVE_CANCEL_PX = 18; // marge avant de trancher swipe/scroll — augmentée : un doigt part rarement parfaitement droit, un seuil trop bas classait parfois un vrai swipe en "scroll" à tort à cause des tout premiers pixels un peu diagonaux
   const SWIPE_THRESHOLD = 80;
   const MAX_DRAG = 130;
 
@@ -487,7 +494,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
         clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
       } else {
         return;
       }
@@ -556,7 +563,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const rawDy = e.clientY - startY;
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 1.2 ? 'swipe' : 'scroll';
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
       } else {
         return;
       }
@@ -613,6 +620,18 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   document.addEventListener('click', (e) => {
     if (armedItem && !container.contains(e.target)) cancelArmed();
   }, true);
+
+  // Exposé pour renderHistory() : un re-rendu (déclenché par une synchro en
+  // arrière-plan, un tirer-pour-rafraîchir, etc.) reconstruit tout le DOM de
+  // la liste — si un item était "armé" ou en cours de geste au même moment,
+  // ces variables privées à cette fermeture pointeraient vers des éléments
+  // DÉTACHÉS du document (invisibles), sans que l'affichage ne redonne aucun
+  // signe d'un swipe "raté". D'où le bug observé : parfois, glisser un film
+  // ne montre ni Supprimer ni Modifier — un re-rendu venait de s'intercaler.
+  window.resetHistorySwipeState = function() {
+    cancelArmed();
+    resetGesture();
+  };
 })();
 
 function createRadarSVG(averages) {
