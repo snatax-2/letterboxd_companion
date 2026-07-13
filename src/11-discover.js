@@ -301,7 +301,14 @@ function renderTrendingCarousel(movies) {
   }
 
   function tick() {
-    if (!autoScrollPaused) {
+    // Ne fait le travail (qui force un recalcul de mise en page via
+    // scrollLeft) QUE si l'onglet Découvrir est bien affiché — sinon cette
+    // boucle tournait indéfiniment en arrière-plan, même après être passé sur
+    // un autre onglet, au lieu de s'arrêter. Coût quasi nul quand invisible
+    // (juste une vérification de classe), pour pouvoir reprendre sans à-coup
+    // dès qu'on revient sur Découvrir.
+    const isVisible = document.getElementById('view-discover')?.classList.contains('active');
+    if (isVisible && !autoScrollPaused) {
       outer.scrollLeft += AUTO_SCROLL_SPEED;
       const halfWidth = track.scrollWidth / 2;
       if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;

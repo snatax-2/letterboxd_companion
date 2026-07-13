@@ -399,7 +399,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 // ou si l'appui vise déjà un bouton (édition/suppression directe).
 (function initHistoryGestures() {
   const LONG_PRESS_MS = 500;
-  const MOVE_CANCEL_PX = 18; // marge avant de trancher swipe/scroll — augmentée : un doigt part rarement parfaitement droit, un seuil trop bas classait parfois un vrai swipe en "scroll" à tort à cause des tout premiers pixels un peu diagonaux
+  const MOVE_CANCEL_PX = 12; // marge avant de trancher swipe/scroll — le ratio généreux (0.5, voir plus bas) fait maintenant le plus gros du travail, donc ce seuil peut redescendre pour un geste plus réactif dès le départ
   const SWIPE_THRESHOLD = 80;
   const MAX_DRAG = 130;
 
@@ -512,7 +512,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
         clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
       } else {
         return;
       }
@@ -581,7 +581,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const rawDy = e.clientY - startY;
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) ? 'swipe' : 'scroll'; // ratio assoupli (etait *1.2) : moins de faux "scroll" pour un swipe legerement diagonal au depart
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
       } else {
         return;
       }
