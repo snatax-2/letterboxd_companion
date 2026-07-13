@@ -650,18 +650,35 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   // stable, pas un index qui pourrait avoir changé), puis le réappliquer
   // sur le NOUVEL élément correspondant après la reconstruction.
   window.captureArmedHistoryState = function() {
-    if (!armedItem) return null;
-    const captured = {
-      savedAt: armedItem.dataset.savedAt,
-      titleKey: armedItem.dataset.titleKey,
-      direction: armedDirection,
-    };
-    // Réinitialise les variables de geste (pressedItem, etc.) SANS toucher au
-    // visuel — c'est reapplyArmedHistoryState qui s'en charge juste après.
-    resetGesture();
-    armedItem = null;
-    armedDirection = null;
-    return captured;
+    // Cas 1 : un item est déjà ARMÉ (piste révélée, en attente de confirmation).
+    if (armedItem) {
+      const captured = {
+        kind: 'armed',
+        savedAt: armedItem.dataset.savedAt,
+        titleKey: armedItem.dataset.titleKey,
+        direction: armedDirection,
+      };
+      resetGesture();
+      armedItem = null;
+      armedDirection = null;
+      return captured;
+    }
+    // Cas 2 : un glissement est EN COURS (doigt toujours posé, pas encore
+    // armé) — c'est le cas qui manquait encore : un re-rendu à ce moment-là
+    // laissait pressedItem/pressedContent pointer vers un élément détaché,
+    // donc le reste du geste (touchmove/touchend) ne mettait plus rien à
+    // jour de VISIBLE, exactement le bug "le swipe est détecté mais reste
+    // vide" remonté par l'utilisateur.
+    if (pressedItem) {
+      const captured = {
+        kind: 'dragging',
+        savedAt: pressedItem.dataset.savedAt,
+        titleKey: pressedItem.dataset.titleKey,
+        dx, swipeMode,
+      };
+      return captured; // ne réinitialise PAS ici : le doigt est encore posé, le geste continue
+    }
+    return null;
   };
 
   window.reapplyArmedHistoryState = function(captured) {
@@ -672,12 +689,26 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     );
     if (!newItem) return; // le film a été supprimé entre-temps par ailleurs : rien à réappliquer
     const content = newItem.querySelector('.hist-item-content');
-    const cls = captured.direction === 'left' ? 'hist-swipe-armed-left' : 'hist-swipe-armed-right';
-    const swipeCls = captured.direction === 'left' ? 'hist-swipe-left' : 'hist-swipe-right';
-    newItem.classList.add(cls, swipeCls);
-    if (content) content.style.transform = `translateX(${captured.direction === 'left' ? -120 : 120}px)`;
-    armedItem = newItem;
-    armedDirection = captured.direction;
+
+    if (captured.kind === 'armed') {
+      const cls = captured.direction === 'left' ? 'hist-swipe-armed-left' : 'hist-swipe-armed-right';
+      const swipeCls = captured.direction === 'left' ? 'hist-swipe-left' : 'hist-swipe-right';
+      newItem.classList.add(cls, swipeCls);
+      if (content) content.style.transform = `translateX(${captured.direction === 'left' ? -120 : 120}px)`;
+      armedItem = newItem;
+      armedDirection = captured.direction;
+    } else if (captured.kind === 'dragging') {
+      // Rebranche pressedItem/pressedContent sur le NOUVEL élément (le geste
+      // continue dessus dès le prochain touchmove/touchend), et redonne
+      // immédiatement le même rendu visuel qu'avant le re-rendu.
+      pressedItem = newItem;
+      pressedContent = content;
+      dx = captured.dx;
+      swipeMode = captured.swipeMode;
+      if (content) content.style.transform = `translateX(${dx}px)`;
+      newItem.classList.toggle('hist-swipe-left', dx < -10);
+      newItem.classList.toggle('hist-swipe-right', dx > 10);
+    }
   };
 })();
 
