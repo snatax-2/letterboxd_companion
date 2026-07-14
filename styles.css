@@ -1214,7 +1214,7 @@
   /* ── MODALS ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity .2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s cubic-bezier(.2,.8,.2,1), opacity .18s ease; }
   .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }
   .modal-title { color: var(--text-hi); font-weight: 700; margin-bottom: 12px; font-family: var(--font-heading); font-size: 1.2rem;}
   .theme-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px; }
@@ -1357,7 +1357,19 @@
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
   }
-  .mds-trailer-wrap { position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius-sm); overflow: hidden; background: #000; }
+  .mds-trailer-wrap {
+    position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius-sm); overflow: hidden; background: #000;
+    /* Isole son propre contexte d'empilement et force sa propre couche de
+       rendu — un <iframe> (comme celui de YouTube) a une réputation bien
+       connue d'ignorer les règles normales de z-index et de s'afficher
+       par-dessus du contenu qui devrait pourtant passer devant lui,
+       particulièrement sur iOS. C'est ce qui laissait la bande-annonce
+       "percer" au-dessus de l'en-tête une fois collé en haut. */
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    z-index: 0;
+  }
   .mds-trailer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
   /* Synopsis en accordéon : tronqué à 4 lignes par défaut, déployé au tap sur
      le bouton (masqué automatiquement si le texte tient déjà entièrement). */
