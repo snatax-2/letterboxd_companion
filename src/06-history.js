@@ -500,6 +500,14 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
+    // Si CE film était déjà armé (piste révélée après un swipe précédent, sans
+    // confirmation), on nettoie AVANT de démarrer le nouveau geste — sinon les
+    // classes de l'ancien état armé ("hist-swipe-armed-left") restaient
+    // appliquées EN MÊME TEMPS que les nouvelles du geste en cours
+    // ("hist-swipe-right"), deux états contradictoires qui cassaient
+    // l'affichage. C'est exactement le cas signalé : re-swiper le même film
+    // dans l'autre sens sans avoir confirmé le premier geste.
+    if (armedItem === item) cancelArmed();
     pressedItem = item;
     pressedContent = item.querySelector('.hist-item-content');
     startX = e.touches[0].clientX;
@@ -586,6 +594,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   container.addEventListener('mousedown', (e) => {
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    if (armedItem === item) cancelArmed(); // même correctif que le tactile : voir le commentaire sur touchstart
     mouseActive = true;
     pressedItem = item;
     pressedContent = item.querySelector('.hist-item-content');

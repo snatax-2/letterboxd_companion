@@ -1432,9 +1432,8 @@
      par buildMdsContent), plutôt que tout le contenu d'un bloc. */
   .mds-header, .mds-section {
     animation: mdsSectionIn .35s cubic-bezier(.2,.8,.2,1) both;
-    margin-top: 16px;
   }
-  .mds-header { margin-top: 0; }
+  .mds-section { margin-top: 16px; }
   .mds-header + .mds-section { margin-top: 16px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
   .mds-header + .mds-actions {
     margin-top: 20px; /* un peu plus que .mds-section : le tampon de score déborde sous l'affiche (voir .mds-score-stamp), donc un peu plus d'air est nécessaire pour ne pas donner l'impression que les boutons le touchent */
