@@ -70,15 +70,17 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   return `
     <div class="mds-header" style="animation-delay:0s">
       <div class="mds-header-left">
-        ${posterUrl
-          ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
-          : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
-        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
-        ${directorObj ? `<div class="mds-header-director">Réalisé par <b>${escAttr(directorObj.name)}</b></div>` : ''}
-        ${data.vote_average ? `<div class="mds-tmdb-score">★ ${data.vote_average.toFixed(1)} TMDb</div>` : ''}
+        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
     </div>
 

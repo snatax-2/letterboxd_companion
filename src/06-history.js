@@ -477,6 +477,25 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     dx = 0;
   }
 
+  // Remet aussi le VISUEL à zéro (pas juste le suivi interne) — utilisé pour
+  // touchcancel, qui peut se déclencher sur un vrai téléphone (notification,
+  // appel entrant, le système qui interrompt le geste en cours) sans jamais
+  // passer par resolveGesture(). Sans ce nettoyage visuel, le film glissé au
+  // moment de l'interruption restait visuellement coincé à mi-chemin — décalé,
+  // sans indice Supprimer/Modifier visible — et le restait indéfiniment,
+  // jusqu'à ce qu'on retouche cet item précis. D'où le bug remonté :
+  // "après avoir déjà swipé un autre film juste avant".
+  function cancelGestureFully(e) {
+    if (pressedItem) {
+      if (pressedContent) {
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = '';
+      }
+      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+    }
+    resetGesture(e);
+  }
+
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
@@ -559,7 +578,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchend', resolveGesture);
 
-  container.addEventListener('touchcancel', resetGesture);
+  container.addEventListener('touchcancel', cancelGestureFully);
 
   // Souris (pratique pour tester sur desktop / vercel dev) : même logique que
   // le tactile, juste déclenchée par mousedown/mousemove/mouseup.

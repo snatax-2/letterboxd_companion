@@ -1256,49 +1256,91 @@
   .action-sheet-item .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
 
   /* ── FICHE FILM DÉTAILLÉE ── */
-  .mds-box { max-width: 440px; position: relative; padding-top: 34px; }
+  .mds-box { max-width: 440px; position: relative; }
   .mds-close {
-    position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
+    position: absolute; top: 12px; right: 12px; width: 26px; height: 26px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform .12s ease, background-color .15s ease; z-index: 6;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
   .mds-close:hover { background: var(--border-hi); }
   .mds-close:active { transform: scale(.9); }
 
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
-    position: sticky; top: -34px; z-index: 5; background: var(--bg);
-    margin: -34px -24px 0; padding: 34px 24px 12px; transition: padding .2s ease, gap .2s ease;
+    position: sticky; top: -14px; z-index: 5; background: var(--bg);
+    margin: -14px -24px 0; padding: 14px 24px 12px; transition: padding .2s ease, gap .2s ease;
     border-bottom: 1px solid var(--border);
   }
   /* En-tête compact : appliqué en JS passé un certain seuil de défilement
      (voir setupStickyHeader dans 12-movie-detail.js). L'affiche rétrécit et
      le titre passe à côté d'elle sur une seule ligne, façon "now playing" qui
      se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
-  .mds-header.compact { padding-top: 30px; padding-bottom: 8px; gap: 10px; align-items: center; }
+  .mds-header.compact { padding-top: 12px; padding-bottom: 8px; gap: 10px; align-items: center; }
   .mds-header.compact .mds-header-left { width: 40px; }
   .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
   .mds-header.compact .mds-meta,
-  .mds-header.compact .mds-tmdb-score { display: none; }
+  .mds-header.compact .mds-score-stamp { display: none; }
   .mds-header.compact .mds-title { font-size: 0.95rem; }
   .mds-header-left { width: 100px; flex-shrink: 0; transition: width .25s cubic-bezier(.2,.8,.2,1); }
-  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: width .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; }
+  .mds-poster-wrap { position: relative; width: 100%; }
+  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: width .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease; display: block; }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
     background: var(--surface2); font-size: 2rem; color: var(--text-mid);
   }
-  .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; }
+  .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; padding-right: 30px; }
+  .mds-header.compact .mds-header-info { padding-right: 26px; }
   .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; transition: font-size .25s ease; }
-  .mds-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; }
-  .mds-header-director { font-size: 0.78rem; color: var(--text-mid); margin-top: 4px; }
-  .mds-header-director b { color: var(--text-hi); }
-  /* Contrairement au reste (meta, score TMDb), le réalisateur reste visible en
+  /* Ligne meta (année/durée/genres) : de simples points au milieu lisaient
+     comme une liste brute d'infos. Un trait fin entre chaque terme, à la
+     manière d'un carton de générique, structure la même info sans plus de mots. */
+  .mds-meta { font-size: 0.82rem; color: var(--text-mid); margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; }
+  .mds-meta span { position: relative; padding: 0 9px; }
+  .mds-meta span:first-child { padding-left: 0; }
+  .mds-meta span:not(:first-child)::before {
+    content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 1px; background: var(--border-hi);
+  }
+  /* Le nom du réalisateur reste la donnée ; "Réalisé par" devient une
+     étiquette discrète en petites capitales espacées, comme sur un vrai
+     carton "UN FILM DE..." — la personnalité vient de la typo, pas d'un mot de plus. */
+  .mds-header-director { font-size: 0.78rem; color: var(--text-mid); margin-top: 6px; }
+  .mds-director-label { font-family: var(--font-heading); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-mid); }
+  .mds-header-director b { color: var(--text-hi); font-weight: 700; }
+  /* Contrairement au reste (meta, tampon score), le réalisateur reste visible en
      mode compact — c'est justement l'info qu'on veut garder sous les yeux en
      lisant le reste de la fiche (casting, synopsis...). */
   .mds-header.compact .mds-header-director { margin-top: 0; font-size: 0.72rem; }
-  .mds-tmdb-score { font-size: 0.8rem; color: var(--gold); margin-top: 8px; font-weight: 700; }
+
+  /* Élément signature de la fiche : le score TMDb devient un tampon de
+     certification (façon sceau de festival / cachet de laboratoire sur une
+     bobine), coloré avec la teinte dominante DE CETTE AFFICHE précisément
+     (--poster-accent, déjà extraite pour chaque film) — jamais la même
+     couleur deux fois, jamais une pastille générique. */
+  .mds-score-stamp {
+    position: absolute; bottom: -10px; right: -10px; width: 46px; height: 46px;
+    border-radius: 50%; background: var(--bg);
+    border: 2px solid var(--poster-accent, var(--gold));
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform: rotate(-11deg); box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    animation: stampImpact .45s cubic-bezier(.2,1.4,.4,1) both;
+    animation-delay: .15s;
+  }
+  .mds-score-stamp::before {
+    content: ''; position: absolute; inset: 3px; border-radius: 50%; border: 1px solid var(--poster-accent, var(--gold)); opacity: 0.5;
+  }
+  .mds-score-stamp-val { font-family: var(--font-heading); font-size: 0.92rem; font-weight: 900; color: var(--poster-accent, var(--gold)); line-height: 1; }
+  .mds-score-stamp-label { font-size: 0.42rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--poster-accent, var(--gold)); margin-top: 1px; }
+  @keyframes stampImpact {
+    0% { transform: rotate(-11deg) scale(1.6); opacity: 0; }
+    60% { transform: rotate(-11deg) scale(0.92); opacity: 1; }
+    100% { transform: rotate(-11deg) scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mds-score-stamp { animation: none; }
+  }
 
   .mds-section-title {
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
@@ -1394,6 +1436,9 @@
   }
   .mds-header { margin-top: 0; }
   .mds-header + .mds-section { margin-top: 16px; } /* l'en-tête a déjà sa propre bordure/padding en bas, pas besoin du même écart qu'entre deux sections normales */
+  .mds-header + .mds-actions {
+    margin-top: 20px; /* un peu plus que .mds-section : le tampon de score déborde sous l'affiche (voir .mds-score-stamp), donc un peu plus d'air est nécessaire pour ne pas donner l'impression que les boutons le touchent */
+  }
   @keyframes mdsSectionIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }

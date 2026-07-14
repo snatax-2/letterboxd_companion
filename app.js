@@ -2700,6 +2700,25 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     dx = 0;
   }
 
+  // Remet aussi le VISUEL à zéro (pas juste le suivi interne) — utilisé pour
+  // touchcancel, qui peut se déclencher sur un vrai téléphone (notification,
+  // appel entrant, le système qui interrompt le geste en cours) sans jamais
+  // passer par resolveGesture(). Sans ce nettoyage visuel, le film glissé au
+  // moment de l'interruption restait visuellement coincé à mi-chemin — décalé,
+  // sans indice Supprimer/Modifier visible — et le restait indéfiniment,
+  // jusqu'à ce qu'on retouche cet item précis. D'où le bug remonté :
+  // "après avoir déjà swipé un autre film juste avant".
+  function cancelGestureFully(e) {
+    if (pressedItem) {
+      if (pressedContent) {
+        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transform = '';
+      }
+      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+    }
+    resetGesture(e);
+  }
+
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
@@ -2782,7 +2801,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchend', resolveGesture);
 
-  container.addEventListener('touchcancel', resetGesture);
+  container.addEventListener('touchcancel', cancelGestureFully);
 
   // Souris (pratique pour tester sur desktop / vercel dev) : même logique que
   // le tactile, juste déclenchée par mousedown/mousemove/mouseup.
@@ -5419,15 +5438,17 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   return `
     <div class="mds-header" style="animation-delay:0s">
       <div class="mds-header-left">
-        ${posterUrl
-          ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
-          : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
-        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).join(' · ')}</div>
-        ${directorObj ? `<div class="mds-header-director">Réalisé par <b>${escAttr(directorObj.name)}</b></div>` : ''}
-        ${data.vote_average ? `<div class="mds-tmdb-score">★ ${data.vote_average.toFixed(1)} TMDb</div>` : ''}
+        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
     </div>
 
