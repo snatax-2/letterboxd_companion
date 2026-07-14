@@ -29,6 +29,7 @@ function switchRightTab(tabName) {
     loadDiscoverQueue();
     loadTrendingCarousel();
     loadFilmDuJour();
+    loadDailyQuiz();
   }
 }
 

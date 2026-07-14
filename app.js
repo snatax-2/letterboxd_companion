@@ -61,6 +61,8 @@ const ICONS = {
 
   heart: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
 
+  flame: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg>`,
+
   search: `<svg ${ICON_ATTRS}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
 
   barChart: `<svg ${ICON_ATTRS}><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg>`,
@@ -200,6 +202,7 @@ function switchRightTab(tabName) {
     loadDiscoverQueue();
     loadTrendingCarousel();
     loadFilmDuJour();
+    loadDailyQuiz();
   }
 }
 
@@ -3790,11 +3793,11 @@ function deleteWatchlistList(id) {
   return true;
 }
 
-function loadWatchlist() {
-  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(getActiveWatchlistId()))) || []; } catch { return []; }
+function loadWatchlist(listId) {
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId()))) || []; } catch { return []; }
 }
-function saveWatchlist(list) {
-  localStorage.setItem(watchlistStorageKey(getActiveWatchlistId()), JSON.stringify(list));
+function saveWatchlist(list, listId) {
+  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
 }
 
 
@@ -4013,10 +4016,16 @@ async function fetchProviders(tmdbId, idx) {
 }
 
 async function addToWatchlistFromTMDb(movie, year) {
-  const list = loadWatchlist();
+  // Ne fait plus l'ajout directement : demande d'abord dans quelle liste,
+  // avec la possibilité d'en créer une nouvelle à la volée.
+  openWatchlistPicker(movie, year);
+}
+
+async function addToSpecificWatchlist(movie, year, listId) {
+  const list = loadWatchlist(listId);
   const key = (movie.title + '|' + year).toLowerCase();
   if (list.find(i => (i.title + '|' + (i.year||'')).toLowerCase() === key)) {
-    showToast('Déjà dans la liste.');
+    showToast('Déjà dans cette liste.');
     return;
   }
 
@@ -4035,10 +4044,64 @@ async function addToWatchlistFromTMDb(movie, year) {
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
   });
-  saveWatchlist(list);
-  window._justSavedWatchlistTitle = movie.title.toLowerCase();
-  renderWatchlist();
-  showToast(`"${movie.title}" ajouté à la liste 🎯`);
+  saveWatchlist(list, listId);
+  if (listId === getActiveWatchlistId()) {
+    window._justSavedWatchlistTitle = movie.title.toLowerCase();
+    renderWatchlist();
+  }
+  const listName = loadWatchlistsMeta().find(l => l.id === listId)?.name || 'la liste';
+  showToast(`"${movie.title}" ajouté à "${listName}" 🎯`);
+}
+
+function openWatchlistPicker(movie, year) {
+  const modal = document.getElementById('wl-picker-modal');
+  const listEl = document.getElementById('wl-picker-list');
+  const newRow = document.getElementById('wl-picker-new-row');
+  const newForm = document.getElementById('wl-picker-new-form');
+  const newBtn = document.getElementById('wl-picker-new-btn');
+  const newInput = document.getElementById('wl-picker-new-input');
+  const newConfirm = document.getElementById('wl-picker-new-confirm');
+  const cancelBtn = document.getElementById('wl-picker-cancel-btn');
+  if (!modal || !listEl) return;
+
+  // Repart d'un état propre à chaque ouverture (le formulaire "nouvelle liste"
+  // ne doit pas rester déplié d'une fois à l'autre).
+  newForm.style.display = 'none';
+  newBtn.style.display = 'flex';
+  newInput.value = '';
+
+  const meta = loadWatchlistsMeta();
+  listEl.innerHTML = meta.map(l => {
+    const count = loadWatchlist(l.id).length;
+    return `<button type="button" class="wl-picker-item" data-list-id="${l.id}"><span>${escAttr(l.name)}</span><span class="wl-picker-item-count">${count} film${count > 1 ? 's' : ''}</span></button>`;
+  }).join('');
+
+  function pickList(listId) {
+    addToSpecificWatchlist(movie, year, listId);
+    closeModal(modal);
+  }
+
+  listEl.querySelectorAll('.wl-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => pickList(btn.dataset.listId));
+  });
+
+  newBtn.onclick = () => {
+    newBtn.style.display = 'none';
+    newForm.style.display = 'flex';
+    newInput.focus();
+  };
+  newConfirm.onclick = () => {
+    const name = newInput.value.trim();
+    if (!name) { newInput.focus(); return; }
+    const id = createWatchlistList(name);
+    pickList(id);
+  };
+  newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
+  cancelBtn.onclick = () => closeModal(modal);
+
+  lastFocusedBeforeModal = document.activeElement;
+  modal.classList.add('open');
+  (meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn)?.focus();
 }
 
 let deletedWlItemCache = null;
@@ -5374,6 +5437,160 @@ function attachSwipeHandlers(cardEl, movie) {
 discoverPassBtn.addEventListener('click', () => resolveDiscoverSwipe('pass'));
 discoverLikeBtn.addEventListener('click', () => resolveDiscoverSwipe('like'));
 discoverReloadBtn.addEventListener('click', () => loadDiscoverQueue());
+
+// ═══════════════════════════════════════════
+//  QUIZ DU JOUR
+// ═══════════════════════════════════════════
+// Une question par jour (stable toute la journée, comme Film du jour), tirée
+// d'Open Trivia DB (catégorie 11 = Entertainment: Film) — gratuit, sans clé,
+// jamais à court de contenu contrairement à une banque de questions écrites
+// à la main qu'il faudrait sans cesse renouveler. Un lot de 30 questions est
+// récupéré une fois puis mis en cache ; chaque jour, une question du lot est
+// choisie de façon déterministe (index = jour depuis l'epoch, modulo la
+// taille du lot), et le lot est renouvelé une fois entièrement parcouru.
+const QUIZ_BATCH_KEY = 'lbx_quiz_batch';
+const QUIZ_BATCH_FETCHED_DAY_KEY = 'lbx_quiz_batch_fetched_day';
+const QUIZ_STREAK_KEY = 'lbx_quiz_streak';
+const QUIZ_LAST_PLAYED_KEY = 'lbx_quiz_last_played_date';
+const QUIZ_LAST_RESULT_KEY = 'lbx_quiz_last_result';
+
+function quizDaysSinceEpoch() {
+  return Math.floor(Date.now() / 86400000);
+}
+function quizTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function quizDecodeEntities(str) {
+  const el = document.createElement('textarea');
+  el.innerHTML = str;
+  return el.value;
+}
+// Mélange déterministe (seed = index du jour) : l'ordre des réponses reste
+// stable toute la journée, pas un nouveau tirage à chaque rafraîchissement.
+function quizSeededShuffle(arr, seed) {
+  const a = arr.slice();
+  let s = seed || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function ensureQuizBatch() {
+  let batch = [];
+  try { batch = JSON.parse(localStorage.getItem(QUIZ_BATCH_KEY)) || []; } catch {}
+  const fetchedDay = parseInt(localStorage.getItem(QUIZ_BATCH_FETCHED_DAY_KEY), 10) || 0;
+  const daysSinceFetch = quizDaysSinceEpoch() - fetchedDay;
+  const needsRefresh = batch.length === 0 || daysSinceFetch >= batch.length || daysSinceFetch >= 30;
+  if (!needsRefresh) return batch;
+
+  try {
+    const res = await fetch('https://opentdb.com/api.php?amount=30&category=11&type=multiple&encode=url3986');
+    const data = await res.json();
+    if (data.response_code === 0 && data.results?.length > 0) {
+      batch = data.results;
+      localStorage.setItem(QUIZ_BATCH_KEY, JSON.stringify(batch));
+      localStorage.setItem(QUIZ_BATCH_FETCHED_DAY_KEY, String(quizDaysSinceEpoch()));
+    }
+  } catch {
+    // Silencieux : la section reste cachée si indisponible (voir loadDailyQuiz), pas d'erreur gênante pour l'utilisateur.
+  }
+  return batch;
+}
+
+function getTodaysQuizQuestion(batch) {
+  if (!batch || batch.length === 0) return null;
+  const idx = quizDaysSinceEpoch() % batch.length;
+  const raw = batch[idx];
+  const question = quizDecodeEntities(decodeURIComponent(raw.question));
+  const correctAnswer = quizDecodeEntities(decodeURIComponent(raw.correct_answer));
+  const incorrectAnswers = raw.incorrect_answers.map(a => quizDecodeEntities(decodeURIComponent(a)));
+  const allAnswers = quizSeededShuffle([correctAnswer, ...incorrectAnswers], idx);
+  return { idx, question, correctAnswer, allAnswers };
+}
+
+function renderQuizStreakBadge() {
+  const badge = document.getElementById('quiz-streak-badge');
+  if (!badge) return;
+  const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
+}
+
+function renderQuizAnsweredState(card, q, lastResult) {
+  card.innerHTML = `
+    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map(a => {
+        const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
+        return `<button class="quiz-answer-btn ${cls}" disabled>${a}</button>`;
+      }).join('')}
+    </div>
+    <div class="quiz-already-played">${lastResult.wasCorrect ? "✓ Bonne réponse aujourd'hui — reviens demain pour la suite." : `La bonne réponse était « ${q.correctAnswer} » — reviens demain.`}</div>
+  `;
+}
+
+async function loadDailyQuiz() {
+  const wrap = document.getElementById('quiz-wrap');
+  const card = document.getElementById('quiz-card');
+  if (!wrap || !card) return;
+
+  const batch = await ensureQuizBatch();
+  const q = getTodaysQuizQuestion(batch);
+  if (!q) return; // API indisponible pour l'instant : section reste cachée plutôt que d'afficher une erreur
+
+  wrap.style.display = 'block';
+  renderQuizStreakBadge();
+
+  const today = quizTodayStr();
+  const lastPlayed = localStorage.getItem(QUIZ_LAST_PLAYED_KEY);
+  let lastResult = null;
+  try { lastResult = JSON.parse(localStorage.getItem(QUIZ_LAST_RESULT_KEY)); } catch {}
+
+  if (lastPlayed === today && lastResult && lastResult.questionIdx === q.idx) {
+    renderQuizAnsweredState(card, q, lastResult);
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map(a => `<button class="quiz-answer-btn" data-answer="${escAttr(a)}">${a}</button>`).join('')}
+    </div>
+  `;
+
+  card.querySelectorAll('.quiz-answer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const picked = btn.dataset.answer;
+      const wasCorrect = picked === q.correctAnswer;
+      card.querySelectorAll('.quiz-answer-btn').forEach(b => {
+        b.disabled = true;
+        if (b.dataset.answer === q.correctAnswer) b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+
+      // Série : hier → continue ; sinon (jamais joué, ou pause d'un jour ou
+      // plus) → repart de 1. Une mauvaise réponse casse la série (compte
+      // vraiment y répondre juste, contrairement à la série de notation qui
+      // ne demande que d'être actif).
+      const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const newStreak = wasCorrect ? (lastPlayed === yesterday ? streak + 1 : 1) : 0;
+
+      localStorage.setItem(QUIZ_STREAK_KEY, String(newStreak));
+      localStorage.setItem(QUIZ_LAST_PLAYED_KEY, today);
+      localStorage.setItem(QUIZ_LAST_RESULT_KEY, JSON.stringify({ questionIdx: q.idx, wasCorrect, picked }));
+      renderQuizStreakBadge();
+      if (navigator.vibrate) navigator.vibrate(wasCorrect ? 20 : [20, 40, 20]);
+
+      const resultEl = document.createElement('div');
+      resultEl.className = 'quiz-result';
+      resultEl.textContent = wasCorrect ? 'Bonne réponse ! 🎉' : `La bonne réponse était « ${q.correctAnswer} ».`;
+      card.appendChild(resultEl);
+    });
+  });
+}
 
 // ═══════════════════════════════════════════
 //  FICHE FILM DÉTAILLÉE

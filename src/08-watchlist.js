@@ -78,11 +78,11 @@ function deleteWatchlistList(id) {
   return true;
 }
 
-function loadWatchlist() {
-  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(getActiveWatchlistId()))) || []; } catch { return []; }
+function loadWatchlist(listId) {
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId()))) || []; } catch { return []; }
 }
-function saveWatchlist(list) {
-  localStorage.setItem(watchlistStorageKey(getActiveWatchlistId()), JSON.stringify(list));
+function saveWatchlist(list, listId) {
+  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
 }
 
 
@@ -301,10 +301,16 @@ async function fetchProviders(tmdbId, idx) {
 }
 
 async function addToWatchlistFromTMDb(movie, year) {
-  const list = loadWatchlist();
+  // Ne fait plus l'ajout directement : demande d'abord dans quelle liste,
+  // avec la possibilité d'en créer une nouvelle à la volée.
+  openWatchlistPicker(movie, year);
+}
+
+async function addToSpecificWatchlist(movie, year, listId) {
+  const list = loadWatchlist(listId);
   const key = (movie.title + '|' + year).toLowerCase();
   if (list.find(i => (i.title + '|' + (i.year||'')).toLowerCase() === key)) {
-    showToast('Déjà dans la liste.');
+    showToast('Déjà dans cette liste.');
     return;
   }
 
@@ -323,10 +329,64 @@ async function addToWatchlistFromTMDb(movie, year) {
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
   });
-  saveWatchlist(list);
-  window._justSavedWatchlistTitle = movie.title.toLowerCase();
-  renderWatchlist();
-  showToast(`"${movie.title}" ajouté à la liste 🎯`);
+  saveWatchlist(list, listId);
+  if (listId === getActiveWatchlistId()) {
+    window._justSavedWatchlistTitle = movie.title.toLowerCase();
+    renderWatchlist();
+  }
+  const listName = loadWatchlistsMeta().find(l => l.id === listId)?.name || 'la liste';
+  showToast(`"${movie.title}" ajouté à "${listName}" 🎯`);
+}
+
+function openWatchlistPicker(movie, year) {
+  const modal = document.getElementById('wl-picker-modal');
+  const listEl = document.getElementById('wl-picker-list');
+  const newRow = document.getElementById('wl-picker-new-row');
+  const newForm = document.getElementById('wl-picker-new-form');
+  const newBtn = document.getElementById('wl-picker-new-btn');
+  const newInput = document.getElementById('wl-picker-new-input');
+  const newConfirm = document.getElementById('wl-picker-new-confirm');
+  const cancelBtn = document.getElementById('wl-picker-cancel-btn');
+  if (!modal || !listEl) return;
+
+  // Repart d'un état propre à chaque ouverture (le formulaire "nouvelle liste"
+  // ne doit pas rester déplié d'une fois à l'autre).
+  newForm.style.display = 'none';
+  newBtn.style.display = 'flex';
+  newInput.value = '';
+
+  const meta = loadWatchlistsMeta();
+  listEl.innerHTML = meta.map(l => {
+    const count = loadWatchlist(l.id).length;
+    return `<button type="button" class="wl-picker-item" data-list-id="${l.id}"><span>${escAttr(l.name)}</span><span class="wl-picker-item-count">${count} film${count > 1 ? 's' : ''}</span></button>`;
+  }).join('');
+
+  function pickList(listId) {
+    addToSpecificWatchlist(movie, year, listId);
+    closeModal(modal);
+  }
+
+  listEl.querySelectorAll('.wl-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => pickList(btn.dataset.listId));
+  });
+
+  newBtn.onclick = () => {
+    newBtn.style.display = 'none';
+    newForm.style.display = 'flex';
+    newInput.focus();
+  };
+  newConfirm.onclick = () => {
+    const name = newInput.value.trim();
+    if (!name) { newInput.focus(); return; }
+    const id = createWatchlistList(name);
+    pickList(id);
+  };
+  newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
+  cancelBtn.onclick = () => closeModal(modal);
+
+  lastFocusedBeforeModal = document.activeElement;
+  modal.classList.add('open');
+  (meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn)?.focus();
 }
 
 let deletedWlItemCache = null;

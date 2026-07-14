@@ -346,6 +346,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="wl-picker-modal" role="dialog" aria-modal="true" aria-label="Choisir une liste">
+  <div class="modal-box wl-picker-box">
+    <div class="card-title" style="margin-bottom:14px;">Ajouter à…</div>
+    <div id="wl-picker-list"></div>
+    <div class="wl-picker-new-row" id="wl-picker-new-row">
+      <button type="button" class="wl-picker-new-btn" id="wl-picker-new-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 5v14M5 12h14"/></svg>
+        Nouvelle liste
+      </button>
+      <div class="wl-picker-new-form" id="wl-picker-new-form" style="display:none;">
+        <input type="text" id="wl-picker-new-input" placeholder="Nom de la liste" maxlength="40">
+        <button type="button" id="wl-picker-new-confirm">Créer et ajouter</button>
+      </div>
+    </div>
+    <button type="button" class="onboarding-skip" id="wl-picker-cancel-btn" style="margin-top:10px;">Annuler</button>
+  </div>
+</div>
+
 <div class="layout">
 
   <div class="col-left" id="col-rating">
@@ -664,6 +682,14 @@
         <div class="discover-section" id="fdj-wrap" style="display:none">
           <div class="discover-section-title">Film du jour</div>
           <div class="fdj-card" id="fdj-card" role="button" tabindex="0"></div>
+        </div>
+
+        <div class="discover-section" id="quiz-wrap" style="display:none">
+          <div class="discover-section-title">
+            Quiz du jour
+            <span class="quiz-streak" id="quiz-streak-badge"></span>
+          </div>
+          <div class="quiz-card" id="quiz-card"></div>
         </div>
 
         <div class="discover-section" id="trending-carousel-wrap" style="display:none">

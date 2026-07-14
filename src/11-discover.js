@@ -626,3 +626,157 @@ function attachSwipeHandlers(cardEl, movie) {
 discoverPassBtn.addEventListener('click', () => resolveDiscoverSwipe('pass'));
 discoverLikeBtn.addEventListener('click', () => resolveDiscoverSwipe('like'));
 discoverReloadBtn.addEventListener('click', () => loadDiscoverQueue());
+
+// ═══════════════════════════════════════════
+//  QUIZ DU JOUR
+// ═══════════════════════════════════════════
+// Une question par jour (stable toute la journée, comme Film du jour), tirée
+// d'Open Trivia DB (catégorie 11 = Entertainment: Film) — gratuit, sans clé,
+// jamais à court de contenu contrairement à une banque de questions écrites
+// à la main qu'il faudrait sans cesse renouveler. Un lot de 30 questions est
+// récupéré une fois puis mis en cache ; chaque jour, une question du lot est
+// choisie de façon déterministe (index = jour depuis l'epoch, modulo la
+// taille du lot), et le lot est renouvelé une fois entièrement parcouru.
+const QUIZ_BATCH_KEY = 'lbx_quiz_batch';
+const QUIZ_BATCH_FETCHED_DAY_KEY = 'lbx_quiz_batch_fetched_day';
+const QUIZ_STREAK_KEY = 'lbx_quiz_streak';
+const QUIZ_LAST_PLAYED_KEY = 'lbx_quiz_last_played_date';
+const QUIZ_LAST_RESULT_KEY = 'lbx_quiz_last_result';
+
+function quizDaysSinceEpoch() {
+  return Math.floor(Date.now() / 86400000);
+}
+function quizTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function quizDecodeEntities(str) {
+  const el = document.createElement('textarea');
+  el.innerHTML = str;
+  return el.value;
+}
+// Mélange déterministe (seed = index du jour) : l'ordre des réponses reste
+// stable toute la journée, pas un nouveau tirage à chaque rafraîchissement.
+function quizSeededShuffle(arr, seed) {
+  const a = arr.slice();
+  let s = seed || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function ensureQuizBatch() {
+  let batch = [];
+  try { batch = JSON.parse(localStorage.getItem(QUIZ_BATCH_KEY)) || []; } catch {}
+  const fetchedDay = parseInt(localStorage.getItem(QUIZ_BATCH_FETCHED_DAY_KEY), 10) || 0;
+  const daysSinceFetch = quizDaysSinceEpoch() - fetchedDay;
+  const needsRefresh = batch.length === 0 || daysSinceFetch >= batch.length || daysSinceFetch >= 30;
+  if (!needsRefresh) return batch;
+
+  try {
+    const res = await fetch('https://opentdb.com/api.php?amount=30&category=11&type=multiple&encode=url3986');
+    const data = await res.json();
+    if (data.response_code === 0 && data.results?.length > 0) {
+      batch = data.results;
+      localStorage.setItem(QUIZ_BATCH_KEY, JSON.stringify(batch));
+      localStorage.setItem(QUIZ_BATCH_FETCHED_DAY_KEY, String(quizDaysSinceEpoch()));
+    }
+  } catch {
+    // Silencieux : la section reste cachée si indisponible (voir loadDailyQuiz), pas d'erreur gênante pour l'utilisateur.
+  }
+  return batch;
+}
+
+function getTodaysQuizQuestion(batch) {
+  if (!batch || batch.length === 0) return null;
+  const idx = quizDaysSinceEpoch() % batch.length;
+  const raw = batch[idx];
+  const question = quizDecodeEntities(decodeURIComponent(raw.question));
+  const correctAnswer = quizDecodeEntities(decodeURIComponent(raw.correct_answer));
+  const incorrectAnswers = raw.incorrect_answers.map(a => quizDecodeEntities(decodeURIComponent(a)));
+  const allAnswers = quizSeededShuffle([correctAnswer, ...incorrectAnswers], idx);
+  return { idx, question, correctAnswer, allAnswers };
+}
+
+function renderQuizStreakBadge() {
+  const badge = document.getElementById('quiz-streak-badge');
+  if (!badge) return;
+  const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
+}
+
+function renderQuizAnsweredState(card, q, lastResult) {
+  card.innerHTML = `
+    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map(a => {
+        const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
+        return `<button class="quiz-answer-btn ${cls}" disabled>${a}</button>`;
+      }).join('')}
+    </div>
+    <div class="quiz-already-played">${lastResult.wasCorrect ? "✓ Bonne réponse aujourd'hui — reviens demain pour la suite." : `La bonne réponse était « ${q.correctAnswer} » — reviens demain.`}</div>
+  `;
+}
+
+async function loadDailyQuiz() {
+  const wrap = document.getElementById('quiz-wrap');
+  const card = document.getElementById('quiz-card');
+  if (!wrap || !card) return;
+
+  const batch = await ensureQuizBatch();
+  const q = getTodaysQuizQuestion(batch);
+  if (!q) return; // API indisponible pour l'instant : section reste cachée plutôt que d'afficher une erreur
+
+  wrap.style.display = 'block';
+  renderQuizStreakBadge();
+
+  const today = quizTodayStr();
+  const lastPlayed = localStorage.getItem(QUIZ_LAST_PLAYED_KEY);
+  let lastResult = null;
+  try { lastResult = JSON.parse(localStorage.getItem(QUIZ_LAST_RESULT_KEY)); } catch {}
+
+  if (lastPlayed === today && lastResult && lastResult.questionIdx === q.idx) {
+    renderQuizAnsweredState(card, q, lastResult);
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map(a => `<button class="quiz-answer-btn" data-answer="${escAttr(a)}">${a}</button>`).join('')}
+    </div>
+  `;
+
+  card.querySelectorAll('.quiz-answer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const picked = btn.dataset.answer;
+      const wasCorrect = picked === q.correctAnswer;
+      card.querySelectorAll('.quiz-answer-btn').forEach(b => {
+        b.disabled = true;
+        if (b.dataset.answer === q.correctAnswer) b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+
+      // Série : hier → continue ; sinon (jamais joué, ou pause d'un jour ou
+      // plus) → repart de 1. Une mauvaise réponse casse la série (compte
+      // vraiment y répondre juste, contrairement à la série de notation qui
+      // ne demande que d'être actif).
+      const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const newStreak = wasCorrect ? (lastPlayed === yesterday ? streak + 1 : 1) : 0;
+
+      localStorage.setItem(QUIZ_STREAK_KEY, String(newStreak));
+      localStorage.setItem(QUIZ_LAST_PLAYED_KEY, today);
+      localStorage.setItem(QUIZ_LAST_RESULT_KEY, JSON.stringify({ questionIdx: q.idx, wasCorrect, picked }));
+      renderQuizStreakBadge();
+      if (navigator.vibrate) navigator.vibrate(wasCorrect ? 20 : [20, 40, 20]);
+
+      const resultEl = document.createElement('div');
+      resultEl.className = 'quiz-result';
+      resultEl.textContent = wasCorrect ? 'Bonne réponse ! 🎉' : `La bonne réponse était « ${q.correctAnswer} ».`;
+      card.appendChild(resultEl);
+    });
+  });
+}

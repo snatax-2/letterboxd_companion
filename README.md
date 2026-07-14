@@ -142,6 +142,8 @@ npm run test:e2e
 - **`tests/e2e/onboarding.spec.js`** — l'accueil ne s'affiche qu'à un vrai nouvel utilisateur (aucune donnée), se parcourt en plusieurs étapes, et ne revient plus une fois vu (que ce soit terminé ou passé).
 - **`tests/e2e/header-scroll-check.spec.js`** — après défilement d'une fiche film, le bouton de fermeture reste visible et rien ne dépasse au-dessus de l'en-tête.
 - **`tests/e2e/trailer-click-to-load.spec.js`** — la bande-annonce affiche une vignette cliquable, l'iframe ne se charge qu'au clic.
+- **`tests/e2e/watchlist-picker.spec.js`** — choisir une liste existante (même si ce n'est pas la liste active) ajoute bien le film dedans ; créer une nouvelle liste à la volée fonctionne aussi.
+- **`tests/e2e/daily-quiz.spec.js`** — quiz du jour : bonne réponse (confirmation + série), mauvaise réponse (série remise à zéro). Écrit pour ton environnement (celui où j'ai développé avait une restriction réseau propre à son bac à sable empêchant une vérification E2E fiable pour ce fichier précis — la logique a été validée séparément en détail).
 
 À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
 

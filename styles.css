@@ -1106,6 +1106,33 @@
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
      opacité 0 par défaut donc invisible tant que rien n'est en cours. */
+  .wl-picker-box { max-width: 380px; }
+  .wl-picker-item {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    padding: 12px 14px; margin-bottom: 8px; cursor: pointer; font-family: var(--font-body);
+    font-size: 0.9rem; color: var(--text-hi); text-align: left; transition: border-color .15s;
+  }
+  .wl-picker-item:hover { border-color: var(--orange); }
+  .wl-picker-item-count { font-size: 0.76rem; color: var(--text-mid); }
+  .wl-picker-new-row { margin-top: 6px; }
+  .wl-picker-new-btn {
+    display: flex; align-items: center; gap: 8px; width: 100%; background: none;
+    border: 1px dashed var(--border-hi); border-radius: var(--radius-sm); padding: 12px 14px;
+    color: var(--text-mid); font-size: 0.9rem; cursor: pointer; font-family: var(--font-body);
+  }
+  .wl-picker-new-btn:hover { color: var(--orange); border-color: var(--orange); }
+  .wl-picker-new-btn .icon { width: 17px; height: 17px; }
+  .wl-picker-new-form { display: flex; gap: 8px; margin-top: 4px; }
+  .wl-picker-new-form input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    padding: 10px 12px; color: var(--text-hi); font-size: 0.88rem; font-family: var(--font-body);
+  }
+  .wl-picker-new-form button {
+    background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none; border-radius: var(--radius-sm);
+    padding: 10px 14px; font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
+  }
+
   .wrapped-entry-card {
     display: flex; align-items: center; gap: 14px; cursor: pointer;
     background: linear-gradient(135deg, var(--surface2), var(--surface));
@@ -1674,6 +1701,41 @@
     color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
     display: flex; align-items: center; justify-content: space-between;
   }
+  .quiz-streak {
+    font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem; color: var(--orange);
+    display: flex; align-items: center; gap: 3px; text-transform: none; letter-spacing: 0;
+  }
+  .quiz-streak .icon {
+    width: 13px; height: 13px;
+    transform-origin: 50% 90%;
+    animation: quizFlameFlicker 1.6s ease-in-out infinite;
+  }
+  @keyframes quizFlameFlicker {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1, 0.92) rotate(-4deg); }
+    50% { transform: scale(0.94, 1.08) rotate(3deg); }
+    75% { transform: scale(1.06, 0.96) rotate(-2deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .quiz-streak .icon { animation: none; }
+  }
+  .quiz-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+  }
+  .quiz-question { font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; color: var(--text-hi); line-height: 1.4; margin-bottom: 14px; }
+  .quiz-answers { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-answer-btn {
+    text-align: left; background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    padding: 10px 14px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer; font-family: var(--font-body);
+    transition: border-color .15s, background-color .15s;
+  }
+  .quiz-answer-btn:hover:not(:disabled) { border-color: var(--orange); }
+  .quiz-answer-btn:disabled { cursor: default; }
+  .quiz-answer-btn.correct { background: rgba(90,160,90,0.18); border-color: var(--green, #5a9e5a); color: var(--text-hi); }
+  .quiz-answer-btn.wrong { background: rgba(180,70,70,0.18); border-color: var(--red, #b44646); color: var(--text-hi); }
+  .quiz-result { margin-top: 12px; font-size: 0.82rem; color: var(--text-mid); text-align: center; }
+  .quiz-already-played { text-align: center; padding: 8px 0; color: var(--text-mid); font-size: 0.86rem; }
+
   .fdj-card {
     display: flex; gap: 12px; background: var(--bg); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 12px; cursor: pointer; box-shadow: var(--box-shadow-style, none);
