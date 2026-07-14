@@ -75,6 +75,7 @@
       moderne:   { bg: '#F9F6F0', accent: '#E07A5F' },
       journal:   { bg: '#FAF0E6', accent: '#8D6E52' },
       meridien:  { bg: '#F7F3EA', bgNight: '#171410', accent: '#B08D57' },
+      technicolor: { bg: '#101425', accent: '#DF2935' },
     };
     var p = palettes[theme] || palettes.default;
     var bg = p.bg;
@@ -182,6 +183,14 @@
             <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px"></div><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px;opacity:0.6"></div><div class="theme-preview-dot" style="background:#B08D57;border-radius:2px;opacity:0.3"></div></div>
           </div>
           <div class="theme-label" style="background:#B08D57;color:#0d1117;font-family:'Cormorant Garamond',serif;font-weight:700;letter-spacing:.04em;">MÉRIDIEN</div>
+        </div>
+        <div class="theme-card" data-theme="technicolor" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Technicolor">
+          <div class="theme-preview" style="background:#101425; border: 2px solid #E6AF2E;">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1A223B;flex:1;border:1px solid #2A3454"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#DF2935,#E6AF2E);width:65%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#DF2935"></div><div class="theme-preview-dot" style="background:#E6AF2E"></div><div class="theme-preview-dot" style="background:#5C7DAA"></div></div>
+          </div>
+          <div class="theme-label" style="background:#1A223B;color:#E6AF2E;font-family:'Oswald',sans-serif;letter-spacing:.06em;border-top:2px solid #E6AF2E;">TECHNICOLOR</div>
         </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
           <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">

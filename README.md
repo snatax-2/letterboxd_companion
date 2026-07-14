@@ -144,6 +144,7 @@ npm run test:e2e
 - **`tests/e2e/trailer-click-to-load.spec.js`** — la bande-annonce affiche une vignette cliquable, l'iframe ne se charge qu'au clic.
 - **`tests/e2e/watchlist-picker.spec.js`** — choisir une liste existante (même si ce n'est pas la liste active) ajoute bien le film dedans ; créer une nouvelle liste à la volée fonctionne aussi.
 - **`tests/e2e/daily-quiz.spec.js`** — quiz du jour : bonne réponse (confirmation + série), mauvaise réponse (série remise à zéro). Écrit pour ton environnement (celui où j'ai développé avait une restriction réseau propre à son bac à sable empêchant une vérification E2E fiable pour ce fichier précis — la logique a été validée séparément en détail).
+- **`tests/e2e/technicolor-theme.spec.js`** — le thème Technicolor se sélectionne et applique bien ses couleurs (fond, rouge), sauvegardé correctement dans les réglages.
 
 À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
 
