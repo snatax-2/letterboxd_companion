@@ -140,6 +140,8 @@ npm run test:e2e
 - **`tests/e2e/keyboard-accessibility.spec.js`** — activation par Entrée/Espace des cartes cliquables (tendances, casting, filmographie...), focus déplacé à l'ouverture d'une fiche, piégeage du focus dans une fiche ouverte.
 - **`tests/e2e/surprise-me.spec.js`** — le bouton "Surprends-moi" ouvre la fiche du film pioché, et affiche un message (sans planter) si aucun résultat.
 - **`tests/e2e/onboarding.spec.js`** — l'accueil ne s'affiche qu'à un vrai nouvel utilisateur (aucune donnée), se parcourt en plusieurs étapes, et ne revient plus une fois vu (que ce soit terminé ou passé).
+- **`tests/e2e/header-scroll-check.spec.js`** — après défilement d'une fiche film, le bouton de fermeture reste visible et rien ne dépasse au-dessus de l'en-tête.
+- **`tests/e2e/trailer-click-to-load.spec.js`** — la bande-annonce affiche une vignette cliquable, l'iframe ne se charge qu'au clic.
 
 À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
 

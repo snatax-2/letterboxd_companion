@@ -5388,6 +5388,18 @@ const mdsEl = document.getElementById('movie-detail-sheet');
 const mdsContentEl = document.getElementById('mds-content');
 const mdsCloseBtn = document.getElementById('mds-close-btn');
 
+// Bande-annonce : chargée seulement au clic (vignette + bouton lecture avant
+// ça), pas embarquée automatiquement dès l'ouverture de la fiche. Attaché ici,
+// au niveau racine (pas dans renderCastCarousel), pour qu'il fonctionne même
+// pour un film sans casting. Le gestionnaire clavier générique
+// (01-navigation.js) couvre déjà Entrée/Espace pour ce role="button".
+mdsContentEl.addEventListener('click', (e) => {
+  const trailerWrap = e.target.closest('.mds-trailer-wrap');
+  if (!trailerWrap || trailerWrap.querySelector('iframe')) return;
+  const key = trailerWrap.dataset.videoKey;
+  trailerWrap.innerHTML = `<iframe class="mds-trailer" src="https://www.youtube.com/embed/${key}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+});
+
 function formatMoney(amount) {
   if (!amount || amount <= 0) return 'Non communiqué';
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
@@ -5477,8 +5489,9 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       return `
       <div class="mds-section" style="animation-delay:.08s">
         <div class="mds-section-title">Bande-annonce</div>
-        <div class="mds-trailer-wrap">
-          <iframe class="mds-trailer" src="https://www.youtube.com/embed/${trailer.key}" title="Bande-annonce de ${escAttr(data.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.title)}">
+          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
+          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
       </div>`;
     })()}

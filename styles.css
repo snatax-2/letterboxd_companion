@@ -1256,7 +1256,7 @@
   .action-sheet-item .icon { width: 1.2em; height: 1.2em; flex-shrink: 0; }
 
   /* ── FICHE FILM DÉTAILLÉE ── */
-  .mds-box { max-width: 440px; position: relative; padding-top: 14px; }
+  .mds-box { max-width: 440px; position: relative; padding-top: 0; }
   .mds-close {
     position: sticky; top: 12px; margin: 12px 12px -26px auto; width: 26px; height: 26px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
@@ -1272,14 +1272,13 @@
   .mds-header {
     display: flex; gap: 14px; align-items: flex-start;
     position: sticky; top: 0; z-index: 5; background: var(--bg);
-    margin: -14px -24px 0; padding: 14px 24px 12px; transition: padding .2s ease, gap .2s ease;
+    margin: 0 -24px 0; padding: 14px 24px 12px; transition: padding .2s ease, gap .2s ease;
     border-bottom: 1px solid var(--border);
-    /* Force sa propre couche de composition (rendu GPU dédié) — remède
-       standard pour un bug connu de Safari iOS où un élément "sticky", combiné
-       au défilement tactile momentum (-webkit-overflow-scrolling:touch),
-       laisse parfois du contenu défilé "derrière" rester visible par-dessus
-       jusqu'à ce qu'un repaint soit déclenché autrement. Invisible sur les
-       autres navigateurs, qui n'ont pas ce problème. */
+    border-radius: var(--radius) var(--radius) 0 0; /* couvre le coin arrondi de la fiche, sans avoir besoin d'une marge négative qui s'est révélée être la source du bug de contenu qui perce au-dessus */
+    /* Conserve sa propre couche de composition (rendu GPU dédié) par prudence
+       (aide historiquement avec des soucis de repaint sur mobile), même si la
+       cause principale du contenu qui perce était en fait la marge négative
+       ci-dessus, maintenant supprimée. */
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     backface-visibility: hidden;
@@ -1359,17 +1358,21 @@
   }
   .mds-trailer-wrap {
     position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius-sm); overflow: hidden; background: #000;
-    /* Isole son propre contexte d'empilement et force sa propre couche de
-       rendu — un <iframe> (comme celui de YouTube) a une réputation bien
-       connue d'ignorer les règles normales de z-index et de s'afficher
-       par-dessus du contenu qui devrait pourtant passer devant lui,
-       particulièrement sur iOS. C'est ce qui laissait la bande-annonce
-       "percer" au-dessus de l'en-tête une fois collé en haut. */
+    cursor: pointer;
     isolation: isolate;
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     z-index: 0;
   }
+  .mds-trailer-thumb { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+  .mds-trailer-play {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 54px; height: 54px; border-radius: 50%; background: rgba(0,0,0,0.65);
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    transition: transform .15s ease, background-color .15s ease;
+  }
+  .mds-trailer-play .icon { width: 24px; height: 24px; margin-left: 3px; }
+  .mds-trailer-wrap:hover .mds-trailer-play { transform: translate(-50%, -50%) scale(1.08); background: rgba(200,30,30,0.85); }
   .mds-trailer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
   /* Synopsis en accordéon : tronqué à 4 lignes par défaut, déployé au tap sur
      le bouton (masqué automatiquement si le texte tient déjà entièrement). */
