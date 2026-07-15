@@ -21,8 +21,18 @@ function duelFilmKey(item) {
 }
 
 function loadDuelsData() {
-  try { return JSON.parse(localStorage.getItem(DUELS_KEY)) || { ratings: {}, totalDuels: 0 }; }
-  catch { return { ratings: {}, totalDuels: 0 }; }
+  try {
+    const d = JSON.parse(localStorage.getItem(DUELS_KEY)) || {};
+    // pairs : memoire des affrontements deja joues (cle canonique triee),
+    // pour ne JAMAIS reproposer deux fois le meme duel. Le || {} assure la
+    // compatibilite avec les donnees d'avant cette fonctionnalite.
+    return { ratings: d.ratings || {}, totalDuels: d.totalDuels || 0, pairs: d.pairs || {} };
+  }
+  catch { return { ratings: {}, totalDuels: 0, pairs: {} }; }
+}
+
+function duelPairKey(keyA, keyB) {
+  return [keyA, keyB].sort().join('||');
 }
 function saveDuelsData(data) {
   localStorage.setItem(DUELS_KEY, JSON.stringify(data));
@@ -37,9 +47,9 @@ function getDuelRating(data, key) {
 // et le rendu.
 
 // Choisit la paire du prochain duel : privilégie les films les MOINS déjà
-// duellés (pour que tout l'historique participe), puis parmi eux, deux films
-// aux cotes PROCHES (les duels serrés sont les plus informatifs ET les plus
-// intéressants à trancher — "Alien vs Seven", pas "Le Parrain vs un navet").
+// duellés, puis parmi eux, deux films aux cotes PROCHES — mais JAMAIS deux
+// films qui se sont déjà affrontés (mémoire data.pairs). Si toutes les paires
+// possibles ont été jouées, retourne { exhausted: true } pour un message dédié.
 function pickDuelPair() {
   const history = loadHistory();
   if (history.length < 2) return null;
@@ -56,21 +66,24 @@ function pickDuelPair() {
   }
   if (films.length < 2) return null;
 
-  // Trie par nombre de duels croissant, garde le tiers le moins expérimenté
-  // (au moins 4 films pour préserver de la variété), pioche le premier au
-  // hasard dedans...
-  films.sort((a, b) => a.duels - b.duels);
-  const poolSize = Math.max(4, Math.ceil(films.length / 3));
-  const pool = films.slice(0, Math.min(poolSize, films.length));
-  const first = pool[Math.floor(Math.random() * pool.length)];
+  // Candidats "premier du duel" : les moins expérimentés d'abord (tout
+  // l'historique finit par participer), avec un peu de hasard dans l'ordre.
+  const byExperience = films.slice().sort((a, b) => a.duels - b.duels || Math.random() - 0.5);
 
-  // ...puis son adversaire : parmi TOUS les autres, un des 5 plus proches en ELO
-  const others = films.filter(f => f.key !== first.key);
-  others.sort((a, b) => Math.abs(a.elo - first.elo) - Math.abs(b.elo - first.elo));
-  const nearest = others.slice(0, Math.min(5, others.length));
-  const second = nearest[Math.floor(Math.random() * nearest.length)];
+  for (const first of byExperience) {
+    // Adversaires possibles : jamais affrontés, triés par proximité de cote,
+    // choix aléatoire parmi les 5 plus proches pour varier.
+    const unfought = films.filter(f =>
+      f.key !== first.key && !data.pairs[duelPairKey(first.key, f.key)]
+    );
+    if (unfought.length === 0) continue;
+    unfought.sort((a, b) => Math.abs(a.elo - first.elo) - Math.abs(b.elo - first.elo));
+    const nearest = unfought.slice(0, Math.min(5, unfought.length));
+    const second = nearest[Math.floor(Math.random() * nearest.length)];
+    return Math.random() < 0.5 ? [first, second] : [second, first];
+  }
 
-  return Math.random() < 0.5 ? [first, second] : [second, first];
+  return { exhausted: true }; // toutes les paires possibles ont été jouées
 }
 
 function resolveDuel(winnerKey, loserKey) {
@@ -80,6 +93,7 @@ function resolveDuel(winnerKey, loserKey) {
   const { winnerElo, loserElo, delta } = computeEloUpdate(w.elo, l.elo, DUEL_K);
   data.ratings[winnerKey] = { elo: winnerElo, duels: w.duels + 1 };
   data.ratings[loserKey] = { elo: loserElo, duels: l.duels + 1 };
+  data.pairs[duelPairKey(winnerKey, loserKey)] = true; // ce duel ne sera plus jamais reproposé
   data.totalDuels = (data.totalDuels || 0) + 1;
   saveDuelsData(data);
   return delta;
@@ -119,9 +133,13 @@ function renderDuel() {
   if (!arena || !emptyEl) return;
 
   currentDuelPair = pickDuelPair();
-  if (!currentDuelPair) {
+  if (!currentDuelPair || currentDuelPair.exhausted) {
     arena.style.display = 'none';
     emptyEl.style.display = 'block';
+    emptyEl.textContent = currentDuelPair && currentDuelPair.exhausted
+      ? 'Tous les duels possibles ont été joués — ton classement est complet ! Note de nouveaux films pour relancer l\'arène.'
+      : 'Note au moins 2 films pour lancer les duels.';
+    if (currentDuelPair && currentDuelPair.exhausted) currentDuelPair = null;
     return;
   }
   arena.style.display = '';
@@ -155,14 +173,23 @@ function renderDuelRanking() {
     listEl.innerHTML = `<div class="duel-ranking-empty">Ton podium apparaîtra après quelques duels (3 duels minimum par film).</div>`;
     return;
   }
+  // Podium (top 3) toujours visible, sans les points ELO — c'est l'ORDRE qui
+  // compte pour l'utilisateur, le chiffre interne n'apporte que du bruit. Le
+  // reste du top 10 se déplie à la demande (accordéon natif <details>).
   const medals = ['🥇', '🥈', '🥉'];
-  listEl.innerHTML = ranking.map((r, i) => `
+  const rowHtml = (r, i) => `
     <div class="duel-rank-row">
       <span class="duel-rank-pos">${medals[i] || (i + 1)}</span>
       <span class="duel-rank-title">${escAttr(r.item.title)}</span>
-      <span class="duel-rank-elo">${r.elo}</span>
-    </div>
-  `).join('');
+    </div>`;
+  const podium = ranking.slice(0, 3).map(rowHtml).join('');
+  const rest = ranking.slice(3);
+  const restHtml = rest.length > 0 ? `
+    <details class="duel-rank-more">
+      <summary>Voir le reste du top 10 (${rest.length})</summary>
+      ${rest.map((r, i) => rowHtml(r, i + 3)).join('')}
+    </details>` : '';
+  listEl.innerHTML = podium + restHtml;
 }
 
 function renderDuelsSection() {

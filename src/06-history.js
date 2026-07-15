@@ -1024,6 +1024,13 @@ function renderProfileExtras(history) {
 function renderBadges(badges) {
   const grid = document.getElementById('badges-grid');
   if (!grid) return;
+  // Compteur dans l'en-tête plié : l'info essentielle (progression) reste
+  // visible sans déplier, le détail ne prend plus tout cet espace du profil.
+  const countEl = document.getElementById('badges-count');
+  if (countEl) {
+    const unlocked = badges.filter(b => b.unlocked).length;
+    countEl.textContent = `${unlocked}/${badges.length}`;
+  }
   grid.innerHTML = badges.map(b => `
     <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
       <div class="badge-icon">${ICONS.star}</div>

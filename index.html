@@ -829,8 +829,14 @@
       </div>
 
       <div class="card" id="profile-badges-card">
-        <div class="card-title">Badges</div>
-        <div class="badges-grid" id="badges-grid"></div>
+        <details class="badges-fold" id="badges-fold">
+          <summary class="badges-summary">
+            <span class="card-title" style="margin:0;">Badges</span>
+            <span class="badges-count" id="badges-count"></span>
+            <span class="badges-chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="badges-grid" id="badges-grid"></div>
+        </details>
       </div>
 
       <div class="card" id="profile-share-card">

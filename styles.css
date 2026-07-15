@@ -1266,8 +1266,23 @@
   .duel-rank-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.84rem; }
   .duel-rank-pos { width: 26px; flex-shrink: 0; text-align: center; }
   .duel-rank-title { flex: 1; min-width: 0; color: var(--text-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .duel-rank-elo { font-family: var(--font-mono); font-size: 0.76rem; color: var(--gold); }
+  .duel-rank-more summary {
+    cursor: pointer; font-size: 0.76rem; color: var(--text-mid); padding: 6px 0;
+    list-style: none; user-select: none;
+  }
+  .duel-rank-more summary::-webkit-details-marker { display: none; }
+  .duel-rank-more summary::after { content: ' ▾'; }
+  .duel-rank-more[open] summary::after { content: ' ▴'; }
+  .duel-rank-more summary:hover { color: var(--text-hi); }
   .duel-ranking-empty { font-size: 0.8rem; color: var(--text-mid); text-align: center; padding: 8px 0; }
+
+  /* Badges pliés par défaut : l'en-tête (avec compteur x/y) suffit au quotidien */
+  .badges-fold summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; user-select: none; }
+  .badges-fold summary::-webkit-details-marker { display: none; }
+  .badges-count { font-size: 0.78rem; color: var(--gold); font-family: var(--font-mono); }
+  .badges-chevron { margin-left: auto; color: var(--text-mid); transition: transform .2s ease; }
+  .badges-fold[open] .badges-chevron { transform: rotate(180deg); }
+  .badges-fold[open] .badges-grid { margin-top: 12px; }
 
   /* ── Cartes Profil : Il y a un an / Heatmap / Décennies ── */
   .year-ago-body { display: flex; gap: 12px; align-items: center; }
