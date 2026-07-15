@@ -418,6 +418,54 @@ function mapLetterboxdCsv(rows) {
   return { items, skipped, kind };
 }
 
+// ── Cartes Profil : "Il y a un an", heatmap, décennies ──
+// Compte de films par jour (clé YYYY-MM-DD), pour la heatmap calendrier.
+function computeDailyCounts(history) {
+  const counts = {};
+  for (const item of history) {
+    if (!item.date) continue;
+    const key = String(item.date).slice(0, 10);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return counts;
+}
+
+// Films regroupés par décennie de sortie, avec compte et note moyenne.
+// Trié par compte décroissant. Les items sans année sont ignorés.
+function computeDecadeStats(history) {
+  const byDecade = {};
+  for (const item of history) {
+    const y = parseInt(item.year, 10);
+    if (isNaN(y) || y < 1880 || y > 2100) continue;
+    const decade = Math.floor(y / 10) * 10;
+    if (!byDecade[decade]) byDecade[decade] = { decade, count: 0, scoreSum: 0, scored: 0 };
+    byDecade[decade].count++;
+    const s = parseFloat(item.score);
+    if (!isNaN(s)) { byDecade[decade].scoreSum += s; byDecade[decade].scored++; }
+  }
+  return Object.values(byDecade)
+    .map(d => ({ decade: d.decade, count: d.count, avg: d.scored > 0 ? d.scoreSum / d.scored : null }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Le film regardé "il y a un an" : cherche autour de la même date l'an
+// dernier, en élargissant progressivement (jour exact, puis ±1, ±2, ±3 jours)
+// pour maximiser la chance d'un souvenir sans tricher sur "il y a un an".
+function findOneYearAgoFilm(history, today) {
+  const base = new Date(today);
+  base.setFullYear(base.getFullYear() - 1);
+  for (let spread = 0; spread <= 3; spread++) {
+    for (const sign of spread === 0 ? [0] : [-1, 1]) {
+      const d = new Date(base);
+      d.setDate(d.getDate() + spread * sign);
+      const key = d.toISOString().slice(0, 10);
+      const found = history.find(h => h.date && String(h.date).slice(0, 10) === key);
+      if (found) return { item: found, date: key };
+    }
+  }
+  return null;
+}
+
 // ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
 // Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
 // symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
@@ -561,5 +609,8 @@ if (typeof module !== 'undefined' && module.exports) {
     computeEloUpdate,
     parseCsv,
     mapLetterboxdCsv,
+    computeDailyCounts,
+    computeDecadeStats,
+    findOneYearAgoFilm,
   };
 }

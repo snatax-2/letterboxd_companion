@@ -208,6 +208,7 @@ function switchRightTab(tabName) {
   // proposée reste ainsi à jour avec les derniers films notés).
   if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
     renderDuelsSection();
+    if (typeof renderProfileExtras === 'function') renderProfileExtras();
   }
   // Aperçu unique du geste de swipe à la première visite de l'historique
   if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
@@ -1252,6 +1253,54 @@ function mapLetterboxdCsv(rows) {
   return { items, skipped, kind };
 }
 
+// ── Cartes Profil : "Il y a un an", heatmap, décennies ──
+// Compte de films par jour (clé YYYY-MM-DD), pour la heatmap calendrier.
+function computeDailyCounts(history) {
+  const counts = {};
+  for (const item of history) {
+    if (!item.date) continue;
+    const key = String(item.date).slice(0, 10);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return counts;
+}
+
+// Films regroupés par décennie de sortie, avec compte et note moyenne.
+// Trié par compte décroissant. Les items sans année sont ignorés.
+function computeDecadeStats(history) {
+  const byDecade = {};
+  for (const item of history) {
+    const y = parseInt(item.year, 10);
+    if (isNaN(y) || y < 1880 || y > 2100) continue;
+    const decade = Math.floor(y / 10) * 10;
+    if (!byDecade[decade]) byDecade[decade] = { decade, count: 0, scoreSum: 0, scored: 0 };
+    byDecade[decade].count++;
+    const s = parseFloat(item.score);
+    if (!isNaN(s)) { byDecade[decade].scoreSum += s; byDecade[decade].scored++; }
+  }
+  return Object.values(byDecade)
+    .map(d => ({ decade: d.decade, count: d.count, avg: d.scored > 0 ? d.scoreSum / d.scored : null }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Le film regardé "il y a un an" : cherche autour de la même date l'an
+// dernier, en élargissant progressivement (jour exact, puis ±1, ±2, ±3 jours)
+// pour maximiser la chance d'un souvenir sans tricher sur "il y a un an".
+function findOneYearAgoFilm(history, today) {
+  const base = new Date(today);
+  base.setFullYear(base.getFullYear() - 1);
+  for (let spread = 0; spread <= 3; spread++) {
+    for (const sign of spread === 0 ? [0] : [-1, 1]) {
+      const d = new Date(base);
+      d.setDate(d.getDate() + spread * sign);
+      const key = d.toISOString().slice(0, 10);
+      const found = history.find(h => h.date && String(h.date).slice(0, 10) === key);
+      if (found) return { item: found, date: key };
+    }
+  }
+  return null;
+}
+
 // ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
 // Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
 // symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
@@ -1395,6 +1444,9 @@ if (typeof module !== 'undefined' && module.exports) {
     computeEloUpdate,
     parseCsv,
     mapLetterboxdCsv,
+    computeDailyCounts,
+    computeDecadeStats,
+    findOneYearAgoFilm,
   };
 }
 
@@ -3255,6 +3307,7 @@ function renderStats() {
   });
   buildHistogram(dist);
   renderProfileExtras(history);
+  renderProfileDiscoveryCards();
 }
 
 // ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
@@ -3787,6 +3840,84 @@ function maybePlaySwipeHint() {
       }, 450);
     }, 900);
   }, 600);
+}
+// ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
+function renderYearAgoCard(history) {
+  const card = document.getElementById('year-ago-card');
+  const body = document.getElementById('year-ago-body');
+  if (!card || !body) return;
+  const found = findOneYearAgoFilm(history, new Date());
+  if (!found) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const { item } = found;
+  const posterHtml = item.poster
+    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
+  body.innerHTML = `
+    ${posterHtml}
+    <div>
+      <div class="year-ago-title">${escAttr(item.title)}</div>
+      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
+      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
+    </div>
+  `;
+}
+
+function renderHeatmap(history) {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  const counts = computeDailyCounts(history);
+
+  // 53 colonnes de semaines, en remontant depuis aujourd'hui jusqu'à ~1 an.
+  // On démarre au lundi de la semaine d'il y a 52 semaines pour des colonnes alignées.
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 364);
+  const dayOfWeek = (start.getDay() + 6) % 7; // lundi=0
+  start.setDate(start.getDate() - dayOfWeek);
+
+  let html = '';
+  const cur = new Date(start);
+  while (cur <= today) {
+    const key = cur.toISOString().slice(0, 10);
+    const n = counts[key] || 0;
+    const lvl = n === 0 ? 'l0' : n === 1 ? 'l1' : n === 2 ? 'l2' : 'l3';
+    html += `<div class="heatmap-cell ${lvl}" title="${key}${n > 0 ? ` — ${n} film${n > 1 ? 's' : ''}` : ''}"></div>`;
+    cur.setDate(cur.getDate() + 1);
+  }
+  grid.innerHTML = html;
+  // Amène la vue sur la fin (les semaines récentes), pas le début d'il y a un an
+  const scroll = grid.parentElement;
+  if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+}
+
+function renderDecades(history) {
+  const card = document.getElementById('decades-card');
+  const list = document.getElementById('decades-list');
+  if (!card || !list) return;
+  const stats = computeDecadeStats(history);
+  if (stats.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const max = stats[0].count;
+  list.innerHTML = stats.slice(0, 6).map(d => `
+    <div class="decade-row">
+      <span class="decade-label">${d.decade}s</span>
+      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
+      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
+    </div>
+  `).join('');
+}
+
+// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
+// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
+// portaient le même nom à un moment, et la seconde écrasait silencieusement
+// la première par hissage — cassant toute la carte "Ton profil" (Membre
+// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
+function renderProfileDiscoveryCards() {
+  const history = loadHistory();
+  renderYearAgoCard(history);
+  renderHeatmap(history);
+  renderDecades(history);
 }
 
 // ═══════════════════════════════════════════

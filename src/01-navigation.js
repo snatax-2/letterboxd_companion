@@ -35,6 +35,7 @@ function switchRightTab(tabName) {
   // proposée reste ainsi à jour avec les derniers films notés).
   if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
     renderDuelsSection();
+    if (typeof renderProfileExtras === 'function') renderProfileExtras();
   }
   // Aperçu unique du geste de swipe à la première visite de l'historique
   if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {

@@ -939,6 +939,7 @@ function renderStats() {
   });
   buildHistogram(dist);
   renderProfileExtras(history);
+  renderProfileDiscoveryCards();
 }
 
 // ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
@@ -1471,4 +1472,82 @@ function maybePlaySwipeHint() {
       }, 450);
     }, 900);
   }, 600);
+}
+// ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
+function renderYearAgoCard(history) {
+  const card = document.getElementById('year-ago-card');
+  const body = document.getElementById('year-ago-body');
+  if (!card || !body) return;
+  const found = findOneYearAgoFilm(history, new Date());
+  if (!found) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const { item } = found;
+  const posterHtml = item.poster
+    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
+  body.innerHTML = `
+    ${posterHtml}
+    <div>
+      <div class="year-ago-title">${escAttr(item.title)}</div>
+      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
+      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
+    </div>
+  `;
+}
+
+function renderHeatmap(history) {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  const counts = computeDailyCounts(history);
+
+  // 53 colonnes de semaines, en remontant depuis aujourd'hui jusqu'à ~1 an.
+  // On démarre au lundi de la semaine d'il y a 52 semaines pour des colonnes alignées.
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 364);
+  const dayOfWeek = (start.getDay() + 6) % 7; // lundi=0
+  start.setDate(start.getDate() - dayOfWeek);
+
+  let html = '';
+  const cur = new Date(start);
+  while (cur <= today) {
+    const key = cur.toISOString().slice(0, 10);
+    const n = counts[key] || 0;
+    const lvl = n === 0 ? 'l0' : n === 1 ? 'l1' : n === 2 ? 'l2' : 'l3';
+    html += `<div class="heatmap-cell ${lvl}" title="${key}${n > 0 ? ` — ${n} film${n > 1 ? 's' : ''}` : ''}"></div>`;
+    cur.setDate(cur.getDate() + 1);
+  }
+  grid.innerHTML = html;
+  // Amène la vue sur la fin (les semaines récentes), pas le début d'il y a un an
+  const scroll = grid.parentElement;
+  if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+}
+
+function renderDecades(history) {
+  const card = document.getElementById('decades-card');
+  const list = document.getElementById('decades-list');
+  if (!card || !list) return;
+  const stats = computeDecadeStats(history);
+  if (stats.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const max = stats[0].count;
+  list.innerHTML = stats.slice(0, 6).map(d => `
+    <div class="decade-row">
+      <span class="decade-label">${d.decade}s</span>
+      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
+      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
+    </div>
+  `).join('');
+}
+
+// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
+// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
+// portaient le même nom à un moment, et la seconde écrasait silencieusement
+// la première par hissage — cassant toute la carte "Ton profil" (Membre
+// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
+function renderProfileDiscoveryCards() {
+  const history = loadHistory();
+  renderYearAgoCard(history);
+  renderHeatmap(history);
+  renderDecades(history);
 }

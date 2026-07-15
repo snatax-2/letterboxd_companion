@@ -1269,6 +1269,36 @@
   .duel-rank-elo { font-family: var(--font-mono); font-size: 0.76rem; color: var(--gold); }
   .duel-ranking-empty { font-size: 0.8rem; color: var(--text-mid); text-align: center; padding: 8px 0; }
 
+  /* ── Cartes Profil : Il y a un an / Heatmap / Décennies ── */
+  .year-ago-body { display: flex; gap: 12px; align-items: center; }
+  .year-ago-poster { width: 52px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .year-ago-poster-ph { display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text-mid); font-size: 1.2rem; }
+  .year-ago-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem; color: var(--text-hi); }
+  .year-ago-meta { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
+  .year-ago-score { font-size: 0.82rem; color: var(--gold); margin-top: 4px; font-weight: 700; }
+
+  .heatmap-scroll { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  .heatmap-grid {
+    display: grid; grid-template-rows: repeat(7, 9px); grid-auto-flow: column;
+    grid-auto-columns: 9px; gap: 2px; width: max-content;
+  }
+  .heatmap-cell { width: 9px; height: 9px; border-radius: 2px; background: var(--surface2); }
+  .heatmap-cell.l1 { background: color-mix(in srgb, var(--orange) 35%, var(--surface2)); }
+  .heatmap-cell.l2 { background: color-mix(in srgb, var(--orange) 65%, var(--surface2)); }
+  .heatmap-cell.l3 { background: var(--orange); }
+  /* Filet si color-mix indisponible : les niveaux intermédiaires reprennent la couleur pleine en opacités */
+  @supports not (background: color-mix(in srgb, red 50%, blue)) {
+    .heatmap-cell.l1 { background: var(--orange); opacity: 0.35; }
+    .heatmap-cell.l2 { background: var(--orange); opacity: 0.65; }
+  }
+  .heatmap-legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 8px; font-size: 0.66rem; color: var(--text-mid); }
+
+  .decade-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+  .decade-label { width: 52px; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hi); }
+  .decade-bar-track { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .decade-bar { height: 100%; background: var(--orange); border-radius: 999px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+  .decade-count { width: 56px; flex-shrink: 0; text-align: right; font-size: 0.72rem; color: var(--text-mid); }
+
   .wrapped-entry-card {
     display: flex; align-items: center; gap: 14px; cursor: pointer;
     background: linear-gradient(135deg, var(--surface2), var(--surface));

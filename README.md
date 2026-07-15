@@ -150,6 +150,7 @@ npm run test:e2e
 - **`tests/e2e/ux-polish.spec.js`** — l'aperçu du geste de swipe se joue une seule fois à la première visite de l'historique ; l'en-tête de la fiche film garde toujours un fond opaque (teinté ou non).
 - **`tests/letterboxd-import.test.js`** — parseur CSV (virgules dans les titres, guillemets doublés, CRLF, retours à la ligne dans un champ) et mapping Letterboxd (note /5 -> /10, détection diary/ratings/watched par l'en-tête, lignes sans titre ignorées).
 - **`tests/e2e/letterboxd-import.spec.js`** — import réel d'un diary.csv (fusion, doublons ignorés, conversion des notes, titre à virgule intact) ; bannière de rappel de sauvegarde après 30 jours, retirée après export.
+- **`tests/e2e/profile-cards.spec.js`** — la carte "Ton profil" (membre depuis, temps visionné) se remplit bien, tout comme la heatmap calendrier, les décennies et "Il y a un an" — protège aussi contre la régression du doublon de fonction qui avait silencieusement cassé la première.
 
 À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
 
