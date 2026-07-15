@@ -75,7 +75,7 @@ test('le classement apparait apres 3 duels du meme film', async ({ page }) => {
 
   const rows = await page.locator('.duel-rank-title').allTextContents();
   expect(rows[0]).toBe('Film A'); // le mieux cote en premier
-  await expect(page.locator('.duel-rank-pos').first()).toContainText('🥇');
+  await expect(page.locator('.duel-rank-pos').first().locator('.duel-medal-gold svg')).toHaveCount(1);
   // Les points ELO ne sont plus affiches (l'ordre suffit)
   await expect(page.locator('.duel-rank-elo')).toHaveCount(0);
 });

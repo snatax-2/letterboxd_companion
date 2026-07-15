@@ -176,7 +176,14 @@ function renderDuelRanking() {
   // Podium (top 3) toujours visible, sans les points ELO — c'est l'ORDRE qui
   // compte pour l'utilisateur, le chiffre interne n'apporte que du bruit. Le
   // reste du top 10 se déplie à la demande (accordéon natif <details>).
-  const medals = ['🥇', '🥈', '🥉'];
+  // Médailles en SVG (même dessin, trois teintes or/argent/bronze via CSS)
+  // plutôt que les emojis 🥇🥈🥉 : rendu identique sur tous les appareils,
+  // couleurs cohérentes avec le thème actif.
+  const medals = [
+    `<span class="duel-medal duel-medal-gold">${ICONS.medal}</span>`,
+    `<span class="duel-medal duel-medal-silver">${ICONS.medal}</span>`,
+    `<span class="duel-medal duel-medal-bronze">${ICONS.medal}</span>`,
+  ];
   const rowHtml = (r, i) => `
     <div class="duel-rank-row">
       <span class="duel-rank-pos">${medals[i] || (i + 1)}</span>

@@ -1265,6 +1265,11 @@
   .duel-ranking-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px; }
   .duel-rank-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.84rem; }
   .duel-rank-pos { width: 26px; flex-shrink: 0; text-align: center; }
+  .duel-medal { display: inline-flex; }
+  .duel-medal .icon { width: 17px; height: 17px; }
+  .duel-medal-gold { color: var(--gold); }
+  .duel-medal-silver { color: #AEB6C2; }
+  .duel-medal-bronze { color: #C08A5A; }
   .duel-rank-title { flex: 1; min-width: 0; color: var(--text-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .duel-rank-more summary {
     cursor: pointer; font-size: 0.76rem; color: var(--text-mid); padding: 6px 0;
