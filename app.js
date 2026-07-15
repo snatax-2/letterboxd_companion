@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00b-icons.js, 00c-poster-color.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js
+// Assemblé depuis : 00-pwa.js, 00b-icons.js, 00c-poster-color.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -203,6 +203,15 @@ function switchRightTab(tabName) {
     loadTrendingCarousel();
     loadFilmDuJour();
     loadDailyQuiz();
+  }
+  // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
+  // proposée reste ainsi à jour avec les derniers films notés).
+  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
+    renderDuelsSection();
+  }
+  // Aperçu unique du geste de swipe à la première visite de l'historique
+  if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
+    maybePlaySwipeHint();
   }
 }
 
@@ -1175,6 +1184,84 @@ function computeWeekStreak(history, referenceDate = new Date()) {
 // film le mieux noté, temps total visionné. Fonction pure : ne touche à
 // aucun DOM, juste des données en entrée/sortie, pour rester testable
 // facilement (contrairement aux tests E2E, plus lents et parfois instables).
+// ── Import Letterboxd (voir 07-data-io.js pour l'UI) ──
+// Parseur CSV minimal mais correct : gère les champs entre guillemets
+// (contenant virgules, retours à la ligne, guillemets doublés ""), le cas le
+// plus piégeux des exports Letterboxd (titres comme "Paris, Texas").
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else field += c;
+  }
+  if (field !== '' || row.length > 0) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+  return rows;
+}
+
+// Convertit les lignes d'un CSV Letterboxd (diary.csv, ratings.csv ou
+// watched.csv — colonnes détectées par l'en-tête, insensible à l'ordre) en
+// items d'historique Ludex. Note Letterboxd sur 5 étoiles -> score sur 10.
+// Retourne aussi le type détecté et les lignes ignorées (sans titre).
+function mapLetterboxdCsv(rows) {
+  if (!rows || rows.length < 2) return { items: [], skipped: 0, kind: null };
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const col = (name) => header.indexOf(name);
+  const iName = col('name'), iYear = col('year'), iRating = col('rating');
+  const iWatched = col('watched date'), iDate = col('date');
+  if (iName === -1) return { items: [], skipped: 0, kind: null }; // pas un CSV Letterboxd
+
+  const kind = iWatched !== -1 ? 'diary' : (iRating !== -1 ? 'ratings' : 'watched');
+  const items = [];
+  let skipped = 0;
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    const title = (cells[iName] || '').trim();
+    if (!title) { skipped++; continue; }
+    const year = iYear !== -1 ? (cells[iYear] || '').trim() : '';
+    const ratingRaw = iRating !== -1 ? parseFloat(cells[iRating]) : NaN;
+    const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+    const score = hasRating ? (ratingRaw * 2).toFixed(1) : '';
+    const watchedDate = (iWatched !== -1 && cells[iWatched]) ? cells[iWatched].trim()
+                      : (iDate !== -1 && cells[iDate]) ? cells[iDate].trim() : '';
+    items.push({
+      title,
+      year,
+      score,
+      mode: 'quick',
+      values: hasRating ? { quick: ratingRaw } : {},
+      date: watchedDate,
+      savedAt: new Date().toISOString(),
+      importedFrom: 'letterboxd',
+    });
+  }
+  return { items, skipped, kind };
+}
+
+// ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
+// Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
+// symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
+// plus fort que soi rapporte gros ; battre plus faible rapporte peu.
+function computeEloUpdate(winnerElo, loserElo, k = 32) {
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+  const delta = Math.round(k * (1 - expectedWinner));
+  return { winnerElo: winnerElo + delta, loserElo: loserElo - delta, delta };
+}
+
 function computeWrappedStats(history, year) {
   const yearStr = String(year);
   const filtered = history.filter(h => {
@@ -1305,6 +1392,9 @@ if (typeof module !== 'undefined' && module.exports) {
     computeWeekStreak,
     computeBadges,
     computeWrappedStats,
+    computeEloUpdate,
+    parseCsv,
+    mapLetterboxdCsv,
   };
 }
 
@@ -2425,13 +2515,13 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -3667,9 +3757,43 @@ document.getElementById('filter-row').addEventListener('click', e => {
   renderHistory();
 });
 
+// ── Découvrabilité du swipe ──
+// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
+// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
+// l'historique (avec au moins un film), la première carte fait un petit
+// aperçu automatique — elle glisse brièvement, révélant l'action cachée
+// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
+const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
+function maybePlaySwipeHint() {
+  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+  const firstItem = document.querySelector('.hist-item');
+  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
+  const content = firstItem.querySelector('.hist-item-content');
+  if (!content) return;
+  localStorage.setItem(SWIPE_HINT_KEY, '1');
+
+  // Respecte la préférence de réduction des animations
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  setTimeout(() => {
+    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
+    content.style.transition = 'transform .45s cubic-bezier(.2,.8,.2,1)';
+    content.style.transform = 'translateX(-56px)';
+    setTimeout(() => {
+      content.style.transform = '';
+      setTimeout(() => {
+        firstItem.classList.remove('hist-swipe-left');
+        content.style.transition = '';
+      }, 450);
+    }, 900);
+  }, 600);
+}
+
 // ═══════════════════════════════════════════
 //  EXPORT / IMPORT
 // ═══════════════════════════════════════════
+const LAST_EXPORT_KEY = 'lbx_last_export_at';
+
 document.getElementById('export-btn').addEventListener('click', () => {
   const history = loadHistory();
   if (!history.length) { showToast('Aucun film à exporter.'); return; }
@@ -3678,6 +3802,9 @@ document.getElementById('export-btn').addEventListener('click', () => {
   const a    = document.createElement('a');
   a.href = url; a.download = `ludex-backup-${new Date().toISOString().slice(0,10)}.json`;
   a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
+  const banner = document.getElementById('backup-reminder');
+  if (banner) banner.remove();
   showToast(`${history.length} film${history.length > 1 ? 's' : ''} exporté${history.length > 1 ? 's' : ''}`);
 });
 
@@ -3685,33 +3812,111 @@ document.getElementById('import-trigger').addEventListener('click', () => {
   document.getElementById('import-file').click();
 });
 
+function importLudexJson(text) {
+  const data = JSON.parse(text);
+  if (!Array.isArray(data)) throw new Error('Format invalide');
+  openModal(
+    "Importer l'historique",
+    `Importer ${data.length} film${data.length > 1 ? 's' : ''} ? Cela fusionnera avec votre historique actuel (les doublons seront ignorés).`,
+    () => {
+      const existing = loadHistory();
+      const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+      const toAdd = data.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
+      const merged = [...toAdd, ...existing];
+      saveHistory(merged);
+      renderAll();
+      showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''}`);
+    }
+  );
+}
+
+// Import Letterboxd : accepte diary.csv, ratings.csv ou watched.csv de
+// l'export officiel Letterboxd (Réglages -> Import & Export). Le parsing et
+// le mapping (note /5 -> /10, colonnes détectées par l'en-tête) sont des
+// fonctions pures testées dans tests/letterboxd-import.test.js.
+function importLetterboxdCsv(text) {
+  const rows = parseCsv(text);
+  const { items, kind } = mapLetterboxdCsv(rows);
+  if (!kind) { showToast('CSV non reconnu — attendu : un export Letterboxd (diary, ratings ou watched).'); return; }
+  if (items.length === 0) { showToast('Aucun film trouvé dans ce fichier.'); return; }
+
+  const existing = loadHistory();
+  const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+  const toAdd = items.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
+  const dupes = items.length - toAdd.length;
+
+  const kindLabel = { diary: 'journal', ratings: 'notes', watched: 'films vus' }[kind];
+  openModal(
+    'Import Letterboxd',
+    `Fichier ${kindLabel} détecté : ${items.length} film${items.length > 1 ? 's' : ''}, dont ${toAdd.length} nouveau${toAdd.length > 1 ? 'x' : ''}${dupes > 0 ? ` (${dupes} déjà présent${dupes > 1 ? 's' : ''}, ignorés)` : ''}. Importer ?`,
+    () => {
+      const merged = [...toAdd, ...loadHistory()];
+      saveHistory(merged);
+      renderAll();
+      showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''} depuis Letterboxd 🎬`);
+    }
+  );
+}
+
 document.getElementById('import-file').addEventListener('change', e => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
+    const text = ev.target.result;
     try {
-      const data = JSON.parse(ev.target.result);
-      if (!Array.isArray(data)) throw new Error('Format invalide');
-      openModal(
-        "Importer l'historique",
-        `Importer ${data.length} film${data.length > 1 ? 's' : ''} ? Cela fusionnera avec votre historique actuel (les doublons seront ignorés).`,
-        () => {
-          const existing = loadHistory();
-          const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
-          const toAdd = data.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
-          const merged = [...toAdd, ...existing];
-          saveHistory(merged);
-          renderAll();
-          showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''}`);
-        }
-      );
+      // Détection automatique du format : un JSON valide commence par [ ou {,
+      // sinon on tente le chemin CSV Letterboxd. Le nom du fichier n'est pas
+      // fiable (téléchargements renommés), le contenu l'est.
+      const trimmed = text.trimStart();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        importLudexJson(text);
+      } else {
+        importLetterboxdCsv(text);
+      }
     } catch {
-      showToast('Fichier JSON invalide.');
+      showToast('Fichier non reconnu (attendu : sauvegarde Ludex .json ou export Letterboxd .csv).');
     }
     e.target.value = '';
   };
   reader.readAsText(file);
 });
+
+// ── Rappel de sauvegarde ──
+// localStorage peut être effacé par le navigateur (nettoyage de stockage,
+// réinstallation...). Si la dernière sauvegarde date de plus de 30 jours (ou
+// n'a jamais eu lieu) et qu'il y a au moins 10 films en jeu, une bannière
+// discrète le rappelle — fermable, et re-proposée au plus tous les 7 jours.
+const BACKUP_SNOOZE_KEY = 'lbx_backup_snoozed_at';
+function maybeShowBackupReminder() {
+  const history = loadHistory();
+  if (history.length < 10) return;
+
+  const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
+  const days = lastExport ? (Date.now() - new Date(lastExport).getTime()) / 86400000 : Infinity;
+  if (days < 30) return;
+
+  const snoozed = localStorage.getItem(BACKUP_SNOOZE_KEY);
+  if (snoozed && (Date.now() - new Date(snoozed).getTime()) / 86400000 < 7) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'backup-reminder';
+  banner.className = 'backup-reminder';
+  banner.innerHTML = `
+    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length} films notés, aucune sauvegarde.`}</span>
+    <button type="button" class="backup-reminder-btn" id="backup-reminder-export">Exporter</button>
+    <button type="button" class="backup-reminder-close" id="backup-reminder-close" aria-label="Plus tard">✕</button>
+  `;
+  document.body.appendChild(banner);
+  document.getElementById('backup-reminder-export').addEventListener('click', () => {
+    document.getElementById('export-btn').click();
+  });
+  document.getElementById('backup-reminder-close').addEventListener('click', () => {
+    localStorage.setItem(BACKUP_SNOOZE_KEY, new Date().toISOString());
+    banner.remove();
+  });
+}
+// Différé pour ne pas gêner le premier rendu (et laisser l'onboarding passer devant)
+setTimeout(maybeShowBackupReminder, 2500);
 
 // ═══════════════════════════════════════════
 //  WATCHLIST & DYNAMIC RECOMMENDATIONS
@@ -3896,7 +4101,7 @@ function renderWatchlist() {
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Aucun film dans la liste.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
     window._justSavedWatchlistTitle = null;
     return;
   }
@@ -5194,7 +5399,15 @@ async function loadDiscoverQueue() {
 
 async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
-  discoverStack.innerHTML = '<div class="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>';
+  // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
+  // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
+  // et la perception d'attente est bien meilleure.
+  discoverStack.innerHTML = `
+    <div class="discover-card discover-card-skeleton">
+      <div class="skeleton-bg" style="width:100%;aspect-ratio:2/3;border-radius:var(--radius-sm);"></div>
+      <div class="skeleton-text long skeleton-bg" style="margin-top:10px;height:16px;"></div>
+      <div class="skeleton-text short skeleton-bg"></div>
+    </div>`;
 
   const history = loadHistory();
   const watchlist = loadWatchlist();
@@ -6181,3 +6394,206 @@ function initSwipeToClose(overlayEl, closeFn) {
 
 initSwipeToClose(mdsEl, closeMovieDetailSheet);
 initSwipeToClose(pdsEl, closePersonDetailSheet);
+
+// ═══════════════════════════════════════════
+//  DUELS ELO
+// ═══════════════════════════════════════════
+// "Lequel préfères-tu ?" : l'app propose deux films déjà vus, on choisit, et
+// un classement personnel se construit duel après duel — système ELO, le même
+// que les échecs. Pourquoi ELO plutôt qu'un tri manuel : chaque duel n'exige
+// qu'une micro-décision facile ("celui-là"), et le classement global émerge
+// tout seul, y compris entre films jamais comparés directement.
+//
+// Les cotes vivent dans leur propre clé localStorage (lbx_duels), séparée de
+// l'historique : l'export/import de l'historique n'est pas pollué par des
+// données de jeu, et supprimer un film de l'historique ne casse rien ici
+// (sa cote devient simplement orpheline et ignorée).
+
+const DUELS_KEY = 'lbx_duels';
+const DUEL_START_ELO = 1200;
+const DUEL_K = 32; // facteur K standard : assez réactif sans être erratique
+
+function duelFilmKey(item) {
+  return (item.title + '|' + (item.year || '')).toLowerCase();
+}
+
+function loadDuelsData() {
+  try { return JSON.parse(localStorage.getItem(DUELS_KEY)) || { ratings: {}, totalDuels: 0 }; }
+  catch { return { ratings: {}, totalDuels: 0 }; }
+}
+function saveDuelsData(data) {
+  localStorage.setItem(DUELS_KEY, JSON.stringify(data));
+}
+
+function getDuelRating(data, key) {
+  return data.ratings[key] || { elo: DUEL_START_ELO, duels: 0 };
+}
+
+// Cœur mathématique dans 03b-pure-logic.js (computeEloUpdate), testé dans
+// tests/duels.test.js — ici uniquement le stockage, la sélection de paires
+// et le rendu.
+
+// Choisit la paire du prochain duel : privilégie les films les MOINS déjà
+// duellés (pour que tout l'historique participe), puis parmi eux, deux films
+// aux cotes PROCHES (les duels serrés sont les plus informatifs ET les plus
+// intéressants à trancher — "Alien vs Seven", pas "Le Parrain vs un navet").
+function pickDuelPair() {
+  const history = loadHistory();
+  if (history.length < 2) return null;
+  const data = loadDuelsData();
+
+  // Déduplique par clé (re-visionnages = même film)
+  const seen = new Set();
+  const films = [];
+  for (const item of history) {
+    const key = duelFilmKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    films.push({ key, item, ...getDuelRating(data, key) });
+  }
+  if (films.length < 2) return null;
+
+  // Trie par nombre de duels croissant, garde le tiers le moins expérimenté
+  // (au moins 4 films pour préserver de la variété), pioche le premier au
+  // hasard dedans...
+  films.sort((a, b) => a.duels - b.duels);
+  const poolSize = Math.max(4, Math.ceil(films.length / 3));
+  const pool = films.slice(0, Math.min(poolSize, films.length));
+  const first = pool[Math.floor(Math.random() * pool.length)];
+
+  // ...puis son adversaire : parmi TOUS les autres, un des 5 plus proches en ELO
+  const others = films.filter(f => f.key !== first.key);
+  others.sort((a, b) => Math.abs(a.elo - first.elo) - Math.abs(b.elo - first.elo));
+  const nearest = others.slice(0, Math.min(5, others.length));
+  const second = nearest[Math.floor(Math.random() * nearest.length)];
+
+  return Math.random() < 0.5 ? [first, second] : [second, first];
+}
+
+function resolveDuel(winnerKey, loserKey) {
+  const data = loadDuelsData();
+  const w = getDuelRating(data, winnerKey);
+  const l = getDuelRating(data, loserKey);
+  const { winnerElo, loserElo, delta } = computeEloUpdate(w.elo, l.elo, DUEL_K);
+  data.ratings[winnerKey] = { elo: winnerElo, duels: w.duels + 1 };
+  data.ratings[loserKey] = { elo: loserElo, duels: l.duels + 1 };
+  data.totalDuels = (data.totalDuels || 0) + 1;
+  saveDuelsData(data);
+  return delta;
+}
+
+// Classement : uniquement les films ayant réellement duellé (>= 3 duels pour
+// éviter qu'un film à 1 victoire chanceuse squatte le podium), croisé avec
+// l'historique pour ignorer les cotes orphelines de films supprimés.
+function computeDuelRanking(minDuels = 3) {
+  const history = loadHistory();
+  const data = loadDuelsData();
+  const seen = new Set();
+  const ranked = [];
+  for (const item of history) {
+    const key = duelFilmKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const r = data.ratings[key];
+    if (r && r.duels >= minDuels) ranked.push({ key, item, elo: r.elo, duels: r.duels });
+  }
+  ranked.sort((a, b) => b.elo - a.elo);
+  return ranked;
+}
+
+// ── Rendu ──
+let currentDuelPair = null;
+
+function duelPosterHtml(item) {
+  return item.poster
+    ? `<img class="duel-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="duel-poster duel-poster-ph">${ICONS.clapper}</div>`;
+}
+
+function renderDuel() {
+  const arena = document.getElementById('duel-arena');
+  const emptyEl = document.getElementById('duel-empty');
+  if (!arena || !emptyEl) return;
+
+  currentDuelPair = pickDuelPair();
+  if (!currentDuelPair) {
+    arena.style.display = 'none';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  arena.style.display = '';
+  emptyEl.style.display = 'none';
+
+  const [a, b] = currentDuelPair;
+  arena.innerHTML = `
+    <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
+      ${duelPosterHtml(a.item)}
+      <div class="duel-title">${escAttr(a.item.title)}</div>
+      <div class="duel-year">${a.item.year || ''}</div>
+    </div>
+    <div class="duel-vs">VS</div>
+    <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
+      ${duelPosterHtml(b.item)}
+      <div class="duel-title">${escAttr(b.item.title)}</div>
+      <div class="duel-year">${b.item.year || ''}</div>
+    </div>
+  `;
+}
+
+function renderDuelRanking() {
+  const listEl = document.getElementById('duel-ranking-list');
+  const counterEl = document.getElementById('duel-counter');
+  if (!listEl) return;
+  const data = loadDuelsData();
+  if (counterEl) counterEl.textContent = data.totalDuels > 0 ? `${data.totalDuels} duel${data.totalDuels > 1 ? 's' : ''}` : '';
+
+  const ranking = computeDuelRanking().slice(0, 10);
+  if (ranking.length === 0) {
+    listEl.innerHTML = `<div class="duel-ranking-empty">Ton podium apparaîtra après quelques duels (3 duels minimum par film).</div>`;
+    return;
+  }
+  const medals = ['🥇', '🥈', '🥉'];
+  listEl.innerHTML = ranking.map((r, i) => `
+    <div class="duel-rank-row">
+      <span class="duel-rank-pos">${medals[i] || (i + 1)}</span>
+      <span class="duel-rank-title">${escAttr(r.item.title)}</span>
+      <span class="duel-rank-elo">${r.elo}</span>
+    </div>
+  `).join('');
+}
+
+function renderDuelsSection() {
+  renderDuel();
+  renderDuelRanking();
+}
+
+// Gestion des choix : délégué au niveau racine (leçon apprise : jamais dans
+// une fonction de rendu conditionnelle, sinon il disparaît selon le chemin).
+document.getElementById('duel-arena')?.addEventListener('click', (e) => {
+  const side = e.target.closest('.duel-side');
+  if (!side || !currentDuelPair) return;
+  const winnerKey = side.dataset.key;
+  const loser = currentDuelPair.find(f => f.key !== winnerKey);
+  const winner = currentDuelPair.find(f => f.key === winnerKey);
+  if (!winner || !loser) return;
+
+  resolveDuel(winner.key, loser.key);
+  if (navigator.vibrate) navigator.vibrate(15);
+
+  // Petit feedback visuel avant d'enchaîner sur la paire suivante
+  side.classList.add('duel-winner');
+  currentDuelPair = null; // fige les clics le temps de l'animation
+  setTimeout(() => {
+    renderDuelsSection();
+  }, 450);
+});
+
+document.getElementById('duel-arena')?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const side = e.target.closest('.duel-side');
+  if (side) { e.preventDefault(); side.click(); }
+});
+
+document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
+  renderDuel(); // nouvelle paire, aucune cote touchée
+});

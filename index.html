@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="favicon.png">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Ludex Rating Companion — Notation et suivi de films</title>
 
 <!-- SEO de base -->
@@ -676,7 +676,7 @@
           <div class="wl-suggestions" id="wl-suggestions"></div>
         </div>
         <div class="watchlist-scroller" id="watchlist-list">
-          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Aucun film dans la liste.</div>
+          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les films que tu veux voir.</div>
         </div>
       </div>
     </div>
@@ -734,6 +734,19 @@
           <div class="wrapped-entry-sub">Découvre ta rétrospective</div>
         </div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon wrapped-entry-arrow"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="card" id="duels-card">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Duels — lequel préfères-tu ?</span>
+          <span class="duel-counter" id="duel-counter"></span>
+        </div>
+        <div class="duel-arena" id="duel-arena"></div>
+        <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
+        <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
+        <div class="duel-ranking">
+          <div class="duel-ranking-title">Ton classement</div>
+          <div id="duel-ranking-list"></div>
+        </div>
       </div>
       <div class="card" id="stats-card">
         <div class="card-title">Dashboard Analytique</div>

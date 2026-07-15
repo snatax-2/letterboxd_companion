@@ -350,6 +350,84 @@ function computeWeekStreak(history, referenceDate = new Date()) {
 // film le mieux noté, temps total visionné. Fonction pure : ne touche à
 // aucun DOM, juste des données en entrée/sortie, pour rester testable
 // facilement (contrairement aux tests E2E, plus lents et parfois instables).
+// ── Import Letterboxd (voir 07-data-io.js pour l'UI) ──
+// Parseur CSV minimal mais correct : gère les champs entre guillemets
+// (contenant virgules, retours à la ligne, guillemets doublés ""), le cas le
+// plus piégeux des exports Letterboxd (titres comme "Paris, Texas").
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else field += c;
+  }
+  if (field !== '' || row.length > 0) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+  return rows;
+}
+
+// Convertit les lignes d'un CSV Letterboxd (diary.csv, ratings.csv ou
+// watched.csv — colonnes détectées par l'en-tête, insensible à l'ordre) en
+// items d'historique Ludex. Note Letterboxd sur 5 étoiles -> score sur 10.
+// Retourne aussi le type détecté et les lignes ignorées (sans titre).
+function mapLetterboxdCsv(rows) {
+  if (!rows || rows.length < 2) return { items: [], skipped: 0, kind: null };
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const col = (name) => header.indexOf(name);
+  const iName = col('name'), iYear = col('year'), iRating = col('rating');
+  const iWatched = col('watched date'), iDate = col('date');
+  if (iName === -1) return { items: [], skipped: 0, kind: null }; // pas un CSV Letterboxd
+
+  const kind = iWatched !== -1 ? 'diary' : (iRating !== -1 ? 'ratings' : 'watched');
+  const items = [];
+  let skipped = 0;
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    const title = (cells[iName] || '').trim();
+    if (!title) { skipped++; continue; }
+    const year = iYear !== -1 ? (cells[iYear] || '').trim() : '';
+    const ratingRaw = iRating !== -1 ? parseFloat(cells[iRating]) : NaN;
+    const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+    const score = hasRating ? (ratingRaw * 2).toFixed(1) : '';
+    const watchedDate = (iWatched !== -1 && cells[iWatched]) ? cells[iWatched].trim()
+                      : (iDate !== -1 && cells[iDate]) ? cells[iDate].trim() : '';
+    items.push({
+      title,
+      year,
+      score,
+      mode: 'quick',
+      values: hasRating ? { quick: ratingRaw } : {},
+      date: watchedDate,
+      savedAt: new Date().toISOString(),
+      importedFrom: 'letterboxd',
+    });
+  }
+  return { items, skipped, kind };
+}
+
+// ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
+// Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
+// symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
+// plus fort que soi rapporte gros ; battre plus faible rapporte peu.
+function computeEloUpdate(winnerElo, loserElo, k = 32) {
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+  const delta = Math.round(k * (1 - expectedWinner));
+  return { winnerElo: winnerElo + delta, loserElo: loserElo - delta, delta };
+}
+
 function computeWrappedStats(history, year) {
   const yearStr = String(year);
   const filtered = history.filter(h => {
@@ -480,5 +558,8 @@ if (typeof module !== 'undefined' && module.exports) {
     computeWeekStreak,
     computeBadges,
     computeWrappedStats,
+    computeEloUpdate,
+    parseCsv,
+    mapLetterboxdCsv,
   };
 }

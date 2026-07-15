@@ -31,6 +31,15 @@ function switchRightTab(tabName) {
     loadFilmDuJour();
     loadDailyQuiz();
   }
+  // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
+  // proposée reste ainsi à jour avec les derniers films notés).
+  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
+    renderDuelsSection();
+  }
+  // Aperçu unique du geste de swipe à la première visite de l'historique
+  if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
+    maybePlaySwipeHint();
+  }
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));

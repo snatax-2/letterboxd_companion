@@ -199,13 +199,13 @@ function renderHistory() {
   renderGenreChips(history);
 
   if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucun film noté. Évaluez votre premier film !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun résultat pour cette recherche.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -1441,3 +1441,34 @@ document.getElementById('filter-row').addEventListener('click', e => {
   renderHistory();
 });
 
+// ── Découvrabilité du swipe ──
+// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
+// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
+// l'historique (avec au moins un film), la première carte fait un petit
+// aperçu automatique — elle glisse brièvement, révélant l'action cachée
+// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
+const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
+function maybePlaySwipeHint() {
+  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+  const firstItem = document.querySelector('.hist-item');
+  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
+  const content = firstItem.querySelector('.hist-item-content');
+  if (!content) return;
+  localStorage.setItem(SWIPE_HINT_KEY, '1');
+
+  // Respecte la préférence de réduction des animations
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  setTimeout(() => {
+    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
+    content.style.transition = 'transform .45s cubic-bezier(.2,.8,.2,1)';
+    content.style.transform = 'translateX(-56px)';
+    setTimeout(() => {
+      content.style.transform = '';
+      setTimeout(() => {
+        firstItem.classList.remove('hist-swipe-left');
+        content.style.transition = '';
+      }, 450);
+    }, 900);
+  }, 600);
+}

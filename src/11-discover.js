@@ -383,7 +383,15 @@ async function loadDiscoverQueue() {
 
 async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
-  discoverStack.innerHTML = '<div class="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>';
+  // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
+  // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
+  // et la perception d'attente est bien meilleure.
+  discoverStack.innerHTML = `
+    <div class="discover-card discover-card-skeleton">
+      <div class="skeleton-bg" style="width:100%;aspect-ratio:2/3;border-radius:var(--radius-sm);"></div>
+      <div class="skeleton-text long skeleton-bg" style="margin-top:10px;height:16px;"></div>
+      <div class="skeleton-text short skeleton-bg"></div>
+    </div>`;
 
   const history = loadHistory();
   const watchlist = loadWatchlist();

@@ -145,6 +145,11 @@ npm run test:e2e
 - **`tests/e2e/watchlist-picker.spec.js`** — choisir une liste existante (même si ce n'est pas la liste active) ajoute bien le film dedans ; créer une nouvelle liste à la volée fonctionne aussi.
 - **`tests/e2e/daily-quiz.spec.js`** — quiz du jour : bonne réponse (confirmation + série), mauvaise réponse (série remise à zéro). Écrit pour ton environnement (celui où j'ai développé avait une restriction réseau propre à son bac à sable empêchant une vérification E2E fiable pour ce fichier précis — la logique a été validée séparément en détail).
 - **`tests/e2e/technicolor-theme.spec.js`** — le thème Technicolor se sélectionne et applique bien ses couleurs (fond, rouge), sauvegardé correctement dans les réglages.
+- **`tests/duels.test.js`** — cœur mathématique ELO : symétrie stricte des gains/pertes, sensibilité à l'écart de cotes, bornes, conservation de la somme du système.
+- **`tests/e2e/duels.spec.js`** — parcours complet des duels : choisir un film met à jour les cotes (une au-dessus, une en dessous de 1200), passer un duel ne touche à rien, message clair avec moins de 2 films, classement avec médailles après 3 duels.
+- **`tests/e2e/ux-polish.spec.js`** — l'aperçu du geste de swipe se joue une seule fois à la première visite de l'historique ; l'en-tête de la fiche film garde toujours un fond opaque (teinté ou non).
+- **`tests/letterboxd-import.test.js`** — parseur CSV (virgules dans les titres, guillemets doublés, CRLF, retours à la ligne dans un champ) et mapping Letterboxd (note /5 -> /10, détection diary/ratings/watched par l'en-tête, lignes sans titre ignorées).
+- **`tests/e2e/letterboxd-import.spec.js`** — import réel d'un diary.csv (fusion, doublons ignorés, conversion des notes, titre à virgule intact) ; bannière de rappel de sauvegarde après 30 jours, retirée après export.
 
 À étendre à chaque nouvelle fonctionnalité tactile (nouveaux carrousels, nouvelles fiches, etc.) pour ne plus jamais laisser passer ce type de régression.
 
