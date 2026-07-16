@@ -651,6 +651,27 @@ document.getElementById('settings-save').addEventListener('click', () => {
 
 loadSettings();
 
+
+// ── theme-color dynamique ──
+// La barre de statut iOS (et la couleur de fenêtre PWA) suit le thème actif
+// au lieu de rester figée sur une couleur générique : le meta theme-color est
+// resynchronisé avec le --bg calculé à chaque changement d'attribut data-theme
+// (MutationObserver : couvre TOUS les chemins d'application — réglages,
+// système, bascule jour/nuit de Méridien — sans dupliquer l'appel partout).
+(function initDynamicThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  function sync() {
+    // rAF : attend que le nouveau thème soit appliqué au style calculé
+    requestAnimationFrame(() => {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (bg) meta.setAttribute('content', bg);
+    });
+  }
+  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  sync(); // etat initial
+})();
+
 // ═══════════════════════════════════════════
 //  GESTION DE LA DATE LOCALE
 // ═══════════════════════════════════════════
@@ -2824,7 +2845,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   function cancelArmed() {
     if (!armedItem) return;
     const content = armedItem.querySelector('.hist-item-content');
-    if (content) { content.style.transition = 'transform .25s ease'; content.style.transform = ''; }
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
     armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
     armedItem = null;
     armedDirection = null;
@@ -2888,7 +2909,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   function cancelGestureFully(e) {
     if (pressedItem) {
       if (pressedContent) {
-        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
         pressedContent.style.transform = '';
       }
       pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
@@ -2962,7 +2983,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === 'swipe') {
       if (dx <= -SWIPE_THRESHOLD) {
         cancelArmed(); // un seul item armé à la fois
-        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
         pressedContent.style.transform = 'translateX(-120px)';
         pressedItem.classList.add('hist-swipe-armed-left');
         armedItem = pressedItem;
@@ -2970,7 +2991,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         hapticPulse(pressedItem, 'medium');
       } else if (dx >= SWIPE_THRESHOLD) {
         cancelArmed();
-        pressedContent.style.transition = 'transform .2s ease';
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
         pressedContent.style.transform = 'translateX(120px)';
         pressedItem.classList.add('hist-swipe-armed-right');
         armedItem = pressedItem;
@@ -3873,7 +3894,7 @@ function maybePlaySwipeHint() {
 
   setTimeout(() => {
     firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
-    content.style.transition = 'transform .45s cubic-bezier(.2,.8,.2,1)';
+    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
     content.style.transform = 'translateX(-56px)';
     setTimeout(() => {
       content.style.transform = '';

@@ -170,3 +170,23 @@ document.getElementById('settings-save').addEventListener('click', () => {
 
 loadSettings();
 
+
+// ── theme-color dynamique ──
+// La barre de statut iOS (et la couleur de fenêtre PWA) suit le thème actif
+// au lieu de rester figée sur une couleur générique : le meta theme-color est
+// resynchronisé avec le --bg calculé à chaque changement d'attribut data-theme
+// (MutationObserver : couvre TOUS les chemins d'application — réglages,
+// système, bascule jour/nuit de Méridien — sans dupliquer l'appel partout).
+(function initDynamicThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  function sync() {
+    // rAF : attend que le nouveau thème soit appliqué au style calculé
+    requestAnimationFrame(() => {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (bg) meta.setAttribute('content', bg);
+    });
+  }
+  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  sync(); // etat initial
+})();
