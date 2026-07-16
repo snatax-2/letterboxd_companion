@@ -291,7 +291,7 @@
     <button class="icon-btn" id="settings-btn" title="Personnaliser" aria-label="Personnaliser l'apparence"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg></button>
     <button class="icon-btn" id="export-btn" title="Sauvegarder les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Exporter</button>
     <button class="icon-btn" id="import-trigger" title="Restaurer les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Importer</button>
-    <input type="file" id="import-file" accept=".json" style="display:none">
+    <input type="file" id="import-file" accept=".json,.csv,application/json,text/csv" style="display:none">
   </div>
 </header>
 
@@ -699,6 +699,11 @@
             <span class="quiz-streak" id="quiz-streak-badge"></span>
           </div>
           <div class="quiz-card" id="quiz-card"></div>
+        </div>
+
+        <div class="discover-section" id="daily-duel-wrap" style="display:none">
+          <div class="discover-section-title">Duel du jour</div>
+          <div class="quiz-card" id="daily-duel-card"></div>
         </div>
 
         <div class="discover-section" id="trending-carousel-wrap" style="display:none">

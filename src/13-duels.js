@@ -66,13 +66,30 @@ function pickDuelPair() {
   }
   if (films.length < 2) return null;
 
-  // Candidats "premier du duel" : les moins expérimentés d'abord (tout
-  // l'historique finit par participer), avec un peu de hasard dans l'ordre.
+  // PASSE 1 — départage : s'il existe quelque part une paire jamais affrontée
+  // de films ayant la MÊME note dans l'historique (deux 8/10 à ordonner
+  // enfin), elle passe en priorité absolue. Parmi ces paires, celles ayant le
+  // moins duellé d'abord, avec un peu de hasard entre égalités.
+  const tiebreakPairs = [];
+  for (let i = 0; i < films.length; i++) {
+    const si = parseFloat(films[i].item.score);
+    if (isNaN(si)) continue;
+    for (let j = i + 1; j < films.length; j++) {
+      if (parseFloat(films[j].item.score) !== si) continue;
+      if (data.pairs[duelPairKey(films[i].key, films[j].key)]) continue;
+      tiebreakPairs.push([films[i], films[j]]);
+    }
+  }
+  if (tiebreakPairs.length > 0) {
+    tiebreakPairs.sort((a, b) => (a[0].duels + a[1].duels) - (b[0].duels + b[1].duels) || Math.random() - 0.5);
+    const [first, second] = tiebreakPairs[0];
+    return Math.random() < 0.5 ? [first, second] : [second, first];
+  }
+
+  // PASSE 2 — cas général : les moins expérimentés d'abord, adversaire proche en cote.
   const byExperience = films.slice().sort((a, b) => a.duels - b.duels || Math.random() - 0.5);
 
   for (const first of byExperience) {
-    // Adversaires possibles : jamais affrontés, triés par proximité de cote,
-    // choix aléatoire parmi les 5 plus proches pour varier.
     const unfought = films.filter(f =>
       f.key !== first.key && !data.pairs[duelPairKey(first.key, f.key)]
     );
@@ -233,4 +250,71 @@ document.getElementById('duel-arena')?.addEventListener('keydown', (e) => {
 
 document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
   renderDuel(); // nouvelle paire, aucune cote touchée
+});
+
+// ── Duel du jour (onglet Découvrir) ──
+// Un duel par jour, à côté du Quiz du jour : même rituel quotidien. Réutilise
+// exactement la même mécanique (sélection de paire, résolution, mémoire des
+// paires) — seule la limite quotidienne s'ajoute. Jouer le duel du jour
+// alimente le même classement que l'arène du Profil.
+const DAILY_DUEL_DATE_KEY = 'lbx_daily_duel_date';
+let dailyDuelPair = null;
+
+function renderDailyDuel() {
+  const wrap = document.getElementById('daily-duel-wrap');
+  const card = document.getElementById('daily-duel-card');
+  if (!wrap || !card) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (localStorage.getItem(DAILY_DUEL_DATE_KEY) === today) {
+    wrap.style.display = 'block';
+    card.innerHTML = `<div class="quiz-already-played">✓ Duel du jour joué — reviens demain pour le suivant.</div>`;
+    return;
+  }
+
+  dailyDuelPair = pickDuelPair();
+  if (!dailyDuelPair || dailyDuelPair.exhausted) {
+    wrap.style.display = 'none'; // pas assez de films ou tout joué : section absente, pas un message d'erreur
+    dailyDuelPair = null;
+    return;
+  }
+  wrap.style.display = 'block';
+
+  const [a, b] = dailyDuelPair;
+  card.innerHTML = `
+    <div class="duel-arena">
+      <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
+        ${duelPosterHtml(a.item)}
+        <div class="duel-title">${escAttr(a.item.title)}</div>
+        <div class="duel-year">${a.item.year || ''}</div>
+      </div>
+      <div class="duel-vs">VS</div>
+      <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
+        ${duelPosterHtml(b.item)}
+        <div class="duel-title">${escAttr(b.item.title)}</div>
+        <div class="duel-year">${b.item.year || ''}</div>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('daily-duel-card')?.addEventListener('click', (e) => {
+  const side = e.target.closest('.duel-side');
+  if (!side || !dailyDuelPair) return;
+  const winner = dailyDuelPair.find(f => f.key === side.dataset.key);
+  const loser = dailyDuelPair.find(f => f.key !== side.dataset.key);
+  if (!winner || !loser) return;
+
+  resolveDuel(winner.key, loser.key);
+  localStorage.setItem(DAILY_DUEL_DATE_KEY, new Date().toISOString().slice(0, 10));
+  if (navigator.vibrate) navigator.vibrate(15);
+
+  side.classList.add('duel-winner');
+  dailyDuelPair = null;
+  setTimeout(() => renderDailyDuel(), 500);
+});
+document.getElementById('daily-duel-card')?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const side = e.target.closest('.duel-side');
+  if (side) { e.preventDefault(); side.click(); }
 });

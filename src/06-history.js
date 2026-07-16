@@ -151,11 +151,17 @@ function getSorted(history) {
   }
 
   if (historySearchQuery) {
+    // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
+    // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
+    // année/décennie sans UI supplémentaire — combinable avec les puces de
+    // genre et le filtre de note comme le reste.
+    const isYearQuery = /^\d{3,4}$/.test(historySearchQuery.trim());
     h = h.filter(item => {
       const titleMatch = item.title && item.title.toLowerCase().includes(historySearchQuery);
       const dirMatch = item.director && item.director.toLowerCase().includes(historySearchQuery);
       const actMatch = item.actors && item.actors.toLowerCase().includes(historySearchQuery);
-      return titleMatch || dirMatch || actMatch;
+      const yearMatch = isYearQuery && item.year && String(item.year).startsWith(historySearchQuery.trim());
+      return titleMatch || dirMatch || actMatch || yearMatch;
     });
   }
 

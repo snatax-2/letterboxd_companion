@@ -378,6 +378,110 @@
     mix-blend-mode: overlay;
   }
 
+
+  /* ═══════════════════════════════════════════
+     TOUCHES SIGNATURES PAR THÈME
+     ═══════════════════════════════════════════
+     Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
+     détails fidèles à SON concept, peu coûteux (rien qui repeint au
+     défilement — les textures vivent sur des pseudo-éléments fixes). */
+
+  /* ── L'Original (défaut, Letterboxd) : les trois pastilles ── */
+  html:not([data-theme]) .card:hover,
+  [data-theme="default"] .card:hover {
+    border-color: var(--border-hi);
+  }
+  /* L'onglet actif de la nav porte le tricolore emblématique */
+  html:not([data-theme]) .nav-btn.active,
+  [data-theme="default"] .nav-btn.active {
+    background-image: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
+    background-repeat: no-repeat;
+    background-size: 40% 3px;
+    background-position: top center;
+  }
+
+  /* ── Scuderia : livrée de course ── */
+  /* Bande rouge latérale sur les cartes, comme un flanc de monoplace */
+  [data-theme="scuderia"] .card { border-left: 3px solid var(--red); }
+  [data-theme="scuderia"] .app-title { font-style: italic; letter-spacing: 0.04em; }
+  /* Chrono : les valeurs chiffrées prennent la police mono, tableau de bord */
+  [data-theme="scuderia"] .kpi-val, [data-theme="scuderia"] .duel-counter { font-family: var(--font-mono); }
+
+  /* ── Film Noir : clair-obscur ── */
+  /* Vignettage permanent, comme un tirage argentique contrasté */
+  [data-theme="filmnoir"] body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
+  /* Les affiches en noir et blanc — LA promesse du thème. La couleur revient
+     au survol là où il existe (desktop) ; sur mobile, tout reste argentique. */
+  [data-theme="filmnoir"] .hist-item img,
+  [data-theme="filmnoir"] .wl-card img,
+  [data-theme="filmnoir"] .discover-card img,
+  [data-theme="filmnoir"] .fdj-card img,
+  [data-theme="filmnoir"] .duel-poster,
+  [data-theme="filmnoir"] .mds-poster {
+    filter: grayscale(1) contrast(1.08);
+    transition: filter .25s ease;
+  }
+  [data-theme="filmnoir"] .hist-item:hover img,
+  [data-theme="filmnoir"] .wl-card:hover img,
+  [data-theme="filmnoir"] .discover-card:hover img {
+    filter: grayscale(0) contrast(1);
+  }
+  /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
+  [data-theme="filmnoir"] .app-title { text-shadow: 3px 3px 0 rgba(255,255,255,0.12); }
+
+  /* ── Classique : éditorial noir sur blanc ── */
+  /* Filets doubles sous les titres de cartes, comme une maquette de journal chic */
+  [data-theme="classique"] .card-title { border-bottom: 3px double var(--text-hi); padding-bottom: 6px; }
+  [data-theme="classique"] .card-title { letter-spacing: 0.08em; }
+  /* Liens/boutons texte : soulignement à l'ancienne au survol */
+  [data-theme="classique"] .duel-skip:hover, [data-theme="classique"] .hist-action-btn:hover { text-decoration: underline; background: none; }
+
+  /* ── Journal : carnet de notes ── */
+  /* Bordures en pointillés cousus + titres soulignés à la règle */
+  [data-theme="journal"] .card { border-style: dashed; }
+  [data-theme="journal"] .card-title {
+    border-bottom: 1px dotted var(--border-hi);
+    padding-bottom: 5px;
+  }
+
+  /* ── Moderne : verre dépoli ── */
+  /* L'en-tête collant de la fiche film devient translucide avec flou d'arrière-plan */
+  @supports (backdrop-filter: blur(8px)) {
+    [data-theme="moderne"] .mds-header {
+      background: color-mix(in srgb, var(--bg) 72%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+  }
+
+  /* ── Wes Anderson : cadres symétriques ── */
+  /* Double encadrement des cartes, comme un plan centré dans un décor pastel */
+  [data-theme="anderson"] .card {
+    outline: 1px solid var(--border);
+    outline-offset: 3px;
+  }
+  [data-theme="anderson"] .card-title { text-align: center; letter-spacing: 0.1em; }
+
+  /* ── Cinéphile 70s : papier chaud ── */
+  /* Halo chaud sur les étoiles (halation de projection) — le grain n'est pas
+     repris ici : sur fond clair il salirait plus qu'il n'habille. */
+  [data-theme="cinephile"] .stars, [data-theme="cinephile"] .duel-medal-gold {
+    filter: drop-shadow(0 0 3px rgba(139, 66, 38, 0.35));
+  }
+  [data-theme="cinephile"] .card { box-shadow: 0 1px 3px rgba(74, 46, 27, 0.12); }
+
+  /* ── Méridien : revue éditoriale ── */
+  /* Filets fins au-dessus des titres, rubrique de magazine */
+  [data-theme="meridien"] .card-title {
+    border-top: 1px solid var(--border-hi);
+    padding-top: 8px;
+    letter-spacing: 0.06em;
+  }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   /* Icônes SVG (remplacent les emoji dans l'interface — voir 00b-icons.js).
@@ -632,6 +736,18 @@
     padding: 7px 14px; font-family: var(--font-heading); font-weight: 700; font-size: 0.76rem; cursor: pointer; flex-shrink: 0;
   }
   .backup-reminder-close { background: none; border: none; color: var(--text-mid); cursor: pointer; font-size: 0.9rem; padding: 4px 6px; flex-shrink: 0; }
+
+  /* Badge hors-ligne : bandeau fin en haut, n'apparaît que sans réseau */
+  .offline-badge {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 950;
+    background: var(--surface2); color: var(--text-mid); text-align: center;
+    font-size: 0.72rem; padding: 5px 10px calc(5px);
+    padding-top: calc(5px + env(safe-area-inset-top));
+    border-bottom: 1px solid var(--border-hi);
+    transform: translateY(-100%); transition: transform .25s ease;
+    pointer-events: none;
+  }
+  .offline-badge.visible { transform: none; }
 
   /* ── FILM INFO STRIP ── */
   .film-strip {

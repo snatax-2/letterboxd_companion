@@ -31,6 +31,11 @@ function switchRightTab(tabName) {
     loadFilmDuJour();
     loadDailyQuiz();
   }
+  // Duel du jour : re-verifie a chaque affichage de Decouvrir (contrairement
+  // aux blocs ci-dessus charges une fois) car son etat depend du jour courant.
+  if (tabName === 'discover' && typeof renderDailyDuel === 'function') {
+    renderDailyDuel();
+  }
   // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
   // proposée reste ainsi à jour avec les derniers films notés).
   if (tabName === 'profile' && typeof renderDuelsSection === 'function') {

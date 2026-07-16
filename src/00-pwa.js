@@ -28,3 +28,23 @@ document.getElementById('update-banner-reload-btn')?.addEventListener('click', (
   window.location.reload();
 });
 
+// ── Indicateur hors-ligne ──
+// L'app fonctionne largement sans réseau (historique, watchlist, duels,
+// stats : tout est local) — seuls TMDb et le quiz en dépendent. Un badge
+// discret l'indique plutôt que de laisser les recherches échouer sans
+// explication. Créé une fois, simplement montré/caché ensuite.
+(function initOfflineIndicator() {
+  const badge = document.createElement('div');
+  badge.id = 'offline-badge';
+  badge.className = 'offline-badge';
+  badge.setAttribute('role', 'status');
+  badge.textContent = 'Hors-ligne — tes données restent disponibles';
+  document.body.appendChild(badge);
+
+  function update() {
+    badge.classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online', update);
+  window.addEventListener('offline', update);
+  update();
+})();
