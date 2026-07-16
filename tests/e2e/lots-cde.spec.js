@@ -77,3 +77,21 @@ test('le badge hors-ligne apparait quand le reseau tombe', async ({ page, contex
   await page.waitForTimeout(200);
   expect(await badge.evaluate(el => el.classList.contains('visible'))).toBe(false);
 });
+
+test('duel du jour : message explicite quand toutes les paires ont ete jouees', async ({ page }) => {
+  await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seed([{ title: 'A' }, { title: 'B' }]));
+  await page.addInitScript(() => {
+    // La seule paire possible (A vs B) est deja jouee
+    localStorage.setItem('lbx_duels', JSON.stringify({
+      ratings: { 'a|2020': { elo: 1216, duels: 1 }, 'b|2020': { elo: 1184, duels: 1 } },
+      totalDuels: 1,
+      pairs: { 'a|2020||b|2020': true },
+    }));
+  });
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForTimeout(500);
+
+  await expect(page.locator('#daily-duel-wrap')).toBeVisible();
+  await expect(page.locator('#daily-duel-card')).toContainText('Tous les duels possibles');
+});

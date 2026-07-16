@@ -273,8 +273,15 @@ function renderDailyDuel() {
   }
 
   dailyDuelPair = pickDuelPair();
-  if (!dailyDuelPair || dailyDuelPair.exhausted) {
-    wrap.style.display = 'none'; // pas assez de films ou tout joué : section absente, pas un message d'erreur
+  if (!dailyDuelPair) {
+    wrap.style.display = 'none'; // moins de 2 films : section absente (rien d'utile à dire à un nouvel utilisateur ici)
+    return;
+  }
+  if (dailyDuelPair.exhausted) {
+    // Tout a été joué : le dire explicitement plutôt que de faire disparaître
+    // la section sans explication (on croirait à un bug).
+    wrap.style.display = 'block';
+    card.innerHTML = `<div class="quiz-already-played">Tous les duels possibles ont été joués — note de nouveaux films pour relancer l'arène !</div>`;
     dailyDuelPair = null;
     return;
   }
