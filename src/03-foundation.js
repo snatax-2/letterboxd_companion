@@ -117,7 +117,7 @@ function loadDraft() {
       });
       if (draft.poster) {
         document.getElementById('strip-poster').src = draft.poster;
-        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${draft.title}` : '';
+        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
         document.getElementById('strip-poster').style.display = 'block';
       }
       if (draft.tmdbScore) {

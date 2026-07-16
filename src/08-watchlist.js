@@ -205,7 +205,7 @@ function renderWatchlist() {
       <div class="wl-card-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${posterHtml}
         <div class="wl-body">
-          <div class="wl-title">${item.title}</div>
+          <div class="wl-title">${escAttr(item.title)}</div>
           <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
           <div class="wl-providers" id="wl-providers-${i}">
             <span class="wl-provider-loading">⏳ Chargement streaming...</span>
@@ -486,7 +486,7 @@ wlInput.addEventListener('input', () => {
             ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
-            <div class="wl-suggest-title">${m.title}</div>
+            <div class="wl-suggest-title">${escAttr(m.title)}</div>
             <div class="wl-suggest-year">${year}</div>
           </div>`;
         el.addEventListener('click', () => {
@@ -554,7 +554,7 @@ function renderWatchlistTabs() {
   const row = document.getElementById('wl-lists-row');
   if (!row) return;
   row.innerHTML = meta.map(l =>
-    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${l.name.replace(/</g, '&lt;')}</button>`
+    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${escAttr(l.name)}</button>`
   ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
 }
 
@@ -570,7 +570,7 @@ function openWlListManageMenu(id) {
       label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
       onClick: () => {
         if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
-        openModal('Supprimer la liste', `Supprimer "${entry.name}" et tous ses films ? Cette action est définitive.`, () => {
+        openModal('Supprimer la liste', `Supprimer "${escAttr(entry.name)}" et tous ses films ? Cette action est définitive.`, () => {
           deleteWatchlistList(id);
           renderWatchlistTabs();
           renderWatchlist();

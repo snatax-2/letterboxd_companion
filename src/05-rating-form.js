@@ -195,7 +195,7 @@ function suggestGenreWeights(genreNames) {
   } else {
     // L'utilisateur a déjà personnalisé : on ne touche à rien, mais on propose.
     pendingGenrePreset = match;
-    suggestBtn.textContent = `🎯 Suggestion "${match.name}"`;
+    suggestBtn.textContent = `🎯 Suggestion "${escAttr(match.name)}"`;
     suggestBtn.style.display = 'inline-flex';
   }
 }
@@ -576,7 +576,7 @@ window.loadItem = function(idx) {
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;
-    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${item.title}` : '';
+    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${escAttr(item.title)}` : '';
     document.getElementById('strip-poster').style.display = 'block';
   }
 

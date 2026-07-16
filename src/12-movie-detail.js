@@ -72,7 +72,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
-        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+        <div class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
       ${critBreakdown}
@@ -91,7 +91,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
       </div>
       <div class="mds-header-info">
-        <div class="mds-title" id="mds-title">${data.title}</div>
+        <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>

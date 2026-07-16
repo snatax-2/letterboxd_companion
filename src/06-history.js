@@ -30,16 +30,26 @@ let deletedItemIndex = null;
 
 function showToast(msg, withUndo = false, undoFnName = 'undoDelete') {
   const t = document.getElementById('toast');
-  
-  let html = `<span>${msg}</span>`;
+
+  // Construction DOM sûre (textContent) plutôt qu'innerHTML : les messages
+  // contiennent souvent des titres de films (données externes TMDb/imports) —
+  // corriger ici, au puits, sécurise TOUS les appels d'un coup, sans devoir
+  // penser à échapper à chaque site d'appel.
+  t.textContent = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
   if (withUndo) {
-    html += `<button class="toast-undo-btn" onclick="${undoFnName}()">Annuler</button>`;
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo-btn';
+    btn.textContent = 'Annuler';
+    btn.addEventListener('click', () => { if (typeof window[undoFnName] === 'function') window[undoFnName](); });
+    t.appendChild(btn);
   }
-  t.innerHTML = html;
-  
+
   t.classList.add('show');
   clearTimeout(toastTimer);
-  
+
   toastTimer = setTimeout(() => { 
       t.classList.remove('show');
       deletedItemCache = null; 
@@ -260,7 +270,7 @@ function renderHistory() {
     if (item.review) {
       reviewHTML = `
         <div class="hist-review" onclick="this.classList.toggle('expanded')">
-          <div class="hist-review-content">"${item.review}"</div>
+          <div class="hist-review-content">"${escAttr(item.review)}"</div>
           <span class="hist-review-toggle"></span>
         </div>
       `;
@@ -272,7 +282,7 @@ function renderHistory() {
       <div class="hist-item-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${imgHtml}
         <div class="hist-body">
-          <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+          <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
           <div class="hist-meta">${metaHTML}</div>
           ${tagsHTML}
           <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
@@ -280,8 +290,8 @@ function renderHistory() {
           ${reviewHTML}
         </div>
         <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${item.title.replace(/"/g, '&quot;')}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
         </div>
       </div>`;
     container.appendChild(div);
@@ -306,7 +316,7 @@ function buildCopyTextForItem(item) {
   const score = parseFloat(item.score) || 0;
   const stars = getStarStr(scoreToStars(score));
 
-  let text = `📽 ${item.title} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
+  let text = `📽 ${escAttr(item.title)} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
   if (item.director) text += `🎬 Un film de ${item.director}\n`;
   if (item.actors) text += `🎭 Avec ${item.actors}\n`;
   if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
@@ -320,7 +330,7 @@ function buildCopyTextForItem(item) {
     text += `\nScénario ${f(v.scenario)} · Réal ${f(v.realisation)} · Photo ${f(v.photo)} · Acteurs ${f(v.acteurs)} · Son ${f(v.ambiance)} · Affect ${f(v.affect)}\n`;
   }
 
-  if (item.review) text += `\n${item.review}`;
+  if (item.review) text += `\n${escAttr(item.review)}`;
   return text;
 }
 
@@ -936,7 +946,7 @@ function renderStats() {
   const topD = Object.entries(dirs).map(([name,d]) => ({name, count:d.count, avg:d.sum/d.count})).filter(d=>d.count>1).sort((a,b)=>b.count-a.count || b.avg-a.avg).slice(0,4);
   const dirCont = document.getElementById('top-directors-list');
   if(topD.length > 0) {
-    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${d.name}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${d.name}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
+    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(d.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(d.name)}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
   } else { 
     dirCont.innerHTML = `<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>`; 
   }

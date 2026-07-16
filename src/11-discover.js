@@ -108,7 +108,7 @@ function buildFilmDuJourFacts(m) {
   }
 
   if (m.tagline) {
-    facts.push(`Tagline officielle : « ${m.tagline} »`);
+    facts.push(`Tagline officielle : « ${escAttr(m.tagline)} »`);
   }
 
   const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
@@ -192,7 +192,7 @@ function renderFilmDuJour(m) {
   `;
   wrap.style.display = 'block';
   card.dataset.movieId = String(m.id);
-  card.setAttribute('aria-label', `Voir la fiche de ${m.title}`);
+  card.setAttribute('aria-label', `Voir la fiche de ${escAttr(m.title)}`);
   card.addEventListener('click', (e) => {
     if (e.target.closest('.fdj-providers')) return; // évite de rouvrir la fiche si on vient de re-tenter le chargement des plateformes
     openMovieDetailSheet(m.id);
@@ -537,7 +537,7 @@ function buildDiscoverCardEl(m, isTop) {
   if (isTop) {
     el.setAttribute('tabindex', '0');
     el.setAttribute('role', 'group');
-    el.setAttribute('aria-label', `Suggestion : ${m.title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+    el.setAttribute('aria-label', `Suggestion : ${escAttr(m.title)}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
   }
   applyPosterAccent(posterUrl, el);
   return el;
@@ -731,7 +731,7 @@ function renderQuizStreakBadge() {
 
 function renderQuizAnsweredState(card, q, lastResult) {
   card.innerHTML = `
-    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
       ${q.allAnswers.map(a => {
         const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
@@ -765,7 +765,7 @@ async function loadDailyQuiz() {
   }
 
   card.innerHTML = `
-    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
       ${q.allAnswers.map(a => `<button class="quiz-answer-btn" data-answer="${escAttr(a)}">${a}</button>`).join('')}
     </div>

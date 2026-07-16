@@ -154,6 +154,7 @@ npm run test:e2e
 - **`tests/e2e/premium-polish.spec.js`** — le meta theme-color suit le thème actif (barre de statut iOS assortie), les polices sont chargées depuis le head avec préconnexion.
 - **`tests/e2e/error-states.spec.js`** — panne réseau sur la fiche film : l'état d'erreur dessiné apparaît (message + bouton), et « Réessayer » recharge la fiche complète une fois le réseau revenu.
 - **`tests/e2e/poster-picker.spec.js`** — le sélecteur d'affiche : choisir une variante la persiste dans l'historique (URL w185), rafraîchit la fiche (w342) et ferme la modale ; le bouton n'apparaît pas pour un film hors collection.
+- **`tests/e2e/xss.spec.js`** — un titre de film piégé (balise img avec onerror, script dans la critique) s'affiche partout comme texte et ne s'exécute jamais — historique, toast coup de cœur.
 - **`tests/e2e/ux-polish.spec.js`** — l'aperçu du geste de swipe se joue une seule fois à la première visite de l'historique ; l'en-tête de la fiche film garde toujours un fond opaque (teinté ou non).
 - **`tests/letterboxd-import.test.js`** — parseur CSV (virgules dans les titres, guillemets doublés, CRLF, retours à la ligne dans un champ) et mapping Letterboxd (note /5 -> /10, détection diary/ratings/watched par l'en-tête, lignes sans titre ignorées).
 - **`tests/e2e/letterboxd-import.spec.js`** — import réel d'un diary.csv (fusion, doublons ignorés, conversion des notes, titre à virgule intact) ; bannière de rappel de sauvegarde après 30 jours, retirée après export.

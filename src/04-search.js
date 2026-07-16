@@ -131,7 +131,7 @@ async function fetchSuggestions(q) {
       const imgHtml = m.poster_path
         ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
-      item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
+      item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${escAttr(m.title)}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
       suggestEl.appendChild(item);
     });
@@ -152,7 +152,7 @@ async function selectMovie(m, year) {
   document.getElementById('movie-year').value   = year;
   document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
   document.getElementById('movie-tmdb-id').value = m.id;
-  searchEl.value = `${m.title} (${year})`;
+  searchEl.value = `${escAttr(m.title)} (${year})`;
   suggestEl.style.display = 'none';
   document.getElementById('strip-ratings').style.display = 'none';
 
@@ -216,7 +216,7 @@ async function selectMovie(m, year) {
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
     document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
-    document.getElementById('strip-poster').alt = `Affiche de ${m.title}`;
+    document.getElementById('strip-poster').alt = `Affiche de ${escAttr(m.title)}`;
     document.getElementById('strip-poster').style.display = 'block';
   }
   

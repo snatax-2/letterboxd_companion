@@ -791,7 +791,7 @@ function loadDraft() {
       });
       if (draft.poster) {
         document.getElementById('strip-poster').src = draft.poster;
-        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${draft.title}` : '';
+        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
         document.getElementById('strip-poster').style.display = 'block';
       }
       if (draft.tmdbScore) {
@@ -1630,7 +1630,7 @@ async function fetchSuggestions(q) {
       const imgHtml = m.poster_path
         ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
-      item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${m.title}</div><div class="suggestion-year">${year}</div></div>`;
+      item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${escAttr(m.title)}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
       suggestEl.appendChild(item);
     });
@@ -1651,7 +1651,7 @@ async function selectMovie(m, year) {
   document.getElementById('movie-year').value   = year;
   document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
   document.getElementById('movie-tmdb-id').value = m.id;
-  searchEl.value = `${m.title} (${year})`;
+  searchEl.value = `${escAttr(m.title)} (${year})`;
   suggestEl.style.display = 'none';
   document.getElementById('strip-ratings').style.display = 'none';
 
@@ -1715,7 +1715,7 @@ async function selectMovie(m, year) {
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
     document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
-    document.getElementById('strip-poster').alt = `Affiche de ${m.title}`;
+    document.getElementById('strip-poster').alt = `Affiche de ${escAttr(m.title)}`;
     document.getElementById('strip-poster').style.display = 'block';
   }
   
@@ -1923,7 +1923,7 @@ function suggestGenreWeights(genreNames) {
   } else {
     // L'utilisateur a déjà personnalisé : on ne touche à rien, mais on propose.
     pendingGenrePreset = match;
-    suggestBtn.textContent = `🎯 Suggestion "${match.name}"`;
+    suggestBtn.textContent = `🎯 Suggestion "${escAttr(match.name)}"`;
     suggestBtn.style.display = 'inline-flex';
   }
 }
@@ -2304,7 +2304,7 @@ window.loadItem = function(idx) {
 
   if (item.poster) {
     document.getElementById('strip-poster').src = item.poster;
-    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${item.title}` : '';
+    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${escAttr(item.title)}` : '';
     document.getElementById('strip-poster').style.display = 'block';
   }
 
@@ -2445,16 +2445,26 @@ let deletedItemIndex = null;
 
 function showToast(msg, withUndo = false, undoFnName = 'undoDelete') {
   const t = document.getElementById('toast');
-  
-  let html = `<span>${msg}</span>`;
+
+  // Construction DOM sûre (textContent) plutôt qu'innerHTML : les messages
+  // contiennent souvent des titres de films (données externes TMDb/imports) —
+  // corriger ici, au puits, sécurise TOUS les appels d'un coup, sans devoir
+  // penser à échapper à chaque site d'appel.
+  t.textContent = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
   if (withUndo) {
-    html += `<button class="toast-undo-btn" onclick="${undoFnName}()">Annuler</button>`;
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo-btn';
+    btn.textContent = 'Annuler';
+    btn.addEventListener('click', () => { if (typeof window[undoFnName] === 'function') window[undoFnName](); });
+    t.appendChild(btn);
   }
-  t.innerHTML = html;
-  
+
   t.classList.add('show');
   clearTimeout(toastTimer);
-  
+
   toastTimer = setTimeout(() => { 
       t.classList.remove('show');
       deletedItemCache = null; 
@@ -2675,7 +2685,7 @@ function renderHistory() {
     if (item.review) {
       reviewHTML = `
         <div class="hist-review" onclick="this.classList.toggle('expanded')">
-          <div class="hist-review-content">"${item.review}"</div>
+          <div class="hist-review-content">"${escAttr(item.review)}"</div>
           <span class="hist-review-toggle"></span>
         </div>
       `;
@@ -2687,7 +2697,7 @@ function renderHistory() {
       <div class="hist-item-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${imgHtml}
         <div class="hist-body">
-          <div class="hist-title">${item.title}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+          <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
           <div class="hist-meta">${metaHTML}</div>
           ${tagsHTML}
           <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
@@ -2695,8 +2705,8 @@ function renderHistory() {
           ${reviewHTML}
         </div>
         <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${item.title.replace(/"/g, '&quot;')}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${item.title.replace(/"/g, '&quot;')} de l'historique">${ICONS.trash}</button>
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
         </div>
       </div>`;
     container.appendChild(div);
@@ -2721,7 +2731,7 @@ function buildCopyTextForItem(item) {
   const score = parseFloat(item.score) || 0;
   const stars = getStarStr(scoreToStars(score));
 
-  let text = `📽 ${item.title} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
+  let text = `📽 ${escAttr(item.title)} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
   if (item.director) text += `🎬 Un film de ${item.director}\n`;
   if (item.actors) text += `🎭 Avec ${item.actors}\n`;
   if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
@@ -2735,7 +2745,7 @@ function buildCopyTextForItem(item) {
     text += `\nScénario ${f(v.scenario)} · Réal ${f(v.realisation)} · Photo ${f(v.photo)} · Acteurs ${f(v.acteurs)} · Son ${f(v.ambiance)} · Affect ${f(v.affect)}\n`;
   }
 
-  if (item.review) text += `\n${item.review}`;
+  if (item.review) text += `\n${escAttr(item.review)}`;
   return text;
 }
 
@@ -3351,7 +3361,7 @@ function renderStats() {
   const topD = Object.entries(dirs).map(([name,d]) => ({name, count:d.count, avg:d.sum/d.count})).filter(d=>d.count>1).sort((a,b)=>b.count-a.count || b.avg-a.avg).slice(0,4);
   const dirCont = document.getElementById('top-directors-list');
   if(topD.length > 0) {
-    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${d.name}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${d.name}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
+    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(d.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(d.name)}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
   } else { 
     dirCont.innerHTML = `<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>`; 
   }
@@ -4320,7 +4330,7 @@ function renderWatchlist() {
       <div class="wl-card-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${posterHtml}
         <div class="wl-body">
-          <div class="wl-title">${item.title}</div>
+          <div class="wl-title">${escAttr(item.title)}</div>
           <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
           <div class="wl-providers" id="wl-providers-${i}">
             <span class="wl-provider-loading">⏳ Chargement streaming...</span>
@@ -4601,7 +4611,7 @@ wlInput.addEventListener('input', () => {
             ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
-            <div class="wl-suggest-title">${m.title}</div>
+            <div class="wl-suggest-title">${escAttr(m.title)}</div>
             <div class="wl-suggest-year">${year}</div>
           </div>`;
         el.addEventListener('click', () => {
@@ -4669,7 +4679,7 @@ function renderWatchlistTabs() {
   const row = document.getElementById('wl-lists-row');
   if (!row) return;
   row.innerHTML = meta.map(l =>
-    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${l.name.replace(/</g, '&lt;')}</button>`
+    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${escAttr(l.name)}</button>`
   ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
 }
 
@@ -4685,7 +4695,7 @@ function openWlListManageMenu(id) {
       label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
       onClick: () => {
         if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
-        openModal('Supprimer la liste', `Supprimer "${entry.name}" et tous ses films ? Cette action est définitive.`, () => {
+        openModal('Supprimer la liste', `Supprimer "${escAttr(entry.name)}" et tous ses films ? Cette action est définitive.`, () => {
           deleteWatchlistList(id);
           renderWatchlistTabs();
           renderWatchlist();
@@ -5319,7 +5329,7 @@ function buildFilmDuJourFacts(m) {
   }
 
   if (m.tagline) {
-    facts.push(`Tagline officielle : « ${m.tagline} »`);
+    facts.push(`Tagline officielle : « ${escAttr(m.tagline)} »`);
   }
 
   const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
@@ -5403,7 +5413,7 @@ function renderFilmDuJour(m) {
   `;
   wrap.style.display = 'block';
   card.dataset.movieId = String(m.id);
-  card.setAttribute('aria-label', `Voir la fiche de ${m.title}`);
+  card.setAttribute('aria-label', `Voir la fiche de ${escAttr(m.title)}`);
   card.addEventListener('click', (e) => {
     if (e.target.closest('.fdj-providers')) return; // évite de rouvrir la fiche si on vient de re-tenter le chargement des plateformes
     openMovieDetailSheet(m.id);
@@ -5748,7 +5758,7 @@ function buildDiscoverCardEl(m, isTop) {
   if (isTop) {
     el.setAttribute('tabindex', '0');
     el.setAttribute('role', 'group');
-    el.setAttribute('aria-label', `Suggestion : ${m.title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+    el.setAttribute('aria-label', `Suggestion : ${escAttr(m.title)}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
   }
   applyPosterAccent(posterUrl, el);
   return el;
@@ -5942,7 +5952,7 @@ function renderQuizStreakBadge() {
 
 function renderQuizAnsweredState(card, q, lastResult) {
   card.innerHTML = `
-    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
       ${q.allAnswers.map(a => {
         const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
@@ -5976,7 +5986,7 @@ async function loadDailyQuiz() {
   }
 
   card.innerHTML = `
-    <div class="quiz-question">${q.question}</div>
+    <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
       ${q.allAnswers.map(a => `<button class="quiz-answer-btn" data-answer="${escAttr(a)}">${a}</button>`).join('')}
     </div>
@@ -6095,7 +6105,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
-        <div class="mds-personal-score">${localMatch.score}/10 <span class="mds-personal-stars">${localMatch.stars || ''}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+        <div class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
       ${critBreakdown}
@@ -6114,7 +6124,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
       </div>
       <div class="mds-header-info">
-        <div class="mds-title" id="mds-title">${data.title}</div>
+        <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>

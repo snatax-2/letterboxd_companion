@@ -4,17 +4,20 @@
   "description": "Ludex Rating Companion — app de notation de films avec recherche TMDb, watchlist et providers de streaming (BE).",
   "private": true,
   "scripts": {
-    "build": "node scripts/build-app-js.js && node scripts/generate-sw-cache.js",
+    "build": "node scripts/build-app-js.js && node scripts/generate-sw-cache.js && npm run lint",
     "build:js": "node scripts/build-app-js.js",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "test:e2e": "playwright test",
-    "check:load": "node scripts/check-load.js"
+    "check:load": "node scripts/check-load.js",
+    "lint": "eslint src api scripts app.js"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
-    "jsdom": "^29.1.1",
-    "@playwright/test": "1.56.0"
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.56.0",
+    "eslint": "^10.7.0",
+    "jsdom": "^29.1.1"
   }
 }

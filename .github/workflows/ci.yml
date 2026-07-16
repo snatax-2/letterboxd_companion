@@ -56,6 +56,9 @@ jobs:
           done
           exit $status
 
+      - name: Lint (doublons de fonctions/clés — les bugs silencieux du projet)
+        run: npm run lint
+
       - name: Vérifie que app.js s'exécute sans erreur (DOM simulé)
         run: npm run check:load
 
