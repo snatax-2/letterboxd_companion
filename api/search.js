@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -116,6 +116,23 @@ export default async function handler(req, res) {
           }
         }
       });
+    } else if (images) {
+      // Cas : toutes les affiches disponibles d'un film (pour le choix
+      // d'affiche par l'utilisateur). include_image_language ratisse le
+      // français, l'anglais ET les affiches sans texte (null) — les plus
+      // belles variantes sont souvent dans cette dernière catégorie.
+      const imagesRes = await fetch(
+        `https://api.themoviedb.org/3/movie/${images}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
+      );
+      const imagesData = await imagesRes.json();
+      // Ne renvoie que l'essentiel (chemins + langue), trié par note TMDb,
+      // plafonné : inutile de transporter 80 variantes vers un téléphone.
+      const posters = (imagesData.posters || [])
+        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+        .slice(0, 24)
+        .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
+      setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
+      return res.status(200).json({ posters });
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const detailsRes = await fetch(

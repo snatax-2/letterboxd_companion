@@ -819,6 +819,40 @@
   }
   .discover-card-skeleton { padding: 12px; }
 
+  /* ── Sélecteur d'affiche ── */
+  .poster-picker-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    width: min(92vw, 480px); max-height: 80vh; display: flex; flex-direction: column;
+    box-shadow: var(--shadow-3);
+  }
+  .poster-picker-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .poster-picker-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain;
+  }
+  .poster-picker-loading { display: contents; }
+  .poster-picker-cell {
+    background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-sm);
+    padding: 0; cursor: pointer; overflow: hidden; aspect-ratio: 2/3;
+    transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+  }
+  .poster-picker-cell:hover { border-color: var(--gold); }
+  .poster-picker-cell:active { transform: scale(0.96); }
+  .poster-picker-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .poster-picker-empty { grid-column: 1 / -1; text-align: center; color: var(--text-mid); font-size: 0.85rem; padding: 20px 0; }
+  .mds-poster-change-btn {
+    display: block; margin-top: 8px; width: 100%;
+    background: none; border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    color: var(--text-mid); font-size: 0.72rem; padding: 6px 8px; cursor: pointer;
+    font-family: var(--font-body);
+    transition: color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+  }
+  .mds-poster-change-btn:hover { color: var(--text-hi); border-color: var(--gold); }
+  .mds-poster-change-btn:active { transform: scale(0.96); }
+
   /* Bannière de rappel de sauvegarde : discrète, en bas au-dessus de la nav */
   .backup-reminder {
     position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom));

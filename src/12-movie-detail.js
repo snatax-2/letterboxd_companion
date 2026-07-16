@@ -88,6 +88,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
             : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
           ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
         </div>
+        ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${data.title}</div>
@@ -601,4 +602,103 @@ mdsContentEl?.addEventListener('click', (e) => {
   const btn = e.target.closest('.error-retry-btn[data-retry-tmdb-id]');
   if (!btn) return;
   openMovieDetailSheet(btn.dataset.retryTmdbId);
+});
+
+// ═══ CHOIX DE L'AFFICHE ═══
+// TMDb propose souvent des dizaines de variantes d'affiche par film (langues,
+// éditions, versions sans texte). Ce sélecteur laisse choisir SA version : le
+// choix est persisté dans l'historique ET toutes les watchlists où le film
+// apparaît — il voyage donc naturellement avec les sauvegardes JSON, sans
+// table de correspondance séparée à maintenir.
+
+function isInCollection(tmdbId) {
+  const inHistory = loadHistory().some(h => String(h.tmdbId) === String(tmdbId));
+  if (inHistory) return true;
+  return loadWatchlistsMeta().some(meta =>
+    loadWatchlist(meta.id).some(w => String(w.tmdbId) === String(tmdbId))
+  );
+}
+
+function applyChosenPoster(tmdbId, posterUrl) {
+  let touched = 0;
+  const history = loadHistory();
+  let histChanged = false;
+  for (const h of history) {
+    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; histChanged = true; touched++; }
+  }
+  if (histChanged) saveHistory(history);
+
+  for (const meta of loadWatchlistsMeta()) {
+    const list = loadWatchlist(meta.id);
+    let listChanged = false;
+    for (const w of list) {
+      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; listChanged = true; touched++; }
+    }
+    if (listChanged) saveWatchlist(list, meta.id);
+  }
+  return touched;
+}
+
+async function openPosterPicker(tmdbId) {
+  const modal = document.getElementById('poster-picker-modal');
+  const grid = document.getElementById('poster-picker-grid');
+  if (!modal || !grid) return;
+  modal.classList.add('open');
+  grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
+
+  try {
+    const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
+    const data = await res.json();
+    const posters = (data && data.posters) || [];
+    if (posters.length === 0) {
+      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
+      return;
+    }
+    grid.innerHTML = posters.map(p => `
+      <button type="button" class="poster-picker-cell" data-poster-path="${escAttr(p.file_path)}" aria-label="Choisir cette affiche">
+        <img src="https://image.tmdb.org/t/p/w185${p.file_path}" alt="" loading="lazy" decoding="async">
+      </button>
+    `).join('');
+    grid.dataset.tmdbId = String(tmdbId);
+  } catch {
+    grid.innerHTML = `
+      <div class="error-state">
+        <div class="error-state-msg">Impossible de charger les affiches. Vérifie ta connexion.</div>
+        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
+      </div>`;
+  }
+}
+
+// Gestionnaires délégués au niveau RACINE (leçon apprise : jamais dans une
+// fonction de rendu conditionnelle).
+document.getElementById('movie-detail-sheet')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.mds-poster-change-btn');
+  if (btn) openPosterPicker(btn.dataset.posterPicker);
+});
+
+document.getElementById('poster-picker-modal')?.addEventListener('click', (e) => {
+  const modal = document.getElementById('poster-picker-modal');
+  if (e.target === modal) { modal.classList.remove('open'); return; }
+  if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
+
+  const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
+  if (retry) { openPosterPicker(retry.dataset.retryPosters); return; }
+
+  const cell = e.target.closest('.poster-picker-cell[data-poster-path]');
+  if (!cell) return;
+  const grid = document.getElementById('poster-picker-grid');
+  const tmdbId = grid.dataset.tmdbId;
+  const url = `https://image.tmdb.org/t/p/w185${cell.dataset.posterPath}`;
+  const touched = applyChosenPoster(tmdbId, url);
+  if (navigator.vibrate) navigator.vibrate(15);
+  modal.classList.remove('open');
+
+  // Rafraîchit l'affiche visible dans la fiche immédiatement (w342 pour la
+  // grande vue, même chemin de fichier)
+  const sheetPoster = document.querySelector('#movie-detail-sheet .mds-poster');
+  if (sheetPoster && sheetPoster.tagName === 'IMG') {
+    sheetPoster.src = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+  }
+  renderAll();
+  showToast(touched > 0 ? 'Affiche mise à jour dans ta collection' : 'Affiche mise à jour');
 });
