@@ -75,7 +75,8 @@ function pickDiverseBasisFilms(pool, count) {
 }
 
 let discoverQueue = [];
-let discoverLoaded = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
+let discoverLoaded = false;
+let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
 
 // ═══════════════════════════════════════════
 //  FILM DU JOUR
@@ -426,6 +427,11 @@ async function loadDiscoverQueueInner() {
     }
   });
 
+  // Distingue "vraiment plus rien a suggerer" (toutes les requetes ont abouti
+  // mais tout a deja ete vu) d'une panne reseau totale (aucune n'a abouti) :
+  // les deux meritent des messages tres differents.
+  discoverLoadFailed = shuffledTop.length > 0 && !results.some(r => r.status === 'fulfilled');
+
   const uniqueRecs = [];
   const addedIds = new Set();
   allRecs.forEach(m => {
@@ -453,9 +459,17 @@ async function loadDiscoverQueueInner() {
 
 function renderDiscoverStack() {
   if (discoverQueue.length === 0) {
-    discoverStack.innerHTML = '';
     discoverActionsEl.style.display = 'none';
-    discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    if (discoverLoadFailed) {
+      discoverStack.innerHTML = `
+        <div class="error-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
+          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
+        </div>`;
+    } else {
+      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    }
     return;
   }
   discoverActionsEl.style.display = 'flex';
@@ -788,3 +802,10 @@ async function loadDailyQuiz() {
     });
   });
 }
+
+// Reprise après panne réseau des suggestions : délégué au niveau racine.
+discoverStack?.addEventListener('click', (e) => {
+  if (!e.target.closest('.error-retry-btn[data-retry-discover]')) return;
+  discoverLoadFailed = false;
+  loadDiscoverQueue();
+});
