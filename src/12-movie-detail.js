@@ -654,6 +654,39 @@ function applyChosenPoster(tmdbId, posterUrl) {
   return touched;
 }
 
+// Calcule et pose une hauteur EXACTE en pixels sur chaque case du sélecteur
+// d'affiches, dérivée de la largeur réelle mesurée (ratio 2:3 : hauteur =
+// largeur × 1,5). Après deux échecs consécutifs de techniques CSS pures dans
+// ce contexte grid+bouton+img (aspect-ratio direct, puis padding-top en %,
+// tous deux cassés en pratique sur iOS malgré les tests — voir les
+// commentaires CSS historiques), on calcule des pixels concrets : aucune
+// résolution de pourcentage ambiguë possible, donc aucun risque de ce bug de
+// case tronquée qui ne montrait qu'une fine tranche de chaque affiche.
+function applyPosterCellHeights(grid) {
+  function apply() {
+    const cells = grid.querySelectorAll('.poster-picker-cell');
+    if (cells.length === 0) return;
+    const width = cells[0].getBoundingClientRect().width;
+    if (width <= 0) return; // grille pas encore rendue/visible, on retentera au resize
+    const height = Math.round(width * 1.5);
+    cells.forEach(c => { c.style.height = `${height}px`; });
+  }
+  // Un frame d'attente : au moment de l'appel, le innerHTML vient tout juste
+  // d'être posé et la grille peut ne pas avoir encore de largeur calculée.
+  requestAnimationFrame(apply);
+  // Recalcule sur rotation d'écran tant que la modale reste ouverte — retire
+  // l'écouteur à la fermeture pour ne pas accumuler de fuite mémoire.
+  const modal = document.getElementById('poster-picker-modal');
+  const onResize = () => apply();
+  window.addEventListener('resize', onResize);
+  const cleanup = () => {
+    window.removeEventListener('resize', onResize);
+    modal?.removeEventListener('transitionend', maybeCleanup);
+  };
+  function maybeCleanup() { if (!modal.classList.contains('open')) cleanup(); }
+  modal?.addEventListener('transitionend', maybeCleanup);
+}
+
 async function openPosterPicker(tmdbId) {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
@@ -679,6 +712,7 @@ async function openPosterPicker(tmdbId) {
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
+    applyPosterCellHeights(grid);
   } catch (err) {
     grid.innerHTML = `
       <div class="error-state">

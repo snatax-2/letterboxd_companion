@@ -91,3 +91,20 @@ test('chaque affiche est affichee en entier, sans etre rognee (object-fit: conta
   const fit = await page.locator('.poster-picker-cell img').first().evaluate(el => getComputedStyle(el).objectFit);
   expect(fit).toBe('contain');
 });
+
+test('chaque case a une hauteur reelle correcte (2:3 exact en pixels, plus de case tronquee)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_v2', JSON.stringify([
+    { title: 'Argylle', year: '2024', tmdbId: '500', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-07-01', savedAt: '2026-07-01T10:00:00.000Z' },
+  ])));
+  await page.goto('/');
+  await page.evaluate(() => window.openMovieDetailSheet('500'));
+  await page.waitForSelector('#movie-detail-sheet.open .mds-title');
+  await page.click('.mds-poster-change-btn');
+  await page.waitForSelector('.poster-picker-cell[data-poster-path]');
+  await page.waitForTimeout(150); // laisse le requestAnimationFrame calculer la hauteur
+
+  const box = await page.locator('.poster-picker-cell[data-poster-path]').first().boundingBox();
+  const ratio = box.height / box.width;
+  expect(ratio).toBeGreaterThan(1.45);
+  expect(ratio).toBeLessThan(1.55);
+});

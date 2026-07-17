@@ -7007,6 +7007,39 @@ function applyChosenPoster(tmdbId, posterUrl) {
   return touched;
 }
 
+// Calcule et pose une hauteur EXACTE en pixels sur chaque case du sélecteur
+// d'affiches, dérivée de la largeur réelle mesurée (ratio 2:3 : hauteur =
+// largeur × 1,5). Après deux échecs consécutifs de techniques CSS pures dans
+// ce contexte grid+bouton+img (aspect-ratio direct, puis padding-top en %,
+// tous deux cassés en pratique sur iOS malgré les tests — voir les
+// commentaires CSS historiques), on calcule des pixels concrets : aucune
+// résolution de pourcentage ambiguë possible, donc aucun risque de ce bug de
+// case tronquée qui ne montrait qu'une fine tranche de chaque affiche.
+function applyPosterCellHeights(grid) {
+  function apply() {
+    const cells = grid.querySelectorAll('.poster-picker-cell');
+    if (cells.length === 0) return;
+    const width = cells[0].getBoundingClientRect().width;
+    if (width <= 0) return; // grille pas encore rendue/visible, on retentera au resize
+    const height = Math.round(width * 1.5);
+    cells.forEach(c => { c.style.height = `${height}px`; });
+  }
+  // Un frame d'attente : au moment de l'appel, le innerHTML vient tout juste
+  // d'être posé et la grille peut ne pas avoir encore de largeur calculée.
+  requestAnimationFrame(apply);
+  // Recalcule sur rotation d'écran tant que la modale reste ouverte — retire
+  // l'écouteur à la fermeture pour ne pas accumuler de fuite mémoire.
+  const modal = document.getElementById('poster-picker-modal');
+  const onResize = () => apply();
+  window.addEventListener('resize', onResize);
+  const cleanup = () => {
+    window.removeEventListener('resize', onResize);
+    modal?.removeEventListener('transitionend', maybeCleanup);
+  };
+  function maybeCleanup() { if (!modal.classList.contains('open')) cleanup(); }
+  modal?.addEventListener('transitionend', maybeCleanup);
+}
+
 async function openPosterPicker(tmdbId) {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
@@ -7032,6 +7065,7 @@ async function openPosterPicker(tmdbId) {
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
+    applyPosterCellHeights(grid);
   } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
@@ -7401,4 +7435,24 @@ document.getElementById('daily-duel-card')?.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' && e.key !== ' ') return;
   const side = e.target.closest('.duel-side');
   if (side) { e.preventDefault(); side.click(); }
+});
+
+// ── Réinitialisation des duels (depuis Réglages) ──
+// Efface UNIQUEMENT le classement ELO, le compteur de duels, les paires déjà
+// jouées et l'état "duel du jour joué" — ne touche jamais à l'historique des
+// films ni à leurs notes. Confirmation obligatoire : c'est irréversible et
+// perd une vraie progression (parfois des dizaines de duels joués).
+document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
+  openModal(
+    'Réinitialiser les duels ?',
+    'Le classement, les cotes et l\'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.',
+    () => {
+      localStorage.removeItem(DUELS_KEY);
+      localStorage.removeItem(DAILY_DUEL_DATE_KEY);
+      if (typeof renderDuelsSection === 'function') renderDuelsSection();
+      if (typeof renderDailyDuel === 'function') renderDailyDuel();
+      showToast('Duels réinitialisés.');
+    },
+    true // danger : bouton rouge "Supprimer"
+  );
 });

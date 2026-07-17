@@ -325,3 +325,23 @@ document.getElementById('daily-duel-card')?.addEventListener('keydown', (e) => {
   const side = e.target.closest('.duel-side');
   if (side) { e.preventDefault(); side.click(); }
 });
+
+// ── Réinitialisation des duels (depuis Réglages) ──
+// Efface UNIQUEMENT le classement ELO, le compteur de duels, les paires déjà
+// jouées et l'état "duel du jour joué" — ne touche jamais à l'historique des
+// films ni à leurs notes. Confirmation obligatoire : c'est irréversible et
+// perd une vraie progression (parfois des dizaines de duels joués).
+document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
+  openModal(
+    'Réinitialiser les duels ?',
+    'Le classement, les cotes et l\'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.',
+    () => {
+      localStorage.removeItem(DUELS_KEY);
+      localStorage.removeItem(DAILY_DUEL_DATE_KEY);
+      if (typeof renderDuelsSection === 'function') renderDuelsSection();
+      if (typeof renderDailyDuel === 'function') renderDailyDuel();
+      showToast('Duels réinitialisés.');
+    },
+    true // danger : bouton rouge "Supprimer"
+  );
+});

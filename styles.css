@@ -837,16 +837,18 @@
     padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain;
   }
   .poster-picker-loading { display: contents; }
-  /* Ratio 2:3 par la technique du padding (padding-top en % = % de la
-     LARGEUR) : après deux tentatives avec aspect-ratio (sur le bouton puis
-     sur l'image) cassées par iOS Safari dans ce contexte grid+bouton+img,
-     retour à la méthode qui marche partout depuis quinze ans. */
+  /* La hauteur exacte (ratio 2:3) est posée en pixels par JS juste après le
+     rendu (voir applyPosterCellHeights dans 12-movie-detail.js) — after two
+     CSS-only techniques failed in practice in this grid+bouton+img contexte
+     (aspect-ratio, puis padding-top en %), un pixel calculé est la seule
+     valeur qui ne peut pas être mal résolue par le navigateur. */
   .poster-picker-cell {
     background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-sm);
-    padding: 0; padding-top: 150%; cursor: pointer; overflow: hidden; display: block; width: 100%;
+    padding: 0; cursor: pointer; overflow: hidden; display: block; width: 100%;
     position: relative;
     transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   }
+  .poster-picker-cell.skeleton-bg { aspect-ratio: 2/3; } /* squelettes de chargement : pas de JS encore passé, ratio CSS suffit ici (contenu statique, pas d'image réelle) */
   .poster-picker-cell:hover { border-color: var(--gold); }
   .poster-picker-cell:active { transform: scale(0.96); }
   .poster-picker-cell img {
@@ -1710,6 +1712,12 @@
 
   /* ── MODALS ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity var(--dur-base); }
+  /* La modale de confirmation générique (#modal) peut être déclenchée DEPUIS
+     une autre modale déjà ouverte (ex: réinitialiser les duels depuis
+     Réglages) — sans ce z-index dédié, elle partageait la même valeur que
+     les autres et l'ordre du DOM faisait passer #settings-modal par-dessus,
+     rendant "Supprimer"/"Annuler" incliquables. */
+  #modal { z-index: 10010; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
   .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
   .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }

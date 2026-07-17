@@ -243,14 +243,20 @@
         <button class="modal-btn" id="sync-restore-btn" style="flex:1;min-width:140px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Restaurer depuis le cloud</button>
       </div>
       <div id="sync-status" style="font-size:0.78rem;color:var(--text-mid);min-height:1.2em"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="modal-btn" id="settings-cancel">Annuler</button>
+
       <div class="error-log-section" id="error-log-section" style="display:none;">
         <label class="settings-label">Journal technique</label>
         <p class="error-log-hint">Un problème inattendu a été détecté. Tes données ne sont pas affectées.</p>
         <button type="button" class="icon-btn" id="error-log-copy-btn">Copier le détail (pour signaler le bug)</button>
       </div>
+      <div class="error-log-section">
+        <label class="settings-label">Duels</label>
+        <p class="error-log-hint">Remet à zéro le classement, les cotes et l'historique des affrontements déjà joués — tes films et tes notes ne sont pas touchés.</p>
+        <button type="button" class="icon-btn" id="reset-duels-btn">Réinitialiser les duels</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="settings-cancel">Annuler</button>
       <button class="modal-btn primary" id="settings-save">Appliquer</button>
     </div>
   </div>
