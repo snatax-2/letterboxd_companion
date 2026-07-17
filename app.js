@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00b-icons.js, 00c-poster-color.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -51,6 +51,87 @@ document.getElementById('update-banner-reload-btn')?.addEventListener('click', (
   window.addEventListener('online', update);
   window.addEventListener('offline', update);
   update();
+})();
+
+// ═══════════════════════════════════════════
+//  MIGRATIONS DE SCHÉMA
+// ═══════════════════════════════════════════
+// Les données vivent dans localStorage sans serveur pour les faire évoluer :
+// quand la FORME d'un item change (nouveau champ obligatoire, renommage...),
+// les données déjà en place chez l'utilisateur doivent être mises à niveau au
+// chargement, sinon le code qui suppose la nouvelle forme casse.
+//
+// Principes de sécurité, dans l'ordre d'importance :
+// 1. NON DESTRUCTIF EN CAS D'ÉCHEC : si une migration lève une erreur, on
+//    s'arrête, on ne sauvegarde rien de partiel, et la version stockée reste
+//    celle de la dernière migration réussie — l'app tourne avec les données
+//    telles quelles plutôt que de risquer de les corrompre.
+// 2. SAUVEGARDE PRÉ-MIGRATION : avant toute chaîne de migrations, une copie de
+//    l'historique (la donnée critique) est posée dans une clé dédiée, écrasée
+//    à chaque nouvelle chaîne — un filet de dernier recours.
+// 3. MIGRATIONS IDEMPOTENTES : chaque étape peut être rejouée sans effet
+//    (propriété vérifiée par les tests) — protège contre les doubles exécutions.
+//
+// Ce fichier est nommé 00a-* pour s'exécuter AVANT tout code qui lit les
+// données (concaténation alphabétique du build). Les clés sont en littéraux
+// ici (pas STORE_KEY) : les const des fichiers suivants n'existent pas encore
+// à cet instant de l'exécution (zone morte temporelle).
+
+(function runSchemaMigrations() {
+  const VERSION_KEY = 'lbx_schema_version';
+  const HISTORY_KEY = 'lbx_v2'; // = STORE_KEY de 03-foundation.js
+  const BACKUP_KEY = 'lbx_pre_migration_backup';
+
+  // Chaque migration : { to: <version cible>, up: () => void }.
+  // Elles s'exécutent en séquence depuis la version stockée.
+  const MIGRATIONS = [
+    {
+      to: 2,
+      up: () => {
+        // v2 : normalise chaque item d'historique (savedAt, values, title
+        // garantis) — voir normalizeHistoryItemV2 dans 03b-pure-logic.js.
+        // Ce fichier s'exécute avant 03b : la fonction est disponible quand
+        // même car les DÉCLARATIONS de fonctions du script concaténé sont
+        // hissées avant toute exécution.
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if (!raw) return;
+        const history = JSON.parse(raw);
+        if (!Array.isArray(history)) return;
+        const migrated = history.map(normalizeHistoryItemV2);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
+      },
+    },
+  ];
+
+  const CURRENT_VERSION = MIGRATIONS.length > 0 ? MIGRATIONS[MIGRATIONS.length - 1].to : 1;
+
+  let stored;
+  try { stored = parseInt(localStorage.getItem(VERSION_KEY), 10); } catch { stored = NaN; }
+  if (isNaN(stored)) stored = 1; // données d'avant le versioning = baseline v1
+
+  if (stored >= CURRENT_VERSION) return; // à jour, rien à faire
+
+  // Filet de dernier recours : copie de l'historique avant la chaîne
+  try {
+    const current = localStorage.getItem(HISTORY_KEY);
+    if (current) {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({ fromVersion: stored, at: new Date().toISOString(), history: current }));
+    }
+  } catch { /* le quota peut refuser la copie : la migration reste tentée */ }
+
+  for (const migration of MIGRATIONS) {
+    if (migration.to <= stored) continue;
+    try {
+      migration.up();
+      stored = migration.to;
+      localStorage.setItem(VERSION_KEY, String(stored));
+    } catch (e) {
+      // Échec : on s'arrête là, version inchangée depuis la dernière réussite,
+      // données intactes. L'app fonctionne avec l'ancien schéma.
+      console.error(`Migration vers v${migration.to} échouée (données intactes) :`, e);
+      break;
+    }
+  }
 })();
 
 // ═══════════════════════════════════════════
@@ -1348,6 +1429,26 @@ function findOneYearAgoFilm(history, today) {
   return null;
 }
 
+// ── Migrations de schéma (voir 00a-migrations.js pour le runner) ──
+// Normalisation v2 d'un item d'historique : garantit les champs que le reste
+// du code suppose présents. Idempotente (la rejouer ne change rien) — c'est la
+// propriété clé d'une migration sûre. Pure et testée dans tests/migrations.test.js.
+function normalizeHistoryItemV2(item) {
+  if (!item || typeof item !== 'object') return item;
+  const out = { ...item };
+  // savedAt : des données très anciennes ou importées à la main peuvent ne pas
+  // l'avoir — repli sur la date de visionnage, sinon une époque neutre (pas
+  // "maintenant" : ça fausserait les tris "ajouté récemment" à chaque migration).
+  if (!out.savedAt) {
+    out.savedAt = out.date ? `${out.date}T12:00:00.000Z` : '1970-01-01T00:00:00.000Z';
+  }
+  // values : le code de rendu (radar, moyennes) suppose un objet
+  if (!out.values || typeof out.values !== 'object') out.values = {};
+  // title : chaîne toujours (un import cassé pourrait mettre null)
+  if (typeof out.title !== 'string') out.title = String(out.title ?? '');
+  return out;
+}
+
 // ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
 // Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
 // symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
@@ -1494,6 +1595,7 @@ if (typeof module !== 'undefined' && module.exports) {
     computeDailyCounts,
     computeDecadeStats,
     findOneYearAgoFilm,
+    normalizeHistoryItemV2,
   };
 }
 
@@ -2530,11 +2632,15 @@ function getGenres(history) {
 
 function renderGenreChips(history) {
   const genres = getGenres(history);
-  const row    = document.getElementById('genre-filter-row');
+  const row    = document.getElementById('genre-fold');
   const chips  = document.getElementById('genre-chips');
+  const currentLabel = document.getElementById('genre-fold-current');
 
   if (genres.length === 0) { row.style.display = 'none'; return; }
-  row.style.display = 'flex';
+  row.style.display = 'block';
+  // Le genre actif reste lisible plié : c'est ce qui rend le pliage acceptable
+  // (l'état du filtre n'est jamais caché, seule la liste des options l'est).
+  if (currentLabel) currentLabel.textContent = activeGenre || 'Tous';
   chips.innerHTML = '';
 
   const allChip = document.createElement('button');
@@ -2669,12 +2775,14 @@ function renderHistory() {
       ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
       : '';
 
+    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
+    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
+    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
     let metaHTML = '';
-    if (item.year) metaHTML += item.year + ' · ';
-    if (item.runtime) metaHTML += item.runtime + ' · ';
-    metaHTML += item.genre || '';
-    if (item.director) metaHTML += `<br><span style="color:var(--text-mid)">Réalisé par <b>${item.director}</b></span>`;
-    if (item.actors) metaHTML += `<br><span style="color:var(--text-mid)">Avec <b>${item.actors}</b></span>`;
+    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
+    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
+    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
+    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
 
     let tagsHTML = '';
     if (item.contextTags && item.contextTags.length > 0) {
@@ -4026,7 +4134,9 @@ function importLudexJson(text) {
     () => {
       const existing = loadHistory();
       const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
-      const toAdd = data.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
+      // Normalisation au passage : une vieille sauvegarde réimportée porte
+      // l'ancienne forme du schéma — même fonction que la migration v2.
+      const toAdd = data.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
       const merged = [...toAdd, ...existing];
       saveHistory(merged);
       renderAll();
@@ -6654,10 +6764,15 @@ function isInCollection(tmdbId) {
 
 function applyChosenPoster(tmdbId, posterUrl) {
   let touched = 0;
+  // updatedAt est CRUCIAL ici : la fusion de la synchro cloud garde la version
+  // la plus récente par updatedAt — sans le mettre à jour, le choix d'affiche
+  // était silencieusement écrasé par la copie distante au sync suivant
+  // ("l'affiche ne se sauvegarde pas", alors que le stockage local était bon).
+  const now = new Date().toISOString();
   const history = loadHistory();
   let histChanged = false;
   for (const h of history) {
-    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; histChanged = true; touched++; }
+    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; h.updatedAt = now; histChanged = true; touched++; }
   }
   if (histChanged) saveHistory(history);
 
@@ -6665,7 +6780,7 @@ function applyChosenPoster(tmdbId, posterUrl) {
     const list = loadWatchlist(meta.id);
     let listChanged = false;
     for (const w of list) {
-      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; listChanged = true; touched++; }
+      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; w.updatedAt = now; listChanged = true; touched++; }
     }
     if (listChanged) saveWatchlist(list, meta.id);
   }

@@ -621,10 +621,15 @@ function isInCollection(tmdbId) {
 
 function applyChosenPoster(tmdbId, posterUrl) {
   let touched = 0;
+  // updatedAt est CRUCIAL ici : la fusion de la synchro cloud garde la version
+  // la plus récente par updatedAt — sans le mettre à jour, le choix d'affiche
+  // était silencieusement écrasé par la copie distante au sync suivant
+  // ("l'affiche ne se sauvegarde pas", alors que le stockage local était bon).
+  const now = new Date().toISOString();
   const history = loadHistory();
   let histChanged = false;
   for (const h of history) {
-    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; histChanged = true; touched++; }
+    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; h.updatedAt = now; histChanged = true; touched++; }
   }
   if (histChanged) saveHistory(history);
 
@@ -632,7 +637,7 @@ function applyChosenPoster(tmdbId, posterUrl) {
     const list = loadWatchlist(meta.id);
     let listChanged = false;
     for (const w of list) {
-      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; listChanged = true; touched++; }
+      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; w.updatedAt = now; listChanged = true; touched++; }
     }
     if (listChanged) saveWatchlist(list, meta.id);
   }

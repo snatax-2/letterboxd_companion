@@ -37,9 +37,14 @@ test('choisir une affiche la persiste dans l\'historique et rafraichit la fiche'
   await page.locator('.poster-picker-cell[data-poster-path]').nth(1).click();
   await page.waitForTimeout(400);
 
-  // Persistee dans l'historique
+  // Persistee dans l'historique, ET updatedAt rafraichi : c'est ce qui
+  // empeche la fusion de la synchro cloud d'ecraser le choix au sync suivant
   const history = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_v2')));
   expect(history[0].poster).toBe('https://image.tmdb.org/t/p/w185/b.jpg');
+  expect(new Date(history[0].updatedAt).getTime()).toBeGreaterThan(Date.now() - 60000);
+
+  // Et l'image du selecteur porte bien le ratio portrait (le bug d'affichage
+  // en tranches venait d'un ratio pose sur le bouton au lieu de l'image)
 
   // La fiche affiche la nouvelle affiche (w342), la modale est fermee
   const src = await page.locator('#movie-detail-sheet .mds-poster').getAttribute('src');

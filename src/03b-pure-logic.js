@@ -466,6 +466,26 @@ function findOneYearAgoFilm(history, today) {
   return null;
 }
 
+// ── Migrations de schéma (voir 00a-migrations.js pour le runner) ──
+// Normalisation v2 d'un item d'historique : garantit les champs que le reste
+// du code suppose présents. Idempotente (la rejouer ne change rien) — c'est la
+// propriété clé d'une migration sûre. Pure et testée dans tests/migrations.test.js.
+function normalizeHistoryItemV2(item) {
+  if (!item || typeof item !== 'object') return item;
+  const out = { ...item };
+  // savedAt : des données très anciennes ou importées à la main peuvent ne pas
+  // l'avoir — repli sur la date de visionnage, sinon une époque neutre (pas
+  // "maintenant" : ça fausserait les tris "ajouté récemment" à chaque migration).
+  if (!out.savedAt) {
+    out.savedAt = out.date ? `${out.date}T12:00:00.000Z` : '1970-01-01T00:00:00.000Z';
+  }
+  // values : le code de rendu (radar, moyennes) suppose un objet
+  if (!out.values || typeof out.values !== 'object') out.values = {};
+  // title : chaîne toujours (un import cassé pourrait mettre null)
+  if (typeof out.title !== 'string') out.title = String(out.title ?? '');
+  return out;
+}
+
 // ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
 // Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
 // symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
@@ -612,5 +632,6 @@ if (typeof module !== 'undefined' && module.exports) {
     computeDailyCounts,
     computeDecadeStats,
     findOneYearAgoFilm,
+    normalizeHistoryItemV2,
   };
 }

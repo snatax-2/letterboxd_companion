@@ -657,10 +657,14 @@
           <button class="filter-btn" data-sort="title">A→Z</button>
         </div>
 
-        <div class="genre-filter-row" id="genre-filter-row" style="display:none;">
-          <span class="genre-filter-label">Genre :</span>
+        <details class="genre-fold" id="genre-fold" style="display:none;">
+          <summary class="genre-fold-summary">
+            <span class="genre-filter-label">Genre :</span>
+            <span class="genre-fold-current" id="genre-fold-current">Tous</span>
+            <span class="badges-chevron" aria-hidden="true">▾</span>
+          </summary>
           <div class="genre-chips" id="genre-chips"></div>
-        </div>
+        </details>
 
         <div class="history-scroller" id="history-list"></div>
       </div>

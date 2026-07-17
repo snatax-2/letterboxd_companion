@@ -30,7 +30,9 @@ function importLudexJson(text) {
     () => {
       const existing = loadHistory();
       const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
-      const toAdd = data.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
+      // Normalisation au passage : une vieille sauvegarde réimportée porte
+      // l'ancienne forme du schéma — même fonction que la migration v2.
+      const toAdd = data.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
       const merged = [...toAdd, ...existing];
       saveHistory(merged);
       renderAll();

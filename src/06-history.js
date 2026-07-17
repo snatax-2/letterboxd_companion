@@ -115,11 +115,15 @@ function getGenres(history) {
 
 function renderGenreChips(history) {
   const genres = getGenres(history);
-  const row    = document.getElementById('genre-filter-row');
+  const row    = document.getElementById('genre-fold');
   const chips  = document.getElementById('genre-chips');
+  const currentLabel = document.getElementById('genre-fold-current');
 
   if (genres.length === 0) { row.style.display = 'none'; return; }
-  row.style.display = 'flex';
+  row.style.display = 'block';
+  // Le genre actif reste lisible plié : c'est ce qui rend le pliage acceptable
+  // (l'état du filtre n'est jamais caché, seule la liste des options l'est).
+  if (currentLabel) currentLabel.textContent = activeGenre || 'Tous';
   chips.innerHTML = '';
 
   const allChip = document.createElement('button');
@@ -254,12 +258,14 @@ function renderHistory() {
       ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
       : '';
 
+    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
+    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
+    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
     let metaHTML = '';
-    if (item.year) metaHTML += item.year + ' · ';
-    if (item.runtime) metaHTML += item.runtime + ' · ';
-    metaHTML += item.genre || '';
-    if (item.director) metaHTML += `<br><span style="color:var(--text-mid)">Réalisé par <b>${item.director}</b></span>`;
-    if (item.actors) metaHTML += `<br><span style="color:var(--text-mid)">Avec <b>${item.actors}</b></span>`;
+    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
+    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
+    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
+    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
 
     let tagsHTML = '';
     if (item.contextTags && item.contextTags.length > 0) {
