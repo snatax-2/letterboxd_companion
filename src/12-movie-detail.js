@@ -576,15 +576,25 @@ function initSwipeToClose(overlayEl, closeFn) {
   box.addEventListener('touchend', () => {
     if (!dragging) return;
     dragging = false;
-    box.style.transition = 'transform .22s ease';
+    // Système de mouvement unifié (voir styles.css :root) plutôt qu'une durée
+    // isolée : 240ms correspond à --dur-base, JS et CSS ne peuvent pas
+    // partager directement une valeur ici (transition posée en JS), donc la
+    // constante est dupliquée consciemment — le setTimeout ci-dessous DOIT
+    // rester synchronisé avec elle.
+    const CLOSE_DUR_MS = 240;
+    box.style.transition = `transform ${CLOSE_DUR_MS}ms var(--ease-out)`;
     if (currentDelta > THRESHOLD) {
       box.style.transform = `translateY(100%) scale(1)`;
+      // Attend la fin RÉELLE de l'animation avant de fermer : le délai précédent
+      // (180ms) coupait la feuille avant que le glissement vers le bas ait
+      // visuellement terminé sa course (transition de 220ms) — léger "saut"
+      // perceptible en toute fin de fermeture.
       setTimeout(() => {
         closeFn();
         box.style.transform = '';
         box.style.transition = '';
         overlayEl.style.backgroundColor = '';
-      }, 180);
+      }, CLOSE_DUR_MS);
     } else {
       box.style.transform = '';
       overlayEl.style.backgroundColor = '';

@@ -136,6 +136,7 @@ npm run test:e2e
 - **`tests/e2e/update-banner.spec.js`** — le bandeau "nouvelle version disponible" reste caché par défaut, s'affiche correctement une fois déclenché, et le bouton recharge la page.
 - **`tests/e2e/pull-to-refresh.spec.js`** — tirer suffisamment vers le bas (en haut de page) déclenche le rafraîchissement ; aucune interférence si la page est déjà scrollée.
 - **`tests/e2e/watchlist-swipe.spec.js`** — retrait par glissement (avec annulation possible), isolation vis-à-vis du swipe de changement d'onglet.
+- **`tests/e2e/error-log.spec.js`** — une vraie erreur JS non interceptée est journalisée (sans toucher aux données de films), un avertissement s'affiche une seule fois même en cascade, et le journal est visible/copiable depuis Réglages.
 - **`tests/e2e/person-detail-sheet.spec.js`** — filmographie limitée au rôle principal, films déjà vus grisés, navigation vers la fiche film au clic.
 - **`tests/e2e/keyboard-accessibility.spec.js`** — activation par Entrée/Espace des cartes cliquables (tendances, casting, filmographie...), focus déplacé à l'ouverture d'une fiche, piégeage du focus dans une fiche ouverte.
 - **`tests/e2e/surprise-me.spec.js`** — le bouton "Surprends-moi" ouvre la fiche du film pioché, et affiche un message (sans planter) si aucun résultat.
@@ -154,8 +155,11 @@ npm run test:e2e
 - **`tests/e2e/premium-polish.spec.js`** — le meta theme-color suit le thème actif (barre de statut iOS assortie), les polices sont chargées depuis le head avec préconnexion.
 - **`tests/e2e/error-states.spec.js`** — panne réseau sur la fiche film : l'état d'erreur dessiné apparaît (message + bouton), et « Réessayer » recharge la fiche complète une fois le réseau revenu.
 - **`tests/e2e/poster-picker.spec.js`** — le sélecteur d'affiche : choisir une variante la persiste dans l'historique (URL w185), rafraîchit la fiche (w342) et ferme la modale ; le bouton n'apparaît pas pour un film hors collection.
-- **`tests/e2e/hist-uniform.spec.js`** — cartes d'historique à hauteur uniforme malgré des genres/acteurs très longs (lignes bornées avec ellipse) ; filtre genre plié par défaut avec le genre actif toujours visible, filtrage fonctionnel après dépliage.
+- **`tests/e2e/hist-uniform.spec.js`** — cartes d'historique à hauteur uniforme malgré des genres/acteurs très longs (lignes bornées avec ellipse) ; filtre genre plié par défaut avec le genre actif toujours visible, filtrage fonctionnel après dépliage. Verifie aussi le cas reel signale (tag "À la maison" sur une seule carte : memes hauteurs).
 - **`tests/e2e/xss.spec.js`** — un titre de film piégé (balise img avec onerror, script dans la critique) s'affiche partout comme texte et ne s'exécute jamais — historique, toast coup de cœur.
+- **`tests/e2e/targeted-render.spec.js`** — renderStats() (radar/timeline/heatmap/badges/décennies) est différé tant que l'onglet Profil n'est pas visible, et rattrapé dès qu'on y bascule ; aucun retard si on reste sur Profil.
+- **`tests/e2e/drag-fluidity.spec.js`** — la transition CSS est bien désactivée (0s) pendant un glissement actif de l'historique, mesurée en plein geste, et restaurée au relâchement.
+- **`tests/e2e/watchlist-swipe.spec.js`** — corrigé pour désactiver l'écran d'accueil avant d'agir (le test était intermittent sur un état vraiment vierge, indépendamment du reste de ce travail).
 - **`tests/migrations.test.js`** — normalisation v2 des items d'historique : champs garantis (savedAt, values, title), époque neutre plutôt que « maintenant », idempotence (rejouer = aucun changement), pas de mutation de l'original.
 - **`tests/e2e/migrations.spec.js`** — des données ancienne forme sont migrées au chargement (version posée à 2, sauvegarde pré-migration contenant l'état d'avant, données normalisées, app fonctionnelle) ; des données à jour ne relancent rien.
 - **`tests/e2e/ux-polish.spec.js`** — l'aperçu du geste de swipe se joue une seule fois à la première visite de l'historique ; l'en-tête de la fiche film garde toujours un fond opaque (teinté ou non).
@@ -233,6 +237,12 @@ git push -u origin main
 4. Clique sur **Deploy**.
 
 Chaque nouveau `git push` sur `main` redéploiera automatiquement en production ; chaque push sur une autre branche/PR génère un déploiement de preview isolé.
+
+### Minification au déploiement
+
+`vercel.json` exécute `npm run build && node scripts/minify-for-deploy.js`. La seconde étape minifie `app.js` et `styles.css` (Terser + clean-css) **uniquement dans l'environnement de build Vercel** — mesuré : ~95 Ko → ~48 Ko gzippé pour le JS, ~45 Ko → ~29 Ko pour le CSS, soit environ moitié moins de données à charger sur le premier accès (avant que le service worker ne mette tout en cache).
+
+Le fichier `app.js` commité dans Git reste volontairement lisible (utile pour les diffs et les revues) : cette étape ne touche jamais aux fichiers du dépôt, seulement à la copie éphémère que Vercel sert aux utilisateurs. La CI (`npm run build:js`, sans la minification) continue de comparer contre cette version lisible.
 
 ## Points à vérifier
 

@@ -1,4 +1,4 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && node scripts/minify-for-deploy.js",
   "outputDirectory": "."
 }

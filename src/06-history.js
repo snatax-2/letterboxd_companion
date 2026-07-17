@@ -267,10 +267,10 @@ function renderHistory() {
     if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
     if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
 
-    let tagsHTML = '';
-    if (item.contextTags && item.contextTags.length > 0) {
-      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('')}</div>`;
-    }
+    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
+    // c'était la dernière source de hauteurs inégales entre cartes — un film
+    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
+    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
 
     let reviewHTML = '';
     if (item.review) {
@@ -290,8 +290,7 @@ function renderHistory() {
         <div class="hist-body">
           <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
           <div class="hist-meta">${metaHTML}</div>
-          ${tagsHTML}
-          <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
+          <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
           <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
           ${reviewHTML}
         </div>
@@ -474,24 +473,29 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     }
     armedItem = null;
     armedDirection = null;
+    // 240ms = --dur-base (styles.css :root), doit rester synchronisé avec la
+    // transition de sortie ci-dessous (même correctif que watchlist et la
+    // fiche film : l'ancien délai de 200ms coupait l'animation 40ms trop tôt).
+    const EXIT_DUR_MS = 240;
     if (dir === 'left') {
       item.classList.add('hist-swipe-out-left');
       content.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(item, 'strong');
-      setTimeout(() => deleteItem(resolveCurrentIdx()), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+      setTimeout(() => deleteItem(resolveCurrentIdx()), EXIT_DUR_MS); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
     } else {
       item.classList.add('hist-swipe-out-right');
       content.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(item, 'strong');
-      setTimeout(() => loadItem(resolveCurrentIdx()), 200);
+      setTimeout(() => loadItem(resolveCurrentIdx()), EXIT_DUR_MS);
     }
   }
 
   function resetGesture(e) {
     if (e && pressedItem) e.stopPropagation();
     clearTimeout(pressTimer);
+    if (pressedItem) pressedItem.classList.remove('hist-dragging'); // réactive la transition pour l'animation de relâchement
     pressTimer = null;
     pressedItem = null;
     pressedContent = null;
@@ -563,7 +567,15 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         // éventuel état armé du même film — assez tôt pour éviter les deux
         // états contradictoires (le bug historique du re-swipe), assez tard
         // pour ne pas tuer le tap de confirmation (qui ne passe jamais ici).
-        if (swipeMode === 'swipe' && armedItem === pressedItem) cancelArmed();
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          // Désactive la transition CSS pendant le glissement actif (classe
+          // prévue mais jamais posée jusqu'ici) : sans ça, chaque mise à jour
+          // de translateX() au fil du doigt s'anime sur 240ms au lieu d'être
+          // instantanée — un léger effet "élastique" qui traîne derrière le
+          // doigt plutôt qu'un suivi 1:1 franc.
+          pressedItem.classList.add('hist-dragging');
+        }
       } else {
         return;
       }
@@ -635,7 +647,10 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // Même correctif que le tactile : nettoyer un état armé au démarrage
         // d'un VRAI glissement, jamais au simple clic (voir touchstart).
-        if (swipeMode === 'swipe' && armedItem === pressedItem) cancelArmed();
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging'); // voir le commentaire côté tactile
+        }
       } else {
         return;
       }
@@ -979,6 +994,10 @@ function resetProfileExtras() {
 }
 
 function renderProfileExtras(history) {
+  // Défensif : un appel sans argument (bug d'un appelant) ne doit plus faire
+  // planter tout le reste du rendu du profil — juste rester sur les valeurs
+  // par défaut, comme un historique vide.
+  history = history || [];
   // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
   const dates = history
     .map(h => h.savedAt || h.date)
@@ -1458,9 +1477,32 @@ function buildHistogram(dist) {
   });
 }
 
+let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
+
 function renderAll() {
-  renderStats();
+  // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
+  // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
+  // payé jusqu'ici à CHAQUE sauvegarde/suppression/import, même quand l'onglet
+  // Profil n'est pas à l'écran (souvent le cas : on reste sur Noter ou
+  // Historique). On ne le calcule que si Profil est réellement visible ;
+  // sinon on le marque "à jour ultérieurement" — rattrapé par
+  // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
+  // 01-navigation.js). renderHistory() reste inconditionnel : c'est
+  // généralement la vue qu'on regarde au moment de l'appel.
+  const profileView = document.getElementById('view-profile');
+  if (profileView && profileView.classList.contains('active')) {
+    renderStats();
+    statsDirty = false;
+  } else {
+    statsDirty = true;
+  }
   renderHistory();
+}
+
+// Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
+// qui avait été sauté pendant que l'onglet était masqué.
+function renderProfileIfDirty() {
+  if (statsDirty) { renderStats(); statsDirty = false; }
 }
 
 // ═══════════════════════════════════════════

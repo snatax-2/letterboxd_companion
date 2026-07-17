@@ -3,6 +3,10 @@
 const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
+  // L'écran d'accueil (nouvel utilisateur) et le splash initial interceptaient
+  // les clics sur un état vraiment vierge — ce test devenait intermittent
+  // selon le hasard du timing. Même correctif que les autres suites E2E.
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => {
     window.saveWatchlist([

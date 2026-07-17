@@ -830,24 +830,26 @@
     padding: 14px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
   }
   .poster-picker-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    /* 2 colonnes (pas 3) : sur téléphone, c'est la taille qui rend les
+       variantes réellement comparables — 24 vignettes minuscules ne servent
+       à rien. */
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
     padding: 14px 16px; overflow-y: auto; overscroll-behavior: contain;
   }
   .poster-picker-loading { display: contents; }
+  /* Ratio 2:3 par la technique du padding (padding-top en % = % de la
+     LARGEUR) : après deux tentatives avec aspect-ratio (sur le bouton puis
+     sur l'image) cassées par iOS Safari dans ce contexte grid+bouton+img,
+     retour à la méthode qui marche partout depuis quinze ans. */
   .poster-picker-cell {
     background: var(--surface2); border: 2px solid transparent; border-radius: var(--radius-sm);
-    padding: 0; cursor: pointer; overflow: hidden; display: block; width: 100%;
+    padding: 0; padding-top: 150%; cursor: pointer; overflow: hidden; display: block; width: 100%;
+    position: relative;
     transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   }
   .poster-picker-cell:hover { border-color: var(--gold); }
   .poster-picker-cell:active { transform: scale(0.96); }
-  /* Le ratio 2:3 vit sur l'IMAGE (élément remplacé, fiable partout), pas sur
-     le bouton : ratio sur le bouton + img en height:100% d'un parent auto
-     formait une boucle de calcul dégénérée sur iOS — les affiches se
-     retrouvaient écrasées en tranches horizontales. */
-  .poster-picker-cell img { width: 100%; height: auto; aspect-ratio: 2/3; object-fit: cover; display: block; }
-  /* Les cellules squelettes (sans image) portent leur propre ratio */
-  .poster-picker-cell.skeleton-bg { aspect-ratio: 2/3; }
+  .poster-picker-cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   .poster-picker-empty { grid-column: 1 / -1; text-align: center; color: var(--text-mid); font-size: 0.85rem; padding: 20px 0; }
   .mds-poster-change-btn {
     display: block; margin-top: 8px; width: 100%;
@@ -1287,6 +1289,15 @@
   }
   .hist-item-content { display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%; }
   .hist-item:not(.hist-dragging) .hist-item-content { transition: transform var(--dur-base) var(--ease-out); }
+  /* will-change UNIQUEMENT pendant le geste actif (classe posée par le JS au
+     drag, retirée au relâchement) : prévient le compositeur qu'une animation
+     de transform arrive, sans garder la mémoire GPU d'une couche promue en
+     permanence sur des centaines de cartes hors écran. */
+  .hist-item.hist-dragging .hist-item-content,
+  .hist-item.hist-swipe-armed-left .hist-item-content,
+  .hist-item.hist-swipe-armed-right .hist-item-content {
+    will-change: transform;
+  }
   .hist-item.hist-swipe-out-left .hist-item-content,
   .hist-item.hist-swipe-out-right .hist-item-content { transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); opacity: 0; }
 
@@ -1338,7 +1349,8 @@
   .liked-badge .icon { width: 0.9em; height: 0.9em; }
   .hist-meta { font-size: 0.74rem; color: var(--text); margin-bottom: 4px; line-height: 1.4; min-width: 0; }
   .hist-meta-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hist-tags-disp { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+  .hist-score-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; min-width: 0; }
+  .hist-score-row .h-tag { flex-shrink: 0; }
   .h-tag { background: var(--surface2); border: 1px solid var(--border); padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; color: var(--text-mid); }
   .hist-stars { font-size: 0.85rem; color: var(--star-color); text-shadow: var(--star-shadow); }
   .hist-score { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text); margin-left: 6px; }
@@ -1978,6 +1990,10 @@
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
   
   .settings-label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-heading); }
+  .error-log-section {
+    margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .error-log-hint { font-size: 0.78rem; color: var(--text-mid); margin: 4px 0 10px; line-height: 1.4; }
 
   .settings-toggle-row {
     display: flex; align-items: center; justify-content: space-between; gap: 14px;

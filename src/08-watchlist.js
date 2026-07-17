@@ -117,18 +117,22 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
     dragging = false;
     cardEl.classList.remove('wl-dragging');
 
+    // 240ms = --dur-base (styles.css :root) : doit rester synchronisé avec la
+    // durée de la transition d'opacité/translation ci-dessus. L'ancien délai
+    // (200ms) coupait l'animation de sortie 40ms avant sa fin réelle.
+    const EXIT_DUR_MS = 240;
     if (dx <= -SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-left');
       contentEl.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(cardEl, 'strong');
-      setTimeout(() => removeWatchlist(idx), 200);
+      setTimeout(() => removeWatchlist(idx), EXIT_DUR_MS);
     } else if (dx >= SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-right');
       contentEl.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(cardEl, 'strong');
-      setTimeout(() => watchlistToForm(idx), 200);
+      setTimeout(() => watchlistToForm(idx), EXIT_DUR_MS);
     } else {
       contentEl.style.transform = '';
       cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');

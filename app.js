@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -274,6 +274,109 @@ function applyPosterAccent(posterUrl, cardEl) {
 }
 
 // ═══════════════════════════════════════════
+//  JOURNAL D'ERREURS (filet de sécurité)
+// ═══════════════════════════════════════════
+// Jusqu'ici, une erreur JS imprévue (chemin de code non couvert par les
+// tests, bug d'un futur changement...) échouait silencieusement : écran figé
+// ou partiellement cassé, et RIEN n'était jamais visible nulle part — ni pour
+// l'utilisateur, ni pour un développeur qui voudrait corriger ensuite.
+//
+// Ce module ne fait QUE deux choses, volontairement peu ambitieuses :
+// 1. Journaliser localement les erreurs (petit tampon circulaire, jamais les
+//    données de films — uniquement des messages techniques et une pile
+//    d'appels), consultable/exportable depuis Réglages.
+// 2. Prévenir une fois, discrètement (pas de rechargement automatique, pas de
+//    tentative de "réparation" — trop risqué, pourrait perdre des données non
+//    sauvegardées ; la personne reste maître de ce qu'elle fait ensuite).
+//
+// Ce N'EST PAS un système de télémétrie : rien ne quitte l'appareil tant que
+// l'utilisateur ne choisit pas explicitement de copier/partager le journal.
+
+const ERROR_LOG_KEY = 'lbx_error_log';
+const ERROR_LOG_MAX = 20; // tampon circulaire : les plus anciennes sortent
+
+function loadErrorLog() {
+  try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY)) || []; }
+  catch { return []; }
+}
+
+function logClientError(entry) {
+  try {
+    const log = loadErrorLog();
+    log.push({ ...entry, at: new Date().toISOString() });
+    while (log.length > ERROR_LOG_MAX) log.shift();
+    localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(log));
+  } catch {
+    // localStorage plein/inaccessible : on abandonne la journalisation plutôt
+    // que de risquer une boucle (une erreur DANS le gestionnaire d'erreurs
+    // serait le pire des scénarios).
+  }
+  notifyOnce();
+}
+
+// Un seul avertissement par session, même si plusieurs erreurs surviennent en
+// cascade (une erreur en entraîne souvent d'autres) — jamais un flot de toasts.
+let notified = false;
+function notifyOnce() {
+  if (notified) return;
+  notified = true;
+  // Différé : si l'erreur survient tout au début du chargement, showToast /
+  // le DOM du toast peuvent ne pas encore être prêts.
+  setTimeout(() => {
+    try {
+      if (typeof showToast === 'function') {
+        showToast("Un problème technique est survenu. Tes données sont saines — voir Réglages pour le signaler.");
+      }
+      const section = document.getElementById('error-log-section');
+      if (section) section.style.display = 'block';
+    } catch { /* le toast lui-même ne doit jamais faire planter la page */ }
+  }, 300);
+}
+
+window.addEventListener('error', (e) => {
+  logClientError({
+    type: 'error',
+    message: e.message || String(e.error),
+    stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 2000) : '',
+    source: e.filename ? `${e.filename}:${e.lineno}:${e.colno}` : '',
+  });
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  logClientError({
+    type: 'unhandledrejection',
+    message: reason && reason.message ? reason.message : String(reason),
+    stack: reason && reason.stack ? String(reason.stack).slice(0, 2000) : '',
+    source: '',
+  });
+});
+
+// Affichage/export depuis Réglages (voir index.html #error-log-section) :
+// affiche la section si un journal existe déjà (rouvrir Réglages après coup),
+// et copie un résumé texte dans le presse-papiers pour signalement facile.
+function initErrorLogUI() {
+  const section = document.getElementById('error-log-section');
+  const copyBtn = document.getElementById('error-log-copy-btn');
+  if (!section || !copyBtn) return;
+
+  if (loadErrorLog().length > 0) section.style.display = 'block';
+
+  copyBtn.addEventListener('click', async () => {
+    const log = loadErrorLog();
+    const text = log.map(e => `[${e.at}] ${e.type}: ${e.message}${e.source ? ' (' + e.source + ')' : ''}`).join('\n')
+      || 'Aucune erreur journalisée.';
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Journal copié dans le presse-papiers.');
+    } catch {
+      showToast('Impossible de copier automatiquement — le journal reste visible dans les données du site.');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', initErrorLogUI);
+
+// ═══════════════════════════════════════════
 //  GESTION DES ONGLETS (Desktop & Mobile)
 // ═══════════════════════════════════════════
 const tabHistBtn = document.getElementById('tab-right-history');
@@ -315,7 +418,13 @@ function switchRightTab(tabName) {
   // proposée reste ainsi à jour avec les derniers films notés).
   if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
     renderDuelsSection();
-    if (typeof renderProfileExtras === 'function') renderProfileExtras();
+    if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
+  }
+  // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu
+  // ciblé : pas de recalcul du radar/heatmap/badges à chaque sauvegarde si
+  // personne ne regardait cet onglet — voir renderAll() dans 06-history.js).
+  if (tabName === 'profile' && typeof renderProfileIfDirty === 'function') {
+    renderProfileIfDirty();
   }
   // Aperçu unique du geste de swipe à la première visite de l'historique
   if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
@@ -2784,10 +2893,10 @@ function renderHistory() {
     if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
     if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
 
-    let tagsHTML = '';
-    if (item.contextTags && item.contextTags.length > 0) {
-      tagsHTML = `<div class="hist-tags-disp">${item.contextTags.map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('')}</div>`;
-    }
+    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
+    // c'était la dernière source de hauteurs inégales entre cartes — un film
+    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
+    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
 
     let reviewHTML = '';
     if (item.review) {
@@ -2807,8 +2916,7 @@ function renderHistory() {
         <div class="hist-body">
           <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
           <div class="hist-meta">${metaHTML}</div>
-          ${tagsHTML}
-          <div style="margin-bottom:4px;"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}</div>
+          <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
           <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
           ${reviewHTML}
         </div>
@@ -2991,24 +3099,29 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     }
     armedItem = null;
     armedDirection = null;
+    // 240ms = --dur-base (styles.css :root), doit rester synchronisé avec la
+    // transition de sortie ci-dessous (même correctif que watchlist et la
+    // fiche film : l'ancien délai de 200ms coupait l'animation 40ms trop tôt).
+    const EXIT_DUR_MS = 240;
     if (dir === 'left') {
       item.classList.add('hist-swipe-out-left');
       content.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(item, 'strong');
-      setTimeout(() => deleteItem(resolveCurrentIdx()), 200); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+      setTimeout(() => deleteItem(resolveCurrentIdx()), EXIT_DUR_MS); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
     } else {
       item.classList.add('hist-swipe-out-right');
       content.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(item, 'strong');
-      setTimeout(() => loadItem(resolveCurrentIdx()), 200);
+      setTimeout(() => loadItem(resolveCurrentIdx()), EXIT_DUR_MS);
     }
   }
 
   function resetGesture(e) {
     if (e && pressedItem) e.stopPropagation();
     clearTimeout(pressTimer);
+    if (pressedItem) pressedItem.classList.remove('hist-dragging'); // réactive la transition pour l'animation de relâchement
     pressTimer = null;
     pressedItem = null;
     pressedContent = null;
@@ -3080,7 +3193,15 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         // éventuel état armé du même film — assez tôt pour éviter les deux
         // états contradictoires (le bug historique du re-swipe), assez tard
         // pour ne pas tuer le tap de confirmation (qui ne passe jamais ici).
-        if (swipeMode === 'swipe' && armedItem === pressedItem) cancelArmed();
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          // Désactive la transition CSS pendant le glissement actif (classe
+          // prévue mais jamais posée jusqu'ici) : sans ça, chaque mise à jour
+          // de translateX() au fil du doigt s'anime sur 240ms au lieu d'être
+          // instantanée — un léger effet "élastique" qui traîne derrière le
+          // doigt plutôt qu'un suivi 1:1 franc.
+          pressedItem.classList.add('hist-dragging');
+        }
       } else {
         return;
       }
@@ -3152,7 +3273,10 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // Même correctif que le tactile : nettoyer un état armé au démarrage
         // d'un VRAI glissement, jamais au simple clic (voir touchstart).
-        if (swipeMode === 'swipe' && armedItem === pressedItem) cancelArmed();
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging'); // voir le commentaire côté tactile
+        }
       } else {
         return;
       }
@@ -3496,6 +3620,10 @@ function resetProfileExtras() {
 }
 
 function renderProfileExtras(history) {
+  // Défensif : un appel sans argument (bug d'un appelant) ne doit plus faire
+  // planter tout le reste du rendu du profil — juste rester sur les valeurs
+  // par défaut, comme un historique vide.
+  history = history || [];
   // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
   const dates = history
     .map(h => h.savedAt || h.date)
@@ -3975,9 +4103,32 @@ function buildHistogram(dist) {
   });
 }
 
+let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
+
 function renderAll() {
-  renderStats();
+  // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
+  // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
+  // payé jusqu'ici à CHAQUE sauvegarde/suppression/import, même quand l'onglet
+  // Profil n'est pas à l'écran (souvent le cas : on reste sur Noter ou
+  // Historique). On ne le calcule que si Profil est réellement visible ;
+  // sinon on le marque "à jour ultérieurement" — rattrapé par
+  // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
+  // 01-navigation.js). renderHistory() reste inconditionnel : c'est
+  // généralement la vue qu'on regarde au moment de l'appel.
+  const profileView = document.getElementById('view-profile');
+  if (profileView && profileView.classList.contains('active')) {
+    renderStats();
+    statsDirty = false;
+  } else {
+    statsDirty = true;
+  }
   renderHistory();
+}
+
+// Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
+// qui avait été sauté pendant que l'onglet était masqué.
+function renderProfileIfDirty() {
+  if (statsDirty) { renderStats(); statsDirty = false; }
 }
 
 // ═══════════════════════════════════════════
@@ -4352,18 +4503,22 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
     dragging = false;
     cardEl.classList.remove('wl-dragging');
 
+    // 240ms = --dur-base (styles.css :root) : doit rester synchronisé avec la
+    // durée de la transition d'opacité/translation ci-dessus. L'ancien délai
+    // (200ms) coupait l'animation de sortie 40ms avant sa fin réelle.
+    const EXIT_DUR_MS = 240;
     if (dx <= -SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-left');
       contentEl.style.transform = 'translateX(-110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(cardEl, 'strong');
-      setTimeout(() => removeWatchlist(idx), 200);
+      setTimeout(() => removeWatchlist(idx), EXIT_DUR_MS);
     } else if (dx >= SWIPE_THRESHOLD) {
       cardEl.classList.add('wl-swipe-out-right');
       contentEl.style.transform = 'translateX(110%)';
       if (navigator.vibrate) navigator.vibrate(20);
       hapticPulse(cardEl, 'strong');
-      setTimeout(() => watchlistToForm(idx), 200);
+      setTimeout(() => watchlistToForm(idx), EXIT_DUR_MS);
     } else {
       contentEl.style.transform = '';
       cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');
@@ -6719,15 +6874,25 @@ function initSwipeToClose(overlayEl, closeFn) {
   box.addEventListener('touchend', () => {
     if (!dragging) return;
     dragging = false;
-    box.style.transition = 'transform .22s ease';
+    // Système de mouvement unifié (voir styles.css :root) plutôt qu'une durée
+    // isolée : 240ms correspond à --dur-base, JS et CSS ne peuvent pas
+    // partager directement une valeur ici (transition posée en JS), donc la
+    // constante est dupliquée consciemment — le setTimeout ci-dessous DOIT
+    // rester synchronisé avec elle.
+    const CLOSE_DUR_MS = 240;
+    box.style.transition = `transform ${CLOSE_DUR_MS}ms var(--ease-out)`;
     if (currentDelta > THRESHOLD) {
       box.style.transform = `translateY(100%) scale(1)`;
+      // Attend la fin RÉELLE de l'animation avant de fermer : le délai précédent
+      // (180ms) coupait la feuille avant que le glissement vers le bas ait
+      // visuellement terminé sa course (transition de 220ms) — léger "saut"
+      // perceptible en toute fin de fermeture.
       setTimeout(() => {
         closeFn();
         box.style.transform = '';
         box.style.transition = '';
         overlayEl.style.backgroundColor = '';
-      }, 180);
+      }, CLOSE_DUR_MS);
     } else {
       box.style.transform = '';
       overlayEl.style.backgroundColor = '';
