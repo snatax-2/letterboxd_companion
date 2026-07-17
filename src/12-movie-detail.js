@@ -663,7 +663,11 @@ async function openPosterPicker(tmdbId) {
 
   try {
     const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
-    const data = await res.json();
+    // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+    // réponse d'erreur passer pour "aucune affiche disponible" (voir
+    // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
+    // simple manque de variantes pour ce film precis.
+    const data = await readApiJson(res);
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
       grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
@@ -675,10 +679,10 @@ async function openPosterPicker(tmdbId) {
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
-  } catch {
+  } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
-        <div class="error-state-msg">Impossible de charger les affiches. Vérifie ta connexion.</div>
+        <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
         <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
       </div>`;
   }

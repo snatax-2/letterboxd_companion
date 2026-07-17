@@ -849,7 +849,15 @@
   }
   .poster-picker-cell:hover { border-color: var(--gold); }
   .poster-picker-cell:active { transform: scale(0.96); }
-  .poster-picker-cell img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .poster-picker-cell img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    /* contain (pas cover) : montre l'affiche EN ENTIER, quitte à laisser une
+       fine bande du fond de la case visible si ses proportions ne collent pas
+       exactement au 2:3 — certaines variantes TMDb ne sont pas parfaitement
+       cadrées en 2:3, et "cover" rognait alors des bords (visages, texte). */
+    object-fit: contain;
+    display: block;
+  }
   .poster-picker-empty { grid-column: 1 / -1; text-align: center; color: var(--text-mid); font-size: 0.85rem; padding: 20px 0; }
   .mds-poster-change-btn {
     display: block; margin-top: 8px; width: 100%;

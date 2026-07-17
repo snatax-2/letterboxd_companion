@@ -206,3 +206,28 @@ setTimeout(() => {
   loadDraft();
 }, 0);
 
+
+// ── Lecture fiable des réponses de l'API (voir describeSyncFailure dans
+//    10-cloud-sync.js pour le même principe côté synchro cloud) ──
+// Sans ça, une vraie erreur serveur (limite de requêtes, panne, mauvaise
+// configuration) — qui renvoie un statut non-200 avec un message précis dans
+// le corps JSON — était traitée exactement comme "aucun résultat trouvé" :
+// aucune erreur n'apparaissait nulle part, la recherche semblait juste vide.
+// readApiJson() lève une erreur explicite dans ce cas, pour que le code
+// appelant sache qu'il a vraiment échoué (et puisse le dire).
+async function readApiJson(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur de l'API (${res.status})`);
+  return data;
+}
+
+// Message d'erreur honnête pour un appel API en échec : ne blâme "ta
+// connexion" que si c'est vraiment le cas (hors ligne), affiche le message
+// précis du serveur s'il y en a un, et reste neutre sinon — jamais un
+// "vérifie ta connexion" générique qui peut être complètement à côté.
+function describeApiFailure(err) {
+  if (!navigator.onLine) return 'Tu es hors ligne.';
+  const msg = err && err.message ? err.message : '';
+  const isGeneric = !msg || /Failed to fetch|NetworkError/i.test(msg);
+  return isGeneric ? 'Service indisponible pour le moment, réessaie dans un instant.' : msg;
+}

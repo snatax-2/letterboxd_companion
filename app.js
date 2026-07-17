@@ -1070,6 +1070,32 @@ setTimeout(() => {
   loadDraft();
 }, 0);
 
+
+// ── Lecture fiable des réponses de l'API (voir describeSyncFailure dans
+//    10-cloud-sync.js pour le même principe côté synchro cloud) ──
+// Sans ça, une vraie erreur serveur (limite de requêtes, panne, mauvaise
+// configuration) — qui renvoie un statut non-200 avec un message précis dans
+// le corps JSON — était traitée exactement comme "aucun résultat trouvé" :
+// aucune erreur n'apparaissait nulle part, la recherche semblait juste vide.
+// readApiJson() lève une erreur explicite dans ce cas, pour que le code
+// appelant sache qu'il a vraiment échoué (et puisse le dire).
+async function readApiJson(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur de l'API (${res.status})`);
+  return data;
+}
+
+// Message d'erreur honnête pour un appel API en échec : ne blâme "ta
+// connexion" que si c'est vraiment le cas (hors ligne), affiche le message
+// précis du serveur s'il y en a un, et reste neutre sinon — jamais un
+// "vérifie ta connexion" générique qui peut être complètement à côté.
+function describeApiFailure(err) {
+  if (!navigator.onLine) return 'Tu es hors ligne.';
+  const msg = err && err.message ? err.message : '';
+  const isGeneric = !msg || /Failed to fetch|NetworkError/i.test(msg);
+  return isGeneric ? 'Service indisponible pour le moment, réessaie dans un instant.' : msg;
+}
+
 // ═══════════════════════════════════════════
 //  LOGIQUE PURE (testable) : calcul du score & fusion cloud
 // ═══════════════════════════════════════════
@@ -1824,7 +1850,10 @@ async function fetchSuggestions(q) {
       fetch(`/api/search?query=${encodeURIComponent(q)}`),
       fetchPersonMatch(q),
     ]);
-    const data = await res.json();
+    // readApiJson lève si l'API a réellement échoué (statut non-200), au lieu
+    // de laisser passer une réponse d'erreur comme si c'était "0 résultat" —
+    // c'est ce qui rendait un vrai problème d'API totalement invisible.
+    const data = await readApiJson(res);
     searchStatus.style.display = 'none';
     if (!data.results?.length && !personMatch) { suggestEl.style.display = 'none'; return; }
     suggestEl.innerHTML = '';
@@ -1850,10 +1879,10 @@ async function fetchSuggestions(q) {
     manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
     manualItem.addEventListener('click', () => { suggestEl.style.display = 'none'; selectManual(q); });
     suggestEl.appendChild(manualItem);
-  } catch { 
+  } catch (err) { 
     searchStatus.style.display = 'none'; 
     suggestEl.style.display = 'none'; 
-    showToast('Recherche indisponible, vérifie ta connexion.');
+    showToast(describeApiFailure(err));
   }
 }
 
@@ -4843,7 +4872,9 @@ wlInput.addEventListener('input', () => {
         fetch(`/api/search?query=${encodeURIComponent(q)}`),
         fetchPersonMatch(q),
       ]);
-      const data = await res.json();
+      // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+      // réponse d'erreur passer pour "0 résultat" (voir 03-foundation.js).
+      const data = await readApiJson(res);
       if (!data.results?.length && !personMatch) { wlSuggestEl.style.display = 'none'; return; }
       wlSuggestEl.innerHTML = '';
       wlSuggestEl.style.display = 'block';
@@ -4886,9 +4917,9 @@ wlInput.addEventListener('input', () => {
         });
         wlSuggestEl.appendChild(el);
       });
-    } catch {
+    } catch (err) {
       wlSuggestEl.style.display = 'none';
-      showToast('Recherche indisponible, vérifie ta connexion.');
+      showToast(describeApiFailure(err));
     }
   }, 280);
 });
@@ -6985,7 +7016,11 @@ async function openPosterPicker(tmdbId) {
 
   try {
     const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
-    const data = await res.json();
+    // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+    // réponse d'erreur passer pour "aucune affiche disponible" (voir
+    // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
+    // simple manque de variantes pour ce film precis.
+    const data = await readApiJson(res);
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
       grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
@@ -6997,10 +7032,10 @@ async function openPosterPicker(tmdbId) {
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
-  } catch {
+  } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
-        <div class="error-state-msg">Impossible de charger les affiches. Vérifie ta connexion.</div>
+        <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
         <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
       </div>`;
   }

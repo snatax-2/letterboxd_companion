@@ -77,3 +77,17 @@ test('les vignettes du selecteur ont bien un ratio portrait 2:3, en 2 colonnes',
   expect(box0.height / box0.width).toBeLessThan(1.6);
   expect(box0.y).toBeCloseTo(box1.y, 0); // meme ligne = bien 2 colonnes
 });
+
+test('chaque affiche est affichee en entier, sans etre rognee (object-fit: contain)', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_v2', JSON.stringify([
+    { title: 'Argylle', year: '2024', tmdbId: '500', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-07-01', savedAt: '2026-07-01T10:00:00.000Z' },
+  ])));
+  await page.goto('/');
+  await page.evaluate(() => window.openMovieDetailSheet('500'));
+  await page.waitForSelector('#movie-detail-sheet.open .mds-title');
+  await page.click('.mds-poster-change-btn');
+  await page.waitForSelector('.poster-picker-cell[data-poster-path] img');
+
+  const fit = await page.locator('.poster-picker-cell img').first().evaluate(el => getComputedStyle(el).objectFit);
+  expect(fit).toBe('contain');
+});

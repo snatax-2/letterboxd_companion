@@ -457,7 +457,9 @@ wlInput.addEventListener('input', () => {
         fetch(`/api/search?query=${encodeURIComponent(q)}`),
         fetchPersonMatch(q),
       ]);
-      const data = await res.json();
+      // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+      // réponse d'erreur passer pour "0 résultat" (voir 03-foundation.js).
+      const data = await readApiJson(res);
       if (!data.results?.length && !personMatch) { wlSuggestEl.style.display = 'none'; return; }
       wlSuggestEl.innerHTML = '';
       wlSuggestEl.style.display = 'block';
@@ -500,9 +502,9 @@ wlInput.addEventListener('input', () => {
         });
         wlSuggestEl.appendChild(el);
       });
-    } catch {
+    } catch (err) {
       wlSuggestEl.style.display = 'none';
-      showToast('Recherche indisponible, vérifie ta connexion.');
+      showToast(describeApiFailure(err));
     }
   }, 280);
 });

@@ -114,7 +114,10 @@ async function fetchSuggestions(q) {
       fetch(`/api/search?query=${encodeURIComponent(q)}`),
       fetchPersonMatch(q),
     ]);
-    const data = await res.json();
+    // readApiJson lève si l'API a réellement échoué (statut non-200), au lieu
+    // de laisser passer une réponse d'erreur comme si c'était "0 résultat" —
+    // c'est ce qui rendait un vrai problème d'API totalement invisible.
+    const data = await readApiJson(res);
     searchStatus.style.display = 'none';
     if (!data.results?.length && !personMatch) { suggestEl.style.display = 'none'; return; }
     suggestEl.innerHTML = '';
@@ -140,10 +143,10 @@ async function fetchSuggestions(q) {
     manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
     manualItem.addEventListener('click', () => { suggestEl.style.display = 'none'; selectManual(q); });
     suggestEl.appendChild(manualItem);
-  } catch { 
+  } catch (err) { 
     searchStatus.style.display = 'none'; 
     suggestEl.style.display = 'none'; 
-    showToast('Recherche indisponible, vérifie ta connexion.');
+    showToast(describeApiFailure(err));
   }
 }
 
