@@ -197,6 +197,22 @@ async function fetchCloudPayload(code) {
   return data.found ? data.payload : null;
 }
 
+
+// Distingue la VRAIE cause d'un échec de synchro, pour ne plus systématiquement
+// blâmer "ta connexion" quand le problème est ailleurs :
+// - navigator.onLine === false -> coupure réseau réelle, chez l'utilisateur
+// - erreur avec un message venant du serveur (ex: limite de requêtes, service
+//   mal configuré) -> on l'affiche telle quelle, c'est la cause exacte
+// - échec générique (fetch a levé une TypeError, service injoignable) -> ni
+//   confirmé réseau ni message serveur, formulation neutre
+function describeSyncFailure(err) {
+  if (!navigator.onLine) return 'Tu es hors ligne — la synchronisation reprendra à la reconnexion.';
+  const msg = err && err.message ? err.message : '';
+  const isGenericFetchFailure = !msg || msg === 'bad status' || /^bad status \d+$/.test(msg) || /Failed to fetch|NetworkError/i.test(msg);
+  if (!isGenericFetchFailure) return msg; // message précis renvoyé par l'API
+  return 'Impossible de joindre le service de synchronisation. Réessaie dans un instant.';
+}
+
 // Sauvegarde : récupère le cloud, fusionne avec le local, sauvegarde le résultat
 // localement, puis pousse la version fusionnée vers le cloud.
 async function pushToCloud(silent = false) {
@@ -215,15 +231,23 @@ async function pushToCloud(silent = false) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(merged),
     });
-    if (!res.ok) throw new Error('bad status');
+    if (!res.ok) {
+      // Lit le VRAI message renvoyé par l'API (ex: limite de requêtes, mauvaise
+      // configuration serveur) plutôt que de le jeter — c'était la cause du
+      // message trompeur "vérifie ta connexion" alors que le problème était
+      // côté service, pas côté réseau de l'utilisateur.
+      let apiError = '';
+      try { apiError = (await res.json()).error || ''; } catch { /* réponse non-JSON, tant pis */ }
+      throw new Error(apiError || `bad status ${res.status}`);
+    }
 
     const now = new Date().toISOString();
     localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     if (!silent) setSyncStatus(`Synchronisé ✓ (${formatDateTime(now)})`);
     return true;
-  } catch {
-    if (!silent) setSyncStatus('Échec de la synchronisation. Vérifie ta connexion.', true);
+  } catch (err) {
+    if (!silent) setSyncStatus(describeSyncFailure(err), true);
     return false;
   }
 }
@@ -250,8 +274,8 @@ async function pullFromCloud() {
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     setSyncStatus(`Synchronisé depuis le cloud ✓ (${formatDateTime(now)})`);
     showToast('Données synchronisées depuis le cloud.');
-  } catch {
-    setSyncStatus('Échec de la récupération cloud. Vérifie ta connexion.', true);
+  } catch (err) {
+    setSyncStatus(describeSyncFailure(err), true);
   }
 }
 

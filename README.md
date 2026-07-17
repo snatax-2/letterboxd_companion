@@ -137,6 +137,7 @@ npm run test:e2e
 - **`tests/e2e/pull-to-refresh.spec.js`** — tirer suffisamment vers le bas (en haut de page) déclenche le rafraîchissement ; aucune interférence si la page est déjà scrollée.
 - **`tests/e2e/watchlist-swipe.spec.js`** — retrait par glissement (avec annulation possible), isolation vis-à-vis du swipe de changement d'onglet.
 - **`tests/e2e/error-log.spec.js`** — une vraie erreur JS non interceptée est journalisée (sans toucher aux données de films), un avertissement s'affiche une seule fois même en cascade, et le journal est visible/copiable depuis Réglages.
+- **`tests/e2e/sync-error-messages.spec.js`** — la synchro cloud distingue maintenant une vraie coupure réseau, une erreur API précise (ex: limite de requêtes) et un échec générique du service : trois messages différents et exacts, plus jamais un « vérifie ta connexion » générique qui blâme l'utilisateur à tort.
 - **`tests/e2e/person-detail-sheet.spec.js`** — filmographie limitée au rôle principal, films déjà vus grisés, navigation vers la fiche film au clic.
 - **`tests/e2e/keyboard-accessibility.spec.js`** — activation par Entrée/Espace des cartes cliquables (tendances, casting, filmographie...), focus déplacé à l'ouverture d'une fiche, piégeage du focus dans une fiche ouverte.
 - **`tests/e2e/surprise-me.spec.js`** — le bouton "Surprends-moi" ouvre la fiche du film pioché, et affiche un message (sans planter) si aucun résultat.
