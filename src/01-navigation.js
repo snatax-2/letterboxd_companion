@@ -24,17 +24,27 @@ function switchRightTab(tabName) {
     view.classList.toggle('active', isActive);
   }
   // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
-  // re-fetch à chaque fois qu'on revient sur l'onglet).
+  // re-fetch à chaque fois qu'on revient sur l'onglet) — chaque chargeur est
+  // gardé par sa bascule Réglages : un chargeur async (comme loadDailyQuiz)
+  // pourrait sinon réafficher sa section APRÈS le masquage d'applyFeatureFlags
+  // plus bas (chargeurs asynchrones = la dernière écriture DOM gagne).
   if (tabName === 'discover' && !discoverLoaded) {
-    loadDiscoverQueue();
-    loadTrendingCarousel();
-    loadFilmDuJour();
-    loadDailyQuiz();
+    const flags = typeof loadFeatureFlags === 'function' ? loadFeatureFlags() : {};
+    if (flags.discoverRecs !== false) loadDiscoverQueue();
+    if (flags.trending !== false) loadTrendingCarousel();
+    loadFilmDuJour(); // pas dans la liste des bascules demandées
+    if (flags.quiz !== false) loadDailyQuiz();
   }
   // Duel du jour : re-verifie a chaque affichage de Decouvrir (contrairement
   // aux blocs ci-dessus charges une fois) car son etat depend du jour courant.
   if (tabName === 'discover' && typeof renderDailyDuel === 'function') {
     renderDailyDuel();
+  }
+  // Réapplique les bascules Réglages (masque les sections désactivées) après
+  // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
+  // connaître l'état des fonctionnalités désactivées.
+  if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
+    applyFeatureFlags();
   }
   // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
   // proposée reste ainsi à jour avec les derniers films notés).

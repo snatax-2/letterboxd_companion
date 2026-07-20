@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -377,6 +377,107 @@ function initErrorLogUI() {
 document.addEventListener('DOMContentLoaded', initErrorLogUI);
 
 // ═══════════════════════════════════════════
+//  FONCTIONNALITÉS ACTIVABLES/DÉSACTIVABLES
+// ═══════════════════════════════════════════
+// Purement de l'affichage : désactiver une fonctionnalité masque sa section,
+// mais ne touche JAMAIS aux données sous-jacentes (le classement de duels
+// existant reste intact si on coupe les Duels, par exemple — la case à
+// cocher "Réinitialiser les duels" dans Réglages est une action séparée et
+// explicite pour ça).
+
+const FEATURES_KEY = 'lbx_features';
+const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true };
+
+function loadFeatureFlags() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(FEATURES_KEY)) || {};
+    return { ...FEATURE_DEFAULTS, ...stored }; // les clés absentes retombent sur "activé"
+  } catch {
+    return { ...FEATURE_DEFAULTS };
+  }
+}
+
+function saveFeatureFlags(flags) {
+  localStorage.setItem(FEATURES_KEY, JSON.stringify(flags));
+}
+
+// Applique l'état actuel des bascules à l'interface : masque/affiche chaque
+// section concernée. Appelé au chargement ET à chaque changement dans
+// Réglages — jamais besoin de recharger la page pour qu'un changement prenne effet.
+//
+// IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
+// en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
+// (renderDailyDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
+// déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
+// appeler ici, sans condition d'onglet, créait des éléments .duel-side
+// cachés (le Duel du jour se rendait même en restant sur Profil) qui
+// entraient en collision avec le même sélecteur utilisé ailleurs.
+function applyFeatureFlags() {
+  const flags = loadFeatureFlags();
+
+  const duelsCard = document.getElementById('duels-card');
+  if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
+  const dailyDuelWrap = document.getElementById('daily-duel-wrap');
+  if (dailyDuelWrap && !flags.duels) dailyDuelWrap.style.display = 'none';
+
+  const quizWrap = document.getElementById('quiz-wrap');
+  if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
+
+  const trendingWrap = document.getElementById('trending-carousel-wrap');
+  if (trendingWrap && !flags.trending) trendingWrap.style.display = 'none';
+
+  const discoverTinder = document.querySelector('.discover-section-tinder');
+  if (discoverTinder) discoverTinder.style.display = flags.discoverRecs ? '' : 'none';
+}
+
+// Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
+// Réglages — action explicite déclenchée par le changement de bascule
+// uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
+function reloadReenabledFeature(key) {
+  if (key === 'duels' && typeof renderDailyDuel === 'function') renderDailyDuel();
+  if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
+  if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
+  // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
+  // (son contenu n'a jamais été détruit, juste masqué) — rien à recharger.
+}
+
+// Réglages : lit l'état actuel à l'ouverture, sauvegarde à chaque bascule.
+function initFeatureToggleUI() {
+  const map = {
+    'setting-feature-duels': 'duels',
+    'setting-feature-quiz': 'quiz',
+    'setting-feature-trending': 'trending',
+    'setting-feature-discover-recs': 'discoverRecs',
+  };
+  const flags = loadFeatureFlags();
+  for (const [id, key] of Object.entries(map)) {
+    const input = document.getElementById(id);
+    if (!input) continue;
+    input.checked = flags[key];
+    input.addEventListener('change', () => {
+      const current = loadFeatureFlags();
+      const wasOff = !current[key];
+      current[key] = input.checked;
+      saveFeatureFlags(current);
+      applyFeatureFlags();
+      // Rechargement du contenu UNIQUEMENT si on vient de réactiver une
+      // fonctionnalité ET que Découvrir est l'onglet réellement affiché —
+      // sinon on créerait le même problème qu'au chargement de page (contenu
+      // rendu alors qu'un autre onglet est actif).
+      const discoverView = document.getElementById('view-discover');
+      const discoverActive = discoverView && discoverView.classList.contains('active');
+      if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', initFeatureToggleUI);
+
+// Application initiale : différée comme le reste du premier rendu (voir le
+// commentaire sur setTimeout(...,0) dans 03-foundation.js — évite tout accès
+// à une fonction/constante d'un fichier pas encore exécuté).
+setTimeout(applyFeatureFlags, 0);
+
+// ═══════════════════════════════════════════
 //  GESTION DES ONGLETS (Desktop & Mobile)
 // ═══════════════════════════════════════════
 const tabHistBtn = document.getElementById('tab-right-history');
@@ -402,17 +503,27 @@ function switchRightTab(tabName) {
     view.classList.toggle('active', isActive);
   }
   // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
-  // re-fetch à chaque fois qu'on revient sur l'onglet).
+  // re-fetch à chaque fois qu'on revient sur l'onglet) — chaque chargeur est
+  // gardé par sa bascule Réglages : un chargeur async (comme loadDailyQuiz)
+  // pourrait sinon réafficher sa section APRÈS le masquage d'applyFeatureFlags
+  // plus bas (chargeurs asynchrones = la dernière écriture DOM gagne).
   if (tabName === 'discover' && !discoverLoaded) {
-    loadDiscoverQueue();
-    loadTrendingCarousel();
-    loadFilmDuJour();
-    loadDailyQuiz();
+    const flags = typeof loadFeatureFlags === 'function' ? loadFeatureFlags() : {};
+    if (flags.discoverRecs !== false) loadDiscoverQueue();
+    if (flags.trending !== false) loadTrendingCarousel();
+    loadFilmDuJour(); // pas dans la liste des bascules demandées
+    if (flags.quiz !== false) loadDailyQuiz();
   }
   // Duel du jour : re-verifie a chaque affichage de Decouvrir (contrairement
   // aux blocs ci-dessus charges une fois) car son etat depend du jour courant.
   if (tabName === 'discover' && typeof renderDailyDuel === 'function') {
     renderDailyDuel();
+  }
+  // Réapplique les bascules Réglages (masque les sections désactivées) après
+  // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
+  // connaître l'état des fonctionnalités désactivées.
+  if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
+    applyFeatureFlags();
   }
   // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
   // proposée reste ainsi à jour avec les derniers films notés).
@@ -2940,14 +3051,16 @@ function renderHistory() {
     div.innerHTML = `
       <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
       <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-      <div class="hist-item-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-        ${imgHtml}
-        <div class="hist-body">
-          <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-          <div class="hist-meta">${metaHTML}</div>
-          <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-          <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
-          ${reviewHTML}
+      <div class="hist-item-content">
+        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${imgHtml}
+          <div class="hist-body">
+            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+            <div class="hist-meta">${metaHTML}</div>
+            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
+            <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
+            ${reviewHTML}
+          </div>
         </div>
         <div class="hist-actions">
           <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
@@ -3354,6 +3467,23 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const idx = parseInt(item.dataset.idx, 10);
     const history = loadHistory();
     const movieItem = history[idx];
+    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
+  });
+
+  // Activation clavier (Entrée/Espace) de .hist-item-open : role="button" +
+  // tabindex="0" rendent l'élément focusable et l'annoncent comme un bouton
+  // aux lecteurs d'écran, mais NE déclenchent PAS d'activation clavier tout
+  // seuls (contrairement à un vrai <button>) — sans ce gestionnaire, il était
+  // impossible d'ouvrir une fiche film au clavier depuis l'historique.
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const opener = e.target.closest('.hist-item-open');
+    if (!opener) return;
+    e.preventDefault(); // Espace ne doit pas aussi faire défiler la page
+    const item = opener.closest('.hist-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const movieItem = loadHistory()[idx];
     if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
   });
 
@@ -6399,8 +6529,29 @@ function buildMdsSkeleton() {
 // Chaque section reçoit un léger délai croissant (voir CSS .mds-section) pour
 // apparaître en cascade plutôt que d'un bloc — plus agréable à l'œil qu'un
 // simple remplacement de contenu.
+// Cherche une affiche choisie à la main pour ce film, dans l'historique OU
+// n'importe quelle watchlist (un film "à voir" pas encore noté peut aussi
+// avoir reçu un choix d'affiche — voir applyChosenPoster, qui sauvegarde aux
+// deux endroits). localMatch (historique) ne suffit pas seul : un film
+// uniquement en watchlist n'y apparaît jamais.
+function findSavedPosterUrl(tmdbId, localMatch) {
+  if (localMatch && localMatch.poster) return localMatch.poster;
+  for (const meta of loadWatchlistsMeta()) {
+    const found = loadWatchlist(meta.id).find(w => String(w.tmdbId) === String(tmdbId) && w.poster);
+    if (found) return found.poster;
+  }
+  return null;
+}
+
 function buildMdsContent(data, localMatch, localMatchIdx) {
-  const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+  // Une affiche choisie à la main (voir applyChosenPoster) est enregistrée
+  // sur l'item local (historique/watchlist) — elle doit toujours l'emporter
+  // sur l'affiche par défaut de TMDb, sinon rouvrir la fiche plus tard
+  // "oublie" le choix : le rendu revenait systématiquement à data.poster_path
+  // (toujours frais depuis l'API), sans jamais consulter ce qui avait été
+  // sauvegardé. C'était le vrai bug derrière "ça ne se sauvegarde pas".
+  const savedPoster = findSavedPosterUrl(data.id, localMatch);
+  const posterUrl = savedPoster || (data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '');
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
@@ -7094,7 +7245,12 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   if (!cell) return;
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
-  const url = `https://image.tmdb.org/t/p/w185${cell.dataset.posterPath}`;
+  // w342 (pas w185) : c'est la résolution que la fiche film affiche en
+  // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
+  // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
+  // (historique, watchlist) se contentent très bien de la redimensionner
+  // vers le bas.
+  const url = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
   const touched = applyChosenPoster(tmdbId, url);
   if (navigator.vibrate) navigator.vibrate(15);
   modal.classList.remove('open');

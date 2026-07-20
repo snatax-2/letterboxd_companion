@@ -285,14 +285,16 @@ function renderHistory() {
     div.innerHTML = `
       <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
       <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-      <div class="hist-item-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-        ${imgHtml}
-        <div class="hist-body">
-          <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-          <div class="hist-meta">${metaHTML}</div>
-          <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-          <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
-          ${reviewHTML}
+      <div class="hist-item-content">
+        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${imgHtml}
+          <div class="hist-body">
+            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+            <div class="hist-meta">${metaHTML}</div>
+            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
+            <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
+            ${reviewHTML}
+          </div>
         </div>
         <div class="hist-actions">
           <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
@@ -699,6 +701,23 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const idx = parseInt(item.dataset.idx, 10);
     const history = loadHistory();
     const movieItem = history[idx];
+    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
+  });
+
+  // Activation clavier (Entrée/Espace) de .hist-item-open : role="button" +
+  // tabindex="0" rendent l'élément focusable et l'annoncent comme un bouton
+  // aux lecteurs d'écran, mais NE déclenchent PAS d'activation clavier tout
+  // seuls (contrairement à un vrai <button>) — sans ce gestionnaire, il était
+  // impossible d'ouvrir une fiche film au clavier depuis l'historique.
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const opener = e.target.closest('.hist-item-open');
+    if (!opener) return;
+    e.preventDefault(); // Espace ne doit pas aussi faire défiler la page
+    const item = opener.closest('.hist-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const movieItem = loadHistory()[idx];
     if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
   });
 

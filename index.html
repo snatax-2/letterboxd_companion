@@ -88,7 +88,22 @@
     }
     var splash = document.getElementById('app-splash');
     splash.style.background = bg;
-    splash.querySelector('.app-splash-title').style.color = p.accent;
+    // Contraste garanti quel que soit le thème (fonds très sombres à très
+    // clairs selon les 10 thèmes) : la couleur d'accent de chaque thème était
+    // choisie pour son usage DANS l'app (boutons, liens), jamais vérifiée
+    // pour du texte directement sur ce fond précis — axe-core a détecté un
+    // vrai échec de contraste (orange sur fond très sombre, thème par
+    // défaut). Calcule la luminance relative du fond et choisit noir ou blanc
+    // en conséquence : la seule méthode fiable sur 10 palettes différentes.
+    function relLuminance(hex) {
+      var m = hex.replace('#', '');
+      if (m.length === 3) m = m[0]+m[0]+m[1]+m[1]+m[2]+m[2];
+      var r = parseInt(m.substr(0,2),16)/255, g = parseInt(m.substr(2,2),16)/255, b = parseInt(m.substr(4,2),16)/255;
+      function lin(c) { return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4); }
+      return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+    }
+    var titleColor = relLuminance(bg) > 0.35 ? '#14181c' : '#ffffff';
+    splash.querySelector('.app-splash-title').style.color = titleColor;
   } catch (e) { /* si ça échoue, on garde les couleurs par défaut du splash — jamais bloquant */ }
 })();
 </script>
@@ -129,7 +144,7 @@
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#e32636;width:60%"></div></div>
             <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#e32636"></div><div class="theme-preview-dot" style="background:#FFF200"></div><div class="theme-preview-dot" style="background:#444"></div></div>
           </div>
-          <div class="theme-label" style="background:#0f0f0f;color:#e32636;font-family:Oswald,sans-serif;letter-spacing:.1em;font-style:italic;">SCUDERIA</div>
+          <div class="theme-label" style="background:#0f0f0f;color:#f04050;font-family:Oswald,sans-serif;letter-spacing:.1em;font-style:italic;">SCUDERIA</div>
         </div>
         <div class="theme-card" data-theme="anderson" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Wes Anderson">
           <div class="theme-preview" style="background:#FDF6E3; border: 2px solid #D1495B;">
@@ -137,7 +152,7 @@
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#D1495B,#476b6b);width:65%"></div></div>
             <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#D1495B"></div><div class="theme-preview-dot" style="background:#476b6b"></div><div class="theme-preview-dot" style="background:#E8A825"></div></div>
           </div>
-          <div class="theme-label" style="background:#F5EBD0;color:#D1495B;font-family:'Jost',sans-serif;font-style:normal;border-top:2px solid #D1495B">Wes Anderson</div>
+          <div class="theme-label" style="background:#F5EBD0;color:#B83048;font-family:'Jost',sans-serif;font-style:normal;border-top:2px solid #D1495B">Wes Anderson</div>
         </div>
         <div class="theme-card" data-theme="filmnoir" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Film Noir">
           <div class="theme-preview" style="background:#050505">
@@ -206,11 +221,11 @@
       <label class="settings-label">Personnalisation</label>
       <div class="settings-toggle-row">
         <div>
-          <div class="settings-toggle-title">Pondération automatique selon le genre</div>
+          <div class="settings-toggle-title" id="label-genre-weights">Pondération automatique selon le genre</div>
           <div class="settings-toggle-desc">Ajuste les curseurs par défaut selon le genre du film sélectionné (ex : plus de poids sur "Ambiance" pour un film d'horreur).</div>
         </div>
         <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-genre-weights-enabled" checked>
+          <input type="checkbox" id="setting-genre-weights-enabled" checked aria-labelledby="label-genre-weights">
           <span class="settings-toggle-slider"></span>
         </label>
       </div>
@@ -244,6 +259,48 @@
       </div>
       <div id="sync-status" style="font-size:0.78rem;color:var(--text-mid);min-height:1.2em"></div>
 
+      <label class="settings-label">Fonctionnalités</label>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-duels">Duels</div>
+          <div class="settings-toggle-desc">L'arène de duels dans le Profil et le duel du jour dans Découvrir.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-duels" checked aria-labelledby="label-feature-duels">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-quiz">Quiz du jour</div>
+          <div class="settings-toggle-desc">La question quotidienne dans Découvrir.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-quiz" checked aria-labelledby="label-feature-quiz">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-trending">Carrousel tendances</div>
+          <div class="settings-toggle-desc">Les films et séries populaires du moment dans Découvrir.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-trending" checked aria-labelledby="label-feature-trending">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-discover-recs">Recommandations Découvrir</div>
+          <div class="settings-toggle-desc">La pile de suggestions personnalisées à faire défiler.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-discover-recs" checked aria-labelledby="label-feature-discover-recs">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+
       <div class="error-log-section" id="error-log-section" style="display:none;">
         <label class="settings-label">Journal technique</label>
         <p class="error-log-hint">Un problème inattendu a été détecté. Tes données ne sont pas affectées.</p>
@@ -272,7 +329,7 @@
 </div>
 
 <!-- Fiche film détaillée (tap sur un film : historique, watchlist, découvrir) -->
-<div class="modal-overlay" id="movie-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="mds-title">
+<div class="modal-overlay" id="movie-detail-sheet" role="dialog" aria-modal="true" aria-label="Détails du film" aria-labelledby="mds-title">
   <div class="modal-box mds-box">
     <button type="button" class="mds-close" id="mds-close-btn" aria-label="Fermer la fiche film"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <div id="mds-content"></div>
@@ -280,7 +337,7 @@
 </div>
 
 <!-- Fiche personne (réalisateur/acteur) : bio + filmographie + % vu -->
-<div class="modal-overlay" id="person-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="pds-title">
+<div class="modal-overlay" id="person-detail-sheet" role="dialog" aria-modal="true" aria-label="Détails de la personne" aria-labelledby="pds-title">
   <div class="modal-box mds-box">
     <button type="button" class="mds-close" id="pds-close-btn" aria-label="Fermer la fiche personne"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     <div id="pds-content"></div>
@@ -399,7 +456,7 @@
       <div class="search-wrap">
         <div class="search-row">
           <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
-          <input type="date" class="date-input" id="view-date">
+          <input type="date" class="date-input" id="view-date" aria-label="Date de visionnage">
           <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
         </div>
         <div class="search-status" id="search-status"></div>
@@ -458,13 +515,13 @@
         </div>
         <div class="weights-panel" id="weights-panel">
           <div class="weights-grid">
-            <div class="weight-item"><label>Scénario</label><input type="number" id="w-scenario" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Réalisation</label><input type="number" id="w-realisation" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Photographie</label><input type="number" id="w-photo" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Acteurs</label><input type="number" id="w-acteurs" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Ambiance & Son</label><input type="number" id="w-ambiance" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Rythme & Montage</label><input type="number" id="w-rythme" value="1" min="0" max="5" step="0.5"></div>
-            <div class="weight-item"><label>Affect ❤️</label><input type="number" id="w-affect" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-scenario">Scénario</label><input type="number" id="w-scenario" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-realisation">Réalisation</label><input type="number" id="w-realisation" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-photo">Photographie</label><input type="number" id="w-photo" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-acteurs">Acteurs</label><input type="number" id="w-acteurs" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-ambiance">Ambiance & Son</label><input type="number" id="w-ambiance" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-rythme">Rythme & Montage</label><input type="number" id="w-rythme" value="1" min="0" max="5" step="0.5"></div>
+            <div class="weight-item"><label for="w-affect">Affect ❤️</label><input type="number" id="w-affect" value="1" min="0" max="5" step="0.5"></div>
           </div>
           <button class="weight-reset" onclick="resetWeights()">Remettre à égalité</button>
           <button class="weight-reset" id="genre-weight-suggest" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg> Suggestion</button>
@@ -478,13 +535,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Scénario & Écriture <span class="weight-badge" id="wb-scenario">×1</span></span>
+              <span class="criterion-label" id="crit-label-scenario">Scénario & Écriture <span class="weight-badge" id="wb-scenario">×1</span></span>
               <span class="criterion-val" id="val-scenario">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="scenario" data-step="-0.5" aria-label="Diminuer Scénario & Écriture de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="scenario" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="scenario" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-scenario">
                 <div class="criterion-avg-marker" id="avg-marker-scenario" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -495,13 +552,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Réalisation & Mise en scène <span class="weight-badge" id="wb-realisation">×1</span></span>
+              <span class="criterion-label" id="crit-label-realisation">Réalisation & Mise en scène <span class="weight-badge" id="wb-realisation">×1</span></span>
               <span class="criterion-val" id="val-realisation">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="realisation" data-step="-0.5" aria-label="Diminuer Réalisation & Mise en scène de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="realisation" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="realisation" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-realisation">
                 <div class="criterion-avg-marker" id="avg-marker-realisation" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -512,13 +569,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Photographie & Esthétique <span class="weight-badge" id="wb-photo">×1</span></span>
+              <span class="criterion-label" id="crit-label-photo">Photographie & Esthétique <span class="weight-badge" id="wb-photo">×1</span></span>
               <span class="criterion-val" id="val-photo">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="photo" data-step="-0.5" aria-label="Diminuer Photographie & Esthétique de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="photo" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="photo" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-photo">
                 <div class="criterion-avg-marker" id="avg-marker-photo" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -529,13 +586,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Interprétation & Acteurs <span class="weight-badge" id="wb-acteurs">×1</span></span>
+              <span class="criterion-label" id="crit-label-acteurs">Interprétation & Acteurs <span class="weight-badge" id="wb-acteurs">×1</span></span>
               <span class="criterion-val" id="val-acteurs">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="acteurs" data-step="-0.5" aria-label="Diminuer Interprétation & Acteurs de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="acteurs" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-acteurs">
                 <div class="criterion-avg-marker" id="avg-marker-acteurs" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -546,13 +603,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Ambiance & Son <span class="weight-badge" id="wb-ambiance">×1</span></span>
+              <span class="criterion-label" id="crit-label-ambiance">Ambiance & Son <span class="weight-badge" id="wb-ambiance">×1</span></span>
               <span class="criterion-val" id="val-ambiance">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="ambiance" data-step="-0.5" aria-label="Diminuer Ambiance & Son de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="ambiance" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-ambiance">
                 <div class="criterion-avg-marker" id="avg-marker-ambiance" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -563,13 +620,13 @@
 
           <div class="criterion-block">
             <div class="criterion-head">
-              <span class="criterion-label">Rythme & Montage <span class="weight-badge" id="wb-rythme">×1</span></span>
+              <span class="criterion-label" id="crit-label-rythme">Rythme & Montage <span class="weight-badge" id="wb-rythme">×1</span></span>
               <span class="criterion-val" id="val-rythme">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="rythme" data-step="-0.5" aria-label="Diminuer Rythme & Montage de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" id="rythme" min="0" max="10" step="0.5" value="5">
+                <input type="range" id="rythme" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-rythme">
                 <div class="criterion-avg-marker" id="avg-marker-rythme" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>
@@ -580,13 +637,13 @@
 
           <div class="criterion-block affect-block">
             <div class="criterion-head">
-              <span class="criterion-label affect-label">❤️ Impact Affectif <span class="weight-badge" id="wb-affect">×1</span></span>
+              <span class="criterion-label affect-label" id="crit-label-affect">❤️ Impact Affectif <span class="weight-badge" id="wb-affect">×1</span></span>
               <span class="criterion-val affect-val" id="val-affect">5.0</span>
             </div>
             <div class="criterion-slider-row">
               <button type="button" class="criterion-step-btn" data-target="affect" data-step="-0.5" aria-label="Diminuer ❤️ Impact Affectif de 0,5">−</button>
               <div class="criterion-range-wrap">
-                <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5">
+                <input type="range" class="affect-range" id="affect" min="0" max="10" step="0.5" value="5" aria-labelledby="crit-label-affect">
                 <div class="criterion-avg-marker" id="avg-marker-affect" style="display:none;" title="Ta moyenne habituelle sur ce critère"></div>
                 <div class="criterion-ticks" aria-hidden="true"></div>
               </div>

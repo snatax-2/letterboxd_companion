@@ -27,7 +27,7 @@
     --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
     /* 1. L'Original (Letterboxd) */
     --bg: #14181c; --surface: #1f2935; --surface2: #263240; --border: #283040;
-    --border-hi: #445566; --text: #89a; --text-hi: #fff; --text-mid: #9ab;
+    --border-hi: #445566; --text: #94a4b5; --text-hi: #fff; --text-mid: #9ab;
     --orange: #ff8000; --gold: #ff8000; --blue: #40bcf4; --red: #ff4040; --green: #00e054;
     /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
        de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
@@ -334,9 +334,9 @@
     /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
        obscure, or vintage, rouge écarlate) directement dans l'interface. */
     --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
-    --border-hi: #3D4A73; --text: #8A94A6; --text-hi: #F4F1E1; --text-mid: #8A94A6;
-    --orange: #E6AF2E; --gold: #E6AF2E; --blue: #5C7DAA; --red: #DF2935; --green: #4F9268;
-    --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #F4F1E1;
+    --border-hi: #3D4A73; --text: #98A2B4; --text-hi: #F4F1E1; --text-mid: #98A2B4;
+    --orange: #E6AF2E; --gold: #E6AF2E; --blue: #7C9DC5; --red: #DF2935; --green: #4F9268;
+    --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 8px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 50%;
@@ -1193,7 +1193,7 @@
   .score-big.good { color: var(--green); }
   .score-big.mid { color: var(--gold); }
   .score-big.bad { color: var(--red); }
-  .score-denom { font-size: 1.2rem; color: var(--text); font-family: var(--font-mono); margin-top: 18px; margin-left: 4px; opacity: 0.6; }
+  .score-denom { font-size: 1.2rem; color: var(--text); font-family: var(--font-mono); margin-top: 18px; margin-left: 4px; }
   
   .stars-display { 
     text-align: center; font-size: 1.6rem; 
@@ -1248,7 +1248,7 @@
   .btn:active { transform: scale(.96); }
   .btn-copy { background: var(--surface2); color: var(--text-hi); border: 1px solid var(--border-hi); }
   .btn-copy.copied { background: var(--green); color: var(--solid-fill-text, #0d1117); border-color: var(--green); }
-  .btn-save { background: var(--blue); color: var(--solid-fill-text, #0d1117); font-weight: 800; }
+  .btn-save { background: var(--blue); color: var(--blue-fill-text, #0d1117); font-weight: 800; }
 
   /* ── STATS COLUMN ── */
   .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; border: 1px solid var(--border); margin-bottom: 10px; transition: border-color var(--dur-fast); }
@@ -1298,6 +1298,12 @@
     }
   }
   .hist-item-content { display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%; }
+  /* Ne couvre QUE l'affiche+les infos (pas les boutons modifier/supprimer,
+     restés des <button> séparés à côté) — un rôle "bouton" ne doit jamais
+     englober d'autres contrôles interactifs (règle d'accessibilité ; ça
+     perdait aussi silencieusement l'activation clavier, jamais câblée). */
+  .hist-item-open { display: flex; gap: 10px; flex: 1; min-width: 0; cursor: pointer; border-radius: var(--radius-sm); }
+  .hist-item-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .hist-item:not(.hist-dragging) .hist-item-content { transition: transform var(--dur-base) var(--ease-out); }
   /* will-change UNIQUEMENT pendant le geste actif (classe posée par le JS au
      drag, retirée au relâchement) : prévient le compositeur qu'une animation
@@ -1413,7 +1419,7 @@
   .watchlist-add-row { display: flex; gap: 8px; margin-bottom: 14px; width: 100%; }
   .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color var(--dur-fast); box-shadow: var(--box-shadow-style, none); min-width: 0; }
   .watchlist-add-input:focus { border-color: var(--blue); }
-  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--solid-fill-text, #0d1117); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
+  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text, #0d1117); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
   .watchlist-add-btn:hover { opacity: 0.85; }
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
 
@@ -1426,7 +1432,7 @@
     display: flex; align-items: center; gap: 4px; transition: all var(--dur-fast);
   }
   .wl-list-pill:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--solid-fill-text, #0d1117); }
+  .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--blue-fill-text, #0d1117); }
   .wl-list-pill.wl-list-add { background: none; border-style: dashed; }
   .wl-list-pill .icon { width: 1em; height: 1em; }
 
@@ -1537,7 +1543,7 @@
   .duel-year { font-size: 0.72rem; color: var(--text-mid); }
   .duel-vs {
     align-self: center; flex-shrink: 0; font-family: var(--font-heading); font-weight: 800;
-    font-size: 0.9rem; color: var(--red); letter-spacing: 0.05em;
+    font-size: 0.9rem; color: var(--text-hi); letter-spacing: 0.05em;
   }
   .duel-skip {
     display: block; margin: 12px auto 0; background: none; border: 1px solid var(--border-hi);
@@ -2002,7 +2008,7 @@
   .mds-crit-value { width: 30px; text-align: right; color: var(--text-hi); font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
   @keyframes mdsCritGrow { to { width: var(--mds-crit-pct); } }
   .modal-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .modal-btn.danger { background: rgba(255, 64, 64, 0.15); border-color: var(--red); color: var(--red); }
+  .modal-btn.danger { background: var(--red); border-color: var(--red); color: var(--red-fill-text, #fff); }
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
   
   .settings-label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-heading); }
@@ -2042,7 +2048,7 @@
   .settings-input, .settings-select { width: 100%; padding: 10px; margin-bottom: 16px; background: var(--bg); border: 1px solid var(--border-hi); color: var(--text-hi); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9rem; outline: none; }
   .settings-input:focus, .settings-select:focus { border-color: var(--blue); }
 
-  .weight-badge { font-size: 0.65rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; margin-left: 5px; font-family: var(--font-mono); opacity: 0.7; }
+  .weight-badge { font-size: 0.65rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; margin-left: 5px; font-family: var(--font-mono); }
   .strip-ratings { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
   .strip-tmdb-badge { display: inline-flex; align-items: center; gap: 4px; background: #01b4e4; border-radius: 3px; padding: 2px 7px; font-size: 0.75rem; font-weight: 700; color: #fff; letter-spacing: 0.02em; font-family: sans-serif; }
   .strip-rating-icon { font-size: 0.75rem; color: #fff; }

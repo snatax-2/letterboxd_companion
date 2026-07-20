@@ -2,6 +2,8 @@
 
 App de notation de films (recherche TMDb, fiche film, watchlist, providers de streaming BE) — front-end statique + une fonction serverless Vercel qui fait office de proxy vers l'API TMDb.
 
+Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
+
 ## Structure du projet
 
 ```
@@ -116,6 +118,20 @@ Ce que ça couvre :
 
 `npm test` teste la LOGIQUE (Node/jsdom, aucun rendu CSS réel). `npm run test:e2e` complète ça avec de vrais tests dans un vrai navigateur (Playwright/Chromium, viewport mobile, vrais événements tactiles) — c'est le seul moyen d'attraper les bugs de rendu/interaction que jsdom ne peut pas voir (mise en page CSS, gestes tactiles réels).
 
+### Régression visuelle (captures d'écran)
+
+`tests/e2e/visual-regression.spec.js` compare des captures d'écran contre des références commitées (`tests/e2e/visual-regression.spec.js-snapshots/`) — attrape les régressions de PIXEL (une couleur qui change par erreur) qu'aucun test comportemental ne voit. Couvre 2 vues stables (Noter, Historique) × 4 thèmes.
+
+**Limite honnête** : Chromium headless ≠ Mobile Safari — ces captures attrapent les régressions *relatives* (« ça a changé depuis la dernière fois »), pas la fidélité absolue au rendu sur un vrai iPhone.
+
+**Si le test échoue après un changement visuel VOULU** (pas un bug) : régénère les références —
+```powershell
+npx playwright test tests/e2e/visual-regression.spec.js --update-snapshots
+```
+puis commit les `.png` mis à jour. Si le test échoue et que rien n'a été changé intentionnellement, c'est une vraie régression à corriger, pas à ignorer.
+
+**Risque connu** : les références ont été générées dans un environnement Linux (le même genre que le runner GitHub Actions), mais un rendu de police légèrement différent entre environnements reste possible. Une tolérance de 2 % (`maxDiffPixelRatio`) absorbe l'anti-aliasing mineur ; si la CI échoue sans changement visuel réel, régénère les références *depuis la CI elle-même* plutôt qu'en local.
+
 **Première installation** :
 ```powershell
 npm install
@@ -140,6 +156,10 @@ npm run test:e2e
 - **`tests/e2e/sync-error-messages.spec.js`** — la synchro cloud distingue maintenant une vraie coupure réseau, une erreur API précise (ex: limite de requêtes) et un échec générique du service : trois messages différents et exacts, plus jamais un « vérifie ta connexion » générique qui blâme l'utilisateur à tort.
 - **`tests/e2e/api-error-honesty.spec.js`** — même correctif étendu à la recherche principale, la recherche watchlist et le sélecteur d'affiches : une vraie erreur API (statut non-200) est maintenant détectée et affichée avec son vrai message, au lieu d'être silencieusement traitée comme « aucun résultat ».
 - **`tests/e2e/duels-reset.spec.js`** — réinitialiser les duels depuis Réglages (avec confirmation obligatoire) efface classement/cotes/paires jouées sans toucher aux films ni aux notes ; annuler ne touche à rien. A aussi révélé et corrigé un bug de z-index (une confirmation déclenchée depuis une modale déjà ouverte se retrouvait sous elle, boutons incliquables).
+- **`tests/e2e/feature-flags.spec.js`** — les 4 bascules (Duels, Quiz du jour, Carrousel tendances, Recommandations Découvrir) masquent/affichent bien leur section, sans jamais toucher aux données sous-jacentes ; la préférence persiste après rechargement ; réactiver fait réapparaître immédiatement sans recharger la page. A aussi révélé et corrigé un bug de rendu (Duel du jour se rendait au chargement quel que soit l'onglet actif, créant des éléments dupliqués qui cassaient d'autres tests).
+- **`tests/e2e/accessibility.spec.js`** — audit automatisé axe-core sur les 5 onglets principaux (× thèmes défaut et Technicolor), la fiche film, la fiche personne et la modale de confirmation. Zéro violation sérieuse/critique restante. A fait remonter et corriger : bascules/curseurs/poids sans nom accessible (13 éléments), contraste insuffisant (splash, VS des duels, bouton danger), dialogues sans nom quand vides, et un vrai bug — les cartes de l'historique avaient un rôle bouton sans AUCUNE activation clavier (Entrée/Espace ne faisait rien), en plus d'englober d'autres boutons (violation d'imbrication ARIA) ; restructuré pour isoler la zone cliquable et ajouté la gestion clavier manquante.
+- **`tests/e2e/visual-regression.spec.js`** — captures d'écran comparées à des références commitées (Noter, Historique × 4 thèmes) : attrape les régressions de pixel qu'aucun test comportemental ne voit. Voir la section dédiée plus haut pour le workflow de mise à jour des références.
+- **`tests/e2e/offline-full.spec.js`** — parcours hors-ligne RÉEL (pas une requête mockée) : installe le service worker en ligne d'abord, bascule vraiment hors-ligne, recharge la page, vérifie que le shell vient du cache, que chaque onglet reste utilisable, que le badge hors-ligne s'affiche, et qu'aucune erreur JS ni entrée de journal d'erreurs n'apparaît sur tout le parcours. Vérifie aussi qu'une action purement locale (supprimer un film) fonctionne intégralement sans réseau.
 - **`tests/e2e/person-detail-sheet.spec.js`** — filmographie limitée au rôle principal, films déjà vus grisés, navigation vers la fiche film au clic.
 - **`tests/e2e/keyboard-accessibility.spec.js`** — activation par Entrée/Espace des cartes cliquables (tendances, casting, filmographie...), focus déplacé à l'ouverture d'une fiche, piégeage du focus dans une fiche ouverte.
 - **`tests/e2e/surprise-me.spec.js`** — le bouton "Surprends-moi" ouvre la fiche du film pioché, et affiche un message (sans planter) si aucun résultat.
@@ -157,7 +177,7 @@ npm run test:e2e
 - **`tests/e2e/swipe-confirm.spec.js`** — via de vrais TouchEvents : swiper une carte de l'historique puis taper la zone révélée supprime bien le film (au lieu d'ouvrir sa fiche — le bug corrigé), et taper ailleurs sur la carte armée annule proprement.
 - **`tests/e2e/premium-polish.spec.js`** — le meta theme-color suit le thème actif (barre de statut iOS assortie), les polices sont chargées depuis le head avec préconnexion.
 - **`tests/e2e/error-states.spec.js`** — panne réseau sur la fiche film : l'état d'erreur dessiné apparaît (message + bouton), et « Réessayer » recharge la fiche complète une fois le réseau revenu.
-- **`tests/e2e/poster-picker.spec.js`** — le sélecteur d'affiche : choisir une variante la persiste dans l'historique (URL w185), rafraîchit la fiche (w342) et ferme la modale ; le bouton n'apparaît pas pour un film hors collection. Vérifie aussi que chaque affiche s'affiche en entier (object-fit: contain, pas de rognage). Vérifie aussi que chaque case a une hauteur réelle exacte (2:3 en pixels calculés par JS, plus de cases tronquées).
+- **`tests/e2e/poster-picker.spec.js`** — le sélecteur d'affiche : choisir une variante la persiste dans l'historique (URL w185), rafraîchit la fiche (w342) et ferme la modale ; le bouton n'apparaît pas pour un film hors collection. Vérifie aussi que chaque affiche s'affiche en entier (object-fit: contain, pas de rognage). Vérifie aussi que chaque case a une hauteur réelle exacte (2:3 en pixels calculés par JS, plus de cases tronquées). Deux tests de non-régression pour le bug signalé : le choix tient bon après fermeture/réouverture de la fiche (pas seulement avant), et fonctionne aussi pour un film seulement en watchlist (pas encore noté).
 - **`tests/e2e/hist-uniform.spec.js`** — cartes d'historique à hauteur uniforme malgré des genres/acteurs très longs (lignes bornées avec ellipse) ; filtre genre plié par défaut avec le genre actif toujours visible, filtrage fonctionnel après dépliage. Verifie aussi le cas reel signale (tag "À la maison" sur une seule carte : memes hauteurs).
 - **`tests/e2e/xss.spec.js`** — un titre de film piégé (balise img avec onerror, script dans la critique) s'affiche partout comme texte et ne s'exécute jamais — historique, toast coup de cœur.
 - **`tests/e2e/targeted-render.spec.js`** — renderStats() (radar/timeline/heatmap/badges/décennies) est différé tant que l'onglet Profil n'est pas visible, et rattrapé dès qu'on y bascule ; aucun retard si on reste sur Profil.

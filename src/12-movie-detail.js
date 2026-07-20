@@ -46,8 +46,29 @@ function buildMdsSkeleton() {
 // Chaque section reçoit un léger délai croissant (voir CSS .mds-section) pour
 // apparaître en cascade plutôt que d'un bloc — plus agréable à l'œil qu'un
 // simple remplacement de contenu.
+// Cherche une affiche choisie à la main pour ce film, dans l'historique OU
+// n'importe quelle watchlist (un film "à voir" pas encore noté peut aussi
+// avoir reçu un choix d'affiche — voir applyChosenPoster, qui sauvegarde aux
+// deux endroits). localMatch (historique) ne suffit pas seul : un film
+// uniquement en watchlist n'y apparaît jamais.
+function findSavedPosterUrl(tmdbId, localMatch) {
+  if (localMatch && localMatch.poster) return localMatch.poster;
+  for (const meta of loadWatchlistsMeta()) {
+    const found = loadWatchlist(meta.id).find(w => String(w.tmdbId) === String(tmdbId) && w.poster);
+    if (found) return found.poster;
+  }
+  return null;
+}
+
 function buildMdsContent(data, localMatch, localMatchIdx) {
-  const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+  // Une affiche choisie à la main (voir applyChosenPoster) est enregistrée
+  // sur l'item local (historique/watchlist) — elle doit toujours l'emporter
+  // sur l'affiche par défaut de TMDb, sinon rouvrir la fiche plus tard
+  // "oublie" le choix : le rendu revenait systématiquement à data.poster_path
+  // (toujours frais depuis l'API), sans jamais consulter ce qui avait été
+  // sauvegardé. C'était le vrai bug derrière "ça ne se sauvegarde pas".
+  const savedPoster = findSavedPosterUrl(data.id, localMatch);
+  const posterUrl = savedPoster || (data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '');
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
@@ -741,7 +762,12 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   if (!cell) return;
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
-  const url = `https://image.tmdb.org/t/p/w185${cell.dataset.posterPath}`;
+  // w342 (pas w185) : c'est la résolution que la fiche film affiche en
+  // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
+  // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
+  // (historique, watchlist) se contentent très bien de la redimensionner
+  // vers le bas.
+  const url = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
   const touched = applyChosenPoster(tmdbId, url);
   if (navigator.vibrate) navigator.vibrate(15);
   modal.classList.remove('open');
