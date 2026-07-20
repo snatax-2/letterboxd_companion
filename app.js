@@ -3776,6 +3776,10 @@ function resetProfileExtras() {
   document.getElementById('profile-streak').textContent = 'Pas de série en cours';
   renderBadges(computeBadges([], {}));
   drawProfileShareCard(null);
+  // Une rétrospective "0 film noté" n'aurait aucun sens — la carte d'entrée
+  // ne s'affiche que s'il y a au moins un film à raconter.
+  const wrappedCard = document.getElementById('wrapped-entry-card');
+  if (wrappedCard) wrappedCard.style.display = 'none';
 }
 
 function renderProfileExtras(history) {
@@ -3783,6 +3787,11 @@ function renderProfileExtras(history) {
   // planter tout le reste du rendu du profil — juste rester sur les valeurs
   // par défaut, comme un historique vide.
   history = history || [];
+  // Une rétrospective "0 film noté" n'aurait aucun sens : la carte ne
+  // s'affiche que s'il y a au moins un film — mais elle doit pouvoir
+  // réapparaître si l'historique passe de vide à rempli dans la même session.
+  const wrappedCard = document.getElementById('wrapped-entry-card');
+  if (wrappedCard) wrappedCard.style.display = history.length > 0 ? '' : 'none';
   // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
   const dates = history
     .map(h => h.savedAt || h.date)

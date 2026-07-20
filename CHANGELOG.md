@@ -13,6 +13,8 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- La carte d'entrée de la Rétrospective annuelle ("Wrapped") restait visible
+  même sans aucun film noté.
 - Un choix d'affiche ne « tenait » que jusqu'à la fermeture de la fiche film :
   le rendu revenait systématiquement chercher l'affiche par défaut de TMDb à
   chaque réouverture au lieu de consulter le choix sauvegardé. Corrigé pour
