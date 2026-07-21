@@ -13,7 +13,11 @@ const DETAIL = {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
-  await page.route('**/api/search?trending=true', route => route.fulfill({ json: TRENDING }));
+  // dailyPick/weeklyRelease (pas trending=true, plus utilise par Film du Jour
+  // depuis la correction du tirage elargi) — mock les DEUX endpoints possibles
+  // pour rester correct quel que soit le jour reel ou tourne ce test.
+  await page.route('**/api/search?dailyPick=*', route => route.fulfill({ json: { result: TRENDING.results[0] } }));
+  await page.route('**/api/search?weeklyRelease=*', route => route.fulfill({ json: { result: TRENDING.results[0] } }));
   await page.route('**/api/search?id=42', route => route.fulfill({ json: DETAIL }));
   await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: null } }));
   await page.route('**/api/search*providers*', route => route.fulfill({ json: { results: {} } }));

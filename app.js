@@ -5824,23 +5824,28 @@ async function loadFilmDuJour() {
   try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
 
   if (cached && cached.date === todayKey && cached.movie) {
+    setFilmDuJourTitle(cached.isWeekly);
     renderFilmDuJour(cached.movie, cached.anecdote || null);
     return;
   }
 
   try {
-    // Réutilise l'endpoint "tendances" déjà en place comme réservoir de films
-    // candidats — pas besoin d'un nouveau point d'accès dédié.
-    const res = await fetch('/api/search?trending=true');
-    const data = await res.json();
-    const pool = (data.results || []).filter(m => m.poster_path);
-    if (pool.length === 0) return;
-
-    // Choix déterministe basé sur la date (pas Math.random) : stable toute la
-    // journée sur TOUS les appareils de l'utilisateur, change automatiquement
-    // le lendemain, sans avoir besoin de stocker quoi que ce soit côté serveur.
     const daysSinceEpoch = Math.floor(Date.now() / 86400000);
-    const pick = pool[daysSinceEpoch % pool.length];
+    // Le mercredi (jour de sortie ciné en France), le Film du Jour devient
+    // "Sortie de la semaine" : de vraies sorties en salle de la semaine,
+    // pas des tendances mondiales. Les autres jours, tirage élargi sur toute
+    // la base TMDb suffisamment connue (voir api/search.js) — plus les
+    // ~20 films "tendances" d'avant, qui revenaient sans cesse et
+    // penchaient trop vers les sorties très récentes.
+    const isWednesday = new Date().getDay() === 3;
+    const endpoint = isWednesday
+      ? `/api/search?weeklyRelease=${daysSinceEpoch}`
+      : `/api/search?dailyPick=${daysSinceEpoch}`;
+
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    const pick = data.result;
+    if (!pick) return;
 
     const detailRes = await fetch(`/api/search?id=${pick.id}`);
     const details = await detailRes.json();
@@ -5858,11 +5863,22 @@ async function loadFilmDuJour() {
       if (anecdoteData && anecdoteData.anecdote) anecdote = anecdoteData;
     } catch { /* pas grave, on se rabat sur les faits TMDb */ }
 
-    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote }));
+    setFilmDuJourTitle(isWednesday);
+    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote, isWeekly: isWednesday }));
     renderFilmDuJour(details, anecdote);
   } catch (e) {
     console.warn('Impossible de charger le film du jour', e);
   }
+}
+
+// Bascule le titre de la section entre "Film du jour" et "Sortie de la
+// semaine" — manquait entièrement (la fonction était appelée mais jamais
+// définie, ce qui plantait silencieusement tout chargement depuis le cache,
+// c'est-à-dire presque tous les chargements sauf le tout premier de la
+// journée/semaine).
+function setFilmDuJourTitle(isWeekly) {
+  const titleEl = document.getElementById('fdj-title');
+  if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
 }
 
 function renderFilmDuJour(m, anecdote) {

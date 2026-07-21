@@ -12,6 +12,18 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- `setFilmDuJourTitle` était appelée pour basculer le titre entre "Film du
+  jour" et "Sortie de la semaine", mais n'était définie nulle part — plantait
+  silencieusement (erreur JS non interceptée) à chaque chargement du Film du
+  Jour depuis le cache, c'est-à-dire presque tout le temps sauf le tout
+  premier accès de la journée/semaine. Fonction ajoutée, et le calcul/la
+  sauvegarde de l'indicateur "semaine" corrigés (n'existaient que sur le
+  chemin déjà mis en cache, jamais au premier chargement).
+- Commentaire de code corrigé (mentionnait un "numéro de semaine ISO" jamais
+  réellement utilisé — la graine est en fait le nombre de jours depuis
+  epoch, ce qui reste correct mais ne correspondait pas à ce qui était écrit).
+
 ### Ajouté
 - **Anecdotes réelles pour le Film du Jour**, via Wikipédia FR (section
   "Anecdotes"/"Production"/"Genèse"/"Tournage") — remplace les faits générés

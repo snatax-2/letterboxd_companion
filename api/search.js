@@ -1,5 +1,6 @@
 import { rateLimit } from './_rateLimit.js';
 import { extractAnecdote, buildWikiCandidates } from './_wikiAnecdote.js';
+import { seededPageAndIndex, seededFraction } from './_seededPick.js';
 
 export default async function handler(req, res) {
   // Limite large : l'auto-complétion peut déclencher plusieurs appels par minute
@@ -10,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, wikianecdote, wikiyear } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, wikianecdote, wikiyear, dailyPick, weeklyRelease } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -41,6 +42,44 @@ export default async function handler(req, res) {
       const results = discoverData.results || [];
       const pick = results.length > 0 ? results[Math.floor(Math.random() * results.length)] : null;
       res.setHeader('Cache-Control', 'no-store');
+      return res.status(200).json({ result: pick });
+
+    } else if (dailyPick) {
+      // Cas : Film du Jour — tirage sur TOUTE la base TMDb suffisamment
+      // connue (vote_count >= 100, ~4000 films sur 200 pages), pas
+      // seulement les tendances de la semaine (biaisées vers les sorties
+      // très récentes). La graine (nombre de jours depuis epoch, envoyée par
+      // le client) rend le tirage STABLE pour la journée sur tous les
+      // appareils, sans état côté serveur — voir _seededPick.js.
+      const seed = parseInt(dailyPick, 10) || 0;
+      const PAGE_SIZE = 20;
+      const { page, index } = seededPageAndIndex(seed, 200, PAGE_SIZE);
+      const discoverRes = await fetch(
+        `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
+      );
+      const discoverData = await discoverRes.json();
+      const results = (discoverData.results || []).filter(m => m.poster_path);
+      const pick = results.length > 0 ? results[index % results.length] : null;
+      setCache(86400, 604800); // stable 24h : cohérent avec "même film toute la journée"
+      return res.status(200).json({ result: pick });
+
+    } else if (weeklyRelease) {
+      // Cas : "Sortie de la semaine" (le mercredi, jour de sortie ciné en
+      // France) — vraies sorties en salle actuelles, pas des tendances
+      // mondiales. now_playing?region=FR est pensé pour exactement ça.
+      // Graine = jours depuis epoch envoyée par le client (même valeur que
+      // dailyPick) : stable pour tous les appareils sur UNE MÊME journée de
+      // mercredi (le cache client est lui-même daté au jour, voir
+      // FILM_DU_JOUR_KEY dans 11-discover.js — "Sortie de la semaine" ne
+      // reste donc affichée que le mercredi, redevient Film du jour ensuite).
+      const seed = parseInt(weeklyRelease, 10) || 0;
+      const nowPlayingRes = await fetch(
+        `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=fr-FR&region=FR&page=1`
+      );
+      const nowPlayingData = await nowPlayingRes.json();
+      const results = (nowPlayingData.results || []).filter(m => m.poster_path);
+      const pick = results.length > 0 ? results[Math.floor(seededFraction(seed) * results.length)] : null;
+      setCache(86400, 604800);
       return res.status(200).json({ result: pick });
 
     } else if (personSearch) {
