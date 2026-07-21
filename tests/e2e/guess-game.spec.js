@@ -79,8 +79,10 @@ test('trouver le bon titre (accents/majuscules ignores) gagne et incremente la s
   await page.waitForTimeout(200);
 
   await expect(page.locator('.guess-result.guess-won')).toContainText('Trouvé en 1 essai');
-  const filter = await page.locator('.guess-poster').evaluate(el => getComputedStyle(el).filter);
-  expect(filter).toContain('blur(0px)');
+  // Une fois revele, la fiche utilise .fdj-poster (jamais floutee) — le
+  // mecanisme de flou n'a plus lieu d'etre a ce stade, .guess-poster n'existe
+  // plus du tout apres resolution (fusionne dans la fiche complete).
+  await expect(page.locator('.fdj-poster')).toBeVisible();
   await expect(page.locator('#guess-streak-badge')).toContainText('1');
 
   const streak = await page.evaluate(() => localStorage.getItem('lbx_guess_streak'));
@@ -111,8 +113,7 @@ test('epuiser les 5 essais revele le film en defaite, remet la serie a zero', as
   }
 
   await expect(page.locator('.guess-result.guess-lost')).toContainText('Film Mystère');
-  const filter = await page.locator('.guess-poster').evaluate(el => getComputedStyle(el).filter);
-  expect(filter).toContain('blur(0px)');
+  await expect(page.locator('.fdj-poster')).toBeVisible();
   await expect(page.locator('.guess-form')).toHaveCount(0);
 
   const streak = await page.evaluate(() => localStorage.getItem('lbx_guess_streak'));
@@ -132,4 +133,54 @@ test('une fois joue, l\'etat "deja joue" persiste apres rechargement de la page'
   await page.waitForSelector('.guess-result');
   await expect(page.locator('.guess-result.guess-won')).toBeVisible();
   await expect(page.locator('.guess-form')).toHaveCount(0);
+});
+
+test('pendant la devinette, ni anecdote/faits ni plateformes ne sont visibles (evite de spoiler)', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('.guess-poster');
+
+  await expect(page.locator('.fdj-anecdote')).toHaveCount(0);
+  await expect(page.locator('.fdj-facts')).toHaveCount(0);
+  await expect(page.locator('#fdj-providers')).toHaveCount(0);
+  await expect(page.locator('.fdj-film-title')).toHaveCount(0);
+});
+
+test('apres une victoire, les faits TMDb (repli) et les plateformes apparaissent avec le resultat', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('.guess-poster');
+  await page.fill('#guess-input', 'Film Mystère');
+  await page.click('.guess-submit-btn');
+  await page.waitForSelector('#fdj-card .fdj-film-title');
+
+  await expect(page.locator('.guess-result.guess-won')).toBeVisible();
+  await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
+  await expect(page.locator('.fdj-facts li').first()).toBeVisible();
+  await expect(page.locator('#fdj-providers')).toBeVisible();
+});
+
+test('apres une defaite, la fiche complete se revele aussi (pas seulement le titre correct)', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('.guess-poster');
+  for (let i = 0; i < 5; i++) {
+    await page.fill('#guess-input', 'toujours faux');
+    await page.click('.guess-submit-btn');
+    await page.waitForTimeout(150);
+  }
+
+  await expect(page.locator('.guess-result.guess-lost')).toBeVisible();
+  await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
+  await expect(page.locator('.fdj-facts li').first()).toBeVisible();
+});
+
+test('une seule carte affichee (plus de section separee en double)', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('.guess-poster');
+  const cardCount = await page.locator('.fdj-card').count();
+  expect(cardCount).toBe(1);
+  const oldSeparateSection = await page.locator('#guess-game-wrap').count();
+  expect(oldSeparateSection).toBe(0);
 });

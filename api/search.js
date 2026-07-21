@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, wikianecdote, wikiyear, dailyPick, weeklyRelease } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, wikianecdote, wikiyear, wikititle2, dailyPick, weeklyRelease } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -181,7 +181,13 @@ export default async function handler(req, res) {
       // Pas de clé API nécessaire, Wikipédia est ouvert.
       const title = String(wikianecdote);
       const year = wikiyear ? String(wikiyear) : '';
+      // Titre français d'abord (les articles Wikipédia FR sont titrés avec la
+      // sortie française, ex: "Le Parrain" pas "The Godfather") — le titre
+      // original ne sert qu'en dernier recours si rien n'est trouvé avec le
+      // français. Envoyer l'original en priorité (comportement précédent)
+      // faisait échouer la recherche pour tout film au titre traduit.
       const candidates = buildWikiCandidates(title, year);
+      if (wikititle2) candidates.push(...buildWikiCandidates(String(wikititle2), year));
 
       async function fetchPlainExtract(pageTitle) {
         const url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&redirects=1&prop=extracts&explaintext=1&exsectionformat=wiki&format=json&origin=*`;

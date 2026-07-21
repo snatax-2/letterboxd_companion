@@ -13,6 +13,29 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Vrai bug trouvé suite à un retour utilisateur** ("les anecdotes semblent
+  toujours basées sur TMDb") : la recherche Wikipédia envoyait le titre
+  ORIGINAL du film en priorité dès qu'il différait du titre français — or les
+  articles Wikipédia FR sont titrés avec la sortie française ("Le Parrain",
+  pas "The Godfather"). Tout film au titre traduit échouait donc
+  silencieusement sa recherche et retombait sur les faits TMDb. Corrigé :
+  titre français toujours essayé en premier, l'original seulement en dernier
+  recours si rien n'est trouvé.
+
+### Modifié
+- **Fusion de "Film du jour" et "Devine le Film du Jour"** en une seule
+  carte : les deux affichaient le même film séparément, ce qui n'avait pas de
+  sens. Désormais, un seul parcours — l'affiche floutée à deviner d'abord,
+  puis la fiche complète (titre, anecdote Wikipédia ou faits TMDb, plateformes
+  de streaming) se révèle une fois la partie gagnée ou perdue. Sans affiche
+  disponible, la fiche s'affiche directement (deviner n'aurait pas de sens).
+
+### Corrigé
+- Un bug trouvé pendant cette fusion : la fonction qui bascule le titre entre
+  "Film du jour"/"Sortie de la semaine" écrivait son texte à même le
+  conteneur qui héberge aussi le badge de série du jeu — chaque
+  victoire/défaite effaçait silencieusement ce badge. Corrigé en isolant le
+  texte du titre dans son propre élément, indépendant du badge.
 - `setFilmDuJourTitle` était appelée pour basculer le titre entre "Film du
   jour" et "Sortie de la semaine", mais n'était définie nulle part — plantait
   silencieusement (erreur JS non interceptée) à chaque chargement du Film du

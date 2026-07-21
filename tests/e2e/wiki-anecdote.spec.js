@@ -61,3 +61,24 @@ test('l\'anecdote est mise en cache pour la journee (pas de second appel wikiped
 
   expect(wikiCalls).toBe(1);
 });
+
+test('les deux titres (francais et original) sont envoyes quand ils different, le francais en priorite', async ({ page }) => {
+  const DETAIL_TRANSLATED = {
+    id: 42, title: 'Le Parrain', original_title: 'The Godfather', release_date: '1972-03-14',
+    credits: { crew: [], cast: [] },
+  };
+  await page.route('**/api/search?id=42', route => route.fulfill({ json: DETAIL_TRANSLATED }));
+
+  let capturedUrl = '';
+  await page.route('**/api/search?wikianecdote=*', route => {
+    capturedUrl = route.request().url();
+    return route.fulfill({ json: { anecdote: null } });
+  });
+
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('#fdj-card .fdj-film-title, .guess-poster');
+
+  expect(capturedUrl).toContain('wikianecdote=Le+Parrain');
+  expect(capturedUrl).toContain('wikititle2=The+Godfather');
+});

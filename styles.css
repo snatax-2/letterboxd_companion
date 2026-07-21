@@ -2139,11 +2139,20 @@
   .quiz-already-played { text-align: center; padding: 8px 0; color: var(--text-mid); font-size: 0.86rem; }
 
   .fdj-card {
-    display: flex; gap: 12px; background: var(--bg); border: 1px solid var(--border);
+    background: var(--bg); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 12px; cursor: pointer; box-shadow: var(--box-shadow-style, none);
     transition: border-color var(--dur-fast);
   }
   .fdj-card:hover { border-color: var(--border-hi); }
+  /* Fiche révélée (après avoir deviné, ou immédiatement si le film n'a pas
+     d'affiche) : affiche + infos côte à côte, toute la carte cliquable. */
+  .fdj-card.fdj-revealed { display: flex; gap: 12px; }
+  /* Phase "à deviner" : centrée, empilée — pas de mise en page côte à côte
+     tant qu'il n'y a que l'affiche floutée et le formulaire. La carte n'a
+     pas encore de gestionnaire de clic (rien à ouvrir avant la révélation),
+     donc pas de curseur "pointeur" trompeur. */
+  .fdj-card.fdj-guessing { text-align: center; cursor: default; padding: 14px; }
+  .fdj-card.fdj-guessing:hover { border-color: var(--border); }
   .fdj-poster { width: 84px; height: 126px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); }
   .fdj-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid); }
   .fdj-info { flex: 1; min-width: 0; }
@@ -2170,10 +2179,6 @@
   .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
 
   /* ── DÉCOUVRIR : "Devine le Film du Jour" (mini-jeu) ── */
-  .guess-game-card {
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 14px; box-shadow: var(--box-shadow-style, none); text-align: center;
-  }
   .guess-poster {
     width: 130px; height: 195px; object-fit: cover; border-radius: var(--radius-sm);
     background: var(--surface2); margin: 0 auto 10px; display: block;

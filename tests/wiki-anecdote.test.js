@@ -109,3 +109,14 @@ Le budget final a largement dépassé les prévisions initiales[12], forçant le
     assert.deepEqual(withoutYear, ['Amélie (film)', 'Amélie']);
   });
 });
+
+describe('priorite du titre francais sur le titre original (bug reel corrige)', () => {
+  test('buildWikiCandidates avec le titre francais genere les bonnes variantes, sans dependre du titre original', async () => {
+    const { buildWikiCandidates } = await import('../api/_wikiAnecdote.js');
+    // Simule "Le Parrain" (titre francais) plutot que "The Godfather" (original)
+    // -- c'est le titre francais qui doit etre cherche en premier sur
+    // Wikipedia FR, l'ancien code envoyait l'original par erreur.
+    const candidates = buildWikiCandidates('Le Parrain', '1972');
+    assert.deepEqual(candidates, ['Le Parrain (film, 1972)', 'Le Parrain (film)', 'Le Parrain']);
+  });
+});

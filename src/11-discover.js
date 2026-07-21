@@ -144,8 +144,7 @@ async function loadFilmDuJour() {
   try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
 
   if (cached && cached.date === todayKey && cached.movie) {
-    setFilmDuJourTitle(cached.isWeekly);
-    renderFilmDuJour(cached.movie, cached.anecdote || null);
+    renderGuessGame(cached.movie, cached.anecdote || null, cached.isWeekly);
     return;
   }
 
@@ -176,16 +175,23 @@ async function loadFilmDuJour() {
     let anecdote = null;
     try {
       const year = details.release_date ? details.release_date.slice(0, 4) : '';
-      const searchTitle = details.original_title && details.original_title !== details.title
-        ? details.original_title : details.title;
-      const anecdoteRes = await fetch(`/api/search?wikianecdote=${encodeURIComponent(searchTitle)}&wikiyear=${encodeURIComponent(year)}`);
+      // Les articles Wikipédia FR sont titrés avec le titre FRANÇAIS de
+      // sortie, pas le titre original — envoyer le titre original en
+      // priorité (comme avant) faisait échouer la recherche pour tout film
+      // dont le titre a été traduit ("Le Parrain", pas "The Godfather").
+      // On envoie les deux : le serveur essaie le français d'abord, puis
+      // l'original en repli seulement s'il ne trouve rien.
+      const params = new URLSearchParams({ wikianecdote: details.title, wikiyear: year });
+      if (details.original_title && details.original_title !== details.title) {
+        params.set('wikititle2', details.original_title);
+      }
+      const anecdoteRes = await fetch(`/api/search?${params.toString()}`);
       const anecdoteData = await anecdoteRes.json();
       if (anecdoteData && anecdoteData.anecdote) anecdote = anecdoteData;
     } catch { /* pas grave, on se rabat sur les faits TMDb */ }
 
-    setFilmDuJourTitle(isWednesday);
     localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote, isWeekly: isWednesday }));
-    renderFilmDuJour(details, anecdote);
+    renderGuessGame(details, anecdote, isWednesday);
   } catch (e) {
     console.warn('Impossible de charger le film du jour', e);
   }
@@ -197,61 +203,13 @@ async function loadFilmDuJour() {
 // c'est-à-dire presque tous les chargements sauf le tout premier de la
 // journée/semaine).
 function setFilmDuJourTitle(isWeekly) {
-  const titleEl = document.getElementById('fdj-title');
+  // Cible le span de TEXTE dedie (#fdj-title-text), pas #fdj-title lui-meme
+  // — celui-ci contient AUSSI le badge de serie (#guess-streak-badge) comme
+  // enfant ; y ecrire du textContent directement l'effacait entierement a
+  // chaque appel (vrai bug trouve en testant : le badge disparaissait des
+  // qu'une victoire/defaite mettait a jour le titre).
+  const titleEl = document.getElementById('fdj-title-text');
   if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
-}
-
-function renderFilmDuJour(m, anecdote) {
-  const wrap = document.getElementById('fdj-wrap');
-  const card = document.getElementById('fdj-card');
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
-  const year = m.release_date ? m.release_date.slice(0, 4) : '';
-
-  // Une vraie anecdote (Wikipédia) prend toujours le pas sur les faits TMDb
-  // générés — mais le repli reste là pour les films sans section
-  // Anecdotes/Production (beaucoup de films moins connus n'en ont pas).
-  const factsHTML = anecdote
-    ? `<blockquote class="fdj-anecdote">
-         « ${escAttr(anecdote.anecdote)} »
-         <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
-       </blockquote>`
-    : `<ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>`;
-
-  card.innerHTML = `
-    ${posterUrl
-      ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">`
-      : `<div class="fdj-poster fdj-poster-ph" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">${ICONS.clapper}</div>`}
-    <div class="fdj-info">
-      <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
-      ${factsHTML}
-      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
-    </div>
-  `;
-  wrap.style.display = 'block';
-  card.dataset.movieId = String(m.id);
-  // La carte entière reste cliquable au clic/tap (zone large, meilleure
-  // ergonomie tactile) — seuls les VRAIS contrôles interactifs qu'elle
-  // contient (le lien source Wikipédia, le bouton de re-tentative des
-  // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
-  card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source')) return;
-    openMovieDetailSheet(m.id);
-  });
-  // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
-  // seul élément de la carte qui ne contient jamais lui-même de contrôle
-  // interactif — d'où l'ARIA correcte) — role="button"+tabindex="0" rendent
-  // l'élément focusable et l'annoncent comme un bouton, mais ne déclenchent
-  // PAS d'activation clavier tout seuls (contrairement à un vrai <button>) —
-  // même oubli que celui corrigé sur les cartes de l'historique.
-  const poster = card.querySelector('.fdj-poster');
-  poster.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    openMovieDetailSheet(m.id);
-  });
-
-  fetchFilmDuJourProviders(m.id);
-  renderGuessGame(m);
 }
 
 async function fetchFilmDuJourProviders(tmdbId) {
@@ -336,39 +294,49 @@ function renderGuessStreakBadge() {
   badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
 }
 
-function renderGuessGame(m) {
-  const wrap = document.getElementById('guess-game-wrap');
-  const card = document.getElementById('guess-game-card');
-  if (!wrap || !card || !m.poster_path) { if (wrap) wrap.style.display = 'none'; return; } // pas d'affiche, pas de jeu possible
+function renderGuessGame(m, anecdote, isWeekly) {
+  const wrap = document.getElementById('fdj-wrap');
+  const card = document.getElementById('fdj-card');
+  if (!wrap || !card) return;
   wrap.style.display = 'block';
-  renderGuessStreakBadge();
 
   const todayKey = new Date().toISOString().slice(0, 10);
-  const state = loadGuessGameState(m.id, todayKey);
-  const posterUrl = `https://image.tmdb.org/t/p/w300${m.poster_path}`;
-  const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
+  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
+  const year = m.release_date ? m.release_date.slice(0, 4) : '';
 
-  // Indices textuels à des paliers fixes — jouable même si l'affiche seule
-  // ne suffit pas à reconnaître le film.
+  // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
+  // révélée (comme l'ancien "Film du jour" seul, avant la fusion des deux
+  // sections qui montraient jusqu'ici le MÊME film en double).
+  if (!m.poster_path) {
+    setFilmDuJourTitle(isWeekly);
+    renderRevealedFilm(m, anecdote, posterUrl, year, null);
+    return;
+  }
+
+  const state = loadGuessGameState(m.id, todayKey);
+
+  if (state.done) {
+    setFilmDuJourTitle(isWeekly);
+    renderRevealedFilm(m, anecdote, posterUrl, year, state);
+    return;
+  }
+
+  // ── Phase "à deviner" : titre dédié, tant que ce n'est pas résolu ──
+  const titleEl = document.getElementById('fdj-title-text');
+  if (titleEl) titleEl.textContent = 'Devine le Film du Jour';
+  renderGuessStreakBadge();
+
+  const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
   const hints = [];
   if (state.attempts >= 2) {
-    const year = m.release_date ? m.release_date.slice(0, 4) : null;
     if (year) hints.push(`Sorti en ${year}`);
   }
   if (state.attempts >= 4 && m.genres?.length) {
     hints.push(`Genre : ${m.genres[0].name}`);
   }
 
-  if (state.done) {
-    card.innerHTML = `
-      <img class="guess-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" style="filter:blur(0px)">
-      <div class="guess-result ${state.won ? 'guess-won' : 'guess-lost'}">
-        ${state.won ? `Trouvé en ${state.attempts} essai${state.attempts > 1 ? 's' : ''} !` : `Perdu — c'était « ${escAttr(m.title)} »`}
-      </div>
-    `;
-    return;
-  }
-
+  card.classList.add('fdj-guessing');
+  card.classList.remove('fdj-revealed');
   card.innerHTML = `
     <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
     <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
@@ -409,9 +377,72 @@ function renderGuessGame(m) {
     }
     localStorage.setItem(GUESS_LAST_PLAYED_KEY, todayKey);
     saveGuessGameState(state);
-    renderGuessGame(m);
-    if (state.done) renderGuessStreakBadge();
+    // Rejoue le rendu complet (pas juste la mise à jour du jeu) : si la
+    // partie vient de se terminer, ce même appel bascule automatiquement sur
+    // la fiche révélée — c'est tout l'intérêt de la fusion des deux sections.
+    renderGuessGame(m, anecdote, isWeekly);
   });
+}
+
+// Affiche la fiche complète du jour — affiche nette, anecdote (ou faits
+// TMDb à défaut), plateformes — précédée du résultat du jeu si on vient d'y
+// jouer (state non nul), ou affichée directement s'il n'y avait pas
+// d'affiche pour deviner.
+function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
+  const card = document.getElementById('fdj-card');
+  card.classList.add('fdj-revealed');
+  card.classList.remove('fdj-guessing');
+  renderGuessStreakBadge();
+
+  const resultHTML = state
+    ? `<div class="guess-result ${state.won ? 'guess-won' : 'guess-lost'}">
+         ${state.won ? `Trouvé en ${state.attempts} essai${state.attempts > 1 ? 's' : ''} !` : `Perdu — c'était « ${escAttr(m.title)} »`}
+       </div>`
+    : '';
+
+  const factsHTML = anecdote
+    ? `<blockquote class="fdj-anecdote">
+         « ${escAttr(anecdote.anecdote)} »
+         <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
+       </blockquote>`
+    : `<ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>`;
+
+  card.innerHTML = `
+    ${posterUrl
+      ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">`
+      : `<div class="fdj-poster fdj-poster-ph" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">${ICONS.clapper}</div>`}
+    <div class="fdj-info">
+      ${resultHTML}
+      <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
+      ${factsHTML}
+      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
+    </div>
+  `;
+  card.dataset.movieId = String(m.id);
+  // La carte entière reste cliquable au clic/tap (zone large, meilleure
+  // ergonomie tactile) — seuls les VRAIS contrôles interactifs qu'elle
+  // contient (le lien source Wikipédia, le bouton de re-tentative des
+  // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source')) return;
+    openMovieDetailSheet(m.id);
+  });
+  // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
+  // seul élément de la carte qui ne contient jamais lui-même de contrôle
+  // interactif — d'où l'ARIA correcte) — role="button"+tabindex="0" rendent
+  // l'élément focusable et l'annoncent comme un bouton, mais ne déclenchent
+  // PAS d'activation clavier tout seuls (contrairement à un vrai <button>) —
+  // même oubli que celui corrigé sur les cartes de l'historique.
+  const poster = card.querySelector('.fdj-poster');
+  if (poster) {
+    poster.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMovieDetailSheet(m.id);
+    });
+  }
+
+  fetchFilmDuJourProviders(m.id);
 }
 
 // ═══════════════════════════════════════════
