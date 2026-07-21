@@ -1,4 +1,5 @@
 import { rateLimit } from './_rateLimit.js';
+import { extractAnecdote, buildWikiCandidates } from './_wikiAnecdote.js';
 
 export default async function handler(req, res) {
   // Limite large : l'auto-complétion peut déclencher plusieurs appels par minute
@@ -9,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, wikianecdote, wikiyear } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -133,6 +134,46 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (wikianecdote) {
+      // Cas : une VRAIE anecdote pour le Film du Jour, via Wikipédia FR —
+      // TMDb n'a pas d'endpoint "trivia" (voir 11-discover.js), donc on va la
+      // chercher ailleurs plutôt que d'inventer du contenu. Licence CC-BY-SA :
+      // réutilisation autorisée avec attribution (voir le lien renvoyé).
+      // Pas de clé API nécessaire, Wikipédia est ouvert.
+      const title = String(wikianecdote);
+      const year = wikiyear ? String(wikiyear) : '';
+      const candidates = buildWikiCandidates(title, year);
+
+      async function fetchPlainExtract(pageTitle) {
+        const url = `https://fr.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&redirects=1&prop=extracts&explaintext=1&exsectionformat=wiki&format=json&origin=*`;
+        const r = await fetch(url);
+        const d = await r.json();
+        const pages = d?.query?.pages;
+        if (!pages) return null;
+        const page = Object.values(pages)[0];
+        if (!page || page.missing !== undefined || !page.extract || page.extract.length < 200) return null;
+        return { extract: page.extract, resolvedTitle: page.title };
+      }
+
+      let result = null;
+      for (const candidate of candidates) {
+        try {
+          const found = await fetchPlainExtract(candidate);
+          if (!found) continue;
+          const anecdote = extractAnecdote(found.extract);
+          if (anecdote) {
+            result = { anecdote, url: `https://fr.wikipedia.org/wiki/${encodeURIComponent(found.resolvedTitle.replace(/ /g, '_'))}` };
+            break;
+          }
+        } catch { /* essaie le candidat suivant */ }
+      }
+
+      // Le Film du Jour est stable 24h — inutile de refaire cette recherche
+      // plusieurs fois pour le même film le même jour, même si le résultat
+      // est "rien trouvé" (évite de marteler Wikipédia pour un film sans
+      // section Anecdotes/Production).
+      setCache(86400, 604800);
+      return res.status(200).json(result || { anecdote: null });
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const detailsRes = await fetch(

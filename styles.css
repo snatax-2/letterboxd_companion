@@ -2150,6 +2150,17 @@
   .fdj-film-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; color: var(--text-hi); }
   .fdj-year { font-weight: 400; color: var(--text-mid); }
   .fdj-facts { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+  /* Vraie anecdote Wikipédia : présentée comme une citation, avec attribution
+     visible — jamais affichée sans lien vers la source (licence CC-BY-SA). */
+  .fdj-anecdote {
+    margin: 8px 0; padding: 0; border: none; font-size: 0.8rem; color: var(--text);
+    line-height: 1.4; font-style: italic;
+  }
+  .fdj-anecdote-source {
+    display: block; margin-top: 4px; font-size: 0.7rem; font-style: normal;
+    color: var(--text-mid); text-decoration: none;
+  }
+  .fdj-anecdote-source:hover { color: var(--text-hi); text-decoration: underline; }
   .fdj-facts li {
     font-size: 0.78rem; color: var(--text); line-height: 1.35; padding-left: 12px; position: relative;
   }
@@ -2157,6 +2168,42 @@
   .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; }
   .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
   .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
+
+  /* ── DÉCOUVRIR : "Devine le Film du Jour" (mini-jeu) ── */
+  .guess-game-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 14px; box-shadow: var(--box-shadow-style, none); text-align: center;
+  }
+  .guess-poster {
+    width: 130px; height: 195px; object-fit: cover; border-radius: var(--radius-sm);
+    background: var(--surface2); margin: 0 auto 10px; display: block;
+    /* La transition du flou est la seule animation de cette carte — le reste
+       (texte, formulaire) change trop d'un état à l'autre pour qu'une
+       transition générique ait un sens. */
+    transition: filter var(--dur-slow) var(--ease-out);
+  }
+  .guess-attempts { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); margin-bottom: 8px; }
+  .guess-hints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+  .guess-hint {
+    font-size: 0.72rem; color: var(--text-hi); background: var(--surface2);
+    border: 1px solid var(--border-hi); border-radius: 20px; padding: 3px 10px;
+  }
+  .guess-form { display: flex; gap: 8px; }
+  .guess-input {
+    flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm); padding: 9px 12px; font-size: 0.85rem; color: var(--text-hi);
+    font-family: var(--font-body);
+  }
+  .guess-input:focus { outline: none; border-color: var(--orange); }
+  .guess-submit-btn {
+    background: var(--orange); border: none; border-radius: var(--radius-sm); padding: 9px 16px;
+    font-size: 0.82rem; font-weight: 700; color: var(--solid-fill-text, #0d1117); cursor: pointer;
+    font-family: var(--font-heading); transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .guess-submit-btn:active { transform: scale(0.96); }
+  .guess-result { font-size: 0.88rem; font-weight: 700; font-family: var(--font-heading); }
+  .guess-won { color: var(--green); }
+  .guess-lost { color: var(--red); }
 
   /* ── DÉCOUVRIR : carrousel "Tendances du moment" ── */
   .trending-carousel-row { display: flex; align-items: center; gap: 4px; }

@@ -144,7 +144,7 @@ async function loadFilmDuJour() {
   try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
 
   if (cached && cached.date === todayKey && cached.movie) {
-    renderFilmDuJour(cached.movie);
+    renderFilmDuJour(cached.movie, cached.anecdote || null);
     return;
   }
 
@@ -166,39 +166,76 @@ async function loadFilmDuJour() {
     const details = await detailRes.json();
     if (!details || !details.title) return;
 
-    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details }));
-    renderFilmDuJour(details);
+    // Vraie anecdote Wikipédia (pas les faits TMDb) si on en trouve une —
+    // voir buildFilmDuJourFacts plus haut pour le repli si rien n'est trouvé.
+    let anecdote = null;
+    try {
+      const year = details.release_date ? details.release_date.slice(0, 4) : '';
+      const searchTitle = details.original_title && details.original_title !== details.title
+        ? details.original_title : details.title;
+      const anecdoteRes = await fetch(`/api/search?wikianecdote=${encodeURIComponent(searchTitle)}&wikiyear=${encodeURIComponent(year)}`);
+      const anecdoteData = await anecdoteRes.json();
+      if (anecdoteData && anecdoteData.anecdote) anecdote = anecdoteData;
+    } catch { /* pas grave, on se rabat sur les faits TMDb */ }
+
+    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote }));
+    renderFilmDuJour(details, anecdote);
   } catch (e) {
     console.warn('Impossible de charger le film du jour', e);
   }
 }
 
-function renderFilmDuJour(m) {
+function renderFilmDuJour(m, anecdote) {
   const wrap = document.getElementById('fdj-wrap');
   const card = document.getElementById('fdj-card');
   const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
   const year = m.release_date ? m.release_date.slice(0, 4) : '';
-  const facts = buildFilmDuJourFacts(m);
+
+  // Une vraie anecdote (Wikipédia) prend toujours le pas sur les faits TMDb
+  // générés — mais le repli reste là pour les films sans section
+  // Anecdotes/Production (beaucoup de films moins connus n'en ont pas).
+  const factsHTML = anecdote
+    ? `<blockquote class="fdj-anecdote">
+         « ${escAttr(anecdote.anecdote)} »
+         <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
+       </blockquote>`
+    : `<ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>`;
 
   card.innerHTML = `
-    ${posterUrl ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">` : `<div class="fdj-poster fdj-poster-ph">${ICONS.clapper}</div>`}
+    ${posterUrl
+      ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">`
+      : `<div class="fdj-poster fdj-poster-ph" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">${ICONS.clapper}</div>`}
     <div class="fdj-info">
       <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
-      <ul class="fdj-facts">
-        ${facts.map(f => `<li>${escAttr(f)}</li>`).join('')}
-      </ul>
+      ${factsHTML}
       <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
     </div>
   `;
   wrap.style.display = 'block';
   card.dataset.movieId = String(m.id);
-  card.setAttribute('aria-label', `Voir la fiche de ${escAttr(m.title)}`);
+  // La carte entière reste cliquable au clic/tap (zone large, meilleure
+  // ergonomie tactile) — seuls les VRAIS contrôles interactifs qu'elle
+  // contient (le lien source Wikipédia, le bouton de re-tentative des
+  // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers')) return; // évite de rouvrir la fiche si on vient de re-tenter le chargement des plateformes
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source')) return;
+    openMovieDetailSheet(m.id);
+  });
+  // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
+  // seul élément de la carte qui ne contient jamais lui-même de contrôle
+  // interactif — d'où l'ARIA correcte) — role="button"+tabindex="0" rendent
+  // l'élément focusable et l'annoncent comme un bouton, mais ne déclenchent
+  // PAS d'activation clavier tout seuls (contrairement à un vrai <button>) —
+  // même oubli que celui corrigé sur les cartes de l'historique.
+  const poster = card.querySelector('.fdj-poster');
+  poster.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
     openMovieDetailSheet(m.id);
   });
 
   fetchFilmDuJourProviders(m.id);
+  renderGuessGame(m);
 }
 
 async function fetchFilmDuJourProviders(tmdbId) {
@@ -237,6 +274,128 @@ async function fetchFilmDuJourProviders(tmdbId) {
   } catch {
     el.innerHTML = '<span class="fdj-no-streaming">Plateformes indisponibles</span>';
   }
+}
+
+// ═══════════════════════════════════════════
+//  DEVINE LE FILM DU JOUR (mini-jeu, affiche floutée)
+// ═══════════════════════════════════════════
+// Réutilise le film et l'affiche déjà récupérés pour le Film du Jour — aucun
+// nouvel appel réseau. Le flou se réduit à chaque essai raté (esprit
+// "Framed") ; deux indices textuels tombent à des paliers fixes pour rester
+// jouable même sans rien reconnaître visuellement. Convention identique au
+// Quiz/Duel du jour : un essai par jour, série (streak) suivie séparément.
+const GUESS_GAME_KEY = 'lbx_guess_game';
+const GUESS_STREAK_KEY = 'lbx_guess_streak';
+const GUESS_LAST_PLAYED_KEY = 'lbx_guess_last_played'; // date de la derniere partie JOUEE (gagnee ou perdue), pour la continuite de la serie
+const GUESS_MAX_ATTEMPTS = 5;
+// Un cran de flou par essai (index 0 = avant le premier essai) ; le dernier
+// palier (après le 5e essai raté) est à 0 : l'affiche se révèle entièrement
+// que la partie soit gagnée ou perdue, jamais de flou résiduel frustrant.
+const GUESS_BLUR_LEVELS = [22, 16, 12, 8, 4, 0];
+
+function normalizeGuessText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
+    .replace(/[^a-z0-9\s]/g, '') // ponctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function loadGuessGameState(movieId, todayKey) {
+  let state = null;
+  try { state = JSON.parse(localStorage.getItem(GUESS_GAME_KEY) || 'null'); } catch {}
+  if (state && state.date === todayKey && state.movieId === movieId) return state;
+  return { date: todayKey, movieId, attempts: 0, done: false, won: null };
+}
+
+function saveGuessGameState(state) {
+  localStorage.setItem(GUESS_GAME_KEY, JSON.stringify(state));
+}
+
+function renderGuessStreakBadge() {
+  const badge = document.getElementById('guess-streak-badge');
+  if (!badge) return;
+  const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
+  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
+}
+
+function renderGuessGame(m) {
+  const wrap = document.getElementById('guess-game-wrap');
+  const card = document.getElementById('guess-game-card');
+  if (!wrap || !card || !m.poster_path) { if (wrap) wrap.style.display = 'none'; return; } // pas d'affiche, pas de jeu possible
+  wrap.style.display = 'block';
+  renderGuessStreakBadge();
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const state = loadGuessGameState(m.id, todayKey);
+  const posterUrl = `https://image.tmdb.org/t/p/w300${m.poster_path}`;
+  const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
+
+  // Indices textuels à des paliers fixes — jouable même si l'affiche seule
+  // ne suffit pas à reconnaître le film.
+  const hints = [];
+  if (state.attempts >= 2) {
+    const year = m.release_date ? m.release_date.slice(0, 4) : null;
+    if (year) hints.push(`Sorti en ${year}`);
+  }
+  if (state.attempts >= 4 && m.genres?.length) {
+    hints.push(`Genre : ${m.genres[0].name}`);
+  }
+
+  if (state.done) {
+    card.innerHTML = `
+      <img class="guess-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" style="filter:blur(0px)">
+      <div class="guess-result ${state.won ? 'guess-won' : 'guess-lost'}">
+        ${state.won ? `Trouvé en ${state.attempts} essai${state.attempts > 1 ? 's' : ''} !` : `Perdu — c'était « ${escAttr(m.title)} »`}
+      </div>
+    `;
+    return;
+  }
+
+  card.innerHTML = `
+    <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
+    <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
+    ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
+    <form class="guess-form" id="guess-form" autocomplete="off">
+      <input type="text" class="guess-input" id="guess-input" placeholder="Titre du film…" aria-label="Ta proposition">
+      <button type="submit" class="guess-submit-btn">Valider</button>
+    </form>
+  `;
+
+  document.getElementById('guess-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = document.getElementById('guess-input');
+    const guess = normalizeGuessText(input.value);
+    if (!guess) return;
+
+    const targets = [normalizeGuessText(m.title)];
+    if (m.original_title && m.original_title !== m.title) targets.push(normalizeGuessText(m.original_title));
+    const correct = targets.includes(guess);
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const lastPlayed = localStorage.getItem(GUESS_LAST_PLAYED_KEY);
+    state.attempts += 1; // compte CETTE tentative, gagnante ou non — sinon "trouvé au 1er essai" affichait "0 essai"
+    if (correct) {
+      state.done = true;
+      state.won = true;
+      const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
+      const newStreak = lastPlayed === yesterday ? streak + 1 : 1;
+      localStorage.setItem(GUESS_STREAK_KEY, String(newStreak));
+      if (navigator.vibrate) navigator.vibrate(20);
+    } else {
+      if (state.attempts >= GUESS_MAX_ATTEMPTS) {
+        state.done = true;
+        state.won = false;
+        localStorage.setItem(GUESS_STREAK_KEY, '0');
+      }
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    }
+    localStorage.setItem(GUESS_LAST_PLAYED_KEY, todayKey);
+    saveGuessGameState(state);
+    renderGuessGame(m);
+    if (state.done) renderGuessStreakBadge();
+  });
 }
 
 // ═══════════════════════════════════════════

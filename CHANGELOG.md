@@ -12,6 +12,26 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Anecdotes réelles pour le Film du Jour**, via Wikipédia FR (section
+  "Anecdotes"/"Production"/"Genèse"/"Tournage") — remplace les faits générés
+  depuis les données TMDb (budget, tagline...) quand une vraie anecdote est
+  trouvée ; repli propre sur les anciens faits sinon. Attribution et lien
+  Wikipédia toujours affichés (licence CC-BY-SA).
+- **Mini-jeu "Devine le Film du Jour"** — affiche floutée à deviner (esprit
+  *Framed*), 5 essais, flou qui se réduit à chaque échec, indices (année puis
+  genre) aux paliers 3 et 5, titre français ou original accepté, série
+  (streak) suivie séparément du Quiz et des Duels.
+
+### Corrigé
+- Un lien réel (source Wikipédia) ajouté dans la carte "Film du jour"
+  cassait l'accessibilité (même défaut d'imbrication ARIA que sur
+  l'historique, avec la même absence d'activation clavier) — corrigé en
+  scopant le rôle de bouton clavier à l'affiche seule, qui elle ne contient
+  jamais de contrôle interactif.
+- Un décompte d'essais à zéro sur une victoire au premier coup dans le
+  nouveau jeu ("Trouvé en 0 essai") — trouvé en écrivant les tests E2E.
+
 ### Modifié — Refonte complète des thèmes
 - **10 → 7 thèmes.** Scuderia, Wes Anderson, Cinéma Classique et Journal de
   Bord retirés (redondants entre eux ou trop proches d'un autre thème
