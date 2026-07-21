@@ -38,7 +38,7 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'scuderia', 'filmnoir', 'technicolor']) {
+for (const theme of ['default', 'meridien', 'filmnoir', 'technicolor']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedStableHistory(page);
@@ -49,14 +49,14 @@ for (const theme of ['default', 'scuderia', 'filmnoir', 'technicolor']) {
 
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
-      await page.waitForTimeout(300);
+      await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`rating-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
     });
 
     test(`Historique (${theme})`, async ({ page }) => {
       await page.goto('/');
       await page.click('#nav-history');
-      await page.waitForTimeout(300);
+      await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
     });
   });

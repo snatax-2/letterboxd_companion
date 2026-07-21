@@ -53,63 +53,45 @@
     --header-bar: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
   }
 
-  [data-theme="scuderia"] {
-    /* 2. Scuderia (Agressif, Sport) */
-    --bg: #0a0a0a; --surface: #141414; --surface2: #1e1e1e; --border: #2a2a2a;
-    --border-hi: #444; --text: #a0a0a0; --text-hi: #fff; --text-mid: #bbb;
-    --orange: #e32636; /* Rosso Corsa */
-    --gold: #FFF200;   /* Giallo Modena */
-    --blue: #FFF200;   
-    --red: #cc0000; --green: #00cc00;
-    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est un jaune vif ici */
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 3px; --slider-thumb-radius: 4px; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, esprit drapeau/chicane de course */
-    --control-radius: 6px; /* carré adouci pour les boutons +/- et de navigation, pas un carré franc */
-    --font-heading: 'Oswald', sans-serif;
-    --font-body: 'Source Sans 3', sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
-    
-    /* Étoiles Scuderia : Jaune Modène ultra-lumineux et agressif */
-    --star-color: #FFF200;
-    --star-empty-color: #2a2a2a;
-    --star-font: 'Oswald', sans-serif;
-    --star-shadow: 0 0 4px rgba(255, 242, 0, 0.6);
-    --star-symbol: '◆'; /* diamant plein, plus anguleux et agressif que l'étoile classique */
-    --icon-stroke: 2.5; /* traits plus épais et tranchants, esprit course */
-    
-    --title-style: italic;
-    --title-spacing: 0.1em;
-    /* Bande racing rouge/jaune, façon écurie de course, au lieu d'être invisible */
-    --header-bar: linear-gradient(to right, #e32636 50%, #FFF200 50%);
-  }
+  [data-theme="carnet"] {
+    /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
+       de Bord, et l'ancien cluster "vintage clair" trop redondant avec
+       Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
+       de cinéphile physique, entre carte postale et journal manuscrit —
+       structure précise d'Anderson + âme intime de Journal, sans reprendre
+       les bruns de Cinéphile (déjà pris) : duo rose poudré / sauge.
+       Le corps de texte utilise une police PROPORTIONNELLE (pas monospace
+       partout comme l'ancien Journal) — c'était un vrai risque de lisibilité
+       sur les critiques longues, corrigé ici dès la conception. */
+    --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
+    --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
+    --orange: #B8695E; /* Rose Poudré */
+    --gold: #C9A576;   /* Sable Chaud */
+    --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
+    --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
+    --solid-fill-text: #fff;
+    --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
+    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 50%;
+    --font-heading: 'Special Elite', monospace; /* esprit machine à écrire pour titres/labels/chiffres */
+    --font-body: 'Lora', serif; /* proportionnelle et chaleureuse pour le corps de texte — le vrai correctif face à l'ancien Journal */
+    --font-mono: 'Courier Prime', monospace;
+    --review-font: 'Caveat', cursive; /* le détail le plus mémorable de l'ancien Journal : la critique personnelle en vraie écriture manuscrite */
 
-  [data-theme="anderson"] {
-    /* 7. Wes Anderson - Vintage et structuré */
-    --bg: #FDF6E3; --surface: #FAF3E0; --surface2: #F0E6CD; --border: #D1495B; 
-    --border-hi: #D1495B; --text: #555555; --text-hi: #333333; --text-mid: #666666;
-    --orange: #D1495B; --gold: #E8A825; --blue: #476b6b; --red: #D1495B; --green: #568259;
-    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #fff;
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 3px; --slider-thumb-radius: 30%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* carré adouci ("squircle"), pas un carré franc */
-    --control-radius: 8px;
-    --font-heading: 'Jost', sans-serif;
-    --font-body: 'Jost', sans-serif;
-    --font-mono: 'Overpass Mono', monospace;
-    
-    /* Étoiles Anderson : Or rétro mat avec une ombre dure caractéristique */
-    --star-color: #E8A825;
-    --star-empty-color: #CEBF9A;
-    --star-font: 'Jost', sans-serif;
-    --star-shadow: 2px 2px 0px rgba(209, 73, 91, 0.3);
-    --star-symbol: '✦'; /* étoile-diamant plus délicate, esprit papeterie vintage */
-    --icon-stroke: 1.5; /* traits plus fins et délicats */
-    
-    --box-shadow-style: 4px 4px 0px rgba(209, 73, 91, 0.2); 
-    --bg-texture: repeating-linear-gradient(45deg, rgba(209, 73, 91, 0.03) 25%, transparent 25%, transparent 75%, rgba(209, 73, 91, 0.03) 75%, rgba(209, 73, 91, 0.03)), 
-                  repeating-linear-gradient(-45deg, rgba(209, 73, 91, 0.03) 25%, transparent 25%, transparent 75%, rgba(209, 73, 91, 0.03) 75%, rgba(209, 73, 91, 0.03));
-    --bg-size: 20px 20px;
-    /* Tri-bande pastel dans la palette du thème, façon liseré de carte postale */
-    --header-bar: linear-gradient(to right, #D1495B 33%, #E8A825 33%, #E8A825 66%, #476b6b 66%);
+    /* Étoiles : tampon de gare / ticket composté, esprit carnet de voyage */
+    --star-color: #B8695E;
+    --star-empty-color: #D9BFB0;
+    --star-font: 'Special Elite', monospace;
+    --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
+    --star-symbol: '❂';
+    --icon-stroke: 1.5;
+
+    --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
+    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
+    --bg-size: 100% 27px;
+    /* Tri-bande carte postale, dans la palette propre du thème (pas celle d'Anderson) */
+    --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
   }
 
   [data-theme="filmnoir"] {
@@ -183,81 +165,41 @@
      partout où ce même problème se posait) plutôt que de corriger chaque
      bouton séparément au fil des retours. */
 
-  [data-theme="classique"] {
-    /* Le Cinéma Classique — monochrome, éditorial, aucune distraction visuelle.
-       Contraste absolu noir/blanc, typographie de revue de critique. */
-    --bg: #FFFFFF; --surface: #F7F7F7; --surface2: #EFEFEF; --border: #000000;
-    --border-hi: #000000; --text: #333333; --text-hi: #000000; --text-mid: #555555;
-    --orange: #000000; --gold: #333333; --blue: #000000; --red: #000000; --green: #333333;
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 0px;
-    --font-heading: 'Playfair Display', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'Spline Sans Mono', monospace;
-
-    --star-color: #000000; --star-empty-color: #cccccc; --star-font: 'Playfair Display', serif;
-    --star-shadow: none; --star-symbol: '★';
-    --icon-stroke: 1.25; /* traits très fins, minimalistes, laissent respirer le contenu */
-    --solid-fill-text: var(--bg); /* accent noir pur : texte blanc sur fond plein */
-
-    --box-shadow-style: none;
-    --header-bar: #000000; /* simple ligne noire, pas de dégradé — pas de fioriture */
-  }
-  /* Aucune ombre portée nulle part : garantie large plutôt que de traquer
-     chaque déclaration individuelle de box-shadow dans la feuille de style. */
-  [data-theme="classique"] * { box-shadow: none !important; }
-
-  /* Astuce signature du thème : les affiches sont en noir et blanc par défaut,
-     et reprennent leurs couleurs au survol (souris) ou au tap (mobile, via
-     :active) — l'interface s'efface, l'image ne "parle" qu'à l'interaction. */
-  [data-theme="classique"] .hist-poster,
-  [data-theme="classique"] .wl-poster img,
-  [data-theme="classique"] .wl-suggest-poster img,
-  [data-theme="classique"] .discover-card-poster,
-  [data-theme="classique"] .mds-poster,
-  [data-theme="classique"] .suggestion-poster,
-  [data-theme="classique"] .film-strip-poster {
-    filter: grayscale(100%);
-    transition: filter var(--dur-slow) var(--ease-out);
-  }
-  [data-theme="classique"] .hist-poster:hover,
-  [data-theme="classique"] .hist-item:active .hist-poster,
-  [data-theme="classique"] .wl-poster:hover img,
-  [data-theme="classique"] .wl-card:active .wl-poster img,
-  [data-theme="classique"] .discover-card-poster:hover,
-  [data-theme="classique"] .discover-card:active .discover-card-poster,
-  [data-theme="classique"] .mds-poster:hover,
-  [data-theme="classique"] .suggestion-poster:hover,
-  [data-theme="classique"] .suggestion-item:active .suggestion-poster,
-  [data-theme="classique"] .film-strip-poster:hover {
-    filter: grayscale(0%);
-  }
-
   [data-theme="moderne"] {
-    /* L'Affiche d'Art Moderne — blocs de couleurs franches façon affiche de
-       festival, typographie massive et assumée. */
-    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #28549A;
-    --border-hi: #28549A; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
-    --orange: #E07A5F; /* Terracotta */
-    --gold: #C9A66B;   /* Moutarde */
-    --blue: #28549A;   /* Cobalt */
-    --red: #E07A5F; --green: #28549A;
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff;
+    /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
+       d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
+       nettes, précision géométrique, papier millimétré d'architecte. Le
+       mécanisme de couleur tirée de l'affiche du film (voir plus bas,
+       .hist-item/.wl-card border-left, déjà unique à ce thème) reste intact
+       — c'est un vrai atout distinctif, pas une raison de le changer. */
+    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #1E5AA8;
+    --border-hi: #1E5AA8; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
+    --orange: #DD6B47; /* Terracotta, légèrement plus saturée qu'avant */
+    --gold: #7A5507;   /* Moutarde -> ocre profond : deux essais precedents (#D9A62E, #A6790F) manquaient encore de contraste, verifie mathematiquement cette fois (6.22:1) */
+    --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
+    --red: #DD6B47;
+    --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 10px; --radius-sm: 6px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
+    --slider-track-radius: 999px; --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
+    --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
     --font-heading: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
     --font-mono: 'Martian Mono', monospace;
 
-    --star-color: #E07A5F; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
-    --star-shadow: none; --star-symbol: '■'; /* bloc plein, esprit affiche graphique */
+    --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
+    --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
     --icon-stroke: 2.25;
 
-    --box-shadow-style: 5px 5px 0px rgba(40,84,154,0.15);
-    --header-bar: linear-gradient(to right, #28549A 33%, #E07A5F 33%, #E07A5F 66%, #C9A66B 66%);
+    --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
+    /* Grille fine façon papier millimétré d'architecte, à peine visible —
+       la signature la plus neuve du thème, aucun autre thème ne l'utilise. */
+    --bg-texture: linear-gradient(rgba(30,90,168,0.05) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(30,90,168,0.05) 1px, transparent 1px);
+    --bg-size: 24px 24px, 24px 24px;
+    /* Bloc plein (pas un dégradé tri-bande, motif déjà pris par Cinéphile et
+       Carnet) : cohérent avec l'esprit "aplat de couleur" du Bauhaus. */
+    --header-bar: var(--blue);
   }
   /* Accent tiré de la couleur dominante de l'affiche (voir 00c-poster-color.js)
      — signature du thème "Moderne". Se rabat sur la bordure normale du thème
@@ -267,43 +209,20 @@
   [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
-  [data-theme="journal"] {
-    /* Le Journal de Bord — chaleureux et intime, esprit machine à écrire et
-       carnet manuscrit, comme un objet physique plutôt qu'une app. */
-    --bg: #FAF0E6; --surface: #F5E9DA; --surface2: #EFDFC8; --border: #C9B79C;
-    --border-hi: #8D6E52; --text: #5D4037; --text-hi: #3E2723; --text-mid: #7A5C4C;
-    --orange: #8D6E52; --gold: #A67C52; --blue: #6B7A5E; --red: #A0522D; --green: #6B7A5E;
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
-    --radius: 2px; --radius-sm: 2px;
-    --slider-track-radius: 4px; --slider-thumb-radius: 2px; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 2px;
-    --font-heading: 'Courier Prime', monospace;
-    --font-body: 'Courier Prime', monospace;
-    --font-mono: 'Courier Prime', monospace;
-    --review-font: 'Caveat', cursive; /* la zone de critique prend un vrai style manuscrit */
-
-    --star-color: #8D6E52; --star-empty-color: #D9C7AE; --star-font: 'Courier Prime', monospace;
-    --star-shadow: none; --star-symbol: '✎'; /* stylo, esprit carnet manuscrit */
-    --icon-stroke: 1.5;
-    --solid-fill-text: var(--bg); /* accent brun sombre : texte clair plus lisible que #0d1117 */
-
-    --box-shadow-style: 2px 2px 0px rgba(93,64,55,0.12);
-    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(141,110,82,0.13) 27px, rgba(141,110,82,0.13) 28px);
-    --bg-size: 100% 28px;
-    --header-bar: repeating-linear-gradient(to right, #8D6E52 0, #8D6E52 8px, transparent 8px, transparent 16px); /* pointillés, esprit carnet */
-  }
-
   [data-theme="meridien"] {
     /* Méridien — identité propre à Ludex, sans inspiration extérieure.
        Esprit cadran solaire et almanach vintage : épuré, un seul accent
        laiton qui reste IDENTIQUE de jour comme de nuit (seuls le fond et le
        texte s'inversent, comme la même pièce d'horlogerie vue sous deux
        lumières différentes). L'état jour/nuit (classe .meridien-night,
-       voir 02-theme.js) suit l'heure réelle, pas les préférences système. */
+       voir 02-theme.js) suit l'heure réelle, pas les préférences système.
+       Révisé : l'accent et les couleurs de note étaient trop désaturés
+       ("dur" au retour utilisateur) — plus de vie ici, même concept. */
     --bg: #F7F3EA; --surface: #FFFFFF; --surface2: #EDE7D8; --border: #D8CFB8;
-    --border-hi: #B08D57; --text: #4A4438; --text-hi: #241F17; --text-mid: #766C58;
-    --orange: #B08D57; --gold: #B08D57; --blue: #B08D57; /* le laiton, unique accent, ne varie jamais */
-    --red: #8B5E3C; --green: #6B7A5E;
+    --border-hi: #C7B48C; /* bordures structurelles : plus douces que l'accent, pour ne pas quadriller l'écran */
+    --text: #4A4438; --text-hi: #241F17; --text-mid: #766C58;
+    --orange: #C89B4A; --gold: #C89B4A; --blue: #C89B4A; /* le laiton, unique accent, ne varie jamais — mais plus riche et doré, moins terne */
+    --red: #C0603A; --green: #7A9068; /* terre cuite et sauge vivantes, plus de "boue" */
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #0d1117;
     --solid-fill-text: #0d1117; /* le laiton est un ton moyen : texte sombre plus lisible que clair */
     --radius: 2px; --radius-sm: 2px;
@@ -313,11 +232,13 @@
     --font-body: 'Work Sans', sans-serif;
     --font-mono: 'Ubuntu Mono', monospace;
 
-    --star-color: #B08D57; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif;
+    --star-color: #C89B4A; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif;
     --star-shadow: none; --star-symbol: '◇'; /* losange fin et discret, esprit marque de cadran solaire */
-    --icon-stroke: 1.25;
+    --icon-stroke: 1.5; /* legerement plus present qu'avant (1.25), sans perdre la delicatesse */
 
-    --box-shadow-style: none; /* minimalisme : aucune ombre portée */
+    /* Une ombre très subtile réintroduite : l'absence totale ("none")
+       contribuait autant à la sensation de dureté que les couleurs. */
+    --box-shadow-style: 0 1px 4px rgba(176, 141, 74, 0.15);
     --header-bar: var(--border-hi); /* simple ligne fine, pas de dégradé */
   }
   /* Bascule nuit : le fond et le texte s'inversent, le laiton (--orange,
@@ -326,7 +247,7 @@
   [data-theme="meridien"].meridien-night {
     --bg: #171410; --surface: #201C16; --surface2: #2A251C; --border: #3A3327;
     --text: #C9BFA8; --text-hi: #F2ECDD; --text-mid: #8F856E;
-    --red: #C48B5C; --green: #8A9A7D;
+    --red: #D4926A; --green: #96A885; /* meme correction de vivacite qu'en journee */
     --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
   }
 
@@ -421,13 +342,6 @@
     background-position: top center;
   }
 
-  /* ── Scuderia : livrée de course ── */
-  /* Bande rouge latérale sur les cartes, comme un flanc de monoplace */
-  [data-theme="scuderia"] .card { border-left: 3px solid var(--red); }
-  [data-theme="scuderia"] .app-title { font-style: italic; letter-spacing: 0.04em; }
-  /* Chrono : les valeurs chiffrées prennent la police mono, tableau de bord */
-  [data-theme="scuderia"] .kpi-val, [data-theme="scuderia"] .duel-counter { font-family: var(--font-mono); }
-
   /* ── Film Noir : clair-obscur ── */
   /* Vignettage permanent, comme un tirage argentique contrasté */
   [data-theme="filmnoir"] body::before {
@@ -454,23 +368,10 @@
   /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
   [data-theme="filmnoir"] .app-title { text-shadow: 3px 3px 0 rgba(255,255,255,0.12); }
 
-  /* ── Classique : éditorial noir sur blanc ── */
-  /* Filets doubles sous les titres de cartes, comme une maquette de journal chic */
-  [data-theme="classique"] .card-title { border-bottom: 3px double var(--text-hi); padding-bottom: 6px; }
-  [data-theme="classique"] .card-title { letter-spacing: 0.08em; }
-  /* Liens/boutons texte : soulignement à l'ancienne au survol */
-  [data-theme="classique"] .duel-skip:hover, [data-theme="classique"] .hist-action-btn:hover { text-decoration: underline; background: none; }
-
-  /* ── Journal : carnet de notes ── */
-  /* Bordures en pointillés cousus + titres soulignés à la règle */
-  [data-theme="journal"] .card { border-style: dashed; }
-  [data-theme="journal"] .card-title {
-    border-bottom: 1px dotted var(--border-hi);
-    padding-bottom: 5px;
-  }
-
-  /* ── Moderne : verre dépoli ── */
-  /* L'en-tête collant de la fiche film devient translucide avec flou d'arrière-plan */
+  /* ── Moderne : verre dépoli + grille d'architecte ── */
+  /* Le verre dépoli est LE trait distinctif du thème (avec la grille et le
+     losange des curseurs) — poussé ici comme sa vraie signature plutôt qu'un
+     détail isolé sur l'en-tête. */
   @supports (backdrop-filter: blur(8px)) {
     [data-theme="moderne"] .mds-header {
       background: color-mix(in srgb, var(--bg) 72%, transparent);
@@ -479,13 +380,15 @@
     }
   }
 
-  /* ── Wes Anderson : cadres symétriques ── */
-  /* Double encadrement des cartes, comme un plan centré dans un décor pastel */
-  [data-theme="anderson"] .card {
-    outline: 1px solid var(--border);
-    outline-offset: 3px;
+  /* ── Carnet de Voyage : reliure et tampon ── */
+  /* Bordures en pointillés, esprit page de carnet cousue à la main — hérité
+     de l'ancien Journal de Bord, le trait le plus reconnaissable des trois
+     thèmes fusionnés ici. */
+  [data-theme="carnet"] .card { border-style: dashed; }
+  [data-theme="carnet"] .card-title {
+    border-bottom: 1px dotted var(--border-hi);
+    padding-bottom: 5px;
   }
-  [data-theme="anderson"] .card-title { text-align: center; letter-spacing: 0.1em; }
 
   /* ── Cinéphile 70s : papier chaud ── */
   /* Halo chaud sur les étoiles (halation de projection) — le grain n'est pas
@@ -1215,11 +1118,13 @@
   .review-textarea:focus { border-color: var(--orange); box-shadow: var(--box-shadow-style, 0 0 0 2px rgba(255,128,0,0.1)); }
   .review-textarea::placeholder { color: var(--text-mid); opacity: 0.5;}
 
-  /* Signature du thème "Journal de Bord" : la zone de critique devient une
-     vraie page de carnet lignée, écriture manuscrite alignée précisément sur
-     les lignes. background-attachment:local fait défiler les lignes AVEC le
-     texte (sinon elles resteraient fixes derrière un texte qui scrolle). */
-  [data-theme="journal"] .review-textarea {
+  /* Signature du thème "Carnet de Voyage" (héritée de l'ancien Journal de
+     Bord — le détail le plus mémorable des trois thèmes fusionnés) : la zone
+     de critique devient une vraie page de carnet lignée, écriture manuscrite
+     alignée précisément sur les lignes. background-attachment:local fait
+     défiler les lignes AVEC le texte (sinon elles resteraient fixes derrière
+     un texte qui scrolle). */
+  [data-theme="carnet"] .review-textarea {
     font-family: 'Caveat', cursive;
     font-size: 1.4rem;
     line-height: 30px;
@@ -1277,7 +1182,7 @@
   .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
   .filter-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.74rem; color: var(--text); cursor: pointer; transition: all var(--dur-fast); font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.04em; }
   .filter-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .filter-btn.active { background: rgba(255,128,0,0.15); border-color: var(--orange); color: var(--orange); }
+  .filter-btn.active { background: color-mix(in srgb, var(--orange) 18%, var(--surface)); border-color: var(--orange); color: var(--text-hi); }
 
   /* ── HISTORY ── */
   .history-scroller { max-height: 550px; overflow-y: auto; overflow-x: hidden;}

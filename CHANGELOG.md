@@ -12,6 +12,30 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié — Refonte complète des thèmes
+- **10 → 7 thèmes.** Scuderia, Wes Anderson, Cinéma Classique et Journal de
+  Bord retirés (redondants entre eux ou trop proches d'un autre thème
+  conservé) ; Default, Technicolor, Film Noir et Cinéphile 70s inchangés.
+- **Nouveau thème "Carnet de Voyage"** — fusion d'Anderson et Journal (pas de
+  Cinéphile, qui reste intact séparément) : palette rose poudré/sauge propre,
+  police machine à écrire pour les titres + police proportionnelle lisible
+  pour le corps de texte (corrige un vrai risque de lisibilité de l'ancien
+  Journal, qui utilisait du monospace partout), écriture manuscrite conservée
+  pour les critiques personnelles.
+- **Méridien** : couleurs plus vivantes (accent laiton plus riche, rouge/vert
+  moins désaturés), une ombre subtile réintroduite — retour utilisateur : le
+  thème paraissait trop "dur". Concept jour/nuit inchangé.
+- **Moderne** repensé autour du Bauhaus/modernisme architectural : bleu/or
+  plus affirmés, grille façon papier d'architecte, curseur en losange. Corrige
+  aussi un bug préexistant (le vert était fusionné avec le bleu, aucune
+  teinte propre).
+- Toutes les nouvelles couleurs vérifiées par un audit de contraste
+  automatisé (axe-core) — zéro violation sérieuse/critique sur les 3 thèmes
+  modifiés, corrigé par calcul WCAG précis plutôt que par ajustement à l'oeil.
+- Au passage : correction d'un bug de contraste préexistant sur les boutons de
+  tri actifs (texte et fond utilisaient la même couleur, sans lien avec les
+  thèmes retirés).
+
 ### Corrigé
 - La carte d'entrée de la Rétrospective annuelle ("Wrapped") restait visible
   même sans aucun film noté.

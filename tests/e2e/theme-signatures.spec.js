@@ -25,7 +25,7 @@ test('chaque theme se selectionne et applique son fond', async ({ page }) => {
   }
 });
 
-test('touches signatures: noir grise les affiches, scuderia raye les cartes, anderson encadre', async ({ page }) => {
+test('touches signatures: noir grise les affiches, carnet raye les cartes en pointilles, moderne a son losange', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_v2', JSON.stringify([
     { title: 'Film', year: '1994', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-07-10', savedAt: '2026-07-10T10:00:00.000Z', poster: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' },
   ])));
@@ -47,11 +47,11 @@ test('touches signatures: noir grise les affiches, scuderia raye les cartes, and
   const vignette = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
   expect(vignette).toContain('radial-gradient');
 
-  await applyTheme('scuderia');
-  const borderLeft = await page.locator('.card').first().evaluate(el => getComputedStyle(el).borderLeftWidth);
-  expect(borderLeft).toBe('3px');
+  await applyTheme('carnet');
+  const borderStyle = await page.locator('.card').first().evaluate(el => getComputedStyle(el).borderStyle);
+  expect(borderStyle).toContain('dashed');
 
-  await applyTheme('anderson');
-  const outline = await page.locator('.card').first().evaluate(el => getComputedStyle(el).outlineStyle);
-  expect(outline).toBe('solid');
+  await applyTheme('moderne');
+  const thumbRotate = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--slider-thumb-rotate').trim());
+  expect(thumbRotate).toBe('45deg');
 });
