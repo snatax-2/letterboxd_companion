@@ -12,6 +12,26 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- Bouton "Vider le cache du Film du jour" dans Réglages — force une nouvelle
+  recherche d'anecdote sans attendre le lendemain (le tirage du jour lui-même
+  reste stable par conception, seule l'anecdote est retentée).
+
+### Corrigé
+- **Vrai bug trouvé en diagnostiquant un signalement utilisateur** ("les
+  anecdotes restent sur TMDb") : quand la recherche Wikipédia échouait une
+  première fois (pour n'importe quelle raison — bug déjà corrigé, coupure
+  réseau ponctuelle...), le résultat `null` restait en cache pour toute la
+  journée, empêchant tout nouvel essai avant le lendemain. Diagnostiqué en
+  testant le point d'accès en conditions réelles sur le déploiement Vercel de
+  l'utilisateur (le film "L'Odyssée" (2026) confirmait que le serveur
+  fonctionnait bien — c'est le cache client qui restait bloqué sur un ancien
+  échec). Corrigé : un résultat trouvé reste en cache toute la journée comme
+  avant, mais un échec est désormais retenté à chaque ouverture de l'app.
+- Texte de description obsolète dans Réglages ("l'arène de duels dans le
+  Profil et le duel du jour dans Découvrir") — ne correspondait plus à la
+  réorganisation Découvrir/Profil des duels.
+
 ### Corrigé
 - **Vrai bug trouvé en vérifiant la réorganisation Découvrir/Profil des
   duels** (déjà en place depuis une session précédente) : la bascule

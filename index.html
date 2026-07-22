@@ -236,7 +236,7 @@
       <div class="settings-toggle-row">
         <div>
           <div class="settings-toggle-title" id="label-feature-duels">Duels</div>
-          <div class="settings-toggle-desc">L'arène de duels dans le Profil et le duel du jour dans Découvrir.</div>
+          <div class="settings-toggle-desc">L'arène de duels dans Découvrir, et le classement dans Profil.</div>
         </div>
         <label class="settings-toggle-switch">
           <input type="checkbox" id="setting-feature-duels" checked aria-labelledby="label-feature-duels">
@@ -283,6 +283,11 @@
         <label class="settings-label">Duels</label>
         <p class="error-log-hint">Remet à zéro le classement, les cotes et l'historique des affrontements déjà joués — tes films et tes notes ne sont pas touchés.</p>
         <button type="button" class="icon-btn" id="reset-duels-btn">Réinitialiser les duels</button>
+      </div>
+      <div class="error-log-section">
+        <label class="settings-label">Film du jour</label>
+        <p class="error-log-hint">Relance la recherche d'anecdote pour le film du jour (le tirage reste le même toute la journée par conception, pour rester cohérent entre tes appareils) — utile si elle n'avait pas abouti la première fois.</p>
+        <button type="button" class="icon-btn" id="clear-fdj-cache-btn">Vider le cache du Film du jour</button>
       </div>
     </div>
     <div class="modal-actions">

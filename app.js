@@ -5827,13 +5827,55 @@ function buildFilmDuJourFacts(m) {
   return facts.slice(0, 3);
 }
 
+// Vraie anecdote Wikipédia (pas les faits TMDb) si on en trouve une — voir
+// buildFilmDuJourFacts plus haut pour le repli si rien n'est trouvé. Extrait
+// dans sa propre fonction pour pouvoir être retentée indépendamment (voir
+// loadFilmDuJour : un échec ne doit plus coûter 24h d'attente).
+async function fetchWikiAnecdote(details) {
+  try {
+    const year = details.release_date ? details.release_date.slice(0, 4) : '';
+    // Les articles Wikipédia FR sont titrés avec le titre FRANÇAIS de
+    // sortie, pas le titre original — envoyer le titre original en
+    // priorité (comme avant) faisait échouer la recherche pour tout film
+    // dont le titre a été traduit ("Le Parrain", pas "The Godfather").
+    // On envoie les deux : le serveur essaie le français d'abord, puis
+    // l'original en repli seulement s'il ne trouve rien.
+    const params = new URLSearchParams({ wikianecdote: details.title, wikiyear: year });
+    if (details.original_title && details.original_title !== details.title) {
+      params.set('wikititle2', details.original_title);
+    }
+    const anecdoteRes = await fetch(`/api/search?${params.toString()}`);
+    const anecdoteData = await anecdoteRes.json();
+    return (anecdoteData && anecdoteData.anecdote) ? anecdoteData : null;
+  } catch {
+    return null; // pas grave, on se rabat sur les faits TMDb
+  }
+}
+
 async function loadFilmDuJour() {
   const todayKey = new Date().toISOString().slice(0, 10);
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
 
   if (cached && cached.date === todayKey && cached.movie) {
-    renderGuessGame(cached.movie, cached.anecdote || null, cached.isWeekly);
+    if (cached.anecdote) {
+      // Anecdote déjà trouvée : mise en cache pour toute la journée, comme
+      // avant — inutile de re-solliciter Wikipédia pour un résultat qui ne
+      // changera pas.
+      renderGuessGame(cached.movie, cached.anecdote, cached.isWeekly);
+      return;
+    }
+    // Anecdote absente : retente à CHAQUE visite plutôt que d'attendre le
+    // lendemain — un échec (bug corrigé, coupure réseau ponctuelle...) ne
+    // doit plus coûter 24h d'attente pour un simple raté transitoire. Le
+    // film du jour reste le même (pas de nouvel appel dailyPick/weeklyRelease),
+    // seule l'anecdote est retentée.
+    renderGuessGame(cached.movie, null, cached.isWeekly); // affiche immédiatement avec le repli TMDb
+    fetchWikiAnecdote(cached.movie).then(anecdote => {
+      if (!anecdote) return; // toujours rien : on garde l'affichage déjà fait
+      localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ ...cached, anecdote }));
+      renderGuessGame(cached.movie, anecdote, cached.isWeekly);
+    });
     return;
   }
 
@@ -5859,25 +5901,7 @@ async function loadFilmDuJour() {
     const details = await detailRes.json();
     if (!details || !details.title) return;
 
-    // Vraie anecdote Wikipédia (pas les faits TMDb) si on en trouve une —
-    // voir buildFilmDuJourFacts plus haut pour le repli si rien n'est trouvé.
-    let anecdote = null;
-    try {
-      const year = details.release_date ? details.release_date.slice(0, 4) : '';
-      // Les articles Wikipédia FR sont titrés avec le titre FRANÇAIS de
-      // sortie, pas le titre original — envoyer le titre original en
-      // priorité (comme avant) faisait échouer la recherche pour tout film
-      // dont le titre a été traduit ("Le Parrain", pas "The Godfather").
-      // On envoie les deux : le serveur essaie le français d'abord, puis
-      // l'original en repli seulement s'il ne trouve rien.
-      const params = new URLSearchParams({ wikianecdote: details.title, wikiyear: year });
-      if (details.original_title && details.original_title !== details.title) {
-        params.set('wikititle2', details.original_title);
-      }
-      const anecdoteRes = await fetch(`/api/search?${params.toString()}`);
-      const anecdoteData = await anecdoteRes.json();
-      if (anecdoteData && anecdoteData.anecdote) anecdote = anecdoteData;
-    } catch { /* pas grave, on se rabat sur les faits TMDb */ }
+    const anecdote = await fetchWikiAnecdote(details);
 
     localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote, isWeekly: isWednesday }));
     renderGuessGame(details, anecdote, isWednesday);
@@ -5900,6 +5924,16 @@ function setFilmDuJourTitle(isWeekly) {
   const titleEl = document.getElementById('fdj-title-text');
   if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
 }
+
+// Réglages : force une nouvelle recherche d'anecdote (et re-render complet)
+// sans attendre le lendemain — utile si la recherche Wikipédia avait échoué
+// une première fois (le tirage du film, lui, reste le même de la journée
+// par conception : voir le commentaire sur isWednesday plus haut).
+document.getElementById('clear-fdj-cache-btn')?.addEventListener('click', () => {
+  localStorage.removeItem(FILM_DU_JOUR_KEY);
+  loadFilmDuJour();
+  showToast('Film du jour actualisé.');
+});
 
 async function fetchFilmDuJourProviders(tmdbId) {
   const el = document.getElementById('fdj-providers');
