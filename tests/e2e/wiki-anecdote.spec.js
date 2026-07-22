@@ -29,10 +29,14 @@ test('une vraie anecdote Wikipedia s\'affiche avec son attribution, priorite sur
   await page.click('#nav-discover');
   await page.waitForSelector('#fdj-card .fdj-film-title');
 
-  await expect(page.locator('.fdj-anecdote')).toContainText('failli être annulé');
+  await expect(page.locator('.fdj-anecdote-card')).toContainText('failli être annulé');
   await expect(page.locator('.fdj-anecdote-source')).toHaveAttribute('href', 'https://fr.wikipedia.org/wiki/Film_Test');
   await expect(page.locator('.fdj-anecdote-source')).toContainText('Wikipédia');
-  await expect(page.locator('.fdj-facts')).toHaveCount(0); // pas les faits TMDb quand une vraie anecdote existe
+  // Les faits TMDb restent disponibles dans l'accordeon "Chiffres cles",
+  // mais REPLIE par defaut quand une vraie anecdote existe deja (pas absents
+  // du DOM : juste pas la premiere chose montree).
+  const accordionOpen = await page.locator('.fdj-facts-accordion').evaluate(el => el.open);
+  expect(accordionOpen).toBe(false);
 });
 
 test('sans anecdote trouvee, repli propre sur les faits TMDb (comportement inchange)', async ({ page }) => {
@@ -42,7 +46,10 @@ test('sans anecdote trouvee, repli propre sur les faits TMDb (comportement incha
   await page.waitForSelector('#fdj-card .fdj-film-title');
 
   await expect(page.locator('.fdj-facts li').first()).toBeVisible();
-  await expect(page.locator('.fdj-anecdote')).toHaveCount(0);
+  await expect(page.locator('.fdj-anecdote-card')).toHaveCount(0);
+  // L'accordeon s'ouvre automatiquement puisqu'il n'y a rien d'autre a montrer
+  const accordionOpen = await page.locator('.fdj-facts-accordion').evaluate(el => el.open);
+  expect(accordionOpen).toBe(true);
 });
 
 test('l\'anecdote est mise en cache pour la journee (pas de second appel wikipedia)', async ({ page }) => {
@@ -53,7 +60,7 @@ test('l\'anecdote est mise en cache pour la journee (pas de second appel wikiped
   });
   await page.goto('/');
   await page.click('#nav-discover');
-  await page.waitForSelector('.fdj-anecdote');
+  await page.waitForSelector('.fdj-anecdote-card');
 
   await page.click('#nav-rating');
   await page.click('#nav-discover');

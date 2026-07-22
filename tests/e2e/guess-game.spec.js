@@ -7,7 +7,7 @@ const DETAIL = {
   id: 42, title: 'Film Mystère', original_title: 'Mystery Movie', release_date: '2015-06-01',
   poster_path: '/poster.jpg', genres: [{ id: 1, name: 'Thriller' }],
   budget: 1000000, revenue: 5000000, tagline: 'Une tagline.',
-  credits: { crew: [{ job: 'Director', name: 'Réal Isateur' }], cast: [{ name: 'Act Rice' }] },
+  credits: { crew: [{ job: 'Director', name: 'Réal Isateur' }], cast: [{ name: 'Act Rice' }, { name: 'Second Acteur' }] },
   vote_average: 7.2, runtime: 110,
 };
 
@@ -48,25 +48,37 @@ test('une mauvaise reponse reduit le flou et avance le compteur d\'essai', async
   expect(filter).toContain('blur(16px)');
 });
 
-test('l\'indice annee apparait au 3e essai, le genre au 5e', async ({ page }) => {
+test('les indices tombent dans le bon ordre : annee, realisateur, acteur, second acteur', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
   await page.waitForSelector('.guess-poster');
 
-  for (let i = 0; i < 2; i++) {
-    await page.fill('#guess-input', 'faux');
-    await page.click('.guess-submit-btn');
-    await page.waitForTimeout(150);
-  }
+  // Apres 1 essai rate : l'annee, rien d'autre
+  await page.fill('#guess-input', 'faux');
+  await page.click('.guess-submit-btn');
+  await page.waitForTimeout(150);
   await expect(page.locator('.guess-hints')).toContainText('2015');
-  await expect(page.locator('.guess-hints')).not.toContainText('Thriller');
+  await expect(page.locator('.guess-hints')).not.toContainText('Réal Isateur');
 
-  for (let i = 0; i < 2; i++) {
-    await page.fill('#guess-input', 'faux');
-    await page.click('.guess-submit-btn');
-    await page.waitForTimeout(150);
-  }
-  await expect(page.locator('.guess-hints')).toContainText('Thriller');
+  // Apres 2 essais rates : le realisateur s'ajoute
+  await page.fill('#guess-input', 'faux');
+  await page.click('.guess-submit-btn');
+  await page.waitForTimeout(150);
+  await expect(page.locator('.guess-hints')).toContainText('Réal Isateur');
+  await expect(page.locator('.guess-hints')).not.toContainText('Act Rice');
+
+  // Apres 3 essais rates : le premier acteur s'ajoute
+  await page.fill('#guess-input', 'faux');
+  await page.click('.guess-submit-btn');
+  await page.waitForTimeout(150);
+  await expect(page.locator('.guess-hints')).toContainText('Act Rice');
+  await expect(page.locator('.guess-hints')).not.toContainText('Second Acteur');
+
+  // Apres 4 essais rates : le second acteur s'ajoute (dernier indice avant la revelation au 5e)
+  await page.fill('#guess-input', 'faux');
+  await page.click('.guess-submit-btn');
+  await page.waitForTimeout(150);
+  await expect(page.locator('.guess-hints')).toContainText('Second Acteur');
 });
 
 test('trouver le bon titre (accents/majuscules ignores) gagne et incremente la serie', async ({ page }) => {

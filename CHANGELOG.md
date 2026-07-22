@@ -12,6 +12,36 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- **Bug majeur d'affichage PC** : la colonne de droite (Watchlist/Découvrir/
+  Profil) débordait à plus de 2000px de large sur un écran large, cassant
+  toute la mise en page à deux colonnes. Cause : le carrousel "Tendances du
+  moment" (pensé pour défiler horizontalement au doigt sur mobile) est un
+  élément flex avec `overflow-x: auto` mais sans `min-width: 0` — sans ça, un
+  enfant flex refuse par défaut de se réduire sous la largeur de SON contenu
+  (tous les films tendances à la suite, sans retour à la ligne), forçant
+  toute la colonne à s'élargir pour l'accueillir. Invisible sur mobile (une
+  seule colonne, jamais remarqué) mais cassait entièrement l'affichage PC.
+  Corrigé, et la même protection appliquée par prudence aux 3 autres
+  carrousels horizontaux du même type (sélecteur de listes watchlist, heatmap
+  d'activité annuelle, carrousel du casting dans la fiche film) qui avaient
+  le même risque, même si non encore observés en défaut.
+
+### Ajouté
+- **Habillage visuel de l'anecdote** : encart distinct (fond teinté), icône
+  ampoule dédiée, grand guillemet décoratif, léger fondu d'apparition à la
+  révélation — remplace l'ancien texte en italique flottant sans cadre.
+- **Accordéon "Chiffres clés"** (natif `<details>/<summary>`, gratuit en
+  accessibilité clavier) : les faits TMDb (budget, tagline, réalisateur/
+  acteur, note, durée) y sont désormais rangés plutôt que mélangés à
+  l'anecdote — replié par défaut si une anecdote Wikipédia existe, ouvert
+  automatiquement sinon.
+- **Indices progressifs enrichis** pour "Devine le Film du Jour" : un nouvel
+  indice à chaque essai raté — année (1er), réalisateur (2e), acteur
+  principal (3e), second acteur (4e) — volontairement différents des
+  "Chiffres clés" pour ne pas répéter la même info deux fois une fois le jeu
+  terminé.
+
 ### Ajouté
 - Bouton "Vider le cache du Film du jour" dans Réglages — force une nouvelle
   recherche d'anecdote sans attendre le lendemain (le tirage du jour lui-même

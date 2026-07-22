@@ -591,7 +591,7 @@
     grid-template-columns: 1.45fr 0.55fr; gap: 20px; align-items: start;
     width: 100%;
   }
-  .col-right { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; }
+  .col-right { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; min-width: 0; }
 
   /* ── TABS STRUCTURE ── */
   .right-tabs-container { display: flex; gap: 6px; margin-bottom: 0; }
@@ -1329,7 +1329,7 @@
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
 
   /* Sélecteur de listes "À voir" multiples (pastilles, scroll horizontal) */
-  .wl-lists-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; }
+  .wl-lists-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; min-width: 0; }
   .wl-list-pill {
     flex-shrink: 0; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
@@ -1494,7 +1494,7 @@
   .year-ago-meta { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
   .year-ago-score { font-size: 0.82rem; color: var(--gold); margin-top: 4px; font-weight: 700; }
 
-  .heatmap-scroll { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  .heatmap-scroll { overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; min-width: 0; }
   .heatmap-grid {
     display: grid; grid-template-rows: repeat(7, 9px); grid-auto-flow: column;
     grid-auto-columns: 9px; gap: 2px; width: max-content;
@@ -1843,6 +1843,7 @@
     overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
     mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    min-width: 0;
   }
   .mds-cast-carousel::-webkit-scrollbar { display: none; }
   .mds-cast-track { display: flex; gap: 12px; width: max-content; }
@@ -2158,18 +2159,54 @@
   .fdj-info { flex: 1; min-width: 0; }
   .fdj-film-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; color: var(--text-hi); }
   .fdj-year { font-weight: 400; color: var(--text-mid); }
-  .fdj-facts { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-  /* Vraie anecdote Wikipédia : présentée comme une citation, avec attribution
-     visible — jamais affichée sans lien vers la source (licence CC-BY-SA). */
-  .fdj-anecdote {
-    margin: 8px 0; padding: 0; border: none; font-size: 0.8rem; color: var(--text);
-    line-height: 1.4; font-style: italic;
+  /* Vraie anecdote Wikipédia : un vrai encart visuel distinct plutôt qu'un
+     texte flottant — icône dédiée, grand guillemet décoratif en fond, léger
+     fondu d'apparition au moment de la révélation (esprit "récompense").
+     Attribution toujours visible, jamais d'anecdote sans lien vers la
+     source (licence CC-BY-SA). */
+  .fdj-anecdote-card {
+    display: flex; gap: 10px; margin: 10px 0; padding: 12px;
+    background: var(--surface2); border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    animation: fdj-anecdote-reveal var(--dur-slow) var(--ease-out);
+  }
+  @keyframes fdj-anecdote-reveal {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fdj-anecdote-icon { flex-shrink: 0; color: var(--orange); opacity: 0.85; font-size: 1.3rem; padding-top: 2px; }
+  .fdj-anecdote-body { position: relative; flex: 1; min-width: 0; }
+  .fdj-anecdote-quote-mark {
+    position: absolute; top: -14px; left: -4px; font-size: 2.6rem; line-height: 1;
+    font-family: Georgia, serif; color: var(--orange); opacity: 0.18;
+    pointer-events: none; user-select: none;
+  }
+  .fdj-anecdote-text {
+    position: relative; margin: 0; font-size: 0.82rem; color: var(--text-hi);
+    line-height: 1.45; font-style: italic;
   }
   .fdj-anecdote-source {
-    display: block; margin-top: 4px; font-size: 0.7rem; font-style: normal;
+    display: block; margin-top: 6px; font-size: 0.7rem; font-style: normal;
     color: var(--text-mid); text-decoration: none;
   }
   .fdj-anecdote-source:hover { color: var(--text-hi); text-decoration: underline; }
+
+  /* Accordéon "Chiffres clés" (faits TMDb) : <details>/<summary> natifs —
+     gratuit en clavier/accessibilité, pas besoin de JS pour le toggle.
+     Replié par défaut quand une anecdote existe déjà (voir renderRevealedFilm),
+     ouvert automatiquement sinon puisqu'il n'y a rien d'autre à montrer. */
+  .fdj-facts-accordion { margin: 8px 0; }
+  .fdj-facts-accordion summary {
+    cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--text-mid);
+    font-family: var(--font-heading); list-style: none; padding: 4px 0;
+  }
+  .fdj-facts-accordion summary::-webkit-details-marker { display: none; }
+  .fdj-facts-accordion summary::before {
+    content: '▸'; display: inline-block; margin-right: 6px;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .fdj-facts-accordion[open] summary::before { transform: rotate(90deg); }
+  .fdj-facts { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
   .fdj-facts li {
     font-size: 0.78rem; color: var(--text); line-height: 1.35; padding-left: 12px; position: relative;
   }
@@ -2227,6 +2264,15 @@
     scrollbar-width: none; /* cache la barre de défilement (desktop) */
     -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
     mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    /* min-width:0 + flex:1 : sans ça, un enfant flex avec overflow-x:auto
+       refuse par défaut de se réduire sous la largeur de SON contenu
+       (min-width:auto implicite) — la piste de 10 films à la suite forçait
+       toute la colonne (et donc toute la mise en page à deux colonnes) à
+       s'élargir bien au-delà de l'écran. Bug classique de flexbox, invisible
+       sur mobile (une seule colonne, jamais remarqué) mais qui cassait
+       entièrement l'affichage PC. */
+    min-width: 0;
+    flex: 1;
   }
   .trending-carousel::-webkit-scrollbar { display: none; }
   .trending-carousel-track {

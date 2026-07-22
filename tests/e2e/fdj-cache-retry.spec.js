@@ -38,8 +38,8 @@ test('anecdote en cache a null : retentee au chargement, affichage mis a jour si
   await page.waitForSelector('.guess-poster');
   await page.fill('#guess-input', 'Film Test');
   await page.click('.guess-submit-btn');
-  await page.waitForSelector('.fdj-anecdote');
-  await expect(page.locator('.fdj-anecdote')).toContainText('deuxieme essai');
+  await page.waitForSelector('.fdj-anecdote-card');
+  await expect(page.locator('.fdj-anecdote-card')).toContainText('deuxieme essai');
 });
 
 test('anecdote en cache et trouvee : aucun nouvel appel Wikipedia (comportement inchange)', async ({ page }) => {
@@ -61,8 +61,8 @@ test('anecdote en cache et trouvee : aucun nouvel appel Wikipedia (comportement 
   await page.waitForSelector('.guess-poster');
   await page.fill('#guess-input', 'Film Test');
   await page.click('.guess-submit-btn');
-  await page.waitForSelector('.fdj-anecdote');
-  await expect(page.locator('.fdj-anecdote')).toContainText('deja en cache');
+  await page.waitForSelector('.fdj-anecdote-card');
+  await expect(page.locator('.fdj-anecdote-card')).toContainText('deja en cache');
   expect(wikiCalls).toBe(0);
 });
 

@@ -174,6 +174,7 @@ const ICONS = {
   medal: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M7 2h4l1.5 4L14 2h4l-3.6 7.2a6 6 0 1 1-4.8 0L7 2z" opacity="0.55"/><circle cx="12" cy="15" r="5.4"/><circle cx="12" cy="15" r="3" fill="#fff" opacity="0.28"/></svg>`,
 
   clapper: `<svg ${ICON_ATTRS}><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg>`,
+  lightbulb: `<svg ${ICON_ATTRS}><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.05V17h6v-2.25c0-.85.4-1.55 1-2.05A7 7 0 0 0 12 2z"/></svg>`,
 
   copy: `<svg ${ICON_ATTRS}><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>`,
 
@@ -6050,13 +6051,16 @@ function renderGuessGame(m, anecdote, isWeekly) {
   renderGuessStreakBadge();
 
   const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
+  // Un nouvel indice par essai raté — volontairement différents des
+  // "Chiffres clés" de la fiche révélée (budget, tagline, note, durée),
+  // pour ne pas répéter la même info deux fois une fois le jeu terminé.
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const cast = m.credits?.cast || [];
   const hints = [];
-  if (state.attempts >= 2) {
-    if (year) hints.push(`Sorti en ${year}`);
-  }
-  if (state.attempts >= 4 && m.genres?.length) {
-    hints.push(`Genre : ${m.genres[0].name}`);
-  }
+  if (state.attempts >= 1 && year) hints.push(`Sorti en ${year}`);
+  if (state.attempts >= 2 && director) hints.push(`Réalisé par ${director}`);
+  if (state.attempts >= 3 && cast[0]) hints.push(`Avec ${cast[0].name}`);
+  if (state.attempts >= 4 && cast[1]) hints.push(`Et aussi ${cast[1].name}`);
 
   card.classList.add('fdj-guessing');
   card.classList.remove('fdj-revealed');
@@ -6123,12 +6127,27 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
        </div>`
     : '';
 
-  const factsHTML = anecdote
-    ? `<blockquote class="fdj-anecdote">
-         « ${escAttr(anecdote.anecdote)} »
-         <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
-       </blockquote>`
-    : `<ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>`;
+  // L'anecdote (si trouvée) reste l'élément principal, mise en avant — les
+  // faits TMDb passent dans un accordéon "Chiffres clés", replié par défaut
+  // (natif <details>/<summary> : gratuit en accessibilité clavier, pas besoin
+  // de JS pour le toggle). Si aucune anecdote n'est trouvée, l'accordéon
+  // s'ouvre automatiquement puisqu'il n'y a rien d'autre à montrer.
+  const anecdoteHTML = anecdote
+    ? `<div class="fdj-anecdote-card">
+         <div class="fdj-anecdote-icon">${ICONS.lightbulb}</div>
+         <div class="fdj-anecdote-body">
+           <span class="fdj-anecdote-quote-mark" aria-hidden="true">“</span>
+           <p class="fdj-anecdote-text">${escAttr(anecdote.anecdote)}</p>
+           <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
+         </div>
+       </div>`
+    : '';
+  const factsAccordionHTML = `
+    <details class="fdj-facts-accordion"${anecdote ? '' : ' open'}>
+      <summary>Chiffres clés</summary>
+      <ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>
+    </details>`;
+  const factsHTML = anecdoteHTML + factsAccordionHTML;
 
   card.innerHTML = `
     ${posterUrl
@@ -6147,7 +6166,7 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
   // contient (le lien source Wikipédia, le bouton de re-tentative des
   // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source')) return;
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source') || e.target.closest('.fdj-facts-accordion')) return;
     openMovieDetailSheet(m.id);
   });
   // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le

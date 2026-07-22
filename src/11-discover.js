@@ -361,13 +361,16 @@ function renderGuessGame(m, anecdote, isWeekly) {
   renderGuessStreakBadge();
 
   const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
+  // Un nouvel indice par essai raté — volontairement différents des
+  // "Chiffres clés" de la fiche révélée (budget, tagline, note, durée),
+  // pour ne pas répéter la même info deux fois une fois le jeu terminé.
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const cast = m.credits?.cast || [];
   const hints = [];
-  if (state.attempts >= 2) {
-    if (year) hints.push(`Sorti en ${year}`);
-  }
-  if (state.attempts >= 4 && m.genres?.length) {
-    hints.push(`Genre : ${m.genres[0].name}`);
-  }
+  if (state.attempts >= 1 && year) hints.push(`Sorti en ${year}`);
+  if (state.attempts >= 2 && director) hints.push(`Réalisé par ${director}`);
+  if (state.attempts >= 3 && cast[0]) hints.push(`Avec ${cast[0].name}`);
+  if (state.attempts >= 4 && cast[1]) hints.push(`Et aussi ${cast[1].name}`);
 
   card.classList.add('fdj-guessing');
   card.classList.remove('fdj-revealed');
@@ -434,12 +437,27 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
        </div>`
     : '';
 
-  const factsHTML = anecdote
-    ? `<blockquote class="fdj-anecdote">
-         « ${escAttr(anecdote.anecdote)} »
-         <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
-       </blockquote>`
-    : `<ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>`;
+  // L'anecdote (si trouvée) reste l'élément principal, mise en avant — les
+  // faits TMDb passent dans un accordéon "Chiffres clés", replié par défaut
+  // (natif <details>/<summary> : gratuit en accessibilité clavier, pas besoin
+  // de JS pour le toggle). Si aucune anecdote n'est trouvée, l'accordéon
+  // s'ouvre automatiquement puisqu'il n'y a rien d'autre à montrer.
+  const anecdoteHTML = anecdote
+    ? `<div class="fdj-anecdote-card">
+         <div class="fdj-anecdote-icon">${ICONS.lightbulb}</div>
+         <div class="fdj-anecdote-body">
+           <span class="fdj-anecdote-quote-mark" aria-hidden="true">“</span>
+           <p class="fdj-anecdote-text">${escAttr(anecdote.anecdote)}</p>
+           <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
+         </div>
+       </div>`
+    : '';
+  const factsAccordionHTML = `
+    <details class="fdj-facts-accordion"${anecdote ? '' : ' open'}>
+      <summary>Chiffres clés</summary>
+      <ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>
+    </details>`;
+  const factsHTML = anecdoteHTML + factsAccordionHTML;
 
   card.innerHTML = `
     ${posterUrl
@@ -458,7 +476,7 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
   // contient (le lien source Wikipédia, le bouton de re-tentative des
   // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source')) return;
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source') || e.target.closest('.fdj-facts-accordion')) return;
     openMovieDetailSheet(m.id);
   });
   // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
