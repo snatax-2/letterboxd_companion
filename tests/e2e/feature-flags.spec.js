@@ -15,7 +15,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('desactiver les Duels masque l\'arene ET le duel du jour, sans toucher au classement stocke', async ({ page }) => {
+test('desactiver les Duels masque l\'arene (Decouvrir) ET le classement (Profil), sans toucher au classement stocke', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-profile');
   await expect(page.locator('#duels-card')).toBeVisible();
@@ -29,7 +29,11 @@ test('desactiver les Duels masque l\'arene ET le duel du jour, sans toucher au c
 
   await page.click('#nav-discover');
   await page.waitForTimeout(300);
-  await expect(page.locator('#daily-duel-wrap')).toBeHidden();
+  // #duel-arena-wrap (pas l'ancien #daily-duel-wrap, qui n'existe plus depuis
+  // que l'arène a été déplacée vers Découvrir — un test qui vérifiait encore
+  // l'ancien élément "passait" à tort : toBeHidden() réussit aussi pour un
+  // élément absent du DOM, ça ne prouvait rien sur le vrai comportement).
+  await expect(page.locator('#duel-arena-wrap')).toBeHidden();
 
   // Les donnees de classement restent intactes en arriere-plan
   const duels = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_duels')));

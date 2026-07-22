@@ -29,7 +29,7 @@ function saveFeatureFlags(flags) {
 //
 // IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
 // en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
-// (renderDailyDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
+// (renderDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
 // déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
 // appeler ici, sans condition d'onglet, créait des éléments .duel-side
 // cachés (le Duel du jour se rendait même en restant sur Profil) qui
@@ -39,8 +39,13 @@ function applyFeatureFlags() {
 
   const duelsCard = document.getElementById('duels-card');
   if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
-  const dailyDuelWrap = document.getElementById('daily-duel-wrap');
-  if (dailyDuelWrap && !flags.duels) dailyDuelWrap.style.display = 'none';
+  // L'arène vit désormais dans Découvrir (déplacée depuis Profil, qui ne
+  // garde que le classement) — c'est elle qu'il faut masquer, pas l'ancien
+  // "daily-duel-wrap" qui n'existe plus depuis cette réorganisation (résidu
+  // de migration jamais mis à jour ici : la bascule "Duels" ne masquait donc
+  // plus vraiment l'arène, seulement le classement dans Profil).
+  const duelArenaWrap = document.getElementById('duel-arena-wrap');
+  if (duelArenaWrap) duelArenaWrap.style.display = flags.duels ? '' : 'none';
 
   const quizWrap = document.getElementById('quiz-wrap');
   if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
@@ -56,7 +61,10 @@ function applyFeatureFlags() {
 // Réglages — action explicite déclenchée par le changement de bascule
 // uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
 function reloadReenabledFeature(key) {
-  if (key === 'duels' && typeof renderDailyDuel === 'function') renderDailyDuel();
+  // renderDuel (pas "renderDailyDuel", qui n'existe plus depuis que l'arène
+  // a été déplacée vers Découvrir — résidu de migration jamais mis à jour :
+  // réactiver "Duels" depuis Réglages ne rechargeait donc jamais l'arène).
+  if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
   if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
   if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
   // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags

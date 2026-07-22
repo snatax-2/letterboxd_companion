@@ -407,7 +407,7 @@ function saveFeatureFlags(flags) {
 //
 // IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
 // en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
-// (renderDailyDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
+// (renderDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
 // déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
 // appeler ici, sans condition d'onglet, créait des éléments .duel-side
 // cachés (le Duel du jour se rendait même en restant sur Profil) qui
@@ -417,8 +417,13 @@ function applyFeatureFlags() {
 
   const duelsCard = document.getElementById('duels-card');
   if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
-  const dailyDuelWrap = document.getElementById('daily-duel-wrap');
-  if (dailyDuelWrap && !flags.duels) dailyDuelWrap.style.display = 'none';
+  // L'arène vit désormais dans Découvrir (déplacée depuis Profil, qui ne
+  // garde que le classement) — c'est elle qu'il faut masquer, pas l'ancien
+  // "daily-duel-wrap" qui n'existe plus depuis cette réorganisation (résidu
+  // de migration jamais mis à jour ici : la bascule "Duels" ne masquait donc
+  // plus vraiment l'arène, seulement le classement dans Profil).
+  const duelArenaWrap = document.getElementById('duel-arena-wrap');
+  if (duelArenaWrap) duelArenaWrap.style.display = flags.duels ? '' : 'none';
 
   const quizWrap = document.getElementById('quiz-wrap');
   if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
@@ -434,7 +439,10 @@ function applyFeatureFlags() {
 // Réglages — action explicite déclenchée par le changement de bascule
 // uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
 function reloadReenabledFeature(key) {
-  if (key === 'duels' && typeof renderDailyDuel === 'function') renderDailyDuel();
+  // renderDuel (pas "renderDailyDuel", qui n'existe plus depuis que l'arène
+  // a été déplacée vers Découvrir — résidu de migration jamais mis à jour :
+  // réactiver "Duels" depuis Réglages ne rechargeait donc jamais l'arène).
+  if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
   if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
   if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
   // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
@@ -514,10 +522,11 @@ function switchRightTab(tabName) {
     loadFilmDuJour(); // pas dans la liste des bascules demandées
     if (flags.quiz !== false) loadDailyQuiz();
   }
-  // Duel du jour : re-verifie a chaque affichage de Decouvrir (contrairement
-  // aux blocs ci-dessus charges une fois) car son etat depend du jour courant.
-  if (tabName === 'discover' && typeof renderDailyDuel === 'function') {
-    renderDailyDuel();
+  // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
+  // qui ne garde que le classement) — re-rendue à chaque affichage pour que
+  // la paire proposée reste à jour avec les derniers films notés.
+  if (tabName === 'discover' && typeof renderDuel === 'function') {
+    renderDuel();
   }
   // Réapplique les bascules Réglages (masque les sections désactivées) après
   // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
@@ -525,10 +534,10 @@ function switchRightTab(tabName) {
   if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
     applyFeatureFlags();
   }
-  // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
-  // proposée reste ainsi à jour avec les derniers films notés).
-  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
-    renderDuelsSection();
+  // Duels : seul le classement s'affiche dans le Profil désormais (l'arène a
+  // été déplacée vers Découvrir) — rendu léger, à jour à chaque affichage.
+  if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
+    renderDuelRanking();
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
   }
   // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu
@@ -7734,80 +7743,6 @@ document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
   renderDuel(); // nouvelle paire, aucune cote touchée
 });
 
-// ── Duel du jour (onglet Découvrir) ──
-// Un duel par jour, à côté du Quiz du jour : même rituel quotidien. Réutilise
-// exactement la même mécanique (sélection de paire, résolution, mémoire des
-// paires) — seule la limite quotidienne s'ajoute. Jouer le duel du jour
-// alimente le même classement que l'arène du Profil.
-const DAILY_DUEL_DATE_KEY = 'lbx_daily_duel_date';
-let dailyDuelPair = null;
-
-function renderDailyDuel() {
-  const wrap = document.getElementById('daily-duel-wrap');
-  const card = document.getElementById('daily-duel-card');
-  if (!wrap || !card) return;
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (localStorage.getItem(DAILY_DUEL_DATE_KEY) === today) {
-    wrap.style.display = 'block';
-    card.innerHTML = `<div class="quiz-already-played">✓ Duel du jour joué — reviens demain pour le suivant.</div>`;
-    return;
-  }
-
-  dailyDuelPair = pickDuelPair();
-  if (!dailyDuelPair) {
-    wrap.style.display = 'none'; // moins de 2 films : section absente (rien d'utile à dire à un nouvel utilisateur ici)
-    return;
-  }
-  if (dailyDuelPair.exhausted) {
-    // Tout a été joué : le dire explicitement plutôt que de faire disparaître
-    // la section sans explication (on croirait à un bug).
-    wrap.style.display = 'block';
-    card.innerHTML = `<div class="quiz-already-played">Tous les duels possibles ont été joués — note de nouveaux films pour relancer l'arène !</div>`;
-    dailyDuelPair = null;
-    return;
-  }
-  wrap.style.display = 'block';
-
-  const [a, b] = dailyDuelPair;
-  card.innerHTML = `
-    <div class="duel-arena">
-      <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
-        ${duelPosterHtml(a.item)}
-        <div class="duel-title">${escAttr(a.item.title)}</div>
-        <div class="duel-year">${a.item.year || ''}</div>
-      </div>
-      <div class="duel-vs">VS</div>
-      <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
-        ${duelPosterHtml(b.item)}
-        <div class="duel-title">${escAttr(b.item.title)}</div>
-        <div class="duel-year">${b.item.year || ''}</div>
-      </div>
-    </div>
-  `;
-}
-
-document.getElementById('daily-duel-card')?.addEventListener('click', (e) => {
-  const side = e.target.closest('.duel-side');
-  if (!side || !dailyDuelPair) return;
-  const winner = dailyDuelPair.find(f => f.key === side.dataset.key);
-  const loser = dailyDuelPair.find(f => f.key !== side.dataset.key);
-  if (!winner || !loser) return;
-
-  resolveDuel(winner.key, loser.key);
-  localStorage.setItem(DAILY_DUEL_DATE_KEY, new Date().toISOString().slice(0, 10));
-  if (navigator.vibrate) navigator.vibrate(15);
-
-  side.classList.add('duel-winner');
-  dailyDuelPair = null;
-  setTimeout(() => renderDailyDuel(), 500);
-});
-document.getElementById('daily-duel-card')?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const side = e.target.closest('.duel-side');
-  if (side) { e.preventDefault(); side.click(); }
-});
-
 // ── Réinitialisation des duels (depuis Réglages) ──
 // Efface UNIQUEMENT le classement ELO, le compteur de duels, les paires déjà
 // jouées et l'état "duel du jour joué" — ne touche jamais à l'historique des
@@ -7819,9 +7754,7 @@ document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
     'Le classement, les cotes et l\'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.',
     () => {
       localStorage.removeItem(DUELS_KEY);
-      localStorage.removeItem(DAILY_DUEL_DATE_KEY);
       if (typeof renderDuelsSection === 'function') renderDuelsSection();
-      if (typeof renderDailyDuel === 'function') renderDailyDuel();
       showToast('Duels réinitialisés.');
     },
     true // danger : bouton rouge "Supprimer"

@@ -120,3 +120,27 @@ describe('priorite du titre francais sur le titre original (bug reel corrige)', 
     assert.deepEqual(candidates, ['Le Parrain (film, 1972)', 'Le Parrain (film)', 'Le Parrain']);
   });
 });
+
+test('Tournage (sous-section riche) est prefere a Production (souvent juste une intro) - decouverte verifiee sur un vrai article', async () => {
+  const { extractAnecdote } = await import('../api/_wikiAnecdote.js');
+  // Reproduit fidelement la structure reelle observee sur "Le Parrain (film)"
+  // sur Wikipedia : Production (intro breve) contient des sous-sections
+  // Genese et Tournage, ou se trouve la vraie matiere.
+  const fixture = `Intro de l'article.
+
+== Production ==
+Cette section presente brievement le contexte de production.
+
+=== Genèse ===
+Le projet est ne d'une adaptation du roman de Mario Puzo, avant que Coppola ne soit choisi parmi plusieurs realisateurs approches.
+
+=== Tournage ===
+Le tournage s'est deroule avec beaucoup d'improvisation : le chat dans les bras de Brando n'etait pas prevu au scenario, et la tete de cheval etait authentique, fournie par une entreprise de nourriture pour chien.
+
+== Distribution ==
+La liste des acteurs.`;
+  const result = extractAnecdote(fixture);
+  // Le texte du Tournage doit etre choisi, PAS le texte generique de Production
+  assert.ok(result.includes('improvisation'));
+  assert.ok(!result.includes('presente brievement'));
+});

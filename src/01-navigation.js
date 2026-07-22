@@ -35,10 +35,11 @@ function switchRightTab(tabName) {
     loadFilmDuJour(); // pas dans la liste des bascules demandées
     if (flags.quiz !== false) loadDailyQuiz();
   }
-  // Duel du jour : re-verifie a chaque affichage de Decouvrir (contrairement
-  // aux blocs ci-dessus charges une fois) car son etat depend du jour courant.
-  if (tabName === 'discover' && typeof renderDailyDuel === 'function') {
-    renderDailyDuel();
+  // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
+  // qui ne garde que le classement) — re-rendue à chaque affichage pour que
+  // la paire proposée reste à jour avec les derniers films notés.
+  if (tabName === 'discover' && typeof renderDuel === 'function') {
+    renderDuel();
   }
   // Réapplique les bascules Réglages (masque les sections désactivées) après
   // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
@@ -46,10 +47,10 @@ function switchRightTab(tabName) {
   if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
     applyFeatureFlags();
   }
-  // Duels : re-rendus à chaque affichage du profil (rendu léger, et la paire
-  // proposée reste ainsi à jour avec les derniers films notés).
-  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
-    renderDuelsSection();
+  // Duels : seul le classement s'affiche dans le Profil désormais (l'arène a
+  // été déplacée vers Découvrir) — rendu léger, à jour à chaque affichage.
+  if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
+    renderDuelRanking();
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
   }
   // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu

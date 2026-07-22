@@ -13,6 +13,26 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Vrai bug trouvé en vérifiant la réorganisation Découvrir/Profil des
+  duels** (déjà en place depuis une session précédente) : la bascule
+  "Duels" dans Réglages ne masquait plus vraiment l'arène dans Découvrir —
+  elle référençait un élément (`daily-duel-wrap`) et une fonction
+  (`renderDailyDuel`) qui n'existaient plus depuis que l'arène avait été
+  déplacée depuis Profil. Un ancien test donnait un faux positif en vérifiant
+  ce même élément fantôme (`toBeHidden()` réussit aussi pour un élément
+  absent du DOM). Corrigé pour cibler les vrais éléments actuels
+  (`duel-arena-wrap`, `renderDuel`), et le test corrigé pour vérifier le bon
+  élément.
+
+### Corrigé
+- Ordre de priorité des sections Wikipédia affiné : "Tournage" et "Genèse"
+  (sous-sections riches en anecdotes concrètes) passent désormais avant
+  "Production" (leur section parente, souvent une simple phrase
+  d'introduction). Vérifié contre la vraie structure d'un article réel via
+  recherche web (le sandbox n'a pas d'accès réseau direct à Wikipédia) :
+  confirmé que "Le Parrain (film)" est bien le format de titre utilisé, et
+  que Genèse/Tournage sont des sous-sections de Production contenant la
+  matière la plus riche (casting, improvisations, anecdotes de plateau).
 - **Vrai bug trouvé suite à un retour utilisateur** ("les anecdotes semblent
   toujours basées sur TMDb") : la recherche Wikipédia envoyait le titre
   ORIGINAL du film en priorité dès qu'il différait du titre français — or les

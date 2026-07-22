@@ -252,80 +252,6 @@ document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
   renderDuel(); // nouvelle paire, aucune cote touchée
 });
 
-// ── Duel du jour (onglet Découvrir) ──
-// Un duel par jour, à côté du Quiz du jour : même rituel quotidien. Réutilise
-// exactement la même mécanique (sélection de paire, résolution, mémoire des
-// paires) — seule la limite quotidienne s'ajoute. Jouer le duel du jour
-// alimente le même classement que l'arène du Profil.
-const DAILY_DUEL_DATE_KEY = 'lbx_daily_duel_date';
-let dailyDuelPair = null;
-
-function renderDailyDuel() {
-  const wrap = document.getElementById('daily-duel-wrap');
-  const card = document.getElementById('daily-duel-card');
-  if (!wrap || !card) return;
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (localStorage.getItem(DAILY_DUEL_DATE_KEY) === today) {
-    wrap.style.display = 'block';
-    card.innerHTML = `<div class="quiz-already-played">✓ Duel du jour joué — reviens demain pour le suivant.</div>`;
-    return;
-  }
-
-  dailyDuelPair = pickDuelPair();
-  if (!dailyDuelPair) {
-    wrap.style.display = 'none'; // moins de 2 films : section absente (rien d'utile à dire à un nouvel utilisateur ici)
-    return;
-  }
-  if (dailyDuelPair.exhausted) {
-    // Tout a été joué : le dire explicitement plutôt que de faire disparaître
-    // la section sans explication (on croirait à un bug).
-    wrap.style.display = 'block';
-    card.innerHTML = `<div class="quiz-already-played">Tous les duels possibles ont été joués — note de nouveaux films pour relancer l'arène !</div>`;
-    dailyDuelPair = null;
-    return;
-  }
-  wrap.style.display = 'block';
-
-  const [a, b] = dailyDuelPair;
-  card.innerHTML = `
-    <div class="duel-arena">
-      <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
-        ${duelPosterHtml(a.item)}
-        <div class="duel-title">${escAttr(a.item.title)}</div>
-        <div class="duel-year">${a.item.year || ''}</div>
-      </div>
-      <div class="duel-vs">VS</div>
-      <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
-        ${duelPosterHtml(b.item)}
-        <div class="duel-title">${escAttr(b.item.title)}</div>
-        <div class="duel-year">${b.item.year || ''}</div>
-      </div>
-    </div>
-  `;
-}
-
-document.getElementById('daily-duel-card')?.addEventListener('click', (e) => {
-  const side = e.target.closest('.duel-side');
-  if (!side || !dailyDuelPair) return;
-  const winner = dailyDuelPair.find(f => f.key === side.dataset.key);
-  const loser = dailyDuelPair.find(f => f.key !== side.dataset.key);
-  if (!winner || !loser) return;
-
-  resolveDuel(winner.key, loser.key);
-  localStorage.setItem(DAILY_DUEL_DATE_KEY, new Date().toISOString().slice(0, 10));
-  if (navigator.vibrate) navigator.vibrate(15);
-
-  side.classList.add('duel-winner');
-  dailyDuelPair = null;
-  setTimeout(() => renderDailyDuel(), 500);
-});
-document.getElementById('daily-duel-card')?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const side = e.target.closest('.duel-side');
-  if (side) { e.preventDefault(); side.click(); }
-});
-
 // ── Réinitialisation des duels (depuis Réglages) ──
 // Efface UNIQUEMENT le classement ELO, le compteur de duels, les paires déjà
 // jouées et l'état "duel du jour joué" — ne touche jamais à l'historique des
@@ -337,9 +263,7 @@ document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
     'Le classement, les cotes et l\'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.',
     () => {
       localStorage.removeItem(DUELS_KEY);
-      localStorage.removeItem(DAILY_DUEL_DATE_KEY);
       if (typeof renderDuelsSection === 'function') renderDuelsSection();
-      if (typeof renderDailyDuel === 'function') renderDailyDuel();
       showToast('Duels réinitialisés.');
     },
     true // danger : bouton rouge "Supprimer"

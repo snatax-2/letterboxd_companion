@@ -6,8 +6,13 @@
 // fixture plutôt qu'un vrai appel réseau.
 
 // Titres des sections qui contiennent typiquement de vraies anecdotes sur le
-// Wikipédia francophone, dans l'ordre de préférence.
-const SECTION_NAMES = ['anecdotes', 'production', 'genèse', 'tournage'];
+// Wikipédia francophone, dans l'ordre de préférence. Ordre vérifié contre un
+// vrai article ("Le Parrain (film)") : "Genèse" et "Tournage" sont des
+// SOUS-sections de "Production" et contiennent la matière la plus riche
+// (casting, improvisations, anecdotes de plateau) — "Production" lui-même
+// n'est souvent qu'un bref texte d'introduction avant ces sous-sections,
+// d'où sa priorité plus basse ici malgré son nom générique.
+const SECTION_NAMES = ['anecdotes', 'tournage', 'genèse', 'production'];
 
 function stripAccents(s) {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
