@@ -628,23 +628,11 @@ navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
 navDiscover.addEventListener('click', () => switchMobileNav('discover'));
 navProfile.addEventListener('click', () => switchMobileNav('profile'));
 
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 860) {
-    colRating.style.display = '';
-    colRightViews.style.display = '';
-  } else {
-    const activeNavId = document.querySelector('.nav-btn.active')?.id;
-    if (activeNavId === 'nav-history') switchMobileNav('history');
-    else if (activeNavId === 'nav-watchlist') switchMobileNav('watchlist');
-    else if (activeNavId === 'nav-discover') switchMobileNav('discover');
-    else if (activeNavId === 'nav-profile') switchMobileNav('profile');
-    else switchMobileNav('rating');
-  }
-});
-
-if (window.innerWidth <= 860) {
-  switchMobileNav('rating');
-}
+// Un seul système de bascule de vue à toutes les tailles d'écran désormais
+// (voir styles.css : la grille à deux colonnes est remplacée par des onglets
+// uniques, positionnés en haut sur PC et en bas sur mobile) — plus besoin de
+// réagir différemment au redimensionnement selon la largeur.
+switchMobileNav('rating');
 
 // ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
 // Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,
@@ -6132,12 +6120,21 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
   // (natif <details>/<summary> : gratuit en accessibilité clavier, pas besoin
   // de JS pour le toggle). Si aucune anecdote n'est trouvée, l'accordéon
   // s'ouvre automatiquement puisqu'il n'y a rien d'autre à montrer.
+  // Une anecdote longue (souvent 300+ caractères, jusqu'à une quinzaine de
+  // lignes) rendait la carte immense — un mur de texte plutôt qu'un joli
+  // "fait marquant". Tronqué visuellement à 3 lignes par défaut (CSS
+  // line-clamp) avec un "Lire la suite" pour déplier — le texte complet
+  // reste dans le DOM depuis le début, aucun second appel réseau. Le seuil
+  // (140 caractères) est approximatif mais évite d'afficher un bouton
+  // inutile pour une anecdote déjà courte qui tient sur 2-3 lignes.
+  const anecdoteNeedsToggle = anecdote && anecdote.anecdote.length > 140;
   const anecdoteHTML = anecdote
     ? `<div class="fdj-anecdote-card">
          <div class="fdj-anecdote-icon">${ICONS.lightbulb}</div>
          <div class="fdj-anecdote-body">
            <span class="fdj-anecdote-quote-mark" aria-hidden="true">“</span>
-           <p class="fdj-anecdote-text">${escAttr(anecdote.anecdote)}</p>
+           <p class="fdj-anecdote-text${anecdoteNeedsToggle ? ' fdj-anecdote-clamped' : ''}">${escAttr(anecdote.anecdote)}</p>
+           ${anecdoteNeedsToggle ? `<button type="button" class="fdj-anecdote-toggle">Lire la suite</button>` : ''}
            <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
          </div>
        </div>`
@@ -6166,7 +6163,7 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
   // contient (le lien source Wikipédia, le bouton de re-tentative des
   // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source') || e.target.closest('.fdj-facts-accordion')) return;
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source') || e.target.closest('.fdj-facts-accordion') || e.target.closest('.fdj-anecdote-toggle')) return;
     openMovieDetailSheet(m.id);
   });
   // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
@@ -6181,6 +6178,18 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       openMovieDetailSheet(m.id);
+    });
+  }
+
+  // "Lire la suite" : déplie le texte complet de l'anecdote (déjà dans le
+  // DOM, aucun appel réseau) en retirant le troncage visuel à 3 lignes.
+  const anecdoteToggle = card.querySelector('.fdj-anecdote-toggle');
+  if (anecdoteToggle) {
+    anecdoteToggle.addEventListener('click', () => {
+      const text = card.querySelector('.fdj-anecdote-text');
+      const expanded = text.classList.toggle('fdj-anecdote-expanded');
+      text.classList.toggle('fdj-anecdote-clamped', !expanded);
+      anecdoteToggle.textContent = expanded ? 'Réduire' : 'Lire la suite';
     });
   }
 

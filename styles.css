@@ -129,7 +129,7 @@
        sur des angles nets : ici tout est délibérément arrondi et sépia,
        esprit vieux fauteuils de cinéma et pellicule argentique. */
     --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
-    --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #8a7460;
+    --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
     --orange: #4A2E1B; /* Terre de Sienne */
     --gold: #DAC0A3;    /* Ambre Brûlé */
     --blue: #5C6E58;    /* Olive Vintage */
@@ -585,16 +585,23 @@
   .icon-btn:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text-hi); }
 
   /* ── LAYOUT ── */
+  /* Une seule vue à la fois, à toutes les tailles d'écran (voir switchMobileNav
+     dans 01-navigation.js) — l'ancienne grille à deux colonnes (Noter à
+     gauche toujours visible + onglets internes à droite) est remplacée par
+     un système d'onglets unique, positionné en bas sur mobile et en haut sur
+     PC (voir .mobile-nav plus bas), à la demande de l'utilisateur : "un
+     système d'onglets comme sur téléphone" plutôt que deux colonnes. */
   .layout {
-    max-width: 1100px;
-    margin: 0 auto; display: grid;
-    grid-template-columns: 1.45fr 0.55fr; gap: 20px; align-items: start;
+    max-width: 800px;
+    margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
     width: 100%;
   }
-  .col-right { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; min-width: 0; }
+  .col-right { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
   /* ── TABS STRUCTURE ── */
-  .right-tabs-container { display: flex; gap: 6px; margin-bottom: 0; }
+  /* .right-tabs-container n'est plus utilisé : les 5 onglets (Noter compris)
+     vivent tous dans .mobile-nav désormais, visible à toutes les tailles. */
+  .right-tabs-container { display: none; }
   .right-tab {
     flex: 1; text-align: center; padding: 10px;
     background: var(--surface); border: 1px solid var(--border);
@@ -609,7 +616,27 @@
   .right-view { display: none; flex-direction: column; gap: 20px; }
   .right-view.active { display: flex; }
 
-  .mobile-nav { display: none; }
+  /* Barre à 5 onglets (Noter/Historique/À voir/Découvrir/Profil) — visible à
+     toutes les tailles désormais : ancrée en bas sur mobile (voir le point de
+     rupture plus bas), en haut en flux normal sur PC (remplace l'ancienne
+     grille à deux colonnes, à la demande de l'utilisateur). */
+  .mobile-nav {
+    display: flex; margin: 0 auto 16px auto; max-width: 800px;
+    background: var(--surface); border: 1px solid var(--border-hi);
+    border-radius: 14px; box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+  }
+  .nav-btn {
+    flex: 1; padding: 12px 4px; background: transparent; border: none;
+    color: var(--text); font-family: var(--font-heading);
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.05em;
+  }
+  .nav-btn:first-child { border-radius: 14px 0 0 14px; }
+  .nav-btn:last-child { border-radius: 0 14px 14px 0; }
+  .nav-btn.active { color: var(--blue); }
+  .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
+  .nav-btn:hover:not(.active) { color: var(--text-hi); }
 
   /* ── CARDS ── */
   .card {
@@ -2167,14 +2194,25 @@
   .fdj-anecdote-card {
     display: flex; gap: 10px; margin: 10px 0; padding: 12px;
     background: var(--surface2); border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
+    /* Bande colorée à gauche plutôt qu'une bordure fine tout autour : un
+       thème à faible contraste volontaire (Méridien) rend un fond de carte
+       et une bordure fine quasiment invisibles (fond de carte vs fond de
+       page : 1.11:1 mesuré) — une bande pleine de 4px reste visible même
+       à contraste modeste, car elle se perçoit par sa présence/teinte, pas
+       par un contraste texte-sur-fond. */
+    border-left: 4px solid var(--orange);
+    box-shadow: var(--box-shadow-style, none);
     animation: fdj-anecdote-reveal var(--dur-slow) var(--ease-out);
   }
   @keyframes fdj-anecdote-reveal {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .fdj-anecdote-icon { flex-shrink: 0; color: var(--orange); opacity: 0.85; font-size: 1.3rem; padding-top: 2px; }
+  /* text-hi (pas var(--orange) atténué) : l'accent de certains thèmes
+     (Méridien notamment) n'a que ~2:1 de contraste sur un fond de carte
+     clair — illisible. text-hi est systématiquement à contraste garanti,
+     quel que soit le thème (vérifié à 13.26:1 sur Méridien). */
+  .fdj-anecdote-icon { flex-shrink: 0; color: var(--text-hi); font-size: 1.3rem; padding-top: 2px; }
   .fdj-anecdote-body { position: relative; flex: 1; min-width: 0; }
   .fdj-anecdote-quote-mark {
     position: absolute; top: -14px; left: -4px; font-size: 2.6rem; line-height: 1;
@@ -2185,9 +2223,24 @@
     position: relative; margin: 0; font-size: 0.82rem; color: var(--text-hi);
     line-height: 1.45; font-style: italic;
   }
+  /* Troncage visuel à 3 lignes par défaut — le texte complet reste dans le
+     DOM (pas de second appel réseau au dépli), juste masqué visuellement. */
+  .fdj-anecdote-text.fdj-anecdote-clamped {
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .fdj-anecdote-toggle {
+    display: block; margin-top: 4px; padding: 0; background: none; border: none;
+    font-size: 0.72rem; font-weight: 700; color: var(--orange); cursor: pointer;
+    font-family: var(--font-heading);
+  }
+  .fdj-anecdote-toggle:hover { text-decoration: underline; }
   .fdj-anecdote-source {
     display: block; margin-top: 6px; font-size: 0.7rem; font-style: normal;
-    color: var(--text-mid); text-decoration: none;
+    /* var(--text), pas --text-mid : --text-mid tombe sous le seuil de
+       contraste (4.2:1 mesuré sur Méridien) sur un fond de carte clair —
+       une attribution de source doit rester lisible sur tous les thèmes. */
+    color: var(--text); text-decoration: none;
   }
   .fdj-anecdote-source:hover { color: var(--text-hi); text-decoration: underline; }
 
@@ -2404,24 +2457,10 @@
     .discover-stack { max-width: 100%; height: min(70vh, 580px); }
     .discover-action-btn { width: 62px; height: 62px; font-size: 1.5rem; }
 
-    .layout { 
-      display: flex; 
-      flex-direction: column; 
-      gap: 16px;
-      width: 100%; 
-    }
-    
-    .right-tabs-container { display: none; }
-
-    /* Bug Safari iOS : un flex item en position:sticky ne s'étire pas en largeur.
-       Inutile sur mobile de toute façon (navigation par onglets en bas). */
-    .col-right {
-      position: static;
-      width: 100%;
-    }
-    .col-left {
-      width: 100%;
-    }
+    /* .layout, .right-tabs-container, .col-right et .col-left utilisent
+       déjà ces valeurs par défaut (voir plus haut) — un seul système de
+       colonne unique à toutes les tailles désormais, donc rien à redéfinir
+       ici spécifiquement pour mobile. */
 
     /* Petite transition d'entrée quand on change d'onglet mobile (Noter / Historique
        / À voir), pour éviter la bascule instantanée et sèche entre les sections. */
@@ -2461,25 +2500,19 @@
     /* Menu de navigation mobile persistant : flotte au-dessus du bas de
        l'écran (marge + coins arrondis + ombre) plutôt qu'une barre plaquée
        bord à bord, pour un rendu plus "app native" moderne. */
+    /* Sur mobile, la même barre devient une pastille flottante ancrée en
+       bas — seul le positionnement change, le style (couleurs, police,
+       disposition icône/texte) est déjà défini plus haut, partagé avec PC. */
     .mobile-nav {
-      display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+      position: fixed; bottom: 0; left: 0; right: 0;
       margin: 0 12px calc(12px + env(safe-area-inset-bottom)) 12px;
-      background: var(--surface); border: 1px solid var(--border-hi);
       border-radius: 22px;
       z-index: 1000;
       box-shadow: 0 8px 28px rgba(0,0,0,0.5);
-    }
-    .nav-btn {
-      flex: 1; padding: 12px 4px; background: transparent; border: none;
-      color: var(--text); font-family: var(--font-heading);
-      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-      cursor: pointer; display: flex; flex-direction: column;
-      align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.05em;
+      max-width: none;
     }
     .nav-btn:first-child { border-radius: 22px 0 0 22px; }
     .nav-btn:last-child { border-radius: 0 22px 22px 0; }
-    .nav-btn.active { color: var(--blue); }
-    .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

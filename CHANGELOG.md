@@ -12,6 +12,35 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié
+- **Refonte de l'affichage PC : système d'onglets unique** (comme sur
+  mobile) plutôt que la grille à deux colonnes (Noter toujours à gauche +
+  onglets internes à droite). Les 5 onglets (Noter, Historique, À voir,
+  Découvrir, Profil) vivent désormais dans une seule barre, positionnée en
+  haut sur PC et ancrée en bas sur mobile (inchangé) — un seul onglet visible
+  à la fois, à toutes les tailles d'écran. Simplifie au passage la logique
+  JS de navigation (plus besoin de réagir différemment au redimensionnement
+  selon la largeur, la bascule est désormais universelle).
+- Mise en page centrée sur une largeur de lecture confortable (800px) plutôt
+  que la grille à deux colonnes précédente (1100px).
+
+### Corrigé
+- **Carte anecdote peu lisible signalée par l'utilisateur** (capture d'écran
+  à l'appui) : la carte reposait sur un contraste bordure/fond qui
+  s'effondre sur un thème à faible contraste volontaire (Méridien : fond de
+  carte à peine différent du fond de page, 1.11:1 mesuré). Remplacé par une
+  bande colorée à gauche (motif "citation en avant" classique), qui reste
+  visible même à contraste modeste puisqu'elle se perçoit par sa teinte
+  pleine plutôt qu'un contraste texte-sur-fond. Icône passée à `text-hi`
+  (contraste garanti sur tous les thèmes, était à 2:1 avec l'ancienne
+  couleur d'accent atténuée). Lien de source Wikipédia assombri (était sous
+  le seuil sur Méridien).
+- Au passage, trouvé et corrigé un défaut de contraste préexistant sur le
+  thème Cinéphile (`--text-mid` à 4.1:1, jamais testé sur cet écran avant),
+  sans rapport avec la refonte de la carte anecdote.
+- Vérifié sur les 7 thèmes : zéro violation d'accessibilité restante sur la
+  carte anecdote.
+
 ### Corrigé
 - **Bug majeur d'affichage PC** : la colonne de droite (Watchlist/Découvrir/
   Profil) débordait à plus de 2000px de large sur un écran large, cassant

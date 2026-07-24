@@ -140,23 +140,11 @@ navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
 navDiscover.addEventListener('click', () => switchMobileNav('discover'));
 navProfile.addEventListener('click', () => switchMobileNav('profile'));
 
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 860) {
-    colRating.style.display = '';
-    colRightViews.style.display = '';
-  } else {
-    const activeNavId = document.querySelector('.nav-btn.active')?.id;
-    if (activeNavId === 'nav-history') switchMobileNav('history');
-    else if (activeNavId === 'nav-watchlist') switchMobileNav('watchlist');
-    else if (activeNavId === 'nav-discover') switchMobileNav('discover');
-    else if (activeNavId === 'nav-profile') switchMobileNav('profile');
-    else switchMobileNav('rating');
-  }
-});
-
-if (window.innerWidth <= 860) {
-  switchMobileNav('rating');
-}
+// Un seul système de bascule de vue à toutes les tailles d'écran désormais
+// (voir styles.css : la grille à deux colonnes est remplacée par des onglets
+// uniques, positionnés en haut sur PC et en bas sur mobile) — plus besoin de
+// réagir différemment au redimensionnement selon la largeur.
+switchMobileNav('rating');
 
 // ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
 // Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,

@@ -89,3 +89,40 @@ test('les deux titres (francais et original) sont envoyes quand ils different, l
   expect(capturedUrl).toContain('wikianecdote=Le+Parrain');
   expect(capturedUrl).toContain('wikititle2=The+Godfather');
 });
+
+test('anecdote longue : tronquee a 3 lignes par defaut, "Lire la suite" la deplie completement', async ({ page }) => {
+  const LONG = "Le tournage débute le 25 février 2025, avec des prises de vue dans la province de Ouarzazate au Maroc (notamment dans le ksar d'Aït Ben Haddou) jusqu'au 4 mars, pour les scènes situées à Troie. Il se poursuit entre le 10 et 21 mars en Grèce, dans le Péloponnèse (en Messénie : dans la ville de Pylos et ses environs, ainsi que sur le site de l'Acrocorinthe à Corinthe).";
+  await page.route('**/api/search?id=42', route => route.fulfill({ json: DETAIL }));
+  await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: LONG, url: 'https://fr.wikipedia.org/wiki/test' } }));
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('#fdj-card .fdj-film-title, .guess-poster');
+  if (await page.locator('.guess-poster').count()) {
+    await page.fill('#guess-input', 'Film Test');
+    await page.click('.guess-submit-btn');
+  }
+  await page.waitForSelector('.fdj-anecdote-card');
+
+  const clampedBefore = await page.locator('.fdj-anecdote-text').evaluate(el => el.classList.contains('fdj-anecdote-clamped'));
+  expect(clampedBefore).toBe(true);
+  await expect(page.locator('.fdj-anecdote-toggle')).toHaveText('Lire la suite');
+
+  await page.click('.fdj-anecdote-toggle');
+  const clampedAfter = await page.locator('.fdj-anecdote-text').evaluate(el => el.classList.contains('fdj-anecdote-clamped'));
+  expect(clampedAfter).toBe(false);
+  await expect(page.locator('.fdj-anecdote-toggle')).toHaveText('Réduire');
+});
+
+test('anecdote courte : pas de bouton "Lire la suite" (rien a replier)', async ({ page }) => {
+  await page.route('**/api/search?id=42', route => route.fulfill({ json: DETAIL }));
+  await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: 'Une courte anecdote.', url: 'https://fr.wikipedia.org/wiki/test' } }));
+  await page.goto('/');
+  await page.click('#nav-discover');
+  await page.waitForSelector('#fdj-card .fdj-film-title, .guess-poster');
+  if (await page.locator('.guess-poster').count()) {
+    await page.fill('#guess-input', 'Film Test');
+    await page.click('.guess-submit-btn');
+  }
+  await page.waitForSelector('.fdj-anecdote-card');
+  await expect(page.locator('.fdj-anecdote-toggle')).toHaveCount(0);
+});

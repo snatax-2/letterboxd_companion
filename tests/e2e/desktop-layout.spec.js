@@ -1,11 +1,11 @@
 const { test, expect } = require('@playwright/test');
 
-// Verifie specifiquement le bug d'affichage PC trouve suite a un
-// signalement utilisateur : le carrousel "Tendances du moment" (flex +
-// overflow-x:auto sans min-width:0) forcait toute la colonne de droite a
-// deborder bien au-dela de l'ecran, cassant la mise en page a deux colonnes.
-// Ce test tourne a une largeur de bureau (le layout a deux colonnes ne
-// s'active qu'au-dessus de 860px, voir le point de rupture dans styles.css).
+// Verifie le bug d'affichage PC trouve suite a un signalement utilisateur :
+// le carrousel "Tendances du moment" (flex + overflow-x:auto sans
+// min-width:0) forcait la page a deborder bien au-dela de l'ecran. Corrige,
+// puis la mise en page desktop a ete refondue en systeme d'onglets uniques
+// (comme sur mobile) a la demande de l'utilisateur -- ce test verifie les
+// deux : pas de debordement horizontal, et un seul onglet visible a la fois.
 
 const DETAIL = { id: 1, title: 'Film Test', poster_path: '/p.jpg', release_date: '2020-01-01', credits: { crew: [], cast: [] } };
 const TRENDING_MANY = { results: Array.from({ length: 10 }, (_, i) => ({ id: 100 + i, title: 'Tendance ' + i, poster_path: '/t.jpg', vote_average: 7 })) };
@@ -26,28 +26,34 @@ test.beforeEach(async ({ page }) => {
 
 test('le carrousel Tendances (10 films) ne fait plus deborder la page en largeur bureau', async ({ page }) => {
   await page.goto('/');
-  await page.click('#tab-right-discover');
+  await page.click('#nav-discover');
   await page.waitForTimeout(1000);
 
   const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
   expect(scrollWidth).toBeLessThanOrEqual(1440);
-
-  const rightCol = await page.locator('.col-right').boundingBox();
-  // La colonne de droite doit rester dans une fourchette raisonnable
-  // (~0.55fr d'un layout limite a 1100px), pas des milliers de pixels.
-  expect(rightCol.width).toBeLessThan(700);
 });
 
-test('aucun chevauchement entre les deux colonnes sur les 4 onglets, avec des tendances chargees', async ({ page }) => {
+test('la barre a 5 onglets est visible en haut sur PC, un seul onglet actif a la fois', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(600);
-  for (const tab of ['discover', 'watchlist', 'profile']) {
-    await page.click(`#tab-right-${tab}`);
-    await page.waitForTimeout(600);
-    const leftBox = await page.locator('.layout > *:first-child').first().boundingBox();
-    const rightBox = await page.locator('.col-right').boundingBox();
-    expect(leftBox.x + leftBox.width).toBeLessThanOrEqual(rightBox.x + 1); // +1 tolerance d'arrondi
+
+  await expect(page.locator('#mobile-nav')).toBeVisible();
+  await expect(page.locator('.nav-btn')).toHaveCount(5);
+
+  await expect(page.locator('#col-rating')).toBeVisible();
+  await expect(page.locator('#col-right-views')).toBeHidden();
+
+  for (const tab of ['discover', 'watchlist', 'profile', 'history']) {
+    await page.click(`#nav-${tab}`);
+    await page.waitForTimeout(500);
+    await expect(page.locator('#col-rating')).toBeHidden();
+    await expect(page.locator('#col-right-views')).toBeVisible();
     const scrollWidth = await page.evaluate(() => document.body.scrollWidth);
     expect(scrollWidth).toBeLessThanOrEqual(1440);
   }
+
+  await page.click('#nav-rating');
+  await page.waitForTimeout(400);
+  await expect(page.locator('#col-rating')).toBeVisible();
+  await expect(page.locator('#col-right-views')).toBeHidden();
 });
