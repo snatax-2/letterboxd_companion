@@ -2186,85 +2186,17 @@
   .fdj-info { flex: 1; min-width: 0; }
   .fdj-film-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; color: var(--text-hi); }
   .fdj-year { font-weight: 400; color: var(--text-mid); }
-  /* Vraie anecdote Wikipédia : un vrai encart visuel distinct plutôt qu'un
-     texte flottant — icône dédiée, grand guillemet décoratif en fond, léger
-     fondu d'apparition au moment de la révélation (esprit "récompense").
-     Attribution toujours visible, jamais d'anecdote sans lien vers la
-     source (licence CC-BY-SA). */
-  .fdj-anecdote-card {
-    display: flex; gap: 10px; margin: 10px 0; padding: 12px;
-    background: var(--surface2); border-radius: var(--radius-sm);
-    /* Bande colorée à gauche plutôt qu'une bordure fine tout autour : un
-       thème à faible contraste volontaire (Méridien) rend un fond de carte
-       et une bordure fine quasiment invisibles (fond de carte vs fond de
-       page : 1.11:1 mesuré) — une bande pleine de 4px reste visible même
-       à contraste modeste, car elle se perçoit par sa présence/teinte, pas
-       par un contraste texte-sur-fond. */
-    border-left: 4px solid var(--orange);
-    box-shadow: var(--box-shadow-style, none);
-    animation: fdj-anecdote-reveal var(--dur-slow) var(--ease-out);
+  /* Présentation simple du film — synopsis, réalisateur, note (voir
+     renderRevealedFilm). Remplace l'ancienne carte anecdote Wikipédia +
+     accordéon "Chiffres clés", retirée : n'apportait pas de réelle
+     plus-value au retour de l'utilisateur, et dépendait de la disponibilité
+     d'une page Wikipédia adaptée — ces informations viennent directement et
+     fiablement de TMDb à chaque fois. */
+  .fdj-meta-line { font-size: 0.78rem; color: var(--text-mid); margin-top: 4px; }
+  .fdj-synopsis {
+    margin: 8px 0 0; font-size: 0.82rem; color: var(--text); line-height: 1.45;
   }
-  @keyframes fdj-anecdote-reveal {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  /* text-hi (pas var(--orange) atténué) : l'accent de certains thèmes
-     (Méridien notamment) n'a que ~2:1 de contraste sur un fond de carte
-     clair — illisible. text-hi est systématiquement à contraste garanti,
-     quel que soit le thème (vérifié à 13.26:1 sur Méridien). */
-  .fdj-anecdote-icon { flex-shrink: 0; color: var(--text-hi); font-size: 1.3rem; padding-top: 2px; }
-  .fdj-anecdote-body { position: relative; flex: 1; min-width: 0; }
-  .fdj-anecdote-quote-mark {
-    position: absolute; top: -14px; left: -4px; font-size: 2.6rem; line-height: 1;
-    font-family: Georgia, serif; color: var(--orange); opacity: 0.18;
-    pointer-events: none; user-select: none;
-  }
-  .fdj-anecdote-text {
-    position: relative; margin: 0; font-size: 0.82rem; color: var(--text-hi);
-    line-height: 1.45; font-style: italic;
-  }
-  /* Troncage visuel à 3 lignes par défaut — le texte complet reste dans le
-     DOM (pas de second appel réseau au dépli), juste masqué visuellement. */
-  .fdj-anecdote-text.fdj-anecdote-clamped {
-    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .fdj-anecdote-toggle {
-    display: block; margin-top: 4px; padding: 0; background: none; border: none;
-    font-size: 0.72rem; font-weight: 700; color: var(--orange); cursor: pointer;
-    font-family: var(--font-heading);
-  }
-  .fdj-anecdote-toggle:hover { text-decoration: underline; }
-  .fdj-anecdote-source {
-    display: block; margin-top: 6px; font-size: 0.7rem; font-style: normal;
-    /* var(--text), pas --text-mid : --text-mid tombe sous le seuil de
-       contraste (4.2:1 mesuré sur Méridien) sur un fond de carte clair —
-       une attribution de source doit rester lisible sur tous les thèmes. */
-    color: var(--text); text-decoration: none;
-  }
-  .fdj-anecdote-source:hover { color: var(--text-hi); text-decoration: underline; }
-
-  /* Accordéon "Chiffres clés" (faits TMDb) : <details>/<summary> natifs —
-     gratuit en clavier/accessibilité, pas besoin de JS pour le toggle.
-     Replié par défaut quand une anecdote existe déjà (voir renderRevealedFilm),
-     ouvert automatiquement sinon puisqu'il n'y a rien d'autre à montrer. */
-  .fdj-facts-accordion { margin: 8px 0; }
-  .fdj-facts-accordion summary {
-    cursor: pointer; font-size: 0.78rem; font-weight: 700; color: var(--text-mid);
-    font-family: var(--font-heading); list-style: none; padding: 4px 0;
-  }
-  .fdj-facts-accordion summary::-webkit-details-marker { display: none; }
-  .fdj-facts-accordion summary::before {
-    content: '▸'; display: inline-block; margin-right: 6px;
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-  .fdj-facts-accordion[open] summary::before { transform: rotate(90deg); }
-  .fdj-facts { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-  .fdj-facts li {
-    font-size: 0.78rem; color: var(--text); line-height: 1.35; padding-left: 12px; position: relative;
-  }
-  .fdj-facts li::before { content: '—'; position: absolute; left: 0; color: var(--orange); }
-  .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; }
+  .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; margin-top: 8px; }
   .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
   .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
 
@@ -2284,12 +2216,30 @@
     border: 1px solid var(--border-hi); border-radius: 20px; padding: 3px 10px;
   }
   .guess-form { display: flex; gap: 8px; }
+  .guess-input-wrap { position: relative; flex: 1; min-width: 0; }
   .guess-input {
-    flex: 1; min-width: 0; background: var(--surface2); border: 1px solid var(--border-hi);
+    width: 100%; background: var(--surface2); border: 1px solid var(--border-hi);
     border-radius: var(--radius-sm); padding: 9px 12px; font-size: 0.85rem; color: var(--text-hi);
     font-family: var(--font-body);
   }
   .guess-input:focus { outline: none; border-color: var(--orange); }
+  /* Suggestions texte seul (pas d'affiche) : montrer l'affiche du bon film
+     dans la liste spoilerait instantanément le jeu — voir
+     fetchGuessSuggestions dans 11-discover.js. */
+  .guess-suggestions {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+    background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-2, 0 4px 16px rgba(0,0,0,0.3));
+    text-align: left;
+  }
+  .guess-suggestion-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 9px 12px; cursor: pointer; font-size: 0.82rem; color: var(--text-hi);
+    border-bottom: 1px solid var(--border);
+  }
+  .guess-suggestion-item:last-child { border-bottom: none; }
+  .guess-suggestion-item:hover { background: var(--surface2); }
+  .guess-suggestion-year { color: var(--text-mid); font-size: 0.74rem; flex-shrink: 0; }
   .guess-submit-btn {
     background: var(--orange); border: none; border-radius: var(--radius-sm); padding: 9px 16px;
     font-size: 0.82rem; font-weight: 700; color: var(--solid-fill-text, #0d1117); cursor: pointer;

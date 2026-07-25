@@ -6,6 +6,7 @@ const TRENDING = { results: [
 const DETAIL = {
   id: 42, title: 'Film Mystère', original_title: 'Mystery Movie', release_date: '2015-06-01',
   poster_path: '/poster.jpg', genres: [{ id: 1, name: 'Thriller' }],
+  overview: 'Un synopsis suffisamment long pour verifier son affichage correct dans la fiche revelee.',
   budget: 1000000, revenue: 5000000, tagline: 'Une tagline.',
   credits: { crew: [{ job: 'Director', name: 'Réal Isateur' }], cast: [{ name: 'Act Rice' }, { name: 'Second Acteur' }] },
   vote_average: 7.2, runtime: 110,
@@ -19,7 +20,6 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/search?dailyPick=*', route => route.fulfill({ json: { result: TRENDING.results[0] } }));
   await page.route('**/api/search?weeklyRelease=*', route => route.fulfill({ json: { result: TRENDING.results[0] } }));
   await page.route('**/api/search?id=42', route => route.fulfill({ json: DETAIL }));
-  await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: null } }));
   await page.route('**/api/search*providers*', route => route.fulfill({ json: { results: {} } }));
 });
 
@@ -147,18 +147,18 @@ test('une fois joue, l\'etat "deja joue" persiste apres rechargement de la page'
   await expect(page.locator('.guess-form')).toHaveCount(0);
 });
 
-test('pendant la devinette, ni anecdote/faits ni plateformes ne sont visibles (evite de spoiler)', async ({ page }) => {
+test('pendant la devinette, ni synopsis/infos ni plateformes ne sont visibles (evite de spoiler)', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
   await page.waitForSelector('.guess-poster');
 
-  await expect(page.locator('.fdj-anecdote')).toHaveCount(0);
-  await expect(page.locator('.fdj-facts')).toHaveCount(0);
+  await expect(page.locator('.fdj-synopsis')).toHaveCount(0);
+  await expect(page.locator('.fdj-meta-line')).toHaveCount(0);
   await expect(page.locator('#fdj-providers')).toHaveCount(0);
   await expect(page.locator('.fdj-film-title')).toHaveCount(0);
 });
 
-test('apres une victoire, les faits TMDb (repli) et les plateformes apparaissent avec le resultat', async ({ page }) => {
+test('apres une victoire, le synopsis/realisateur/note et les plateformes apparaissent avec le resultat', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
   await page.waitForSelector('.guess-poster');
@@ -168,7 +168,9 @@ test('apres une victoire, les faits TMDb (repli) et les plateformes apparaissent
 
   await expect(page.locator('.guess-result.guess-won')).toBeVisible();
   await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
-  await expect(page.locator('.fdj-facts li').first()).toBeVisible();
+  await expect(page.locator('.fdj-synopsis')).toContainText('Un synopsis suffisamment long');
+  await expect(page.locator('.fdj-meta-line')).toContainText('Réal Isateur');
+  await expect(page.locator('.fdj-meta-line')).toContainText('7.2/10');
   await expect(page.locator('#fdj-providers')).toBeVisible();
 });
 
@@ -184,7 +186,7 @@ test('apres une defaite, la fiche complete se revele aussi (pas seulement le tit
 
   await expect(page.locator('.guess-result.guess-lost')).toBeVisible();
   await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
-  await expect(page.locator('.fdj-facts li').first()).toBeVisible();
+  await expect(page.locator('.fdj-synopsis')).toBeVisible();
 });
 
 test('une seule carte affichee (plus de section separee en double)', async ({ page }) => {

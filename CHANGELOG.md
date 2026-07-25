@@ -13,6 +13,18 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Modifié
+- **Anecdotes Wikipédia retirées** (retour utilisateur : "n'apporte pas de
+  réelle plus-value"). Remplacées par une présentation simple et toujours
+  fiable du film — synopsis, réalisateur, note TMDb — sans dépendre de
+  l'existence d'une page Wikipédia adaptée. Suppression complète de bout en
+  bout : point d'accès serveur, module d'extraction, accordéon "Chiffres
+  clés", tests dédiés.
+- **Auto-suggestion de titres pour "Devine le Film du Jour"** : en tapant,
+  une liste de titres correspondants apparaît (même recherche TMDb que la
+  watchlist et la notation), mais en texte seul — sans affiche — pour ne
+  jamais spoiler la bonne réponse pendant la devinette.
+
+### Modifié
 - **Refonte de l'affichage PC : système d'onglets unique** (comme sur
   mobile) plutôt que la grille à deux colonnes (Noter toujours à gauche +
   onglets internes à droite). Les 5 onglets (Noter, Historique, À voir,

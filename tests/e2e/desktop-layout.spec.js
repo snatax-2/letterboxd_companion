@@ -19,7 +19,6 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/search?dailyPick=*', route => route.fulfill({ json: { result: DETAIL } }));
   await page.route('**/api/search?weeklyRelease=*', route => route.fulfill({ json: { result: DETAIL } }));
   await page.route('**/api/search?id=1', route => route.fulfill({ json: DETAIL }));
-  await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: null } }));
   await page.route('**/api/search*providers*', route => route.fulfill({ json: { results: {} } }));
   await page.route('**/api/search?trending=true', route => route.fulfill({ json: TRENDING_MANY }));
 });

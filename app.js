@@ -5760,10 +5760,8 @@ let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvr
 //  FILM DU JOUR
 // ═══════════════════════════════════════════
 // Un film choisi aléatoirement mais STABLE toute la journée (même choix du
-// matin au soir, change le lendemain), avec 3 informations générées à partir
-// de données TMDb réelles — pas de vraies "anecdotes" (trivia) : TMDb n'a pas
-// cet endpoint, on affiche donc des faits fiables (budget/recettes, tagline
-// officielle, équipe) plutôt que d'inventer du contenu.
+// matin au soir, change le lendemain) — présenté simplement avec le
+// synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
 const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
 
 function formatMoneyShort(amount) {
@@ -5773,98 +5771,13 @@ function formatMoneyShort(amount) {
   return (amount / 1_000).toFixed(0) + ' k$';
 }
 
-function buildFilmDuJourFacts(m) {
-  const facts = [];
-
-  if (m.budget > 0 && m.revenue > 0) {
-    const ratio = m.revenue / m.budget;
-    facts.push(ratio >= 2
-      ? `A rapporté ${ratio.toFixed(1)}× son budget au box-office.`
-      : `Budget de ${formatMoneyShort(m.budget)} pour ${formatMoneyShort(m.revenue)} de recettes.`);
-  } else if (m.budget > 0) {
-    facts.push(`Produit avec un budget de ${formatMoneyShort(m.budget)}.`);
-  }
-
-  if (m.tagline) {
-    facts.push(`Tagline officielle : « ${escAttr(m.tagline)} »`);
-  }
-
-  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
-  const mainActor = m.credits?.cast?.[0]?.name;
-  if (director && mainActor) {
-    facts.push(`Réalisé par ${director}, avec ${mainActor} en tête d'affiche.`);
-  } else if (director) {
-    facts.push(`Réalisé par ${director}.`);
-  } else if (mainActor) {
-    facts.push(`Avec ${mainActor} en tête d'affiche.`);
-  }
-
-  if (facts.length < 3 && m.release_date) {
-    const years = new Date().getFullYear() - parseInt(m.release_date.slice(0, 4), 10);
-    if (years > 0) facts.push(`Sorti il y a ${years} an${years > 1 ? 's' : ''}.`);
-  }
-  if (facts.length < 3 && m.vote_average) {
-    facts.push(`Noté ${m.vote_average.toFixed(1)}/10 par les spectateurs sur TMDb.`);
-  }
-  if (facts.length < 3 && m.production_countries?.length) {
-    facts.push(`Production ${m.production_countries.map(c => c.name).join(', ')}.`);
-  }
-  if (facts.length < 3 && m.runtime) {
-    facts.push(`Dure ${m.runtime} minutes.`);
-  }
-
-  return facts.slice(0, 3);
-}
-
-// Vraie anecdote Wikipédia (pas les faits TMDb) si on en trouve une — voir
-// buildFilmDuJourFacts plus haut pour le repli si rien n'est trouvé. Extrait
-// dans sa propre fonction pour pouvoir être retentée indépendamment (voir
-// loadFilmDuJour : un échec ne doit plus coûter 24h d'attente).
-async function fetchWikiAnecdote(details) {
-  try {
-    const year = details.release_date ? details.release_date.slice(0, 4) : '';
-    // Les articles Wikipédia FR sont titrés avec le titre FRANÇAIS de
-    // sortie, pas le titre original — envoyer le titre original en
-    // priorité (comme avant) faisait échouer la recherche pour tout film
-    // dont le titre a été traduit ("Le Parrain", pas "The Godfather").
-    // On envoie les deux : le serveur essaie le français d'abord, puis
-    // l'original en repli seulement s'il ne trouve rien.
-    const params = new URLSearchParams({ wikianecdote: details.title, wikiyear: year });
-    if (details.original_title && details.original_title !== details.title) {
-      params.set('wikititle2', details.original_title);
-    }
-    const anecdoteRes = await fetch(`/api/search?${params.toString()}`);
-    const anecdoteData = await anecdoteRes.json();
-    return (anecdoteData && anecdoteData.anecdote) ? anecdoteData : null;
-  } catch {
-    return null; // pas grave, on se rabat sur les faits TMDb
-  }
-}
-
 async function loadFilmDuJour() {
   const todayKey = new Date().toISOString().slice(0, 10);
   let cached = null;
   try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
 
   if (cached && cached.date === todayKey && cached.movie) {
-    if (cached.anecdote) {
-      // Anecdote déjà trouvée : mise en cache pour toute la journée, comme
-      // avant — inutile de re-solliciter Wikipédia pour un résultat qui ne
-      // changera pas.
-      renderGuessGame(cached.movie, cached.anecdote, cached.isWeekly);
-      return;
-    }
-    // Anecdote absente : retente à CHAQUE visite plutôt que d'attendre le
-    // lendemain — un échec (bug corrigé, coupure réseau ponctuelle...) ne
-    // doit plus coûter 24h d'attente pour un simple raté transitoire. Le
-    // film du jour reste le même (pas de nouvel appel dailyPick/weeklyRelease),
-    // seule l'anecdote est retentée.
-    renderGuessGame(cached.movie, null, cached.isWeekly); // affiche immédiatement avec le repli TMDb
-    fetchWikiAnecdote(cached.movie).then(anecdote => {
-      if (!anecdote) return; // toujours rien : on garde l'affichage déjà fait
-      localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ ...cached, anecdote }));
-      renderGuessGame(cached.movie, anecdote, cached.isWeekly);
-    });
+    renderGuessGame(cached.movie, cached.isWeekly);
     return;
   }
 
@@ -5890,10 +5803,8 @@ async function loadFilmDuJour() {
     const details = await detailRes.json();
     if (!details || !details.title) return;
 
-    const anecdote = await fetchWikiAnecdote(details);
-
-    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, anecdote, isWeekly: isWednesday }));
-    renderGuessGame(details, anecdote, isWednesday);
+    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, isWeekly: isWednesday }));
+    renderGuessGame(details, isWednesday);
   } catch (e) {
     console.warn('Impossible de charger le film du jour', e);
   }
@@ -5914,10 +5825,10 @@ function setFilmDuJourTitle(isWeekly) {
   if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
 }
 
-// Réglages : force une nouvelle recherche d'anecdote (et re-render complet)
-// sans attendre le lendemain — utile si la recherche Wikipédia avait échoué
-// une première fois (le tirage du film, lui, reste le même de la journée
-// par conception : voir le commentaire sur isWednesday plus haut).
+// Réglages : force un rechargement du Film du jour — utile si la section
+// n'a pas pu se charger correctement (panne réseau ponctuelle...). Le
+// tirage du film, lui, reste le même de la journée par conception : voir
+// le commentaire sur isWednesday plus haut.
 document.getElementById('clear-fdj-cache-btn')?.addEventListener('click', () => {
   localStorage.removeItem(FILM_DU_JOUR_KEY);
   loadFilmDuJour();
@@ -5974,6 +5885,17 @@ const GUESS_GAME_KEY = 'lbx_guess_game';
 const GUESS_STREAK_KEY = 'lbx_guess_streak';
 const GUESS_LAST_PLAYED_KEY = 'lbx_guess_last_played'; // date de la derniere partie JOUEE (gagnee ou perdue), pour la continuite de la serie
 const GUESS_MAX_ATTEMPTS = 5;
+// Ferme les suggestions de titre au clic en dehors — un seul écouteur pour
+// toute la durée de vie de la page (pas un par rendu du formulaire, qui se
+// reconstruit à chaque tentative ratée : ça aurait empilé un écouteur par
+// essai sans jamais les retirer). Recherche l'élément en direct au moment
+// du clic plutôt que de capturer une référence, qui deviendrait obsolète
+// dès le prochain rendu.
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.guess-input-wrap')) return;
+  const guessSuggestEl = document.getElementById('guess-suggestions');
+  if (guessSuggestEl) guessSuggestEl.style.display = 'none';
+});
 // Un cran de flou par essai (index 0 = avant le premier essai) ; le dernier
 // palier (après le 5e essai raté) est à 0 : l'affiche se révèle entièrement
 // que la partie soit gagnée ou perdue, jamais de flou résiduel frustrant.
@@ -6006,7 +5928,38 @@ function renderGuessStreakBadge() {
   badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
 }
 
-function renderGuessGame(m, anecdote, isWeekly) {
+// Suggestions de titres pendant la devinette — même recherche TMDb que le
+// formulaire de notation et la watchlist (fetchSuggestions dans
+// 04-search.js), mais SANS affiche ni bouton "saisie manuelle" : juste
+// titre + année en texte. Montrer l'affiche du bon film dans la liste
+// spoilerait instantanément le jeu, d'où cette version simplifiée dédiée.
+async function fetchGuessSuggestions(q, inputEl, suggestEl) {
+  try {
+    const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+    const data = await readApiJson(res);
+    const results = (data.results || []).slice(0, 6);
+    if (!results.length) { suggestEl.style.display = 'none'; return; }
+    suggestEl.innerHTML = '';
+    suggestEl.style.display = 'block';
+    results.forEach(r => {
+      const year = r.release_date?.slice(0, 4) || '????';
+      const item = document.createElement('div');
+      item.className = 'guess-suggestion-item';
+      item.setAttribute('role', 'option');
+      item.innerHTML = `<span class="guess-suggestion-title">${escAttr(r.title)}</span><span class="guess-suggestion-year">${year}</span>`;
+      item.addEventListener('click', () => {
+        inputEl.value = r.title;
+        suggestEl.style.display = 'none';
+        inputEl.focus();
+      });
+      suggestEl.appendChild(item);
+    });
+  } catch {
+    suggestEl.style.display = 'none'; // pas grave : la saisie libre + Valider marche toujours sans suggestion
+  }
+}
+
+function renderGuessGame(m, isWeekly) {
   const wrap = document.getElementById('fdj-wrap');
   const card = document.getElementById('fdj-card');
   if (!wrap || !card) return;
@@ -6021,7 +5974,7 @@ function renderGuessGame(m, anecdote, isWeekly) {
   // sections qui montraient jusqu'ici le MÊME film en double).
   if (!m.poster_path) {
     setFilmDuJourTitle(isWeekly);
-    renderRevealedFilm(m, anecdote, posterUrl, year, null);
+    renderRevealedFilm(m, posterUrl, year, null);
     return;
   }
 
@@ -6029,7 +5982,7 @@ function renderGuessGame(m, anecdote, isWeekly) {
 
   if (state.done) {
     setFilmDuJourTitle(isWeekly);
-    renderRevealedFilm(m, anecdote, posterUrl, year, state);
+    renderRevealedFilm(m, posterUrl, year, state);
     return;
   }
 
@@ -6039,9 +5992,7 @@ function renderGuessGame(m, anecdote, isWeekly) {
   renderGuessStreakBadge();
 
   const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
-  // Un nouvel indice par essai raté — volontairement différents des
-  // "Chiffres clés" de la fiche révélée (budget, tagline, note, durée),
-  // pour ne pas répéter la même info deux fois une fois le jeu terminé.
+  // Un nouvel indice par essai raté.
   const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
   const cast = m.credits?.cast || [];
   const hints = [];
@@ -6057,13 +6008,31 @@ function renderGuessGame(m, anecdote, isWeekly) {
     <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
     ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
     <form class="guess-form" id="guess-form" autocomplete="off">
-      <input type="text" class="guess-input" id="guess-input" placeholder="Titre du film…" aria-label="Ta proposition">
+      <div class="guess-input-wrap">
+        <input type="text" class="guess-input" id="guess-input" placeholder="Titre du film…" aria-label="Ta proposition" autocomplete="off">
+        <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+      </div>
       <button type="submit" class="guess-submit-btn">Valider</button>
     </form>
   `;
 
+  // Suggestions de titres en tapant — même recherche TMDb que le formulaire
+  // de notation et la watchlist, mais SANS affiche dans la liste (juste
+  // titre + année) : montrer l'affiche du bon film dans les suggestions
+  // spoilerait instantanément le jeu.
+  const guessInput = document.getElementById('guess-input');
+  const guessSuggestEl = document.getElementById('guess-suggestions');
+  let guessSearchTimer;
+  guessInput.addEventListener('input', () => {
+    clearTimeout(guessSearchTimer);
+    const q = guessInput.value.trim();
+    if (q.length < 2) { guessSuggestEl.style.display = 'none'; return; }
+    guessSearchTimer = setTimeout(() => fetchGuessSuggestions(q, guessInput, guessSuggestEl), 280);
+  });
+
   document.getElementById('guess-form').addEventListener('submit', (e) => {
     e.preventDefault();
+    guessSuggestEl.style.display = 'none';
     const input = document.getElementById('guess-input');
     const guess = normalizeGuessText(input.value);
     if (!guess) return;
@@ -6095,15 +6064,15 @@ function renderGuessGame(m, anecdote, isWeekly) {
     // Rejoue le rendu complet (pas juste la mise à jour du jeu) : si la
     // partie vient de se terminer, ce même appel bascule automatiquement sur
     // la fiche révélée — c'est tout l'intérêt de la fusion des deux sections.
-    renderGuessGame(m, anecdote, isWeekly);
+    renderGuessGame(m, isWeekly);
   });
 }
 
-// Affiche la fiche complète du jour — affiche nette, anecdote (ou faits
-// TMDb à défaut), plateformes — précédée du résultat du jeu si on vient d'y
-// jouer (state non nul), ou affichée directement s'il n'y avait pas
-// d'affiche pour deviner.
-function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
+// Affiche la fiche complète du jour — affiche nette, synopsis, réalisateur
+// et note, plateformes — précédée du résultat du jeu si on vient d'y jouer
+// (state non nul), ou affichée directement s'il n'y avait pas d'affiche
+// pour deviner.
+function renderRevealedFilm(m, posterUrl, year, state) {
   const card = document.getElementById('fdj-card');
   card.classList.add('fdj-revealed');
   card.classList.remove('fdj-guessing');
@@ -6115,36 +6084,17 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
        </div>`
     : '';
 
-  // L'anecdote (si trouvée) reste l'élément principal, mise en avant — les
-  // faits TMDb passent dans un accordéon "Chiffres clés", replié par défaut
-  // (natif <details>/<summary> : gratuit en accessibilité clavier, pas besoin
-  // de JS pour le toggle). Si aucune anecdote n'est trouvée, l'accordéon
-  // s'ouvre automatiquement puisqu'il n'y a rien d'autre à montrer.
-  // Une anecdote longue (souvent 300+ caractères, jusqu'à une quinzaine de
-  // lignes) rendait la carte immense — un mur de texte plutôt qu'un joli
-  // "fait marquant". Tronqué visuellement à 3 lignes par défaut (CSS
-  // line-clamp) avec un "Lire la suite" pour déplier — le texte complet
-  // reste dans le DOM depuis le début, aucun second appel réseau. Le seuil
-  // (140 caractères) est approximatif mais évite d'afficher un bouton
-  // inutile pour une anecdote déjà courte qui tient sur 2-3 lignes.
-  const anecdoteNeedsToggle = anecdote && anecdote.anecdote.length > 140;
-  const anecdoteHTML = anecdote
-    ? `<div class="fdj-anecdote-card">
-         <div class="fdj-anecdote-icon">${ICONS.lightbulb}</div>
-         <div class="fdj-anecdote-body">
-           <span class="fdj-anecdote-quote-mark" aria-hidden="true">“</span>
-           <p class="fdj-anecdote-text${anecdoteNeedsToggle ? ' fdj-anecdote-clamped' : ''}">${escAttr(anecdote.anecdote)}</p>
-           ${anecdoteNeedsToggle ? `<button type="button" class="fdj-anecdote-toggle">Lire la suite</button>` : ''}
-           <a href="${escAttr(anecdote.url)}" target="_blank" rel="noopener noreferrer" class="fdj-anecdote-source">Source : Wikipédia</a>
-         </div>
-       </div>`
-    : '';
-  const factsAccordionHTML = `
-    <details class="fdj-facts-accordion"${anecdote ? '' : ' open'}>
-      <summary>Chiffres clés</summary>
-      <ul class="fdj-facts">${buildFilmDuJourFacts(m).map(f => `<li>${escAttr(f)}</li>`).join('')}</ul>
-    </details>`;
-  const factsHTML = anecdoteHTML + factsAccordionHTML;
+  // Présentation simple du film : synopsis, réalisateur, note — les
+  // anecdotes Wikipédia ont été retirées (n'apportaient pas de réelle
+  // plus-value au retour de l'utilisateur), remplacées par ces informations
+  // toujours disponibles directement depuis TMDb, sans dépendre de
+  // l'existence d'une page Wikipédia adaptée.
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const metaParts = [];
+  if (director) metaParts.push(`Réalisé par ${escAttr(director)}`);
+  if (m.vote_average) metaParts.push(`${m.vote_average.toFixed(1)}/10`);
+  const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join(' · ')}</div>` : '';
+  const synopsisHTML = m.overview ? `<p class="fdj-synopsis">${escAttr(m.overview)}</p>` : '';
 
   card.innerHTML = `
     ${posterUrl
@@ -6153,17 +6103,17 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
     <div class="fdj-info">
       ${resultHTML}
       <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
-      ${factsHTML}
+      ${metaLineHTML}
+      ${synopsisHTML}
       <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
     </div>
   `;
   card.dataset.movieId = String(m.id);
   // La carte entière reste cliquable au clic/tap (zone large, meilleure
-  // ergonomie tactile) — seuls les VRAIS contrôles interactifs qu'elle
-  // contient (le lien source Wikipédia, le bouton de re-tentative des
-  // plateformes) en sont exclus, pour ne jamais voler leur propre clic.
+  // ergonomie tactile) — seul le bouton de re-tentative des plateformes en
+  // est exclu, pour ne jamais voler son propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-anecdote-source') || e.target.closest('.fdj-facts-accordion') || e.target.closest('.fdj-anecdote-toggle')) return;
+    if (e.target.closest('.fdj-providers')) return;
     openMovieDetailSheet(m.id);
   });
   // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
@@ -6178,18 +6128,6 @@ function renderRevealedFilm(m, anecdote, posterUrl, year, state) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       openMovieDetailSheet(m.id);
-    });
-  }
-
-  // "Lire la suite" : déplie le texte complet de l'anecdote (déjà dans le
-  // DOM, aucun appel réseau) en retirant le troncage visuel à 3 lignes.
-  const anecdoteToggle = card.querySelector('.fdj-anecdote-toggle');
-  if (anecdoteToggle) {
-    anecdoteToggle.addEventListener('click', () => {
-      const text = card.querySelector('.fdj-anecdote-text');
-      const expanded = text.classList.toggle('fdj-anecdote-expanded');
-      text.classList.toggle('fdj-anecdote-clamped', !expanded);
-      anecdoteToggle.textContent = expanded ? 'Réduire' : 'Lire la suite';
     });
   }
 

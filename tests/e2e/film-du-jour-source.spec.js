@@ -9,7 +9,6 @@ const DETAIL = {
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search?id=99', route => route.fulfill({ json: DETAIL }));
-  await page.route('**/api/search?wikianecdote=*', route => route.fulfill({ json: { anecdote: null } }));
   await page.route('**/api/search*providers*', route => route.fulfill({ json: { results: {} } }));
 });
 
