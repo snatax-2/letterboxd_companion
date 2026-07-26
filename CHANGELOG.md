@@ -13,6 +13,16 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Modifié
+- **Contraste et icônes de la fiche Film du Jour** (retour utilisateur, capture
+  à l'appui) : la ligne réalisateur/note se confondait visuellement avec le
+  synopsis. Ajout d'icônes cohérentes avec le reste de l'app (clap de cinéma,
+  déjà utilisé comme repli d'affiche ; étoile, déjà utilisée pour les notes)
+  et passage en texte plus contrasté (`text-hi`, gras) pour bien distinguer
+  les informations structurées du synopsis en prose. Icônes marquées
+  décoratives (`aria-hidden`) puisque le texte adjacent porte déjà toute
+  l'information.
+
+### Modifié
 - **Anecdotes Wikipédia retirées** (retour utilisateur : "n'apporte pas de
   réelle plus-value"). Remplacées par une présentation simple et toujours
   fiable du film — synopsis, réalisateur, note TMDb — sans dépendre de

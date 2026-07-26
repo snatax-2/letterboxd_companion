@@ -2191,10 +2191,19 @@
      accordéon "Chiffres clés", retirée : n'apportait pas de réelle
      plus-value au retour de l'utilisateur, et dépendait de la disponibilité
      d'une page Wikipédia adaptée — ces informations viennent directement et
-     fiablement de TMDb à chaque fois. */
-  .fdj-meta-line { font-size: 0.78rem; color: var(--text-mid); margin-top: 4px; }
+     fiablement de TMDb à chaque fois. Icônes cohérentes avec le reste de
+     l'app (clap déjà utilisé comme repli d'affiche, étoile déjà utilisée
+     pour les notes) plutôt qu'un simple texte séparé par des points, pour
+     un vrai contraste visuel entre les infos structurées et le synopsis. */
+  .fdj-meta-line {
+    display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px;
+    font-size: 0.82rem; font-weight: 700; color: var(--text-hi);
+  }
+  .fdj-meta-item { display: inline-flex; align-items: center; gap: 5px; }
+  .fdj-meta-icon { display: inline-flex; color: var(--orange); flex-shrink: 0; }
+  .fdj-meta-icon .icon { width: 14px; height: 14px; }
   .fdj-synopsis {
-    margin: 8px 0 0; font-size: 0.82rem; color: var(--text); line-height: 1.45;
+    margin: 10px 0 0; font-size: 0.82rem; color: var(--text); line-height: 1.5;
   }
   .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; margin-top: 8px; }
   .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }

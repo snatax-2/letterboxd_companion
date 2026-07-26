@@ -6091,9 +6091,12 @@ function renderRevealedFilm(m, posterUrl, year, state) {
   // l'existence d'une page Wikipédia adaptée.
   const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
   const metaParts = [];
-  if (director) metaParts.push(`Réalisé par ${escAttr(director)}`);
-  if (m.vote_average) metaParts.push(`${m.vote_average.toFixed(1)}/10`);
-  const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join(' · ')}</div>` : '';
+  // Icônes cohérentes avec le reste de l'app (clap déjà utilisé comme
+  // placeholder d'affiche, étoile déjà utilisée pour les notes ailleurs)
+  // plutôt que d'introduire de nouveaux symboles isolés.
+  if (director) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.clapper}</span>Réalisé par ${escAttr(director)}</span>`);
+  if (m.vote_average) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.star}</span>${m.vote_average.toFixed(1)}/10</span>`);
+  const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join('')}</div>` : '';
   const synopsisHTML = m.overview ? `<p class="fdj-synopsis">${escAttr(m.overview)}</p>` : '';
 
   card.innerHTML = `
