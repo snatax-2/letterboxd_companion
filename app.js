@@ -6097,7 +6097,20 @@ function renderRevealedFilm(m, posterUrl, year, state) {
   if (director) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.clapper}</span>Réalisé par ${escAttr(director)}</span>`);
   if (m.vote_average) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.star}</span>${m.vote_average.toFixed(1)}/10</span>`);
   const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join('')}</div>` : '';
-  const synopsisHTML = m.overview ? `<p class="fdj-synopsis">${escAttr(m.overview)}</p>` : '';
+  // Synopsis en encart distinct (même traitement visuel que l'ancienne
+  // carte anecdote, réutilisé ici) — tronqué à 4 lignes avec "Lire la
+  // suite" si long, pour garder une hauteur de carte stable plutôt que de
+  // varier fortement selon la longueur du synopsis d'un film à l'autre.
+  const synopsisNeedsToggle = m.overview && m.overview.length > 180;
+  const synopsisHTML = m.overview
+    ? `<div class="fdj-synopsis-card">
+         <div class="fdj-synopsis-icon" aria-hidden="true">${ICONS.clapper}</div>
+         <div class="fdj-synopsis-body">
+           <p class="fdj-synopsis-text${synopsisNeedsToggle ? ' fdj-synopsis-clamped' : ''}">${escAttr(m.overview)}</p>
+           ${synopsisNeedsToggle ? `<button type="button" class="fdj-synopsis-toggle">Lire la suite</button>` : ''}
+         </div>
+       </div>`
+    : '';
 
   card.innerHTML = `
     ${posterUrl
@@ -6116,7 +6129,7 @@ function renderRevealedFilm(m, posterUrl, year, state) {
   // ergonomie tactile) — seul le bouton de re-tentative des plateformes en
   // est exclu, pour ne jamais voler son propre clic.
   card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers')) return;
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-synopsis-toggle')) return;
     openMovieDetailSheet(m.id);
   });
   // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
@@ -6131,6 +6144,18 @@ function renderRevealedFilm(m, posterUrl, year, state) {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       openMovieDetailSheet(m.id);
+    });
+  }
+
+  // "Lire la suite" : déplie le synopsis complet (déjà dans le DOM, aucun
+  // appel réseau) en retirant le troncage visuel à 4 lignes.
+  const synopsisToggle = card.querySelector('.fdj-synopsis-toggle');
+  if (synopsisToggle) {
+    synopsisToggle.addEventListener('click', () => {
+      const text = card.querySelector('.fdj-synopsis-text');
+      const expanded = text.classList.toggle('fdj-synopsis-expanded');
+      text.classList.toggle('fdj-synopsis-clamped', !expanded);
+      synopsisToggle.textContent = expanded ? 'Réduire' : 'Lire la suite';
     });
   }
 
@@ -6631,9 +6656,14 @@ function renderQuizAnsweredState(card, q, lastResult) {
   card.innerHTML = `
     <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
-      ${q.allAnswers.map(a => {
+      ${q.allAnswers.map((a, i) => {
         const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
-        return `<button class="quiz-answer-btn ${cls}" disabled>${a}</button>`;
+        const icon = a === q.correctAnswer ? ICONS.check : (a === lastResult.picked ? ICONS.close : '');
+        return `<button class="quiz-answer-btn ${cls}" disabled>
+          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
+          <span class="quiz-answer-text">${a}</span>
+          <span class="quiz-answer-icon" aria-hidden="true">${icon}</span>
+        </button>`;
       }).join('')}
     </div>
     <div class="quiz-already-played">${lastResult.wasCorrect ? "✓ Bonne réponse aujourd'hui — reviens demain pour la suite." : `La bonne réponse était « ${q.correctAnswer} » — reviens demain.`}</div>
@@ -6665,7 +6695,12 @@ async function loadDailyQuiz() {
   card.innerHTML = `
     <div class="quiz-question">${escAttr(q.question)}</div>
     <div class="quiz-answers">
-      ${q.allAnswers.map(a => `<button class="quiz-answer-btn" data-answer="${escAttr(a)}">${a}</button>`).join('')}
+      ${q.allAnswers.map((a, i) => `
+        <button class="quiz-answer-btn" data-answer="${escAttr(a)}">
+          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
+          <span class="quiz-answer-text">${a}</span>
+          <span class="quiz-answer-icon" aria-hidden="true"></span>
+        </button>`).join('')}
     </div>
   `;
 
@@ -6675,8 +6710,15 @@ async function loadDailyQuiz() {
       const wasCorrect = picked === q.correctAnswer;
       card.querySelectorAll('.quiz-answer-btn').forEach(b => {
         b.disabled = true;
-        if (b.dataset.answer === q.correctAnswer) b.classList.add('correct');
-        else if (b === btn) b.classList.add('wrong');
+        // Icône en plus de la couleur (pas seulement une teinte de fond) :
+        // reste clair même pour qui distingue mal le vert du rouge.
+        if (b.dataset.answer === q.correctAnswer) {
+          b.classList.add('correct');
+          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.check;
+        } else if (b === btn) {
+          b.classList.add('wrong');
+          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.close;
+        }
       });
 
       // Série : hier → continue ; sinon (jamais joué, ou pause d'un jour ou

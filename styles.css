@@ -2155,14 +2155,36 @@
   .quiz-question { font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; color: var(--text-hi); line-height: 1.4; margin-bottom: 14px; }
   .quiz-answers { display: flex; flex-direction: column; gap: 8px; }
   .quiz-answer-btn {
+    display: flex; align-items: center; gap: 10px;
     text-align: left; background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
     padding: 10px 14px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer; font-family: var(--font-body);
     transition: border-color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   }
+  /* Pastille A/B/C/D, esprit "quiz télé" plutôt que de simples boutons pleine largeur. */
+  .quiz-answer-letter {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border-hi);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; font-family: var(--font-heading); color: var(--text-mid);
+    transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
+  }
+  .quiz-answer-text { flex: 1; }
+  .quiz-answer-icon { flex-shrink: 0; display: inline-flex; }
+  .quiz-answer-icon .icon { width: 16px; height: 16px; }
   .quiz-answer-btn:hover:not(:disabled) { border-color: var(--orange); }
   .quiz-answer-btn:disabled { cursor: default; }
-  .quiz-answer-btn.correct { background: rgba(90,160,90,0.18); border-color: var(--green, #5a9e5a); color: var(--text-hi); }
-  .quiz-answer-btn.wrong { background: rgba(180,70,70,0.18); border-color: var(--red, #b44646); color: var(--text-hi); }
+  /* color-mix (pas de rgba() fixe) : la version précédente était codée en
+     dur (rgba(90,160,90...)/(180,70,70...)) et ne s'adaptait à AUCUN des 7
+     thèmes de l'app — un vrai défaut, pas juste un choix esthétique, trouvé
+     en révisant l'affichage du quiz. Une icône (✓/✗) accompagne désormais
+     la couleur, pas seulement une teinte de fond — reste clair même pour
+     qui distingue mal le vert du rouge. */
+  .quiz-answer-btn.correct { background: color-mix(in srgb, var(--green) 18%, var(--surface2)); border-color: var(--green); color: var(--text-hi); }
+  .quiz-answer-btn.correct .quiz-answer-letter { background: var(--green); border-color: var(--green); color: var(--green-fill-text, #fff); }
+  .quiz-answer-btn.correct .quiz-answer-icon { color: var(--green); }
+  .quiz-answer-btn.wrong { background: color-mix(in srgb, var(--red) 18%, var(--surface2)); border-color: var(--red); color: var(--text-hi); }
+  .quiz-answer-btn.wrong .quiz-answer-letter { background: var(--red); border-color: var(--red); color: var(--red-fill-text, #fff); }
+  .quiz-answer-btn.wrong .quiz-answer-icon { color: var(--red); }
   .quiz-result { margin-top: 12px; font-size: 0.82rem; color: var(--text-mid); text-align: center; }
   .quiz-already-played { text-align: center; padding: 8px 0; color: var(--text-mid); font-size: 0.86rem; }
 
@@ -2202,9 +2224,38 @@
   .fdj-meta-item { display: inline-flex; align-items: center; gap: 5px; }
   .fdj-meta-icon { display: inline-flex; color: var(--orange); flex-shrink: 0; }
   .fdj-meta-icon .icon { width: 14px; height: 14px; }
-  .fdj-synopsis {
-    margin: 10px 0 0; font-size: 0.82rem; color: var(--text); line-height: 1.5;
+  /* Synopsis en encart distinct — même traitement visuel que l'ancienne
+     carte anecdote Wikipédia (bande colorée à gauche, plutôt qu'une bordure
+     fine tout autour : reste visible même sur un thème à faible contraste
+     volontaire comme Méridien, où un fond de carte et une bordure fine
+     étaient quasiment invisibles — 1.11:1 mesuré à l'époque). Icône clap
+     (pas l'ampoule de l'ancienne anecdote, qui signalait un "fait
+     surprenant" — un synopsis est une présentation neutre, pas une
+     révélation). */
+  .fdj-synopsis-card {
+    display: flex; gap: 10px; margin: 10px 0; padding: 12px;
+    background: var(--surface2); border-radius: var(--radius-sm);
+    border-left: 4px solid var(--orange);
+    box-shadow: var(--box-shadow-style, none);
   }
+  .fdj-synopsis-icon { flex-shrink: 0; color: var(--text-hi); font-size: 1.2rem; padding-top: 2px; }
+  .fdj-synopsis-icon .icon { width: 18px; height: 18px; }
+  .fdj-synopsis-body { flex: 1; min-width: 0; }
+  .fdj-synopsis-text { margin: 0; font-size: 0.82rem; color: var(--text); line-height: 1.5; }
+  /* Troncage visuel à 4 lignes par défaut — le texte complet reste dans le
+     DOM (pas de second appel réseau au dépli), juste masqué visuellement.
+     Hauteur de carte stable d'un film à l'autre plutôt que de varier
+     fortement selon la longueur du synopsis. */
+  .fdj-synopsis-text.fdj-synopsis-clamped {
+    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .fdj-synopsis-toggle {
+    display: block; margin-top: 4px; padding: 0; background: none; border: none;
+    font-size: 0.72rem; font-weight: 700; color: var(--orange); cursor: pointer;
+    font-family: var(--font-heading);
+  }
+  .fdj-synopsis-toggle:hover { text-decoration: underline; }
   .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; margin-top: 8px; }
   .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
   .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }

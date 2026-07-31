@@ -12,6 +12,23 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Synopsis en encart distinct** dans la fiche révélée du Film du Jour —
+  même traitement visuel que l'ancienne carte anecdote (bande colorée à
+  gauche, icône), avec troncage à 4 lignes et bouton "Lire la suite" pour
+  les synopsis longs, afin de garder une hauteur de carte stable d'un film à
+  l'autre.
+- **Pastilles A/B/C/D et icônes ✓/✗** sur les réponses du Quiz du jour, pour
+  un vrai esprit "quiz télé" et une lisibilité qui ne dépend pas seulement
+  de la couleur.
+
+### Corrigé
+- **Vrai bug trouvé en révisant l'affichage du Quiz** : les couleurs
+  bonne/mauvaise réponse étaient codées en dur (`rgba(90,160,90,...)` /
+  `rgba(180,70,70,...)`) et ne s'adaptaient à aucun des 7 thèmes de l'app —
+  contrairement à tout le reste de l'interface. Corrigé avec les couleurs du
+  thème actif.
+
 ### Modifié
 - **Contraste et icônes de la fiche Film du Jour** (retour utilisateur, capture
   à l'appui) : la ligne réalisateur/note se confondait visuellement avec le

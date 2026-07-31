@@ -152,7 +152,7 @@ test('pendant la devinette, ni synopsis/infos ni plateformes ne sont visibles (e
   await page.click('#nav-discover');
   await page.waitForSelector('.guess-poster');
 
-  await expect(page.locator('.fdj-synopsis')).toHaveCount(0);
+  await expect(page.locator('.fdj-synopsis-text')).toHaveCount(0);
   await expect(page.locator('.fdj-meta-line')).toHaveCount(0);
   await expect(page.locator('#fdj-providers')).toHaveCount(0);
   await expect(page.locator('.fdj-film-title')).toHaveCount(0);
@@ -168,7 +168,7 @@ test('apres une victoire, le synopsis/realisateur/note et les plateformes appara
 
   await expect(page.locator('.guess-result.guess-won')).toBeVisible();
   await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
-  await expect(page.locator('.fdj-synopsis')).toContainText('Un synopsis suffisamment long');
+  await expect(page.locator('.fdj-synopsis-text')).toContainText('Un synopsis suffisamment long');
   await expect(page.locator('.fdj-meta-line')).toContainText('Réal Isateur');
   await expect(page.locator('.fdj-meta-line')).toContainText('7.2/10');
   await expect(page.locator('#fdj-providers')).toBeVisible();
@@ -186,7 +186,7 @@ test('apres une defaite, la fiche complete se revele aussi (pas seulement le tit
 
   await expect(page.locator('.guess-result.guess-lost')).toBeVisible();
   await expect(page.locator('.fdj-film-title')).toContainText('Film Mystère');
-  await expect(page.locator('.fdj-synopsis')).toBeVisible();
+  await expect(page.locator('.fdj-synopsis-text')).toBeVisible();
 });
 
 test('une seule carte affichee (plus de section separee en double)', async ({ page }) => {
