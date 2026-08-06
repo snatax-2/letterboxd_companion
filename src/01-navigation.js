@@ -52,6 +52,7 @@ function switchRightTab(tabName) {
   if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
     renderDuelRanking();
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
+    if (typeof renderCuratedListsCard === 'function') renderCuratedListsCard();
   }
   // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu
   // ciblé : pas de recalcul du radar/heatmap/badges à chaque sauvegarde si

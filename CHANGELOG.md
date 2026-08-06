@@ -13,6 +13,26 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **"Classiques à explorer"** dans Profil — deux natures de listes bien
+  distinctes, jamais mélangées :
+  - **Tous les temps** : compilée à la main sur le classement Sight & Sound
+    2022 (British Film Institute, référence la plus citée du milieu
+    critique, ~1 600 votants, publié tous les 10 ans).
+  - **Une liste par décennie** (des années 1920 à aujourd'hui) : tri
+    algorithmique transparent sur TMDb (note moyenne, minimum 500 votes pour
+    éviter qu'un film obscur à 3 votes ne fausse le classement) — annoncé
+    comme tel dans l'app, pas présenté comme un vrai palmarès critique.
+  - Pourcentage déjà vu par liste (même mécanisme que pour un
+    réalisateur/acteur), grille détaillée avec films vus/manquants
+    distingués visuellement, et un bouton pour ajouter tous les manquants
+    d'un coup à la watchlist active.
+  - Raccourci direct depuis Découvrir, sans dupliquer la fonctionnalité à
+    deux endroits.
+  - La résolution des ~100 titres de la liste "Tous les temps" vers leurs
+    identifiants TMDb se fait en tâche de fond, par lots (respecte la limite
+    de débit du proxy), une seule fois — mise en cache définitivement
+    ensuite.
+
 - **Synopsis en encart distinct** dans la fiche révélée du Film du Jour —
   même traitement visuel que l'ancienne carte anecdote (bande colorée à
   gauche, icône), avec troncage à 4 lignes et bouton "Lire la suite" pour

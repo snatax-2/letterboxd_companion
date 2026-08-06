@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -172,6 +172,31 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (decadeTop) {
+      // Cas : "Meilleurs films des années XXXX" (listes prédéfinies du
+      // Profil) — contrairement à la liste "tous les temps" (compilée à la
+      // main sur le classement Sight & Sound), ici pas de source critique
+      // faisant autorité par décennie : tri algorithmique transparent sur
+      // TMDb (note moyenne, minimum 500 votes pour éviter qu'un film obscur
+      // avec 3 votes à 10/10 fausse le classement) — annoncé comme tel dans
+      // l'app, pas présenté comme un vrai palmarès critique.
+      const startYear = parseInt(decadeTop, 10);
+      if (!startYear || startYear < 1900 || startYear > 2030) {
+        setCache(3600, 86400);
+        return res.status(200).json({ results: [] });
+      }
+      const endYear = startYear + 9;
+      const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=500&primary_release_date.gte=${startYear}-01-01&primary_release_date.lte=${endYear}-12-31&page=${page}`)
+          .then(r => r.json()).catch(() => ({ results: [] }))
+      ));
+      const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
+      // Une semaine de cache : ce classement ne bouge presque jamais d'un
+      // jour à l'autre (les votes TMDb évoluent lentement), inutile de le
+      // recalculer à chaque consultation du Profil.
+      setCache(604800, 2592000);
+      return res.status(200).json({ results: merged.slice(0, 100) });
+
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const detailsRes = await fetch(

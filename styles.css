@@ -1537,6 +1537,36 @@
   }
   .heatmap-legend { display: flex; align-items: center; gap: 4px; justify-content: flex-end; margin-top: 8px; font-size: 0.66rem; color: var(--text-mid); }
 
+  /* ── Profil : "Classiques à explorer" (listes prédéfinies) ── */
+  .curated-lists-hint { font-size: 0.76rem; color: var(--text-mid); margin: -4px 0 10px; }
+  .curated-list-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 6px; cursor: pointer;
+    font-family: var(--font-body); transition: border-color var(--dur-fast);
+  }
+  .curated-list-row:last-child { margin-bottom: 0; }
+  .curated-list-row:hover { border-color: var(--orange); }
+  .curated-list-row-label { font-size: 0.85rem; font-weight: 700; color: var(--text-hi); }
+  .curated-list-row-sub { font-size: 0.7rem; color: var(--text-mid); margin-top: 2px; }
+  .curated-list-row-pct {
+    flex-shrink: 0; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;
+    color: var(--orange); min-width: 42px; text-align: right;
+  }
+
+  /* ── Découvrir : raccourci vers les Classiques (Profil) ── */
+  .curated-lists-shortcut-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    padding: 12px 14px; cursor: pointer; font-family: var(--font-body); color: var(--text-hi);
+    text-align: left; transition: border-color var(--dur-fast);
+  }
+  .curated-lists-shortcut-btn:hover { border-color: var(--orange); }
+  .curated-lists-shortcut-btn .icon:first-child { flex-shrink: 0; color: var(--orange); }
+  .curated-lists-shortcut-btn span:not([class]) { font-size: 0.85rem; font-weight: 700; flex: 1; }
+  .curated-lists-shortcut-sub { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-mid); margin-top: 2px; }
+  .curated-lists-shortcut-arrow { flex-shrink: 0; color: var(--text-mid); }
+
   .decade-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
   .decade-label { width: 52px; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hi); }
   .decade-bar-track { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }

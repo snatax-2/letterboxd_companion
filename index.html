@@ -322,6 +322,13 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="curated-list-sheet" role="dialog" aria-modal="true" aria-label="Détails de la liste" aria-labelledby="cls-title">
+  <div class="modal-box mds-box">
+    <button type="button" class="mds-close" id="cls-close-btn" aria-label="Fermer la liste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div id="cls-content"></div>
+  </div>
+</div>
+
 <!-- Créer / renommer une liste "À voir" -->
 <div class="modal-overlay" id="wl-list-modal" role="dialog" aria-modal="true" aria-labelledby="wl-list-modal-title">
   <div class="modal-box">
@@ -750,6 +757,14 @@
           </div>
         </div>
 
+        <div class="discover-section" id="curated-lists-shortcut-wrap">
+          <button type="button" class="curated-lists-shortcut-btn" id="curated-lists-shortcut-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Explorer les classiques du cinéma <span class="curated-lists-shortcut-sub">— % déjà vu, dans ton Profil</span></span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon curated-lists-shortcut-arrow"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+
         <div class="discover-section" id="fdj-wrap" style="display:none">
           <div class="discover-section-title" id="fdj-title">
             <span id="fdj-title-text">Devine le Film du Jour</span>
@@ -804,6 +819,11 @@
       <div class="card" id="duels-card">
         <div class="card-title">Ton classement</div>
         <div id="duel-ranking-list"></div>
+      </div>
+      <div class="card" id="curated-lists-card">
+        <div class="card-title">Classiques à explorer</div>
+        <div class="curated-lists-hint">Le pourcentage déjà vu de quelques incontournables du cinéma.</div>
+        <div id="curated-lists-container"></div>
       </div>
       <div class="card" id="year-ago-card" style="display:none;">
         <div class="card-title">Il y a un an</div>
