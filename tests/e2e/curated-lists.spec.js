@@ -24,20 +24,34 @@ test('carte Classiques a explorer : rendu et pourcentages', async ({ page }) => 
   await page.waitForSelector('#curated-lists-card');
 
   const rowCount = await page.locator('.curated-list-row').count();
-  console.log('nombre de listes affichees:', rowCount);
-  expect(rowCount).toBe(12); // 1 tous-les-temps + 11 decennies
+  console.log('nombre de listes au total (dont repliees):', rowCount);
+  expect(rowCount).toBe(17); // 1 tous-les-temps + 11 decennies + 5 studios
+
+  const accordionOpen = await page.locator('.curated-decades-accordion').first().evaluate(el => el.open);
+  console.log('accordeon decennies ouvert par defaut:', accordionOpen);
+  expect(accordionOpen).toBe(false);
+  const visibleRows = await page.locator('.curated-list-row:visible').count();
+  console.log('lignes visibles avant depli (attendu: 1, juste Tous les temps):', visibleRows);
+  expect(visibleRows).toBe(1);
 
   await page.waitForTimeout(1000);
   const decadePct = await page.locator('#curated-pct-decade-1940').textContent();
   console.log('pourcentage decennie 1940 (1 film vu sur 2 attendu -> 50%):', decadePct);
 
   // Ouvre la liste 1940 et verifie la grille
+  await page.locator('.curated-decades-accordion summary').first().click(); // deplie l'accordeon des decennies (le premier des deux) avant de cliquer dedans
   await page.click('.curated-list-row[data-list-id="decade-1940"]');
   await page.waitForSelector('#curated-list-sheet.open');
   const filmCount = await page.locator('#curated-list-sheet .pds-film-item').count();
   const seenCount = await page.locator('#curated-list-sheet .pds-film-item.seen').count();
   console.log('films dans la liste:', filmCount, '| dont vus:', seenCount);
   await expect(page.locator('#cls-add-missing-btn')).toBeVisible();
+  // Verrouille le correctif : les annees viennent de release_date (donnees
+  // TMDb discover brutes dans le mock), pas d'un champ year pre-existant --
+  // ne doivent jamais s'afficher vides.
+  const years = await page.locator('#curated-list-sheet .pds-film-year').allTextContents();
+  console.log('annees affichees (decennie 1940):', years);
+  expect(years).toEqual(['1941', '1945']);
 });
 
 test('raccourci Decouvrir -> Profil, et ajout des manquants a la watchlist', async ({ page }) => {
@@ -61,6 +75,7 @@ test('raccourci Decouvrir -> Profil, et ajout des manquants a la watchlist', asy
   await expect(page.locator('#curated-lists-card')).toBeInViewport();
 
   // 2. Ajout des manquants a la watchlist (aucun film vu -> 2 manquants)
+  await page.locator('.curated-decades-accordion summary').first().click(); // deplie l'accordeon des decennies (le premier des deux) avant de cliquer dedans
   await page.click('.curated-list-row[data-list-id="decade-1940"]');
   await page.waitForSelector('#curated-list-sheet.open');
   await page.click('#cls-add-missing-btn');

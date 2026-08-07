@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 16-blind-spots.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', initErrorLogUI);
 // explicite pour ça).
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true };
+const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true };
 
 function loadFeatureFlags() {
   try {
@@ -457,6 +457,7 @@ function initFeatureToggleUI() {
     'setting-feature-quiz': 'quiz',
     'setting-feature-trending': 'trending',
     'setting-feature-discover-recs': 'discoverRecs',
+    'setting-feature-guess-game': 'guessGame',
   };
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
@@ -476,6 +477,12 @@ function initFeatureToggleUI() {
       const discoverView = document.getElementById('view-discover');
       const discoverActive = discoverView && discoverView.classList.contains('active');
       if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
+      // "Devine le Film du Jour" fait exception : désactiver DOIT révéler
+      // immédiatement le film en cours si la devinette était affichée (pas
+      // de sens à laisser un mystère non désiré à l'écran) — dans les deux
+      // sens, contrairement aux autres bascules qui ne rechargent qu'à la
+      // réactivation.
+      if (key === 'guessGame' && discoverActive && typeof loadFilmDuJour === 'function') loadFilmDuJour();
     });
   }
 }
@@ -601,6 +608,59 @@ const CURATED_ALL_TIME = [
   { title: 'Get Out', year: 2017 },
 ];
 
+// Studios/maisons de production à identité créative forte et catalogue
+// resserré (pas les grands studios généralistes type Universal/Warner, qui
+// ont des milliers de films sans vraie identité de "collection à
+// compléter"). Identifiants TMDb vérifiés un par un (une erreur ici
+// casserait silencieusement la fonctionnalité) :
+// A24 themoviedb.org/company/41077-a24, Studio Ghibli .../company/10342,
+// Pixar .../company/3-pixar, Blumhouse .../company/3172-blumhouse-productions,
+// Marvel Studios .../company/420-marvel-studios.
+const CURATED_STUDIOS = [
+  { id: 41077, name: 'A24', sub: 'Cinéma indépendant et arthouse' },
+  { id: 10342, name: 'Studio Ghibli', sub: 'Animation japonaise' },
+  { id: 3, name: 'Pixar', sub: 'Animation 3D' },
+  { id: 3172, name: 'Blumhouse', sub: 'Horreur à petit budget' },
+  { id: 420, name: 'Marvel Studios', sub: 'Univers cinématographique Marvel' },
+];
+
+// Carte du monde du cinéma — sélection restreinte de pays à forte identité
+// cinématographique (pas les ~195 pays du monde, dont la plupart n'auraient
+// pas grand-chose à montrer avec un vrai filtre TMDb). Codes ISO 3166-1
+// pour with_origin_country. `top`/`left` en pourcentage : position
+// APPROXIMATIVE sur une carte stylisée (pas de vraies frontières
+// géographiques précises — voir la discussion sur l'ergonomie tactile),
+// juste assez pour suggérer la bonne région du monde.
+const CURATED_COUNTRIES = [
+  { code: 'JP', name: 'Japon', flag: '🇯🇵', top: 15, left: 90 },
+  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷', top: 30, left: 85 },
+  { code: 'DK', name: 'Danemark', flag: '🇩🇰', top: 15, left: 45 },
+  { code: 'IT', name: 'Italie', flag: '🇮🇹', top: 35, left: 48 },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷', top: 55, left: 60 },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', top: 55, left: 82 },
+  { code: 'IN', name: 'Inde', flag: '🇮🇳', top: 78, left: 62 },
+  { code: 'MX', name: 'Mexique', flag: '🇲🇽', top: 70, left: 12 },
+];
+
+// Exploration par thème (Découvrir) — mots-clés TMDb, indépendants des
+// genres classiques (un genre dit "c'est un thriller", un mot-clé dit
+// "c'est un film de braquage"). Sélection choisie à la main plutôt qu'une
+// recherche en texte libre (risque réel de recherches sans résultat) —
+// identifiants vérifiés un par un. Contrairement aux décennies/studios/pays
+// (un vrai "canon" à suivre, dans Profil), un mot-clé n'a pas de nombre
+// canonique de films : vit dans Découvrir comme un outil de
+// navigation/suggestion, pas de suivi de complétion.
+const CURATED_THEMES = [
+  { id: 10051, name: 'Braquage', emoji: '💰' },
+  { id: 10854, name: 'Boucle temporelle', emoji: '🔁' },
+  { id: 9748, name: 'Vengeance', emoji: '⚔️' },
+  { id: 10683, name: "Passage à l'âge adulte", emoji: '🌱' },
+  { id: 10349, name: 'Survie', emoji: '🏝️' },
+  { id: 7312, name: 'Road trip', emoji: '🚗' },
+  { id: 3358, name: 'Maison hantée', emoji: '👻' },
+  { id: 4565, name: 'Dystopie', emoji: '🏙️' },
+];
+
 // ═══════════════════════════════════════════
 //  GESTION DES ONGLETS (Desktop & Mobile)
 // ═══════════════════════════════════════════
@@ -636,6 +696,8 @@ function switchRightTab(tabName) {
     if (flags.discoverRecs !== false) loadDiscoverQueue();
     if (flags.trending !== false) loadTrendingCarousel();
     loadFilmDuJour(); // pas dans la liste des bascules demandées
+    loadOnThisDay();
+    if (typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
     if (flags.quiz !== false) loadDailyQuiz();
   }
   // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
@@ -5926,6 +5988,65 @@ async function loadFilmDuJour() {
   }
 }
 
+// ═══════════════════════════════════════════
+//  CE JOUR-LÀ (anniversaires de sortie)
+// ═══════════════════════════════════════════
+// Anniversaires RONDS (10/20/30/40/50 ans) plutôt que toutes les années —
+// TMDb ne permet pas de filtrer "sorti un 7 août, toutes années confondues"
+// en un seul appel (voir api/search.js). Certains jours n'auront aucun
+// anniversaire rond avec une sortie notable : la section se masque
+// entièrement plutôt que d'afficher un encart vide (même esprit que le
+// Quiz/Duel quand rien n'est disponible).
+const ON_THIS_DAY_KEY = 'lbx_on_this_day';
+
+async function loadOnThisDay() {
+  const wrap = document.getElementById('on-this-day-wrap');
+  const strip = document.getElementById('on-this-day-strip');
+  if (!wrap || !strip) return;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(ON_THIS_DAY_KEY) || 'null'); } catch {}
+
+  let anniversaries;
+  if (cached && cached.date === todayKey) {
+    anniversaries = cached.anniversaries;
+  } else {
+    try {
+      const res = await fetch('/api/search?onThisDay=1');
+      const data = await res.json();
+      anniversaries = data.anniversaries || [];
+      localStorage.setItem(ON_THIS_DAY_KEY, JSON.stringify({ date: todayKey, anniversaries }));
+    } catch (e) {
+      console.warn('Impossible de charger "Ce jour-là"', e);
+      return;
+    }
+  }
+
+  if (anniversaries.length === 0) return; // section reste masquée (display:none par défaut)
+
+  strip.innerHTML = anniversaries.flatMap(a =>
+    a.films.map(f => `
+      <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="on-this-day-poster" src="https://image.tmdb.org/t/p/w200${f.poster_path}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
+        <div class="on-this-day-title">${escAttr(f.title)}</div>
+      </div>
+    `)
+  ).join('');
+
+  strip.querySelectorAll('.on-this-day-item').forEach(item => {
+    item.addEventListener('click', () => openMovieDetailSheet(item.dataset.movieId));
+    item.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMovieDetailSheet(item.dataset.movieId);
+    });
+  });
+
+  wrap.style.display = 'block';
+}
+
 // Bascule le titre de la section entre "Film du jour" et "Sortie de la
 // semaine" — manquait entièrement (la fonction était appelée mais jamais
 // définie, ce qui plantait silencieusement tout chargement depuis le cache,
@@ -6087,8 +6208,12 @@ function renderGuessGame(m, isWeekly) {
 
   // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
   // révélée (comme l'ancien "Film du jour" seul, avant la fusion des deux
-  // sections qui montraient jusqu'ici le MÊME film en double).
-  if (!m.poster_path) {
+  // sections qui montraient jusqu'ici le MÊME film en double). Même chemin
+  // si la devinette est désactivée dans Réglages (voir 00e-feature-flags.js)
+  // — l'état de la partie en cours (essais, série) n'est jamais touché,
+  // juste jamais montré tant que la bascule reste désactivée.
+  const guessEnabled = typeof loadFeatureFlags === 'function' ? loadFeatureFlags().guessGame : true;
+  if (!m.poster_path || !guessEnabled) {
     setFilmDuJourTitle(isWeekly);
     renderRevealedFilm(m, posterUrl, year, null);
     return;
@@ -7035,6 +7160,15 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         <div class="mds-section-title">Casting</div>
         <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
       </div>` : ''}
+
+    ${data.belongs_to_collection ? `
+      <div class="mds-section" style="animation-delay:.3s">
+        <div class="mds-section-title">
+          Fait partie d'une saga
+          <span class="mds-saga-link" id="mds-saga-link" data-collection-id="${data.belongs_to_collection.id}" data-collection-name="${escAttr(data.belongs_to_collection.name)}" role="button" tabindex="0">${escAttr(data.belongs_to_collection.name)} →</span>
+        </div>
+        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
+      </div>` : ''}
   `;
 }
 
@@ -7130,6 +7264,31 @@ function renderCastCarousel(castArray) {
   outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
 }
 
+// Bande des autres films de la saga (belongs_to_collection), en bas de la
+// fiche film — appel réseau séparé du chargement principal (les détails
+// d'un film n'incluent pas la liste complète de sa collection, juste son
+// id/nom/affiche), donc rendue après coup plutôt que de retarder tout
+// l'affichage de la fiche pour ça.
+async function populateSagaStrip(collectionId, currentMovieId) {
+  const stripEl = document.getElementById('mds-saga-strip');
+  if (!stripEl) return;
+  try {
+    const res = await fetch(`/api/search?collectionId=${collectionId}`);
+    const data = await readApiJson(res);
+    const parts = (data.parts || []).filter(f => f.poster_path)
+      .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
+    if (parts.length === 0) { stripEl.innerHTML = ''; return; }
+    stripEl.innerHTML = parts.map(f => `
+      <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="mds-saga-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">
+        <div class="mds-saga-title">${escAttr(f.title)}</div>
+      </div>
+    `).join('');
+  } catch {
+    stripEl.innerHTML = ''; // pas grave : le lien "Voir la saga complète" reste utilisable
+  }
+}
+
 // Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
 // les lignes visibles par défaut — pas la peine de proposer un accordéon pour
 // un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
@@ -7211,6 +7370,7 @@ async function openMovieDetailSheet(tmdbId) {
     setupStickyHeader();
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
+    if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
   } catch (e) {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
@@ -7243,6 +7403,18 @@ mdsEl.addEventListener('click', (e) => {
     const overview = document.getElementById('mds-overview');
     const expanded = overview.classList.toggle('expanded');
     overviewToggle.textContent = expanded ? 'Réduire ▴' : 'Lire la suite ▾';
+    return;
+  }
+
+  const sagaItem = e.target.closest('.mds-saga-item');
+  if (sagaItem && !sagaItem.classList.contains('current')) {
+    openMovieDetailSheet(sagaItem.dataset.movieId); // remplace la fiche actuelle par celle du film de la saga choisi
+    return;
+  }
+  const sagaLink = e.target.closest('.mds-saga-link');
+  if (sagaLink) {
+    closeMovieDetailSheet();
+    openSagaSheet(sagaLink.dataset.collectionId, sagaLink.dataset.collectionName);
     return;
   }
 
@@ -7935,7 +8107,7 @@ document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
 //   aujourd'hui — les décennies les plus anciennes auront naturellement
 //   moins de films avec 500+ votes, ce qui est normal, pas un défaut.
 const CURATED_RESOLVED_KEY = 'lbx_curated_alltime_resolved';
-const CURATED_DECADE_KEY_PREFIX = 'lbx_curated_decade_';
+const CURATED_DECADE_KEY_PREFIX = 'lbx_curated_decade_v2_'; // v2 : invalide le cache d'avant le correctif de l'annee manquante (voir withExtractedYear)
 const CURATED_DECADE_CACHE_DAYS = 30;
 const CURATED_DECADES = [1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
 
@@ -8011,14 +8183,73 @@ function loadDecadeCache(startYear) {
     return raw.films;
   } catch { return null; }
 }
+// Normalise .year depuis .release_date : les résultats bruts de l'API
+// discover TMDb (décennies, studios) n'ont qu'une date complète, pas une
+// année pré-extraite — sans ça, l'année s'affichait vide dans la grille
+// (vrai bug trouvé en vérifiant le texte réellement affiché, pas juste le
+// nombre de films).
+function withExtractedYear(films) {
+  return films.map(f => ({ ...f, year: f.year || (f.release_date ? f.release_date.slice(0, 4) : '') }));
+}
+
 async function fetchDecadeList(startYear) {
   const cached = loadDecadeCache(startYear);
   if (cached) return cached;
   try {
     const res = await fetch(`/api/search?decadeTop=${startYear}`);
     const data = await readApiJson(res);
-    const films = data.results || [];
+    const films = withExtractedYear(data.results || []);
     localStorage.setItem(CURATED_DECADE_KEY_PREFIX + startYear, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+// ── Catalogues de studio ──
+const CURATED_STUDIO_KEY_PREFIX = 'lbx_curated_studio_';
+function loadStudioCache(studioId) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_STUDIO_KEY_PREFIX + studioId) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_DECADE_CACHE_DAYS) return null; // même durée que les décennies : ça ne bouge presque jamais
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchStudioList(studioId) {
+  const cached = loadStudioCache(studioId);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?studioId=${studioId}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_STUDIO_KEY_PREFIX + studioId, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+// ── Cinéma par pays (carte du monde) ──
+const CURATED_COUNTRY_KEY_PREFIX = 'lbx_curated_country_';
+function loadCountryCache(code) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_COUNTRY_KEY_PREFIX + code) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_DECADE_CACHE_DAYS) return null;
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchCountryList(code) {
+  const cached = loadCountryCache(code);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?countryCode=${code}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_COUNTRY_KEY_PREFIX + code, JSON.stringify({ films, fetchedAt: Date.now() }));
     return films;
   } catch {
     return [];
@@ -8040,31 +8271,79 @@ function renderCuratedListsCard() {
   const container = document.getElementById('curated-lists-container');
   if (!container) return;
 
-  const entries = [
-    { id: 'alltime', label: 'Tous les temps', sub: 'Classement Sight & Sound 2022' },
-    ...CURATED_DECADES.map(y => ({ id: `decade-${y}`, label: curatedDecadeLabel(y), sub: 'Mieux notés sur TMDb (500 votes min.)' })),
-  ];
-
-  container.innerHTML = entries.map(e => `
+  // "Tous les temps" reste toujours visible (la liste principale, compilée
+  // à la main) — les 11 décennies partent dans un accordéon natif
+  // <details>/<summary> replié par défaut (gratuit en accessibilité
+  // clavier, pas besoin de JS pour le toggle) : les montrer toutes dépliées
+  // d'un coup rendait la carte bien trop longue à faire défiler.
+  const rowHtml = (e) => `
     <button type="button" class="curated-list-row" data-list-id="${e.id}">
       <div class="curated-list-row-text">
         <div class="curated-list-row-label">${escAttr(e.label)}</div>
         <div class="curated-list-row-sub">${escAttr(e.sub)}</div>
       </div>
       <div class="curated-list-row-pct" id="curated-pct-${e.id}">…</div>
+    </button>`;
+
+  const decadeEntries = CURATED_DECADES.map(y => ({ id: `decade-${y}`, label: curatedDecadeLabel(y), sub: 'Mieux notés sur TMDb (500 votes min.)' }));
+  const studioEntries = CURATED_STUDIOS.map(s => ({ id: `studio-${s.id}`, label: s.name, sub: s.sub }));
+
+  // Carte du monde stylisée — pas de vraies frontières géographiques (voir
+  // la discussion sur l'ergonomie tactile : des pays comme la Corée du Sud
+  // seraient minuscules sur une carte précise à l'échelle d'un téléphone).
+  // Juste un fond abstrait + des pastilles pays largement dimensionnées,
+  // positionnées approximativement à la bonne région du monde.
+  const mapPinsHtml = CURATED_COUNTRIES.map(c => `
+    <button type="button" class="curated-map-pin" data-list-id="country-${c.code}" style="top:${c.top}%; left:${c.left}%;">
+      <span class="curated-map-pin-flag" aria-hidden="true">${c.flag}</span>
+      <span class="curated-map-pin-name">${escAttr(c.name)}</span>
+      <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
     </button>
   `).join('');
 
-  container.querySelectorAll('.curated-list-row').forEach(btn => {
+  container.innerHTML = `
+    ${rowHtml({ id: 'alltime', label: 'Tous les temps', sub: 'Classement Sight & Sound 2022' })}
+    <details class="curated-decades-accordion">
+      <summary>Par décennie (${CURATED_DECADES.length})</summary>
+      <div class="curated-decades-list">${decadeEntries.map(rowHtml).join('')}</div>
+    </details>
+    <details class="curated-decades-accordion">
+      <summary>Par studio (${CURATED_STUDIOS.length})</summary>
+      <div class="curated-decades-list">${studioEntries.map(rowHtml).join('')}</div>
+    </details>
+    <details class="curated-decades-accordion">
+      <summary>Par pays (${CURATED_COUNTRIES.length})</summary>
+      <div class="curated-map"><div class="curated-map-inner">${mapPinsHtml}</div></div>
+    </details>
+  `;
+
+  container.querySelectorAll('.curated-list-row, .curated-map-pin').forEach(btn => {
     btn.addEventListener('click', () => openCuratedListSheet(btn.dataset.listId));
   });
 
   // Décennies : rapide, direct depuis le cache serveur/local — pas besoin
-  // d'attendre pour afficher un pourcentage.
+  // d'attendre pour afficher un pourcentage. Calculé même repliées (léger,
+  // et évite un "…" qui traîne si l'utilisateur déplie plus tard).
   CURATED_DECADES.forEach(async (y) => {
     const films = await fetchDecadeList(y);
     const { pct, total } = computeCuratedSeenPercentage(films);
     const el = document.getElementById(`curated-pct-decade-${y}`);
+    if (el) el.textContent = total > 0 ? `${pct}%` : '—';
+  });
+
+  // Studios : même principe.
+  CURATED_STUDIOS.forEach(async (s) => {
+    const films = await fetchStudioList(s.id);
+    const { pct, total } = computeCuratedSeenPercentage(films);
+    const el = document.getElementById(`curated-pct-studio-${s.id}`);
+    if (el) el.textContent = total > 0 ? `${pct}%` : '—';
+  });
+
+  // Pays : même principe.
+  CURATED_COUNTRIES.forEach(async (c) => {
+    const films = await fetchCountryList(c.code);
+    const { pct, total } = computeCuratedSeenPercentage(films);
+    const el = document.getElementById(`curated-pct-country-${c.code}`);
     if (el) el.textContent = total > 0 ? `${pct}%` : '—';
   });
 
@@ -8103,16 +8382,51 @@ async function openCuratedListSheet(listId) {
   if (listId === 'alltime') {
     label = 'Tous les temps';
     films = getAllTimeFilmsFromCache();
-    if (films.length < CURATED_ALL_TIME.length) {
-      // Pas encore entièrement résolue : affiche ce qui est déjà là plutôt
-      // que de bloquer, la résolution continue en tâche de fond.
-    }
+  } else if (listId.startsWith('studio-')) {
+    const studioId = parseInt(listId.replace('studio-', ''), 10);
+    const studio = CURATED_STUDIOS.find(s => s.id === studioId);
+    label = studio ? studio.name : 'Studio';
+    films = await fetchStudioList(studioId);
+  } else if (listId.startsWith('country-')) {
+    const code = listId.replace('country-', '');
+    const country = CURATED_COUNTRIES.find(c => c.code === code);
+    label = country ? `Cinéma ${country.flag} ${country.name}` : 'Cinéma';
+    films = await fetchCountryList(code);
   } else {
     const startYear = parseInt(listId.replace('decade-', ''), 10);
     label = curatedDecadeLabel(startYear);
     films = await fetchDecadeList(startYear);
   }
+  renderFilmGridSheet(label, films);
+}
 
+// Fiche saga (belongs_to_collection TMDb) — même mise en page que les
+// listes prédéfinies (grille, % vu, ajout des manquants), juste une source
+// de films différente. Réutilise la même feuille plutôt que d'en construire
+// une nouvelle, à l'image de la fiche réalisateur.
+async function openSagaSheet(collectionId, collectionName) {
+  lastFocusedBeforeModal = document.activeElement;
+  clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
+  clsEl.classList.add('open');
+  clsCloseBtn.focus();
+
+  try {
+    const res = await fetch(`/api/search?collectionId=${collectionId}`);
+    const data = await readApiJson(res);
+    const films = (data.parts || [])
+      .filter(f => f.poster_path)
+      .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'))
+      .map(f => ({ id: f.id, title: f.title, poster_path: f.poster_path, year: f.release_date ? f.release_date.slice(0, 4) : '' }));
+    renderFilmGridSheet(data.name || collectionName, films);
+  } catch {
+    clsContentEl.innerHTML = `<div class="mds-error">Impossible de charger la saga. Vérifie ta connexion.</div>`;
+  }
+}
+
+// Rendu partagé : grille de films avec pourcentage vu et ajout des
+// manquants à la watchlist — utilisé par les listes prédéfinies ET les
+// sagas, seule la provenance des films diffère.
+function renderFilmGridSheet(label, films) {
   const { films: withSeen, seenCount, total, pct } = computeCuratedSeenPercentage(films);
   const missingCount = total - seenCount;
 
@@ -8179,3 +8493,255 @@ document.getElementById('curated-lists-shortcut-btn')?.addEventListener('click',
     document.getElementById('curated-lists-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, 100);
 });
+
+// ═══════════════════════════════════════════
+//  EXPLORATION PAR THÈME (Découvrir)
+// ═══════════════════════════════════════════
+// Contrairement aux décennies/studios/pays (Profil, un vrai "canon" à
+// suivre avec % vu), un mot-clé n'a pas de nombre canonique de films — vit
+// ici comme un outil de navigation/suggestion. Cache plus court que les
+// autres listes (5 jours, pas 30) : trié par popularité, qui évolue plus
+// vite qu'un classement par note.
+const CURATED_THEME_KEY_PREFIX = 'lbx_curated_theme_';
+const CURATED_THEME_CACHE_DAYS = 5;
+function loadThemeCache(id) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_THEME_KEY_PREFIX + id) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_THEME_CACHE_DAYS) return null;
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchThemeList(id) {
+  const cached = loadThemeCache(id);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?keywordId=${id}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_THEME_KEY_PREFIX + id, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+function renderThemeChips() {
+  const row = document.getElementById('theme-chips-row');
+  if (!row) return;
+  row.innerHTML = CURATED_THEMES.map(t => `
+    <button type="button" class="theme-chip" data-theme-id="${t.id}" data-theme-name="${escAttr(t.name)}">
+      <span aria-hidden="true">${t.emoji}</span> ${escAttr(t.name)}
+    </button>
+  `).join('');
+  row.querySelectorAll('.theme-chip').forEach(chip => {
+    chip.addEventListener('click', () => openThemeSheet(chip.dataset.themeId, chip.dataset.themeName));
+  });
+}
+
+// Feuille thème : réutilise la même modale que les listes prédéfinies/sagas
+// (#curated-list-sheet), mais un rendu plus simple — pas de barre de
+// complétion ni de bouton d'ajout en masse, juste une grille à parcourir
+// (esprit "suggestion", pas "collection à cocher"). L'ajout à la watchlist
+// se fait film par film en ouvrant sa fiche, comme partout ailleurs.
+async function openThemeSheet(themeId, themeName) {
+  lastFocusedBeforeModal = document.activeElement;
+  clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
+  clsEl.classList.add('open');
+  clsCloseBtn.focus();
+
+  const films = await fetchThemeList(themeId);
+  clsContentEl.innerHTML = `
+    <div class="mds-header" style="animation-delay:0s">
+      <div class="mds-header-info">
+        <div class="mds-title" id="cls-title">${escAttr(themeName)}</div>
+        <div class="mds-meta">${films.length} film${films.length > 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="mds-section pds-filmography" style="animation-delay:.05s">
+      ${films.map(f => `
+        <div class="pds-film-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+          ${f.poster_path
+            ? `<img class="pds-film-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">`
+            : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
+          <div class="pds-film-title">${escAttr(f.title)}</div>
+          <div class="pds-film-year">${f.year || ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+renderThemeChips();
+
+// ═══════════════════════════════════════════
+//  ANGLE MORT CIBLÉ (Découvrir)
+// ═══════════════════════════════════════════
+// "Tu adores [réalisateur], il te reste N films à découvrir" — transforme
+// le % de filmographie déjà affiché sur la fiche personne (une simple
+// donnée passive) en incitation concrète, dans Découvrir. Le vrai défi
+// technique : l'historique stocke le réalisateur en texte simple, pas en
+// identifiant TMDb — il faut faire le lien film par film (une fois, mis en
+// cache définitivement, jamais recalculé) avant de pouvoir agréger quoi
+// que ce soit par créateur.
+
+const CREATOR_MATCH_CACHE_KEY = 'lbx_creator_match_cache';
+const BLIND_SPOTS_CACHE_KEY = 'lbx_blind_spots';
+const BLIND_SPOTS_CACHE_DAYS = 7; // les gouts recents peuvent changer le classement, contrairement aux listes figées
+
+function loadCreatorMatchCache() {
+  try { return JSON.parse(localStorage.getItem(CREATOR_MATCH_CACHE_KEY) || '{}'); } catch { return {}; }
+}
+function saveCreatorMatchCache(map) {
+  localStorage.setItem(CREATOR_MATCH_CACHE_KEY, JSON.stringify(map));
+}
+
+// Une entrée par film déjà noté : { directorId, directorName } ou
+// { directorId: null } si le film n'a pas de réalisateur crédité (rare,
+// mais évite de re-essayer indéfiniment le même film sans résultat).
+async function resolveOneFilmDirector(tmdbId) {
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}`);
+    const data = await readApiJson(res);
+    const director = data.credits?.crew?.find(c => c.job === 'Director');
+    return director ? { directorId: director.id, directorName: director.name } : { directorId: null };
+  } catch {
+    return null; // erreur reseau : on ne met PAS en cache, pour retenter au prochain passage
+  }
+}
+
+let creatorMatchInProgress = false;
+// Traite par lots (respecte la limite de débit du proxy, comme la
+// résolution de la liste "Tous les temps") — priorise les films les MIEUX
+// notés d'abord : plus susceptibles de faire remonter un créateur pertinent
+// rapidement, plutôt que de traiter l'historique dans un ordre arbitraire.
+async function ensureCreatorMatchesResolved(onProgress) {
+  if (creatorMatchInProgress) return;
+  const history = loadHistory().filter(h => h.tmdbId);
+  const cache = loadCreatorMatchCache();
+  const missing = history
+    .filter(h => !(h.tmdbId in cache))
+    .sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+  if (missing.length === 0) return;
+  creatorMatchInProgress = true;
+
+  const BATCH_SIZE = 8;
+  for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+    const batch = missing.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(h => resolveOneFilmDirector(h.tmdbId)));
+    batch.forEach((h, idx) => {
+      if (results[idx]) cache[h.tmdbId] = results[idx];
+    });
+    saveCreatorMatchCache(cache);
+    if (onProgress) onProgress();
+    if (i + BATCH_SIZE < missing.length) await new Promise(r => setTimeout(r, 1500));
+  }
+  creatorMatchInProgress = false;
+}
+
+// Agrège les notes par réalisateur à partir du cache de correspondance déjà
+// résolu — ne déclenche AUCUN appel réseau (utilise ce qui est déjà là,
+// même partiel). Minimum 2 films notés pour compter (une seule note ne dit
+// pas grand-chose sur un "créateur préféré"), triés par note moyenne
+// décroissante.
+function computeTopCreators(minFilms = 2, topN = 3) {
+  const history = loadHistory().filter(h => h.tmdbId);
+  const cache = loadCreatorMatchCache();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)));
+  const byDirector = {};
+
+  history.forEach(h => {
+    const match = cache[h.tmdbId];
+    if (!match || !match.directorId) return;
+    const score = parseFloat(h.score);
+    if (!score) return;
+    if (!byDirector[match.directorId]) {
+      byDirector[match.directorId] = { id: match.directorId, name: match.directorName, scores: [], seenFilmIds: new Set() };
+    }
+    byDirector[match.directorId].scores.push(score);
+    byDirector[match.directorId].seenFilmIds.add(String(h.tmdbId));
+  });
+
+  return Object.values(byDirector)
+    .filter(d => d.scores.length >= minFilms)
+    .map(d => ({ ...d, avg: d.scores.reduce((a, b) => a + b, 0) / d.scores.length }))
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, topN);
+}
+
+async function fetchCreatorBlindSpot(directorId) {
+  try {
+    const res = await fetch(`/api/search?personId=${directorId}`);
+    const data = await readApiJson(res);
+    if (!data || !data.name) return null;
+    const films = buildPersonFilmography(data);
+    const { seenCount, total } = computeSeenPercentage(films);
+    return { unseenCount: total - seenCount, total };
+  } catch {
+    return null;
+  }
+}
+
+function loadBlindSpotsCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BLIND_SPOTS_CACHE_KEY) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > BLIND_SPOTS_CACHE_DAYS) return null;
+    return raw.creators;
+  } catch { return null; }
+}
+
+async function renderBlindSpotsSection() {
+  const wrap = document.getElementById('blind-spots-wrap');
+  const container = document.getElementById('blind-spots-container');
+  if (!wrap || !container) return;
+
+  const cached = loadBlindSpotsCache();
+  if (cached) {
+    renderBlindSpotsCards(cached);
+    // Continue quand même la résolution en tâche de fond pour affiner au
+    // fil du temps (nouveaux films notés depuis) — sans bloquer l'affichage
+    // déjà en cache.
+    ensureCreatorMatchesResolved();
+    return;
+  }
+
+  // Première fois (ou cache expiré) : résout ce qui manque avant de calculer
+  // le classement — sinon les tout premiers résultats seraient basés sur un
+  // historique quasi vide.
+  await ensureCreatorMatchesResolved();
+  const topCreators = computeTopCreators();
+  if (topCreators.length === 0) return; // pas assez de donnees encore (historique trop court, ou pas assez de recoupements) : section reste masquee
+
+  const withBlindSpots = await Promise.all(topCreators.map(async (c) => {
+    const spot = await fetchCreatorBlindSpot(c.id);
+    return spot && spot.unseenCount > 0 ? { ...c, ...spot } : null;
+  }));
+  const creators = withBlindSpots.filter(Boolean);
+  localStorage.setItem(BLIND_SPOTS_CACHE_KEY, JSON.stringify({ creators, fetchedAt: Date.now() }));
+  renderBlindSpotsCards(creators);
+}
+
+function renderBlindSpotsCards(creators) {
+  const wrap = document.getElementById('blind-spots-wrap');
+  const container = document.getElementById('blind-spots-container');
+  if (creators.length === 0) return; // reste masque (display:none par defaut)
+
+  container.innerHTML = creators.map(c => `
+    <button type="button" class="blind-spot-card" data-person-id="${c.id}" data-person-name="${escAttr(c.name)}">
+      <div class="blind-spot-text">
+        <span class="blind-spot-highlight">Tu adores ${escAttr(c.name)}</span>
+        <span class="blind-spot-detail">${c.avg.toFixed(1)}/10 en moyenne sur ${c.scores.length} film${c.scores.length > 1 ? 's' : ''} — il te reste ${c.unseenCount} film${c.unseenCount > 1 ? 's' : ''} à découvrir</span>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon blind-spot-arrow"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  `).join('');
+
+  container.querySelectorAll('.blind-spot-card').forEach(card => {
+    card.addEventListener('click', () => openPersonDetailSheet(card.dataset.personId, card.dataset.personName));
+  });
+
+  wrap.style.display = 'block';
+}

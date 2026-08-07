@@ -132,6 +132,65 @@ async function loadFilmDuJour() {
   }
 }
 
+// ═══════════════════════════════════════════
+//  CE JOUR-LÀ (anniversaires de sortie)
+// ═══════════════════════════════════════════
+// Anniversaires RONDS (10/20/30/40/50 ans) plutôt que toutes les années —
+// TMDb ne permet pas de filtrer "sorti un 7 août, toutes années confondues"
+// en un seul appel (voir api/search.js). Certains jours n'auront aucun
+// anniversaire rond avec une sortie notable : la section se masque
+// entièrement plutôt que d'afficher un encart vide (même esprit que le
+// Quiz/Duel quand rien n'est disponible).
+const ON_THIS_DAY_KEY = 'lbx_on_this_day';
+
+async function loadOnThisDay() {
+  const wrap = document.getElementById('on-this-day-wrap');
+  const strip = document.getElementById('on-this-day-strip');
+  if (!wrap || !strip) return;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(ON_THIS_DAY_KEY) || 'null'); } catch {}
+
+  let anniversaries;
+  if (cached && cached.date === todayKey) {
+    anniversaries = cached.anniversaries;
+  } else {
+    try {
+      const res = await fetch('/api/search?onThisDay=1');
+      const data = await res.json();
+      anniversaries = data.anniversaries || [];
+      localStorage.setItem(ON_THIS_DAY_KEY, JSON.stringify({ date: todayKey, anniversaries }));
+    } catch (e) {
+      console.warn('Impossible de charger "Ce jour-là"', e);
+      return;
+    }
+  }
+
+  if (anniversaries.length === 0) return; // section reste masquée (display:none par défaut)
+
+  strip.innerHTML = anniversaries.flatMap(a =>
+    a.films.map(f => `
+      <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="on-this-day-poster" src="https://image.tmdb.org/t/p/w200${f.poster_path}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
+        <div class="on-this-day-title">${escAttr(f.title)}</div>
+      </div>
+    `)
+  ).join('');
+
+  strip.querySelectorAll('.on-this-day-item').forEach(item => {
+    item.addEventListener('click', () => openMovieDetailSheet(item.dataset.movieId));
+    item.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMovieDetailSheet(item.dataset.movieId);
+    });
+  });
+
+  wrap.style.display = 'block';
+}
+
 // Bascule le titre de la section entre "Film du jour" et "Sortie de la
 // semaine" — manquait entièrement (la fonction était appelée mais jamais
 // définie, ce qui plantait silencieusement tout chargement depuis le cache,
@@ -293,8 +352,12 @@ function renderGuessGame(m, isWeekly) {
 
   // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
   // révélée (comme l'ancien "Film du jour" seul, avant la fusion des deux
-  // sections qui montraient jusqu'ici le MÊME film en double).
-  if (!m.poster_path) {
+  // sections qui montraient jusqu'ici le MÊME film en double). Même chemin
+  // si la devinette est désactivée dans Réglages (voir 00e-feature-flags.js)
+  // — l'état de la partie en cours (essais, série) n'est jamais touché,
+  // juste jamais montré tant que la bascule reste désactivée.
+  const guessEnabled = typeof loadFeatureFlags === 'function' ? loadFeatureFlags().guessGame : true;
+  if (!m.poster_path || !guessEnabled) {
     setFilmDuJourTitle(isWeekly);
     renderRevealedFilm(m, posterUrl, year, null);
     return;

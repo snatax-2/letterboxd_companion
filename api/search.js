@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
@@ -172,6 +172,108 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (onThisDay) {
+      // Cas : "Ce jour-là" (Découvrir) — anniversaires de sortie. TMDb ne
+      // permet PAS de filtrer "tous les films sortis un 7 août, toutes
+      // années confondues" en un seul appel (leurs filtres de date
+      // fonctionnent par plage continue, pas par jour répété chaque année)
+      // — d'où le choix de se limiter aux anniversaires RONDS (10/20/30/40/
+      // 50 ans) plutôt que de vérifier chaque année une par une (ce qui
+      // aurait demandé des dizaines d'appels). Une requête par palier,
+      // sur la date exacte (même date en borne basse et haute).
+      const today = new Date();
+      const month = today.getUTCMonth() + 1;
+      const day = today.getUTCDate();
+      const currentYear = today.getUTCFullYear();
+      const isFeb29 = month === 2 && day === 29;
+
+      const results = await Promise.all([10, 20, 30, 40, 50].map(async (yearsAgo) => {
+        const targetYear = currentYear - yearsAgo;
+        // Cas particulier 29 février : certaines années cibles ne sont pas
+        // bissextiles — l'anniversaire "exact" n'existe pas cette année-là,
+        // on saute plutôt que de risquer un débordement silencieux sur le
+        // 1er mars (comportement par défaut de Date).
+        const isTargetLeap = (targetYear % 4 === 0 && targetYear % 100 !== 0) || targetYear % 400 === 0;
+        if (isFeb29 && !isTargetLeap) return null;
+        const dateStr = `${targetYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        try {
+          const r = await fetch(
+            `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&primary_release_date.gte=${dateStr}&primary_release_date.lte=${dateStr}&sort_by=popularity.desc`
+          );
+          const data = await r.json();
+          const films = (data.results || []).filter(m => m.poster_path).slice(0, 4);
+          return films.length ? { yearsAgo, year: targetYear, films } : null;
+        } catch {
+          return null;
+        }
+      }));
+
+      // 24h de cache seulement : contrairement aux décennies/studios (qui ne
+      // bougent presque jamais), "aujourd'hui" change chaque jour.
+      setCache(86400, 172800);
+      return res.status(200).json({ anniversaries: results.filter(Boolean) });
+
+    } else if (keywordId) {
+      // Cas : exploration par thème (Découvrir) — mot-clé TMDb, indépendant
+      // des genres classiques (voir CURATED_THEMES). Tri par popularité
+      // (esprit "parcourir/découvrir", pas "les mieux notés" comme les
+      // décennies) avec un seuil de votes léger pour écarter le bruit.
+      const kid = parseInt(keywordId, 10);
+      if (!kid) {
+        setCache(3600, 86400);
+        return res.status(200).json({ results: [] });
+      }
+      const pages = await Promise.all([1, 2].map(page =>
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=50&with_keywords=${kid}&page=${page}`)
+          .then(r => r.json()).catch(() => ({ results: [] }))
+      ));
+      const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
+      setCache(604800, 2592000);
+      return res.status(200).json({ results: merged.slice(0, 40) });
+
+    } else if (countryCode) {
+      // Cas : cinéma d'un pays (carte du monde du cinéma, dans Profil) —
+      // contrairement aux studios (catalogue resserré, montré en quasi-
+      // totalité), le cinéma d'un pays entier sur toute son histoire est
+      // bien trop vaste pour ça (l'Inde à elle seule produit plus de films
+      // que Hollywood) — même esprit "mieux notés" que les décennies, pas
+      // "catalogue complet" comme les studios.
+      const cc = String(countryCode).toUpperCase();
+      if (!/^[A-Z]{2}$/.test(cc)) {
+        setCache(3600, 86400);
+        return res.status(200).json({ results: [] });
+      }
+      const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=200&with_origin_country=${cc}&page=${page}`)
+          .then(r => r.json()).catch(() => ({ results: [] }))
+      ));
+      const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
+      setCache(604800, 2592000); // une semaine, comme les décennies/studios
+      return res.status(200).json({ results: merged.slice(0, 100) });
+
+    } else if (studioId) {
+      // Cas : catalogue d'un studio (liste prédéfinie du Profil, dans le
+      // même esprit que les décennies/la saga) — contrairement aux
+      // décennies (des milliers de films à trier), le catalogue d'un studio
+      // choisi à la main (voir CURATED_STUDIOS) est naturellement resserré :
+      // l'idée est de le montrer en quasi-totalité, pas de garder que les
+      // "meilleurs" au prix d'en exclure des titres légitimes. Ordre
+      // chronologique (esprit "catalogue à explorer"), seuil de votes plus
+      // bas que les décennies (20, pas 500) pour ne pas exclure de vrais
+      // films sous prétexte qu'ils sont moins connus.
+      const sid = parseInt(studioId, 10);
+      if (!sid) {
+        setCache(3600, 86400);
+        return res.status(200).json({ results: [] });
+      }
+      const pages = await Promise.all([1, 2, 3].map(page =>
+        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=primary_release_date.asc&vote_count.gte=20&with_companies=${sid}&page=${page}`)
+          .then(r => r.json()).catch(() => ({ results: [] }))
+      ));
+      const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
+      setCache(604800, 2592000); // une semaine, comme les décennies : ça ne bouge presque jamais
+      return res.status(200).json({ results: merged });
+
     } else if (decadeTop) {
       // Cas : "Meilleurs films des années XXXX" (listes prédéfinies du
       // Profil) — contrairement à la liste "tous les temps" (compilée à la
@@ -196,6 +298,18 @@ export default async function handler(req, res) {
       // recalculer à chaque consultation du Profil.
       setCache(604800, 2592000);
       return res.status(200).json({ results: merged.slice(0, 100) });
+
+    } else if (collectionId) {
+      // Cas : détail complet d'une saga (fiche saga, à l'image de la fiche
+      // réalisateur) — TMDb a un vrai concept de "collection" nativement,
+      // déjà présent dans belongs_to_collection sur chaque fiche film (pas
+      // besoin de le construire à la main comme les listes prédéfinies).
+      const collectionRes = await fetch(
+        `https://api.themoviedb.org/3/collection/${collectionId}?api_key=${TMDB_KEY}&language=fr-FR`
+      );
+      const collectionData = await collectionRes.json();
+      setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
+      return res.status(200).json(collectionData);
 
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)

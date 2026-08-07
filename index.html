@@ -273,6 +273,16 @@
           <span class="settings-toggle-slider"></span>
         </label>
       </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-guess-game">Devine le Film du Jour</div>
+          <div class="settings-toggle-desc">L'affiche floutée à deviner. Désactivé, le Film du jour s'affiche directement révélé.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-guess-game" checked aria-labelledby="label-feature-guess-game">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
 
       <div class="error-log-section" id="error-log-section" style="display:none;">
         <label class="settings-label">Journal technique</label>
@@ -763,6 +773,21 @@
             <span>Explorer les classiques du cinéma <span class="curated-lists-shortcut-sub">— % déjà vu, dans ton Profil</span></span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon curated-lists-shortcut-arrow"><path d="M9 18l6-6-6-6"/></svg>
           </button>
+        </div>
+
+        <div class="discover-section" id="theme-explorer-wrap">
+          <div class="discover-section-title">Explorer par thème</div>
+          <div class="theme-chips-row" id="theme-chips-row"></div>
+        </div>
+
+        <div class="discover-section" id="blind-spots-wrap" style="display:none">
+          <div class="discover-section-title">D'après tes goûts</div>
+          <div id="blind-spots-container"></div>
+        </div>
+
+        <div class="discover-section" id="on-this-day-wrap" style="display:none">
+          <div class="discover-section-title">Ce jour-là</div>
+          <div class="on-this-day-strip" id="on-this-day-strip"></div>
         </div>
 
         <div class="discover-section" id="fdj-wrap" style="display:none">

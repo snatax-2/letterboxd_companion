@@ -8,7 +8,7 @@
 // explicite pour ça).
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true };
+const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true };
 
 function loadFeatureFlags() {
   try {
@@ -78,6 +78,7 @@ function initFeatureToggleUI() {
     'setting-feature-quiz': 'quiz',
     'setting-feature-trending': 'trending',
     'setting-feature-discover-recs': 'discoverRecs',
+    'setting-feature-guess-game': 'guessGame',
   };
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
@@ -97,6 +98,12 @@ function initFeatureToggleUI() {
       const discoverView = document.getElementById('view-discover');
       const discoverActive = discoverView && discoverView.classList.contains('active');
       if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
+      // "Devine le Film du Jour" fait exception : désactiver DOIT révéler
+      // immédiatement le film en cours si la devinette était affichée (pas
+      // de sens à laisser un mystère non désiré à l'écran) — dans les deux
+      // sens, contrairement aux autres bascules qui ne rechargent qu'à la
+      // réactivation.
+      if (key === 'guessGame' && discoverActive && typeof loadFilmDuJour === 'function') loadFilmDuJour();
     });
   }
 }

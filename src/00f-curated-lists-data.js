@@ -112,3 +112,56 @@ const CURATED_ALL_TIME = [
   { title: 'Tropical Malady', year: 2004 },
   { title: 'Get Out', year: 2017 },
 ];
+
+// Studios/maisons de production à identité créative forte et catalogue
+// resserré (pas les grands studios généralistes type Universal/Warner, qui
+// ont des milliers de films sans vraie identité de "collection à
+// compléter"). Identifiants TMDb vérifiés un par un (une erreur ici
+// casserait silencieusement la fonctionnalité) :
+// A24 themoviedb.org/company/41077-a24, Studio Ghibli .../company/10342,
+// Pixar .../company/3-pixar, Blumhouse .../company/3172-blumhouse-productions,
+// Marvel Studios .../company/420-marvel-studios.
+const CURATED_STUDIOS = [
+  { id: 41077, name: 'A24', sub: 'Cinéma indépendant et arthouse' },
+  { id: 10342, name: 'Studio Ghibli', sub: 'Animation japonaise' },
+  { id: 3, name: 'Pixar', sub: 'Animation 3D' },
+  { id: 3172, name: 'Blumhouse', sub: 'Horreur à petit budget' },
+  { id: 420, name: 'Marvel Studios', sub: 'Univers cinématographique Marvel' },
+];
+
+// Carte du monde du cinéma — sélection restreinte de pays à forte identité
+// cinématographique (pas les ~195 pays du monde, dont la plupart n'auraient
+// pas grand-chose à montrer avec un vrai filtre TMDb). Codes ISO 3166-1
+// pour with_origin_country. `top`/`left` en pourcentage : position
+// APPROXIMATIVE sur une carte stylisée (pas de vraies frontières
+// géographiques précises — voir la discussion sur l'ergonomie tactile),
+// juste assez pour suggérer la bonne région du monde.
+const CURATED_COUNTRIES = [
+  { code: 'JP', name: 'Japon', flag: '🇯🇵', top: 15, left: 90 },
+  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷', top: 30, left: 85 },
+  { code: 'DK', name: 'Danemark', flag: '🇩🇰', top: 15, left: 45 },
+  { code: 'IT', name: 'Italie', flag: '🇮🇹', top: 35, left: 48 },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷', top: 55, left: 60 },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', top: 55, left: 82 },
+  { code: 'IN', name: 'Inde', flag: '🇮🇳', top: 78, left: 62 },
+  { code: 'MX', name: 'Mexique', flag: '🇲🇽', top: 70, left: 12 },
+];
+
+// Exploration par thème (Découvrir) — mots-clés TMDb, indépendants des
+// genres classiques (un genre dit "c'est un thriller", un mot-clé dit
+// "c'est un film de braquage"). Sélection choisie à la main plutôt qu'une
+// recherche en texte libre (risque réel de recherches sans résultat) —
+// identifiants vérifiés un par un. Contrairement aux décennies/studios/pays
+// (un vrai "canon" à suivre, dans Profil), un mot-clé n'a pas de nombre
+// canonique de films : vit dans Découvrir comme un outil de
+// navigation/suggestion, pas de suivi de complétion.
+const CURATED_THEMES = [
+  { id: 10051, name: 'Braquage', emoji: '💰' },
+  { id: 10854, name: 'Boucle temporelle', emoji: '🔁' },
+  { id: 9748, name: 'Vengeance', emoji: '⚔️' },
+  { id: 10683, name: "Passage à l'âge adulte", emoji: '🌱' },
+  { id: 10349, name: 'Survie', emoji: '🏝️' },
+  { id: 7312, name: 'Road trip', emoji: '🚗' },
+  { id: 3358, name: 'Maison hantée', emoji: '👻' },
+  { id: 4565, name: 'Dystopie', emoji: '🏙️' },
+];

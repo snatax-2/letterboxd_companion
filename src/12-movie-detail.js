@@ -167,6 +167,15 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         <div class="mds-section-title">Casting</div>
         <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
       </div>` : ''}
+
+    ${data.belongs_to_collection ? `
+      <div class="mds-section" style="animation-delay:.3s">
+        <div class="mds-section-title">
+          Fait partie d'une saga
+          <span class="mds-saga-link" id="mds-saga-link" data-collection-id="${data.belongs_to_collection.id}" data-collection-name="${escAttr(data.belongs_to_collection.name)}" role="button" tabindex="0">${escAttr(data.belongs_to_collection.name)} →</span>
+        </div>
+        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
+      </div>` : ''}
   `;
 }
 
@@ -262,6 +271,31 @@ function renderCastCarousel(castArray) {
   outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
 }
 
+// Bande des autres films de la saga (belongs_to_collection), en bas de la
+// fiche film — appel réseau séparé du chargement principal (les détails
+// d'un film n'incluent pas la liste complète de sa collection, juste son
+// id/nom/affiche), donc rendue après coup plutôt que de retarder tout
+// l'affichage de la fiche pour ça.
+async function populateSagaStrip(collectionId, currentMovieId) {
+  const stripEl = document.getElementById('mds-saga-strip');
+  if (!stripEl) return;
+  try {
+    const res = await fetch(`/api/search?collectionId=${collectionId}`);
+    const data = await readApiJson(res);
+    const parts = (data.parts || []).filter(f => f.poster_path)
+      .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
+    if (parts.length === 0) { stripEl.innerHTML = ''; return; }
+    stripEl.innerHTML = parts.map(f => `
+      <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="mds-saga-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">
+        <div class="mds-saga-title">${escAttr(f.title)}</div>
+      </div>
+    `).join('');
+  } catch {
+    stripEl.innerHTML = ''; // pas grave : le lien "Voir la saga complète" reste utilisable
+  }
+}
+
 // Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
 // les lignes visibles par défaut — pas la peine de proposer un accordéon pour
 // un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
@@ -343,6 +377,7 @@ async function openMovieDetailSheet(tmdbId) {
     setupStickyHeader();
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
+    if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
   } catch (e) {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
@@ -375,6 +410,18 @@ mdsEl.addEventListener('click', (e) => {
     const overview = document.getElementById('mds-overview');
     const expanded = overview.classList.toggle('expanded');
     overviewToggle.textContent = expanded ? 'Réduire ▴' : 'Lire la suite ▾';
+    return;
+  }
+
+  const sagaItem = e.target.closest('.mds-saga-item');
+  if (sagaItem && !sagaItem.classList.contains('current')) {
+    openMovieDetailSheet(sagaItem.dataset.movieId); // remplace la fiche actuelle par celle du film de la saga choisi
+    return;
+  }
+  const sagaLink = e.target.closest('.mds-saga-link');
+  if (sagaLink) {
+    closeMovieDetailSheet();
+    openSagaSheet(sagaLink.dataset.collectionId, sagaLink.dataset.collectionName);
     return;
   }
 

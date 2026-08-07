@@ -13,6 +13,92 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **"D'après tes goûts"** dans Découvrir (angle mort ciblé) — la dernière
+  des cinq idées de découverte, et la plus longue à construire : transforme
+  le % de filmographie déjà affiché sur la fiche personne (une donnée
+  passive) en incitation concrète ("Tu adores X, 9.0/10 en moyenne sur 3
+  films — il te reste 2 films à découvrir"). Le vrai défi technique :
+  l'historique stocke le réalisateur en texte simple, pas en identifiant
+  TMDb — résolution film par film en tâche de fond (par lots, comme la
+  liste "Tous les temps"), mise en cache définitivement une fois faite,
+  priorisée sur les films les MIEUX notés d'abord. Minimum 2 films notés
+  du même réalisateur pour compter (une seule note ne dit pas grand-chose
+  sur un "créateur préféré"), top 3 par note moyenne. Section entièrement
+  masquée si l'historique est trop court ou les recoupements insuffisants.
+  Réutilise directement la logique de filmographie déjà construite pour la
+  fiche personne (buildPersonFilmography/computeSeenPercentage), sans la
+  dupliquer.
+
+- **"Ce jour-là"** dans Découvrir, aux côtés du Film du jour — anniversaires
+  de sortie. Limité aux anniversaires RONDS (10/20/30/40/50 ans) plutôt que
+  de vérifier chaque année : TMDb ne permet pas de filtrer "sorti un 7 août,
+  toutes années confondues" en un seul appel (leurs filtres de date
+  fonctionnent par plage continue, pas par jour répété chaque année) — une
+  requête par palier plutôt que des dizaines. Cas particulier du 29 février
+  géré (années cibles non bissextiles ignorées, plutôt qu'un débordement
+  silencieux sur le 1er mars). Section entièrement masquée si aucun
+  anniversaire notable n'est trouvé ce jour-là, plutôt qu'un encart vide.
+
+- **Exploration par thème** dans Découvrir — mots-clés TMDb (indépendants
+  des genres classiques : un genre dit "c'est un thriller", un mot-clé dit
+  "c'est un film de braquage"), 8 thèmes choisis à la main plutôt qu'une
+  recherche en texte libre (risque réel de recherches sans résultat) :
+  Braquage, Boucle temporelle, Vengeance, Passage à l'âge adulte, Survie,
+  Road trip, Maison hantée, Dystopie — identifiants TMDb vérifiés un par un.
+  Contrairement aux décennies/studios/pays (Profil, un vrai "canon" à
+  suivre), vit dans Découvrir sans barre de complétion ni ajout en masse :
+  un outil de navigation/suggestion, pas une collection à cocher.
+
+- **Carte du monde du cinéma** dans "Classiques à explorer" (Profil) —
+  troisième onglet accordéon, aux côtés des décennies et des studios : 8
+  pays à forte identité cinématographique (Japon, Corée du Sud, Hong Kong,
+  Inde, Iran, Italie, Danemark, Mexique). Volontairement **pas** une carte
+  géographiquement précise (vraies frontières) — un fond abstrait façon
+  grille + des pastilles pays largement dimensionnées, positionnées
+  approximativement à la bonne région du monde plutôt qu'avec une précision
+  géographique réelle. Choix assumé après discussion : une carte précise
+  aurait rendu des pays comme la Corée du Sud minuscules et difficiles à
+  viser au doigt sur un écran de téléphone. Vérifié : chaque pastille
+  dépasse la cible tactile minimale de 44px (WCAG 2.5.5).
+
+- **Explorateur de studio** dans "Classiques à explorer" (Profil) — nouvel
+  onglet accordéon aux côtés des décennies : A24, Studio Ghibli, Pixar,
+  Blumhouse, Marvel Studios. Sélection restreinte à des studios à identité
+  créative forte et catalogue resserré (pas les grands studios généralistes
+  type Universal/Warner, qui n'ont pas de vraie identité de "collection à
+  compléter") — identifiants TMDb vérifiés un par un avant implémentation.
+  Catalogue quasi complet plutôt qu'un "top" filtré par note (esprit
+  "complète la collection", pas "les meilleurs de ce studio") : ordre
+  chronologique, seuil de votes plus bas que les décennies (20, pas 500)
+  pour ne pas exclure de vrais films sous prétexte qu'ils sont moins connus.
+
+### Corrigé
+- **Vrai bug trouvé en écrivant les tests des studios** : les listes par
+  décennie et les catalogues de studio affichaient l'année vide dans la
+  grille — les résultats bruts de l'API TMDb (`release_date`, une date
+  complète) n'étaient jamais convertis en année seule avant l'affichage.
+  Cache local des décennies invalidé (nouvelle clé) pour que le correctif
+  s'applique dès le prochain chargement, sans attendre l'expiration
+  naturelle du cache (jusqu'à 30 jours sinon).
+
+- **Bascule "Devine le Film du Jour"** dans Réglages — désactivée, le Film
+  du jour s'affiche directement révélé (comme s'il n'y avait pas d'affiche
+  à deviner), sans jamais toucher aux séries/parties déjà en cours : elles
+  restent gelées, jamais effacées. Désactiver pendant une devinette en
+  cours révèle immédiatement le film ; réactiver restaure la devinette si
+  la partie du jour n'a pas encore été jouée.
+- **Fiche saga** — quand un film appartient à une collection TMDb (ex: une
+  franchise), une bande compacte des autres films de la saga apparaît en
+  bas de sa fiche, avec un lien pour ouvrir la fiche saga complète : même
+  mise en page que la fiche réalisateur (grille, % déjà vu, ajout des
+  manquants à la watchlist) — les deux réutilisent désormais le même rendu
+  partagé.
+- **Accordéon pour les listes par décennie** dans "Classiques à explorer"
+  (retour utilisateur, capture à l'appui) : la carte affichait les 12
+  listes dépliées d'un coup, bien trop longue à faire défiler. "Tous les
+  temps" reste toujours visible, les 11 décennies partent dans un
+  accordéon natif replié par défaut.
+
 - **"Classiques à explorer"** dans Profil — deux natures de listes bien
   distinctes, jamais mélangées :
   - **Tous les temps** : compilée à la main sur le classement Sight & Sound

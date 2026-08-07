@@ -1553,6 +1553,52 @@
     flex-shrink: 0; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;
     color: var(--orange); min-width: 42px; text-align: right;
   }
+  /* Décennies repliées par défaut (<details>/<summary> natifs — gratuit en
+     accessibilité clavier, pas besoin de JS pour le toggle) : les montrer
+     toutes dépliées d'un coup rendait la carte bien trop longue. */
+  .curated-decades-accordion { margin-top: 4px; }
+  .curated-decades-accordion summary {
+    cursor: pointer; font-size: 0.8rem; font-weight: 700; color: var(--text-mid);
+    font-family: var(--font-heading); list-style: none; padding: 6px 2px;
+  }
+  .curated-decades-accordion summary::-webkit-details-marker { display: none; }
+  .curated-decades-accordion summary::before {
+    content: '▸'; display: inline-block; margin-right: 6px;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .curated-decades-accordion[open] summary::before { transform: rotate(90deg); }
+  .curated-decades-list { margin-top: 4px; }
+
+  /* Carte du monde du cinéma — volontairement PAS de vraies frontières
+     géographiques (voir la discussion sur l'ergonomie tactile : des pays
+     comme la Corée du Sud seraient minuscules sur une carte précise à
+     l'échelle d'un téléphone). Juste un fond abstrait façon grille de
+     méridiens/parallèles + des pastilles pays largement dimensionnées,
+     positionnées approximativement à la bonne région du monde plutôt
+     qu'avec une précision géographique réelle. */
+  .curated-map {
+    position: relative; width: 100%; aspect-ratio: 1.7 / 1;
+    border-radius: var(--radius-sm); overflow: hidden; margin-top: 4px;
+    background-color: var(--surface2);
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 12.5% 16.66%;
+  }
+  .curated-map-inner { position: absolute; inset: 0; }
+  .curated-map-pin {
+    position: absolute; transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 999px;
+    padding: 6px 9px; cursor: pointer; min-width: 44px;
+    box-shadow: var(--box-shadow-style, 0 2px 8px rgba(0,0,0,0.25));
+    transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast);
+    font-family: var(--font-body);
+  }
+  .curated-map-pin:hover { border-color: var(--orange); transform: translate(-50%, -50%) scale(1.08); }
+  .curated-map-pin-flag { font-size: 1.05rem; line-height: 1; }
+  .curated-map-pin-name { font-size: 0.58rem; font-weight: 700; color: var(--text-hi); white-space: nowrap; line-height: 1.1; }
+  .curated-map-pin-pct { font-size: 0.6rem; font-weight: 700; color: var(--orange); line-height: 1.1; }
 
   /* ── Découvrir : raccourci vers les Classiques (Profil) ── */
   .curated-lists-shortcut-btn {
@@ -1566,6 +1612,16 @@
   .curated-lists-shortcut-btn span:not([class]) { font-size: 0.85rem; font-weight: 700; flex: 1; }
   .curated-lists-shortcut-sub { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-mid); margin-top: 2px; }
   .curated-lists-shortcut-arrow { flex-shrink: 0; color: var(--text-mid); }
+
+  /* ── Découvrir : Explorer par thème (mots-clés TMDb) ── */
+  .theme-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .theme-chip {
+    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: 999px;
+    padding: 8px 14px; font-size: 0.8rem; font-weight: 700; color: var(--text-hi);
+    cursor: pointer; font-family: var(--font-body); transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
+  }
+  .theme-chip:hover { border-color: var(--orange); }
+  .theme-chip:active { transform: scale(0.96); }
 
   .decade-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
   .decade-label { width: 52px; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hi); }
@@ -1913,6 +1969,60 @@
 
   /* Nom de réalisateur/acteur cliquable, ouvre sa fiche personne */
   .mds-person-link { color: var(--orange); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--dur-fast); }
+
+  /* Saga (belongs_to_collection TMDb) : bande compacte des autres films de
+     la saga en bas de fiche, avec un lien vers la fiche saga complète
+     (même mise en page que la fiche réalisateur). min-width:0 : sans ça,
+     un enfant flex avec overflow-x:auto refuse de se réduire sous la
+     largeur de son contenu — même bug que le carrousel Tendances trouvé et
+     corrigé plus tôt sur l'affichage PC. */
+  .mds-saga-link {
+    display: block; color: var(--orange); cursor: pointer; font-size: 0.76rem;
+    font-weight: 700; margin-top: 4px; text-decoration: none;
+  }
+  .mds-saga-link:hover { text-decoration: underline; }
+  .mds-saga-strip {
+    display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  }
+  .mds-saga-strip::-webkit-scrollbar { display: none; }
+  .mds-saga-item { flex-shrink: 0; width: 72px; cursor: pointer; }
+  .mds-saga-item.current { opacity: 0.5; pointer-events: none; } /* le film déjà ouvert : pas la peine de le réafficher cliquable */
+  .mds-saga-poster { width: 72px; height: 108px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); border: 1px solid var(--border); }
+  .mds-saga-title { font-size: 0.66rem; color: var(--text-mid); margin-top: 4px; line-height: 1.2; text-align: center; }
+
+  /* ── Découvrir : "Ce jour-là" (anniversaires de sortie) ── */
+  .on-this-day-strip {
+    display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; min-width: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  }
+  .on-this-day-strip::-webkit-scrollbar { display: none; }
+  .on-this-day-item { flex-shrink: 0; width: 92px; cursor: pointer; position: relative; }
+  .on-this-day-poster { width: 92px; height: 138px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); border: 1px solid var(--border); }
+  .on-this-day-badge {
+    position: absolute; top: 6px; left: 6px; background: var(--orange); color: var(--solid-fill-text, #0d1117);
+    font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: 999px; font-family: var(--font-heading);
+  }
+  .on-this-day-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 5px; line-height: 1.25; }
+
+  /* ── Découvrir : "D'après tes goûts" (angle mort ciblé) ── */
+  .blind-spot-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--border);
+    border-left: 4px solid var(--orange); border-radius: var(--radius-sm);
+    padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
+    font-family: var(--font-body); transition: border-color var(--dur-fast);
+  }
+  .blind-spot-card:last-child { margin-bottom: 0; }
+  .blind-spot-card:hover { border-color: var(--orange); }
+  .blind-spot-text { display: flex; flex-direction: column; gap: 3px; }
+  .blind-spot-highlight { font-size: 0.85rem; font-weight: 800; color: var(--text-hi); font-family: var(--font-heading); }
+  .blind-spot-detail { font-size: 0.76rem; color: var(--text-mid); line-height: 1.3; }
+  .blind-spot-arrow { flex-shrink: 0; color: var(--text-mid); }
   .mds-person-link:hover { text-decoration-color: var(--orange); }
 
   /* ── FICHE PERSONNE : barre de complétion + grille de filmographie ── */
