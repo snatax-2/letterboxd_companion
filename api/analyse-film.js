@@ -79,7 +79,19 @@ export default async function handler(req, res) {
       if (r.status === 429) {
         return res.status(429).json({ error: "Quota Gemini du jour épuisé — réessaie demain (le palier gratuit se réinitialise chaque jour)." });
       }
-      return res.status(502).json({ error: "Gemini n'a pas pu traiter la demande. Réessaie dans un instant." });
+      // Diagnostic TEMPORAIRE : remonte le détail exact renvoyé par Gemini
+      // (statut + message) plutôt qu'un message générique qui masquait la
+      // vraie cause — nécessaire pour diagnostiquer à distance sans accès
+      // aux journaux de la fonction sur Vercel. À simplifier une fois la
+      // cause réelle identifiée et corrigée.
+      let detail = '';
+      try {
+        const errBody = await r.json();
+        detail = errBody?.error?.message || JSON.stringify(errBody).slice(0, 300);
+      } catch {
+        detail = await r.text().catch(() => '').then(t => t.slice(0, 300));
+      }
+      return res.status(502).json({ error: `Gemini a renvoyé une erreur (${r.status}) : ${detail || 'détail indisponible'}` });
     }
 
     const data = await r.json();
