@@ -22,7 +22,7 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
   ajoutées après coup, n'avaient jamais été intégrées à cette logique et
   restaient affichées en pleine taille, rendant l'en-tête "sticky" bien
   plus haut que prévu et le faisant déborder par-dessus le contenu en
-  dessous. Corrigé en les masquant en mode compact, comme la note TMDb.
+  dessous. Corrigé en les masquant en mode compact, comme la note TMDb. Le bouton "Changer l'affiche" masqué là aussi (retour utilisateur : plus simple que de le remplacer par une icône).
   Reproduction difficile (probablement liée aux réglages d'accessibilité
   du téléphone) — trouvé en simulant le vrai déclencheur (défilement à
   l'intérieur de la fiche) plutôt qu'en essayant de reproduire pixel pour

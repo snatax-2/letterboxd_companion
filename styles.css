@@ -1800,7 +1800,8 @@
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
   .mds-header.compact .mds-meta,
   .mds-header.compact .mds-score-stamp,
-  .mds-header.compact .mds-external-ratings { display: none; }
+  .mds-header.compact .mds-external-ratings,
+  .mds-header.compact .mds-poster-change-btn { display: none; }
   .mds-header.compact .mds-title { font-size: 0.95rem; }
   .mds-header-left { width: 100px; flex-shrink: 0; transition: width var(--dur-base) var(--ease-out); }
   .mds-poster-wrap { position: relative; width: 100%; }
