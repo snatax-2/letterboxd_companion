@@ -12,6 +12,14 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié
+- **Bouton "Noter" recentré** dans la barre de navigation (retour
+  utilisateur, capture d'écran à l'appui) — réordonné pour avoir 2 onglets
+  de chaque côté (Historique, À voir, Noter, Découvrir, Profil) plutôt
+  qu'en première position. Aucune logique JS ne dépendait de l'ordre des
+  boutons (uniquement du positionnement CSS `:first-child`/`:last-child`,
+  qui s'adapte automatiquement), donc un simple réordonnancement du HTML.
+
 ### Ajouté
 - **Bouton "Noter" mis en avant** dans la barre de navigation mobile (fait
   sur demande utilisateur, capture d'écran de référence à l'appui) — un
