@@ -10,8 +10,9 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
+  const OMDB_KEY = process.env.OMDB_KEY;
 
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
   // à servir une version (légèrement) périmée jusqu'à `staleWhileRevalidate` secondes
@@ -172,6 +173,29 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (imdbId) {
+      // Cas : notes IMDb/Rotten Tomatoes/Metacritic (OMDb), affichées
+      // uniquement sur une fiche film ouverte explicitement (jamais sur les
+      // grilles/carrousels qui listent plein de films en même temps) — le
+      // même mécanisme d'ouverture de fiche couvre à la fois "un film noté"
+      // et "une fiche que je décide d'ouvrir", donc rien à distinguer côté
+      // logique. Clé optionnelle : si OMDB_KEY n'est pas encore configurée
+      // (l'utilisateur doit créer la sienne sur omdbapi.com), repli silencieux
+      // plutôt qu'une erreur — la fiche film reste utilisable sans ces notes.
+      if (!OMDB_KEY) {
+        setCache(3600, 86400);
+        return res.status(200).json({ ratings: null });
+      }
+      try {
+        const omdbRes = await fetch(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${OMDB_KEY}`);
+        const omdbData = await omdbRes.json();
+        setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
+        return res.status(200).json({ ratings: omdbData.Response === 'True' ? (omdbData.Ratings || []) : null });
+      } catch {
+        setCache(3600, 86400);
+        return res.status(200).json({ ratings: null });
+      }
+
     } else if (onThisDay) {
       // Cas : "Ce jour-là" (Découvrir) — anniversaires de sortie. TMDb ne
       // permet PAS de filtrer "tous les films sortis un 7 août, toutes
@@ -314,7 +338,7 @@ export default async function handler(req, res) {
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const detailsRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos&include_video_language=fr,en,null`
+        `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids&include_video_language=fr,en,null`
       );
       const detailsData = await detailsRes.json();
       setCache(21600, 604800); // 6h, revalidation jusqu'à 7 jours (infos très stables)

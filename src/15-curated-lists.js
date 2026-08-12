@@ -199,9 +199,11 @@ function renderCuratedListsCard() {
   // positionnées approximativement à la bonne région du monde.
   const mapPinsHtml = CURATED_COUNTRIES.map(c => `
     <button type="button" class="curated-map-pin" data-list-id="country-${c.code}" style="top:${c.top}%; left:${c.left}%;">
-      <span class="curated-map-pin-flag" aria-hidden="true">${c.flag}</span>
-      <span class="curated-map-pin-name">${escAttr(c.name)}</span>
-      <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
+      <span class="curated-map-pin-marker"><span aria-hidden="true">${c.flag}</span></span>
+      <span class="curated-map-pin-label">
+        <span class="curated-map-pin-name">${escAttr(c.name)}</span>
+        <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
+      </span>
     </button>
   `).join('');
 

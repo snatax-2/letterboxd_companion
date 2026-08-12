@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', initErrorLogUI);
 // explicite pour ça).
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true };
+const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true, onThisDay: true, themeExplorer: true, blindSpots: true, curatedShortcut: true };
 
 function loadFeatureFlags() {
   try {
@@ -434,6 +434,25 @@ function applyFeatureFlags() {
 
   const discoverTinder = document.querySelector('.discover-section-tinder');
   if (discoverTinder) discoverTinder.style.display = flags.discoverRecs ? '' : 'none';
+
+  // "Ce jour-là" et "D'après tes goûts" masquent déjà leur section par
+  // défaut tant qu'aucun contenu n'est trouvé (voir loadOnThisDay/
+  // renderBlindSpotsSection) — la bascule ne force donc que le MASQUAGE,
+  // jamais l'affichage (sinon on risquerait de montrer un encart vide sur
+  // un jour sans anniversaire, ou avant que l'agrégation des goûts soit
+  // faite), même schéma asymétrique que Quiz/Tendances.
+  const onThisDayWrap = document.getElementById('on-this-day-wrap');
+  if (onThisDayWrap && !flags.onThisDay) onThisDayWrap.style.display = 'none';
+  const blindSpotsWrap = document.getElementById('blind-spots-wrap');
+  if (blindSpotsWrap && !flags.blindSpots) blindSpotsWrap.style.display = 'none';
+
+  // "Explorer par thème" et le raccourci "Classiques à explorer" sont
+  // toujours visibles dès leur premier rendu (pas de dépendance à des
+  // données qui arrivent après coup) — bascule symétrique, comme Duels.
+  const themeExplorerWrap = document.getElementById('theme-explorer-wrap');
+  if (themeExplorerWrap) themeExplorerWrap.style.display = flags.themeExplorer ? '' : 'none';
+  const curatedShortcutWrap = document.getElementById('curated-lists-shortcut-wrap');
+  if (curatedShortcutWrap) curatedShortcutWrap.style.display = flags.curatedShortcut ? '' : 'none';
 }
 
 // Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
@@ -446,6 +465,11 @@ function reloadReenabledFeature(key) {
   if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
   if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
   if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
+  if (key === 'onThisDay' && typeof loadOnThisDay === 'function') loadOnThisDay();
+  if (key === 'blindSpots' && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
+  // themeExplorer/curatedShortcut : contenu statique déjà rendu au premier
+  // chargement de Découvrir (pas de données à recharger), applyFeatureFlags
+  // suffit à les réafficher.
   // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
   // (son contenu n'a jamais été détruit, juste masqué) — rien à recharger.
 }
@@ -458,6 +482,10 @@ function initFeatureToggleUI() {
     'setting-feature-trending': 'trending',
     'setting-feature-discover-recs': 'discoverRecs',
     'setting-feature-guess-game': 'guessGame',
+    'setting-feature-on-this-day': 'onThisDay',
+    'setting-feature-theme-explorer': 'themeExplorer',
+    'setting-feature-blind-spots': 'blindSpots',
+    'setting-feature-curated-shortcut': 'curatedShortcut',
   };
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
@@ -696,8 +724,8 @@ function switchRightTab(tabName) {
     if (flags.discoverRecs !== false) loadDiscoverQueue();
     if (flags.trending !== false) loadTrendingCarousel();
     loadFilmDuJour(); // pas dans la liste des bascules demandées
-    loadOnThisDay();
-    if (typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
+    if (flags.onThisDay !== false) loadOnThisDay();
+    if (flags.blindSpots !== false && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
     if (flags.quiz !== false) loadDailyQuiz();
   }
   // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
@@ -7107,6 +7135,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="mds-external-ratings"></div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
     </div>
@@ -7289,6 +7318,28 @@ async function populateSagaStrip(collectionId, currentMovieId) {
   }
 }
 
+// Notes IMDb/Rotten Tomatoes/Metacritic (OMDb) — uniquement sur une fiche
+// film ouverte explicitement (jamais sur les grilles/carrousels), voir
+// api/search.js. Repli silencieux si la clé OMDB_KEY n'est pas configurée
+// ou si l'appel échoue : la fiche reste utilisable sans ces notes.
+async function populateExternalRatings(imdbId) {
+  const el = document.getElementById('mds-external-ratings');
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?imdbId=${imdbId}`);
+    const data = await readApiJson(res);
+    const ratings = data.ratings || [];
+    if (ratings.length === 0) return;
+    const labels = { 'Internet Movie Database': 'IMDb', 'Rotten Tomatoes': 'RT', 'Metacritic': 'Metacritic' };
+    el.innerHTML = ratings
+      .filter(r => labels[r.Source])
+      .map(r => `<span class="mds-external-rating"><b>${labels[r.Source]}</b> ${escAttr(r.Value)}</span>`)
+      .join('');
+  } catch {
+    // silencieux : la note TMDb deja affichee suffit
+  }
+}
+
 // Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
 // les lignes visibles par défaut — pas la peine de proposer un accordéon pour
 // un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
@@ -7371,6 +7422,7 @@ async function openMovieDetailSheet(tmdbId) {
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
+    if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
   } catch (e) {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
@@ -8295,9 +8347,11 @@ function renderCuratedListsCard() {
   // positionnées approximativement à la bonne région du monde.
   const mapPinsHtml = CURATED_COUNTRIES.map(c => `
     <button type="button" class="curated-map-pin" data-list-id="country-${c.code}" style="top:${c.top}%; left:${c.left}%;">
-      <span class="curated-map-pin-flag" aria-hidden="true">${c.flag}</span>
-      <span class="curated-map-pin-name">${escAttr(c.name)}</span>
-      <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
+      <span class="curated-map-pin-marker"><span aria-hidden="true">${c.flag}</span></span>
+      <span class="curated-map-pin-label">
+        <span class="curated-map-pin-name">${escAttr(c.name)}</span>
+        <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
+      </span>
     </button>
   `).join('');
 

@@ -1572,33 +1572,43 @@
   /* Carte du monde du cinéma — volontairement PAS de vraies frontières
      géographiques (voir la discussion sur l'ergonomie tactile : des pays
      comme la Corée du Sud seraient minuscules sur une carte précise à
-     l'échelle d'un téléphone). Juste un fond abstrait façon grille de
-     méridiens/parallèles + des pastilles pays largement dimensionnées,
-     positionnées approximativement à la bonne région du monde plutôt
-     qu'avec une précision géographique réelle. */
+     l'échelle d'un téléphone). Fond dégradé sobre (pas de grille façon
+     papier millimétré, jugée trop chargée) + des épingles de carte
+     classiques, toutes à la même taille, positionnées approximativement à
+     la bonne région du monde plutôt qu'avec une précision géographique
+     réelle. */
   .curated-map {
-    position: relative; width: 100%; aspect-ratio: 1.7 / 1;
+    position: relative; width: 100%; aspect-ratio: 1.6 / 1;
     border-radius: var(--radius-sm); overflow: hidden; margin-top: 4px;
-    background-color: var(--surface2);
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 12.5% 16.66%;
+    background: radial-gradient(ellipse 90% 90% at 50% 38%, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border);
   }
   .curated-map-inner { position: absolute; inset: 0; }
   .curated-map-pin {
     position: absolute; transform: translate(-50%, -50%);
-    display: flex; flex-direction: column; align-items: center; gap: 1px;
-    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 999px;
-    padding: 6px 9px; cursor: pointer; min-width: 44px;
-    box-shadow: var(--box-shadow-style, 0 2px 8px rgba(0,0,0,0.25));
-    transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast);
-    font-family: var(--font-body);
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    background: none; border: none; cursor: pointer; width: 60px; padding: 0;
+    transition: transform var(--dur-fast) var(--ease-out);
   }
-  .curated-map-pin:hover { border-color: var(--orange); transform: translate(-50%, -50%) scale(1.08); }
-  .curated-map-pin-flag { font-size: 1.05rem; line-height: 1; }
-  .curated-map-pin-name { font-size: 0.58rem; font-weight: 700; color: var(--text-hi); white-space: nowrap; line-height: 1.1; }
-  .curated-map-pin-pct { font-size: 0.6rem; font-weight: 700; color: var(--orange); line-height: 1.1; }
+  .curated-map-pin:hover { transform: translate(-50%, -50%) scale(1.1); }
+  /* Épingle façon carte classique : un carré arrondi sur 3 coins, pivoté à
+     45°, forme une goutte pointue vers le bas — technique CSS courante. */
+  .curated-map-pin-marker {
+    width: 34px; height: 34px; border-radius: 50% 50% 50% 0;
+    background: var(--surface); border: 2px solid var(--orange);
+    display: flex; align-items: center; justify-content: center;
+    transform: rotate(-45deg); margin-bottom: 4px;
+    box-shadow: var(--box-shadow-style, 0 2px 6px rgba(0,0,0,0.3));
+  }
+  .curated-map-pin-marker span { display: inline-block; transform: rotate(45deg); font-size: 1.05rem; line-height: 1; }
+  .curated-map-pin-label {
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 7px;
+    padding: 3px 5px; width: 100%;
+    box-shadow: var(--box-shadow-style, 0 1px 4px rgba(0,0,0,0.2));
+  }
+  .curated-map-pin-name { font-size: 0.56rem; font-weight: 700; color: var(--text-hi); line-height: 1.15; text-align: center; }
+  .curated-map-pin-pct { font-size: 0.62rem; font-weight: 800; color: var(--orange); line-height: 1.1; }
 
   /* ── Découvrir : raccourci vers les Classiques (Profil) ── */
   .curated-lists-shortcut-btn {
@@ -1855,6 +1865,17 @@
      étiquette discrète en petites capitales espacées, comme sur un vrai
      carton "UN FILM DE..." — la personnalité vient de la typo, pas d'un mot de plus. */
   .mds-header-director { font-size: 0.78rem; color: var(--text-mid); margin-top: 6px; }
+
+  /* Notes externes (IMDb/RT/Metacritic via OMDb) — sur une fiche film ouverte
+     explicitement seulement, jamais sur les grilles qui listent plein de
+     films (voir populateExternalRatings). Vide si non chargées/absentes,
+     ne prend alors aucune place. */
+  .mds-external-ratings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .mds-external-rating {
+    font-size: 0.72rem; color: var(--text-mid); background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px;
+  }
+  .mds-external-rating b { color: var(--text-hi); font-weight: 800; margin-right: 3px; }
   .mds-director-label { font-family: var(--font-heading); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-mid); }
   .mds-header-director b { color: var(--text-hi); font-weight: 700; }
   /* Contrairement au reste (meta, tampon score), le réalisateur reste visible en

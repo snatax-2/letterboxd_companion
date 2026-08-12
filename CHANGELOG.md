@@ -13,6 +13,21 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Vercel Speed Insights** — méthode "site statique sans npm" (deux
+  balises `<script>` dans `index.html`), pas le composant Next.js : Ludex
+  est du JS classique concaténé, sans framework côté client.
+- **Notes IMDb/Rotten Tomatoes/Metacritic (OMDb)** sur la fiche film,
+  uniquement quand elle est ouverte explicitement (jamais sur les grilles
+  qui listent plein de films à la fois). Récupère l'identifiant IMDb
+  directement depuis TMDb (`external_ids`), pas de résolution par titre
+  fragile. Nécessite une clé `OMDB_KEY` gratuite (1000 requêtes/jour) à
+  ajouter sur Vercel — repli silencieux si absente, la fiche reste
+  utilisable sans ces notes.
+- **Bascules Réglages pour les 4 dernières fonctionnalités Découvrir**
+  (Ce jour-là, Explorer par thème, D'après tes goûts, raccourci Classiques
+  à explorer) — désormais toutes les sections de Découvrir sont
+  activables/désactivables individuellement.
+
 - **"D'après tes goûts"** dans Découvrir (angle mort ciblé) — la dernière
   des cinq idées de découverte, et la plus longue à construire : transforme
   le % de filmographie déjà affiché sur la fiche personne (une donnée
@@ -349,6 +364,13 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
   utilisable sans réseau, et les actions locales (noter, modifier, supprimer)
   fonctionnent intégralement — confirmé par un vrai test hors-ligne (pas une
   simulation d'échec réseau ponctuel), pas juste une supposition.
+
+### Modifié
+- **Carte "Par pays" repensée visuellement** (retour utilisateur : "pas ouf
+  dans l'état actuel") — fond dégradé sobre à la place de la grille façon
+  papier millimétré, et épingles de carte classiques (goutte pointue,
+  drapeau) toutes à la même taille, remplaçant les pastilles à largeur
+  variable qui donnaient un rendu inégal.
 
 ## [1.1.0] — 2026-07-20
 

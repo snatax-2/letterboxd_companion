@@ -114,6 +114,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
         <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="mds-external-ratings"></div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
     </div>
@@ -296,6 +297,28 @@ async function populateSagaStrip(collectionId, currentMovieId) {
   }
 }
 
+// Notes IMDb/Rotten Tomatoes/Metacritic (OMDb) — uniquement sur une fiche
+// film ouverte explicitement (jamais sur les grilles/carrousels), voir
+// api/search.js. Repli silencieux si la clé OMDB_KEY n'est pas configurée
+// ou si l'appel échoue : la fiche reste utilisable sans ces notes.
+async function populateExternalRatings(imdbId) {
+  const el = document.getElementById('mds-external-ratings');
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?imdbId=${imdbId}`);
+    const data = await readApiJson(res);
+    const ratings = data.ratings || [];
+    if (ratings.length === 0) return;
+    const labels = { 'Internet Movie Database': 'IMDb', 'Rotten Tomatoes': 'RT', 'Metacritic': 'Metacritic' };
+    el.innerHTML = ratings
+      .filter(r => labels[r.Source])
+      .map(r => `<span class="mds-external-rating"><b>${labels[r.Source]}</b> ${escAttr(r.Value)}</span>`)
+      .join('');
+  } catch {
+    // silencieux : la note TMDb deja affichee suffit
+  }
+}
+
 // Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
 // les lignes visibles par défaut — pas la peine de proposer un accordéon pour
 // un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
@@ -378,6 +401,7 @@ async function openMovieDetailSheet(tmdbId) {
     const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
+    if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
   } catch (e) {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le

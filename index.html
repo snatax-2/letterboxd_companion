@@ -283,6 +283,46 @@
           <span class="settings-toggle-slider"></span>
         </label>
       </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-on-this-day">Ce jour-là</div>
+          <div class="settings-toggle-desc">Les anniversaires de sortie ronds (10/20/30 ans...).</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-on-this-day" checked aria-labelledby="label-feature-on-this-day">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-theme-explorer">Explorer par thème</div>
+          <div class="settings-toggle-desc">Les puces de mots-clés (braquage, boucle temporelle...).</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-theme-explorer" checked aria-labelledby="label-feature-theme-explorer">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-blind-spots">D'après tes goûts</div>
+          <div class="settings-toggle-desc">Suggestions basées sur tes réalisateurs préférés.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-blind-spots" checked aria-labelledby="label-feature-blind-spots">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-feature-curated-shortcut">Raccourci Classiques à explorer</div>
+          <div class="settings-toggle-desc">Le lien vers les listes prédéfinies de Profil.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-feature-curated-shortcut" checked aria-labelledby="label-feature-curated-shortcut">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
 
       <div class="error-log-section" id="error-log-section" style="display:none;">
         <label class="settings-label">Journal technique</label>
@@ -987,5 +1027,12 @@
 </div>
 
 <script src="app.js" defer></script>
+<!-- Vercel Speed Insights — méthode "site statique sans npm" (pas le
+     composant Next.js : Ludex est du JS classique concaténé, sans
+     framework ni étape de build côté client). -->
+<script>
+  window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

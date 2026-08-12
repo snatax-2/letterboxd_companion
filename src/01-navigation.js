@@ -33,8 +33,8 @@ function switchRightTab(tabName) {
     if (flags.discoverRecs !== false) loadDiscoverQueue();
     if (flags.trending !== false) loadTrendingCarousel();
     loadFilmDuJour(); // pas dans la liste des bascules demandées
-    loadOnThisDay();
-    if (typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
+    if (flags.onThisDay !== false) loadOnThisDay();
+    if (flags.blindSpots !== false && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
     if (flags.quiz !== false) loadDailyQuiz();
   }
   // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
