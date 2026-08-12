@@ -13,6 +13,21 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Vrai bug trouvé suite à un signalement utilisateur, avec capture
+  d'écran à l'appui** : les notes IMDb/RT/Metacritic (OMDb) se
+  chevauchaient avec le bouton "Changer l'affiche" et le réalisateur en
+  descendant dans la fiche film. Cause exacte : l'en-tête de la fiche a un
+  mode "compact" déclenché au défilement (l'affiche rétrécit, certains
+  éléments se cachent pour garder un en-tête minimal) — les notes OMDb,
+  ajoutées après coup, n'avaient jamais été intégrées à cette logique et
+  restaient affichées en pleine taille, rendant l'en-tête "sticky" bien
+  plus haut que prévu et le faisant déborder par-dessus le contenu en
+  dessous. Corrigé en les masquant en mode compact, comme la note TMDb.
+  Reproduction difficile (probablement liée aux réglages d'accessibilité
+  du téléphone) — trouvé en simulant le vrai déclencheur (défilement à
+  l'intérieur de la fiche) plutôt qu'en essayant de reproduire pixel pour
+  pixel la capture d'écran.
+
 - **Vrai bug trouvé suite à un signalement utilisateur** : balayer la bande
   "Ce jour-là" changeait d'onglet au lieu de la faire défiler. Le geste
   global de swipe-entre-onglets (`01-navigation.js`) a une liste de zones
