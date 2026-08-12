@@ -12,6 +12,34 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Module Analyse de film** (Phases 0 à 2 du document de référence) — un
+  onglet Analyse sur chaque fiche film, à côté de la note. Deux champs
+  libres (technique, thématique), envoyés à un mentor IA (Gemini
+  2.5 Flash) qui renvoie un retour structuré en quatre parties : synthèse,
+  points forts, angles morts, questions pour approfondir — toujours ancré
+  dans le texte écrit, jamais générique. Chaque analyse est conservée
+  (stockage local, comme le reste de Ludex — décidé ensemble : pas de vraie
+  base de données serveur, Analyse et ProgressionUtilisateur sont des
+  données personnelles comme les autres). Nécessite une clé `GEMINI_API_KEY`
+  gratuite (aistudio.google.com) à ajouter sur Vercel — repli explicite si
+  absente, message clair plutôt qu'une erreur muette.
+  - Le système de connaissances (glossaire, notions à débloquer — Phase 5
+    du document) est volontairement repoussé à plus tard, une fois ce
+    socle vécu un moment — décision prise ensemble en amont.
+  - La synchronisation cloud n'inclut pas encore ces nouvelles données
+    (à ajouter dans un second temps).
+
+### Corrigé
+- **Vrai bug trouvé en testant le module** : le message d'erreur précis du
+  serveur (ex: "clé Gemini manquante") n'atteignait jamais l'utilisateur —
+  remplacé silencieusement par un "vérifie ta connexion" générique et
+  souvent faux. Cause : `readApiJson` lève déjà une exception avec le
+  message du serveur sur une réponse non-OK, rendant mon second contrôle
+  `if (!res.ok)` inatteignable — le message se perdait dans le bloc catch
+  générique. Corrigé en réutilisant `describeApiFailure`, déjà conçue dans
+  l'app pour ce cas exact, plutôt que d'inventer mon propre message.
+
 ### Modifié
 - **Bouton "Noter" recentré** dans la barre de navigation (retour
   utilisateur, capture d'écran à l'appui) — réordonné pour avoir 2 onglets

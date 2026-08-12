@@ -177,6 +177,10 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         </div>
         <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
       </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.35s">
+      ${typeof buildAnalysisSectionHtml === 'function' ? buildAnalysisSectionHtml(data.id, data.title) : ''}
+    </div>
   `;
 }
 
@@ -402,6 +406,7 @@ async function openMovieDetailSheet(tmdbId) {
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
+    if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
   } catch (e) {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le

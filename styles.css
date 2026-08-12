@@ -1876,6 +1876,30 @@
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
   }
+
+  /* ── Module Analyse de film ── */
+  .analysis-label { display: block; font-size: 0.74rem; font-weight: 700; color: var(--text-mid); margin: 8px 0 4px; }
+  .analysis-label:first-child { margin-top: 0; }
+  .analysis-textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
+    padding: 9px 12px; font-size: 0.85rem; color: var(--text-hi); font-family: var(--font-body);
+    resize: vertical; min-height: 64px;
+  }
+  .analysis-textarea:focus { outline: none; border-color: var(--orange); }
+  .analysis-submit-btn { display: block; width: 100%; margin-top: 10px; }
+  .analysis-error { margin-top: 8px; font-size: 0.78rem; color: var(--red); }
+
+  .analysis-history { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .analysis-entry {
+    background: var(--surface2); border-radius: var(--radius-sm); border-left: 4px solid var(--orange);
+    padding: 12px 14px;
+  }
+  .analysis-entry-date { font-size: 0.68rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .analysis-synthese { margin: 0 0 8px; font-size: 0.84rem; color: var(--text-hi); font-style: italic; line-height: 1.4; }
+  .analysis-retour-group { margin-top: 8px; }
+  .analysis-retour-label { font-size: 0.7rem; font-weight: 800; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .analysis-retour-group ul { margin: 0; padding-left: 18px; }
+  .analysis-retour-group li { font-size: 0.8rem; color: var(--text); line-height: 1.4; margin-bottom: 2px; }
   .mds-trailer-wrap {
     position: relative; width: 100%; padding-top: 56.25%; border-radius: var(--radius-sm); overflow: hidden; background: #000;
     cursor: pointer;
