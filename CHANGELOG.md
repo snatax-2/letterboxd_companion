@@ -12,7 +12,23 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Bouton "Noter" mis en avant** dans la barre de navigation mobile (fait
+  sur demande utilisateur, capture d'écran de référence à l'appui) — un
+  badge qui dépasse au-dessus de la barre, pour l'action centrale de l'app.
+  Mobile uniquement (la barre du haut sur PC reste plate, pas la place de
+  déborder vers le haut). Le principe s'applique à tous les thèmes, mais la
+  forme s'adapte à l'esprit de chacun : cercle par défaut, losange pour
+  Moderne (cohérent avec son curseur en losange déjà en place, qui bannit
+  déjà les formes rondes ailleurs dans ce thème).
+
 ### Corrigé
+- **Vrai bug préexistant trouvé en testant le nouveau bouton** : le
+  libellé de l'onglet actif sur Méridien n'avait que 2.54:1 de contraste
+  contre le fond blanc de la barre de navigation (`--blue`, mappé sur le
+  même laiton que l'accent), sous le seuil de 4.5:1 — jamais détecté avant
+  faute d'avoir scanné spécifiquement cette zone en état actif. Assombri,
+  sans toucher aux autres couleurs d'accent du thème.
 - **Vrai bug trouvé suite à un signalement utilisateur, avec capture
   d'écran à l'appui** : les notes IMDb/RT/Metacritic (OMDb) se
   chevauchaient avec le bouton "Changer l'affiche" et le réalisateur en
