@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test('carte du monde : pastilles, pourcentage, ouverture fiche pays', async ({ page }) => {
+test('liste par pays (meme design que les decennies) : lignes, pourcentage, ouverture fiche pays', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');
     localStorage.setItem('lbx_v2', JSON.stringify([
@@ -26,15 +26,15 @@ test('carte du monde : pastilles, pourcentage, ouverture fiche pays', async ({ p
 
   await page.locator('.curated-decades-accordion summary').nth(2).click(); // pays
   await page.waitForTimeout(800);
-  const pinCount = await page.locator('.curated-map-pin').count();
-  console.log('nombre de pastilles pays:', pinCount);
-  expect(pinCount).toBe(8);
+  const rowCount = await page.locator('.curated-decades-list').nth(2).locator('.curated-list-row').count();
+  console.log('nombre de lignes pays:', rowCount);
+  expect(rowCount).toBe(8);
 
   const krPct = await page.locator('#curated-pct-country-KR').textContent();
   console.log('pourcentage Coree du Sud (1 vu sur 2):', krPct);
   expect(krPct).toBe('50%');
 
-  await page.click('.curated-map-pin[data-list-id="country-KR"]');
+  await page.click('.curated-list-row[data-list-id="country-KR"]');
   await page.waitForSelector('#curated-list-sheet.open');
   const title = await page.locator('#cls-title').textContent();
   console.log('titre de la fiche pays:', title);

@@ -137,14 +137,14 @@ const CURATED_STUDIOS = [
 // géographiques précises — voir la discussion sur l'ergonomie tactile),
 // juste assez pour suggérer la bonne région du monde.
 const CURATED_COUNTRIES = [
-  { code: 'JP', name: 'Japon', flag: '🇯🇵', top: 15, left: 90 },
-  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷', top: 30, left: 85 },
-  { code: 'DK', name: 'Danemark', flag: '🇩🇰', top: 15, left: 45 },
-  { code: 'IT', name: 'Italie', flag: '🇮🇹', top: 35, left: 48 },
-  { code: 'IR', name: 'Iran', flag: '🇮🇷', top: 55, left: 60 },
-  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', top: 55, left: 82 },
-  { code: 'IN', name: 'Inde', flag: '🇮🇳', top: 78, left: 62 },
-  { code: 'MX', name: 'Mexique', flag: '🇲🇽', top: 70, left: 12 },
+  { code: 'JP', name: 'Japon', flag: '🇯🇵' },
+  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷' },
+  { code: 'DK', name: 'Danemark', flag: '🇩🇰' },
+  { code: 'IT', name: 'Italie', flag: '🇮🇹' },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷' },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'IN', name: 'Inde', flag: '🇮🇳' },
+  { code: 'MX', name: 'Mexique', flag: '🇲🇽' },
 ];
 
 // Exploration par thème (Découvrir) — mots-clés TMDb, indépendants des

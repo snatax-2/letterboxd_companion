@@ -160,7 +160,7 @@ switchMobileNav('rating');
 // sert à plusieurs mécanismes de geste distincts dans ce fichier.
 function isExcludedTarget(target) {
   return !!target.closest(
-    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, .on-this-day-strip, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
   );
 }
 

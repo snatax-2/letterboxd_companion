@@ -12,7 +12,22 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
-### Ajouté
+### Corrigé
+- **Vrai bug trouvé suite à un signalement utilisateur** : balayer la bande
+  "Ce jour-là" changeait d'onglet au lieu de la faire défiler. Le geste
+  global de swipe-entre-onglets (`01-navigation.js`) a une liste de zones
+  exclues (carrousels, cartes...) pour ne pas interférer avec leurs propres
+  gestes tactiles — `.on-this-day-strip` en avait été oublié. Trouvé au
+  passage et corrigé deux autres cas du même problème, jamais signalés mais
+  bien réels : le sélecteur de listes dans Watchlist et la heatmap
+  d'activité dans Profil.
+
+### Modifié
+- **Carte "Par pays" : retour au même design en lignes que les décennies**
+  (retour utilisateur : la carte stylisée avec pastilles positionnées ne
+  convenait pas) — abandon complet du système de carte, remplacé par des
+  lignes classiques dans un accordéon, identique aux décennies/studios.
+
 - **Vercel Speed Insights** — méthode "site statique sans npm" (deux
   balises `<script>` dans `index.html`), pas le composant Next.js : Ludex
   est du JS classique concaténé, sans framework côté client.

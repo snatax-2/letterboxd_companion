@@ -1569,47 +1569,6 @@
   .curated-decades-accordion[open] summary::before { transform: rotate(90deg); }
   .curated-decades-list { margin-top: 4px; }
 
-  /* Carte du monde du cinéma — volontairement PAS de vraies frontières
-     géographiques (voir la discussion sur l'ergonomie tactile : des pays
-     comme la Corée du Sud seraient minuscules sur une carte précise à
-     l'échelle d'un téléphone). Fond dégradé sobre (pas de grille façon
-     papier millimétré, jugée trop chargée) + des épingles de carte
-     classiques, toutes à la même taille, positionnées approximativement à
-     la bonne région du monde plutôt qu'avec une précision géographique
-     réelle. */
-  .curated-map {
-    position: relative; width: 100%; aspect-ratio: 1.6 / 1;
-    border-radius: var(--radius-sm); overflow: hidden; margin-top: 4px;
-    background: radial-gradient(ellipse 90% 90% at 50% 38%, var(--surface) 0%, var(--surface2) 100%);
-    border: 1px solid var(--border);
-  }
-  .curated-map-inner { position: absolute; inset: 0; }
-  .curated-map-pin {
-    position: absolute; transform: translate(-50%, -50%);
-    display: flex; flex-direction: column; align-items: center; gap: 5px;
-    background: none; border: none; cursor: pointer; width: 60px; padding: 0;
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-  .curated-map-pin:hover { transform: translate(-50%, -50%) scale(1.1); }
-  /* Épingle façon carte classique : un carré arrondi sur 3 coins, pivoté à
-     45°, forme une goutte pointue vers le bas — technique CSS courante. */
-  .curated-map-pin-marker {
-    width: 34px; height: 34px; border-radius: 50% 50% 50% 0;
-    background: var(--surface); border: 2px solid var(--orange);
-    display: flex; align-items: center; justify-content: center;
-    transform: rotate(-45deg); margin-bottom: 4px;
-    box-shadow: var(--box-shadow-style, 0 2px 6px rgba(0,0,0,0.3));
-  }
-  .curated-map-pin-marker span { display: inline-block; transform: rotate(45deg); font-size: 1.05rem; line-height: 1; }
-  .curated-map-pin-label {
-    display: flex; flex-direction: column; align-items: center; gap: 1px;
-    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 7px;
-    padding: 3px 5px; width: 100%;
-    box-shadow: var(--box-shadow-style, 0 1px 4px rgba(0,0,0,0.2));
-  }
-  .curated-map-pin-name { font-size: 0.56rem; font-weight: 700; color: var(--text-hi); line-height: 1.15; text-align: center; }
-  .curated-map-pin-pct { font-size: 0.62rem; font-weight: 800; color: var(--orange); line-height: 1.1; }
-
   /* ── Découvrir : raccourci vers les Classiques (Profil) ── */
   .curated-lists-shortcut-btn {
     display: flex; align-items: center; gap: 10px; width: 100%;

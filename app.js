@@ -660,14 +660,14 @@ const CURATED_STUDIOS = [
 // géographiques précises — voir la discussion sur l'ergonomie tactile),
 // juste assez pour suggérer la bonne région du monde.
 const CURATED_COUNTRIES = [
-  { code: 'JP', name: 'Japon', flag: '🇯🇵', top: 15, left: 90 },
-  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷', top: 30, left: 85 },
-  { code: 'DK', name: 'Danemark', flag: '🇩🇰', top: 15, left: 45 },
-  { code: 'IT', name: 'Italie', flag: '🇮🇹', top: 35, left: 48 },
-  { code: 'IR', name: 'Iran', flag: '🇮🇷', top: 55, left: 60 },
-  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰', top: 55, left: 82 },
-  { code: 'IN', name: 'Inde', flag: '🇮🇳', top: 78, left: 62 },
-  { code: 'MX', name: 'Mexique', flag: '🇲🇽', top: 70, left: 12 },
+  { code: 'JP', name: 'Japon', flag: '🇯🇵' },
+  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷' },
+  { code: 'DK', name: 'Danemark', flag: '🇩🇰' },
+  { code: 'IT', name: 'Italie', flag: '🇮🇹' },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷' },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'IN', name: 'Inde', flag: '🇮🇳' },
+  { code: 'MX', name: 'Mexique', flag: '🇲🇽' },
 ];
 
 // Exploration par thème (Découvrir) — mots-clés TMDb, indépendants des
@@ -851,7 +851,7 @@ switchMobileNav('rating');
 // sert à plusieurs mécanismes de geste distincts dans ce fichier.
 function isExcludedTarget(target) {
   return !!target.closest(
-    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, .on-this-day-strip, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
   );
 }
 
@@ -8339,21 +8339,10 @@ function renderCuratedListsCard() {
 
   const decadeEntries = CURATED_DECADES.map(y => ({ id: `decade-${y}`, label: curatedDecadeLabel(y), sub: 'Mieux notés sur TMDb (500 votes min.)' }));
   const studioEntries = CURATED_STUDIOS.map(s => ({ id: `studio-${s.id}`, label: s.name, sub: s.sub }));
-
-  // Carte du monde stylisée — pas de vraies frontières géographiques (voir
-  // la discussion sur l'ergonomie tactile : des pays comme la Corée du Sud
-  // seraient minuscules sur une carte précise à l'échelle d'un téléphone).
-  // Juste un fond abstrait + des pastilles pays largement dimensionnées,
-  // positionnées approximativement à la bonne région du monde.
-  const mapPinsHtml = CURATED_COUNTRIES.map(c => `
-    <button type="button" class="curated-map-pin" data-list-id="country-${c.code}" style="top:${c.top}%; left:${c.left}%;">
-      <span class="curated-map-pin-marker"><span aria-hidden="true">${c.flag}</span></span>
-      <span class="curated-map-pin-label">
-        <span class="curated-map-pin-name">${escAttr(c.name)}</span>
-        <span class="curated-map-pin-pct" id="curated-pct-country-${c.code}">…</span>
-      </span>
-    </button>
-  `).join('');
+  // Même design en lignes que les décennies/studios — la carte stylisée
+  // (pastilles positionnées façon carte du monde) a été abandonnée : retour
+  // utilisateur négatif sur son rendu visuel.
+  const countryEntries = CURATED_COUNTRIES.map(c => ({ id: `country-${c.code}`, label: `${c.flag} ${c.name}`, sub: 'Mieux notés sur TMDb (200 votes min.)' }));
 
   container.innerHTML = `
     ${rowHtml({ id: 'alltime', label: 'Tous les temps', sub: 'Classement Sight & Sound 2022' })}
@@ -8367,11 +8356,11 @@ function renderCuratedListsCard() {
     </details>
     <details class="curated-decades-accordion">
       <summary>Par pays (${CURATED_COUNTRIES.length})</summary>
-      <div class="curated-map"><div class="curated-map-inner">${mapPinsHtml}</div></div>
+      <div class="curated-decades-list">${countryEntries.map(rowHtml).join('')}</div>
     </details>
   `;
 
-  container.querySelectorAll('.curated-list-row, .curated-map-pin').forEach(btn => {
+  container.querySelectorAll('.curated-list-row').forEach(btn => {
     btn.addEventListener('click', () => openCuratedListSheet(btn.dataset.listId));
   });
 

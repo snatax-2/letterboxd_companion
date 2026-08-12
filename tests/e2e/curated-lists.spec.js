@@ -25,7 +25,7 @@ test('carte Classiques a explorer : rendu et pourcentages', async ({ page }) => 
 
   const rowCount = await page.locator('.curated-list-row').count();
   console.log('nombre de listes au total (dont repliees):', rowCount);
-  expect(rowCount).toBe(17); // 1 tous-les-temps + 11 decennies + 5 studios
+  expect(rowCount).toBe(25); // 1 tous-les-temps + 11 decennies + 5 studios + 8 pays
 
   const accordionOpen = await page.locator('.curated-decades-accordion').first().evaluate(el => el.open);
   console.log('accordeon decennies ouvert par defaut:', accordionOpen);
