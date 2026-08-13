@@ -488,7 +488,10 @@
 
       <div class="search-wrap">
         <div class="search-row">
-          <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
+          <div class="search-input-wrap">
+            <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Twin Peaks...)" autocomplete="off">
+            <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
+          </div>
           <input type="date" class="date-input" id="view-date" aria-label="Date de visionnage">
           <button class="heart-btn" id="heart-btn" title="Aimer ce film" aria-label="Aimer ce film" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
         </div>
@@ -749,7 +752,10 @@
         </div>
 
         <div class="search-wrap" style="margin-bottom: 14px;">
-          <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
+          <div class="search-input-wrap">
+            <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
+            <button type="button" class="search-clear-btn" id="history-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
+          </div>
         </div>
 
         <div class="filter-row" id="filter-row">

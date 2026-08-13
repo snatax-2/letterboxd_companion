@@ -2072,7 +2072,21 @@ document.querySelectorAll('.ctx-tag').forEach(btn => {
 const searchEl  = document.getElementById('movie-search');
 const suggestEl = document.getElementById('suggestions');
 const searchStatus = document.getElementById('search-status');
+const searchClearBtn = document.getElementById('search-clear-btn');
 let searchTimer;
+
+// Bouton d'effacement : visible dès qu'il y a du texte, évite d'avoir à
+// tout effacer au clavier pour relancer une recherche. Redéclenche
+// l'événement 'input' plutôt que de dupliquer sa logique (masquage des
+// suggestions, sauvegarde du brouillon) — une seule source de vérité.
+searchEl.addEventListener('input', () => {
+  searchClearBtn.style.display = searchEl.value ? 'flex' : 'none';
+});
+searchClearBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  searchEl.dispatchEvent(new Event('input'));
+  searchEl.focus();
+});
 
 // Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
 // tapé — partagée entre la recherche du formulaire de notation et celle de la
@@ -3064,10 +3078,18 @@ window.undoDelete = function() {
 //  RECHERCHE HISTORIQUE
 // ═══════════════════════════════════════════
 let histSearchTimer;
-document.getElementById('history-search').addEventListener('input', (e) => {
+const historySearchEl = document.getElementById('history-search');
+const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
+  historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
   clearTimeout(histSearchTimer);
   histSearchTimer = setTimeout(renderHistory, 150);
+});
+historySearchClearBtn.addEventListener('click', () => {
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  historySearchEl.focus();
 });
 
 // ═══════════════════════════════════════════

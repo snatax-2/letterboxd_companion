@@ -13,6 +13,48 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Deuxième vague de finitions UX** (suite de l'audit design) :
+  - Bouton d'effacement ("×") sur les deux champs de recherche (formulaire
+    de notation et Historique) — plus besoin de tout effacer au clavier
+    pour relancer une recherche.
+  - Verre dépoli étendu au fond des fenêtres modales (`backdrop-filter`,
+    opacité réduite en même temps pour laisser le flou se voir) et au
+    toast de confirmation — cohérence avec la barre de navigation.
+  - Intensité du flou de la barre de navigation relevée (16px, était
+    10px), sur demande, avec l'opacité du fond réajustée en conséquence.
+
+### Corrigé
+- **Vrai chevauchement latéral trouvé sur appareil réel, corrigé**
+  (synchronisé depuis une modification faite directement en production) —
+  la colonne "Noter" héritait de `flex:1` comme les 4 autres onglets, donc
+  sa largeur dépendait du texte des voisins ("HISTORIQUE", "DÉCOUVRIR")
+  qui imposaient leur propre largeur plancher. Sur certaines largeurs
+  d'écran, ça réduisait la colonne à moins de 64px, et le cercle de 78px
+  débordait sur les colonnes voisines, chevauchant leur texte. Corrigé
+  avec une largeur de colonne fixe et garantie (`flex: 0 0 74px`) et un
+  cercle légèrement réduit (68px), donnant une marge de sécurité de 3px de
+  chaque côté indépendante du texte des voisins ou de la largeur d'écran.
+  Même ajustement pour le losange de Moderne (48px).
+
+### Modifié
+- **Bouton "Noter" agrandi et recentré** (synchronisé depuis une
+  modification faite directement en production) — le cercle passe de 54px
+  à 78px et se centre désormais sur les deux axes de la barre
+  (`top/left: 50%` + `translate(-50%,-50%)`) plutôt qu'ancré au bord
+  supérieur, débordant élégamment au-dessus ET en dessous de la barre.
+  Même logique pour le losange de Moderne (56px, centré).
+
+### Corrigé
+- **Vrai défaut de contraste trouvé en revérifiant les 7 thèmes après cet
+  agrandissement** : sur Carnet, le blanc habituel (`--solid-fill-text`)
+  contre son orange spécifique (`#B8695E`, "Rose Poudré") ne offre que
+  4.02:1, sous le seuil de 4.5:1 à la taille de police réduite du badge.
+  Corrigé par une surcharge ciblée (noir, 5.22:1) sur ce badge précis,
+  plutôt qu'un changement de `--solid-fill-text` global qui est utilisé
+  largement ailleurs dans l'app et n'aurait pas été vérifié à cette
+  échelle.
+
+### Ajouté
 - **Correctifs issus d'un audit design complet** — passé en revue point par
   point avant de coder (certains étaient déjà réglés, un contredisait un
   choix qu'on venait de faire ensemble, signalé avant d'y toucher) :

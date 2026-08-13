@@ -94,10 +94,18 @@ window.undoDelete = function() {
 //  RECHERCHE HISTORIQUE
 // ═══════════════════════════════════════════
 let histSearchTimer;
-document.getElementById('history-search').addEventListener('input', (e) => {
+const historySearchEl = document.getElementById('history-search');
+const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
+  historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
   clearTimeout(histSearchTimer);
   histSearchTimer = setTimeout(renderHistory, 150);
+});
+historySearchClearBtn.addEventListener('click', () => {
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  historySearchEl.focus();
 });
 
 // ═══════════════════════════════════════════

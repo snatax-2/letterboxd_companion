@@ -672,15 +672,24 @@
   /* ── MOVIE SEARCH ── */
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }
   .search-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 12px; width: 100%; }
+  .search-input-wrap { position: relative; width: 100%; }
   .search-input {
     background: var(--bg); border: 1px solid var(--blue);
-    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 14px;
+    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 36px 10px 14px;
     font-family: var(--font-heading); font-size: 0.9rem; outline: none;
     width: 100%;
     box-shadow: var(--box-shadow-style, none);
   }
   .search-input:focus { box-shadow: var(--box-shadow-style, 0 0 0 3px rgba(64,188,244,0.18)); border-color: var(--blue); }
   .search-input::placeholder { color: var(--text); }
+  .search-clear-btn {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%; border: none;
+    background: var(--surface2); color: var(--text-mid); cursor: pointer;
+    font-size: 0.68rem; padding: 0; line-height: 1;
+  }
+  .search-clear-btn:hover { background: var(--border-hi); color: var(--text-hi); }
 
   .date-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -1433,7 +1442,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -1711,7 +1720,12 @@
   .toast-undo-btn:hover { background: var(--surface2); color: var(--text-hi); }
 
   /* ── MODALS ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity var(--dur-base); }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000;
+    display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
   /* La modale de confirmation générique (#modal) peut être déclenchée DEPUIS
      une autre modale déjà ouverte (ex: réinitialiser les duels depuis
      Réglages) — sans ce z-index dédié, elle partageait la même valeur que
@@ -2694,52 +2708,84 @@
       max-width: none;
       /* Fond semi-transparent + flou : le contenu qui défile en dessous
          glisse élégamment derrière la barre, plutôt qu'un fond plein qui
-         cache tout net. */
-      background: color-mix(in srgb, var(--surface) 85%, transparent);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+         cache tout net. Intensité relevée (16px, était 10px) sur demande —
+         opacité du fond légèrement réduite en même temps, sinon un flou
+         plus fort mais un fond presque opaque ne se voit quasiment pas. */
+      background: color-mix(in srgb, var(--surface) 75%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
     }
     .nav-btn:first-child { border-radius: 22px 0 0 22px; }
     .nav-btn:last-child { border-radius: 0 22px 22px 0; }
 
-    /* Bouton Noter mis en avant : dépasse au-dessus de la barre, esprit
-       "action centrale" — mobile uniquement (une barre du haut sur PC n'a
-       pas la place de déborder vers le haut). Le PRINCIPE s'applique à
-       tous les thèmes, mais la FORME s'adapte à l'esprit de chacun (cercle
-       par défaut, losange pour Moderne — voir plus bas — qui a délibérément
-       banni les formes rondes ailleurs dans l'app). Le libellé "Noter" vit
-       DANS le cercle (icône + texte réduit empilés), pas en dehors comme
-       les autres onglets — évite tout risque de chevauchement avec le
-       reste de la barre, plus besoin de réserver de l'espace en dessous.
-       */
-    .nav-btn-primary { position: relative; padding-top: 10px; }
+    /* Bouton Noter mis en avant : centré sur les deux axes de la barre et
+       légèrement plus grand qu'elle, esprit "action centrale" — mobile
+       uniquement (une barre du haut sur PC n'a pas la place de déborder).
+       Centrage via top/left 50% + translate(-50%,-50%) plutôt qu'un
+       décalage en pixels fixe : le cercle reste pile au centre (x ET y) de
+       .nav-btn-primary quel que soit la hauteur réelle de la barre, et
+       comme il est plus grand qu'elle, il déborde un peu au-dessus ET
+       en dessous au lieu de flotter uniquement collé au bord supérieur.
+       Le PRINCIPE s'applique à tous les thèmes, mais la FORME s'adapte à
+       l'esprit de chacun (cercle par défaut, losange pour Moderne — voir
+       plus bas — qui a délibérément banni les formes rondes ailleurs dans
+       l'app). Le libellé "Noter" vit DANS le cercle (icône + texte réduit
+       empilés), pas en dehors comme les autres onglets — évite tout risque
+       de chevauchement avec le reste de la barre.
+       flex: 0 0 74px (au lieu d'hériter du flex:1 des 4 autres onglets)
+       donne à CETTE colonne une largeur fixe et garantie, plutôt que de
+       dépendre du calcul de flexbox "espace restant après les minimums de
+       contenu" — avec flex:1 partout, les onglets à texte long ("HISTORIQUE",
+       "DÉCOUVRIR") imposaient chacun leur propre largeur plancher, ce qui
+       pouvait réduire la colonne "Noter" à moins de 64px selon la largeur
+       d'écran. Un cercle plus grand que ça (78px, testé puis retiré)
+       débordait alors sur les colonnes voisines et chevauchait le texte
+       "À VOIR"/"DÉCOUVRIR" — repéré sur appareil réel. Avec une largeur de
+       colonne fixe et connue (74px), le cercle (68px) a une marge de
+       sécurité de 3px de chaque côté, indépendante du texte des voisins ou
+       de la largeur de l'écran. */
+    .nav-btn-primary { position: relative; flex: 0 0 74px; }
     .nav-btn-primary .nav-btn-icon {
-      position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
-      width: 54px; height: 54px; margin: 0; border-radius: 50%;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.45);
     }
     .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
     .nav-btn-primary-label {
-      font-size: 0.52rem; font-weight: 800; letter-spacing: 0.03em;
+      font-size: 0.54rem; font-weight: 800; letter-spacing: 0.03em;
       color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading);
       line-height: 1;
     }
 
     /* Moderne : pas de rond ici non plus, cohérent avec le curseur en
-       losange déjà utilisé partout ailleurs dans ce thème. Un peu plus
-       grand que la version précédente (icône seule) : la diagonale d'un
-       carré pivoté doit maintenant accueillir aussi le petit texte. */
+       losange déjà utilisé partout ailleurs dans ce thème. Même centrage
+       que la version par défaut (hérité de la règle du dessus), seule la
+       forme change : carré pivoté à 45° au lieu d'un cercle. Côté plus
+       petit que le cercle (48px vs 68px) car la rotation étire le
+       débordement visuel le long de la diagonale (48×√2 ≈ 68px) — donne
+       un débordement comparable aux ~5px du cercle plutôt que la
+       diagonale complète d'un carré de même côté. */
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 50px; height: 50px; top: -22px; border-radius: 8px;
-      transform: translateX(-50%) rotate(45deg);
+      width: 48px; height: 48px; border-radius: 8px;
+      transform: translate(-50%, -50%) rotate(45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
       transform: rotate(-45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
+
+    /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
+       le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
+       le seuil de 4.5:1 à cette taille de police réduite (trouvé en testant
+       les 7 thèmes après l'agrandissement du cercle). Correctif ciblé ici
+       plutôt qu'un changement de --solid-fill-text (utilisée largement
+       ailleurs dans l'app, changement non vérifié à cette échelle) : noir
+       pur pour une marge confortable (5.22:1) sur ce badge précis. */
+    [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme="carnet"] .nav-btn-primary-label { color: #000; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */
