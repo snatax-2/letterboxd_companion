@@ -12,6 +12,19 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- **Vrai chevauchement latéral trouvé sur appareil réel, corrigé**
+  (synchronisé depuis une modification faite directement en production) —
+  la colonne "Noter" héritait de `flex:1` comme les 4 autres onglets, donc
+  sa largeur dépendait du texte des voisins ("HISTORIQUE", "DÉCOUVRIR")
+  qui imposaient leur propre largeur plancher. Sur certaines largeurs
+  d'écran, ça réduisait la colonne à moins de 64px, et le cercle de 78px
+  débordait sur les colonnes voisines, chevauchant leur texte. Corrigé
+  avec une largeur de colonne fixe et garantie (`flex: 0 0 74px`) et un
+  cercle légèrement réduit (68px), donnant une marge de sécurité de 3px de
+  chaque côté indépendante du texte des voisins ou de la largeur d'écran.
+  Même ajustement pour le losange de Moderne (48px).
+
 ### Modifié
 - **Bouton "Noter" agrandi et recentré** (synchronisé depuis une
   modification faite directement en production) — le cercle passe de 54px

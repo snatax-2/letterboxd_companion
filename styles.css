@@ -2715,18 +2715,30 @@
        plus bas — qui a délibérément banni les formes rondes ailleurs dans
        l'app). Le libellé "Noter" vit DANS le cercle (icône + texte réduit
        empilés), pas en dehors comme les autres onglets — évite tout risque
-       de chevauchement avec le reste de la barre. */
-    .nav-btn-primary { position: relative; }
+       de chevauchement avec le reste de la barre.
+       flex: 0 0 74px (au lieu d'hériter du flex:1 des 4 autres onglets)
+       donne à CETTE colonne une largeur fixe et garantie, plutôt que de
+       dépendre du calcul de flexbox "espace restant après les minimums de
+       contenu" — avec flex:1 partout, les onglets à texte long ("HISTORIQUE",
+       "DÉCOUVRIR") imposaient chacun leur propre largeur plancher, ce qui
+       pouvait réduire la colonne "Noter" à moins de 64px selon la largeur
+       d'écran. Un cercle plus grand que ça (78px, testé puis retiré)
+       débordait alors sur les colonnes voisines et chevauchait le texte
+       "À VOIR"/"DÉCOUVRIR" — repéré sur appareil réel. Avec une largeur de
+       colonne fixe et connue (74px), le cercle (68px) a une marge de
+       sécurité de 3px de chaque côté, indépendante du texte des voisins ou
+       de la largeur de l'écran. */
+    .nav-btn-primary { position: relative; flex: 0 0 74px; }
     .nav-btn-primary .nav-btn-icon {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 78px; height: 78px; margin: 0; border-radius: 50%;
+      width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.45);
     }
-    .nav-btn-primary .nav-btn-icon .icon { width: 19px; height: 19px; color: var(--solid-fill-text, #0d1117); }
+    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
     .nav-btn-primary-label {
-      font-size: 0.56rem; font-weight: 800; letter-spacing: 0.03em;
+      font-size: 0.54rem; font-weight: 800; letter-spacing: 0.03em;
       color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading);
       line-height: 1;
     }
@@ -2735,19 +2747,19 @@
        losange déjà utilisé partout ailleurs dans ce thème. Même centrage
        que la version par défaut (hérité de la règle du dessus), seule la
        forme change : carré pivoté à 45° au lieu d'un cercle. Côté plus
-       petit que le cercle (56px vs 78px) car la rotation étire le
-       débordement visuel le long de la diagonale (56×√2 ≈ 79px) — donne
+       petit que le cercle (48px vs 68px) car la rotation étire le
+       débordement visuel le long de la diagonale (48×√2 ≈ 68px) — donne
        un débordement comparable aux ~5px du cercle plutôt que la
        diagonale complète d'un carré de même côté. */
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 56px; height: 56px; border-radius: 8px;
+      width: 48px; height: 48px; border-radius: 8px;
       transform: translate(-50%, -50%) rotate(45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
       transform: rotate(-45deg);
     }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 16px; height: 16px; }
+    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
 
     /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
        le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
