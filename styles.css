@@ -2702,44 +2702,62 @@
     .nav-btn:first-child { border-radius: 22px 0 0 22px; }
     .nav-btn:last-child { border-radius: 0 22px 22px 0; }
 
-    /* Bouton Noter mis en avant : dépasse au-dessus de la barre, esprit
-       "action centrale" — mobile uniquement (une barre du haut sur PC n'a
-       pas la place de déborder vers le haut). Le PRINCIPE s'applique à
-       tous les thèmes, mais la FORME s'adapte à l'esprit de chacun (cercle
-       par défaut, losange pour Moderne — voir plus bas — qui a délibérément
-       banni les formes rondes ailleurs dans l'app). Le libellé "Noter" vit
-       DANS le cercle (icône + texte réduit empilés), pas en dehors comme
-       les autres onglets — évite tout risque de chevauchement avec le
-       reste de la barre, plus besoin de réserver de l'espace en dessous.
-       */
-    .nav-btn-primary { position: relative; padding-top: 10px; }
+    /* Bouton Noter mis en avant : centré sur les deux axes de la barre et
+       légèrement plus grand qu'elle, esprit "action centrale" — mobile
+       uniquement (une barre du haut sur PC n'a pas la place de déborder).
+       Centrage via top/left 50% + translate(-50%,-50%) plutôt qu'un
+       décalage en pixels fixe : le cercle reste pile au centre (x ET y) de
+       .nav-btn-primary quel que soit la hauteur réelle de la barre, et
+       comme il est plus grand qu'elle, il déborde un peu au-dessus ET
+       en dessous au lieu de flotter uniquement collé au bord supérieur.
+       Le PRINCIPE s'applique à tous les thèmes, mais la FORME s'adapte à
+       l'esprit de chacun (cercle par défaut, losange pour Moderne — voir
+       plus bas — qui a délibérément banni les formes rondes ailleurs dans
+       l'app). Le libellé "Noter" vit DANS le cercle (icône + texte réduit
+       empilés), pas en dehors comme les autres onglets — évite tout risque
+       de chevauchement avec le reste de la barre. */
+    .nav-btn-primary { position: relative; }
     .nav-btn-primary .nav-btn-icon {
-      position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
-      width: 54px; height: 54px; margin: 0; border-radius: 50%;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 78px; height: 78px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.45);
     }
-    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
+    .nav-btn-primary .nav-btn-icon .icon { width: 19px; height: 19px; color: var(--solid-fill-text, #0d1117); }
     .nav-btn-primary-label {
-      font-size: 0.52rem; font-weight: 800; letter-spacing: 0.03em;
+      font-size: 0.56rem; font-weight: 800; letter-spacing: 0.03em;
       color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading);
       line-height: 1;
     }
 
     /* Moderne : pas de rond ici non plus, cohérent avec le curseur en
-       losange déjà utilisé partout ailleurs dans ce thème. Un peu plus
-       grand que la version précédente (icône seule) : la diagonale d'un
-       carré pivoté doit maintenant accueillir aussi le petit texte. */
+       losange déjà utilisé partout ailleurs dans ce thème. Même centrage
+       que la version par défaut (hérité de la règle du dessus), seule la
+       forme change : carré pivoté à 45° au lieu d'un cercle. Côté plus
+       petit que le cercle (56px vs 78px) car la rotation étire le
+       débordement visuel le long de la diagonale (56×√2 ≈ 79px) — donne
+       un débordement comparable aux ~5px du cercle plutôt que la
+       diagonale complète d'un carré de même côté. */
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 50px; height: 50px; top: -22px; border-radius: 8px;
-      transform: translateX(-50%) rotate(45deg);
+      width: 56px; height: 56px; border-radius: 8px;
+      transform: translate(-50%, -50%) rotate(45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
       transform: rotate(-45deg);
     }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
+    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 16px; height: 16px; }
+
+    /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
+       le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
+       le seuil de 4.5:1 à cette taille de police réduite (trouvé en testant
+       les 7 thèmes après l'agrandissement du cercle). Correctif ciblé ici
+       plutôt qu'un changement de --solid-fill-text (utilisée largement
+       ailleurs dans l'app, changement non vérifié à cette échelle) : noir
+       pur pour une marge confortable (5.22:1) sur ce badge précis. */
+    [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme="carnet"] .nav-btn-primary-label { color: #000; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

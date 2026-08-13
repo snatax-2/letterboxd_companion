@@ -12,6 +12,24 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié
+- **Bouton "Noter" agrandi et recentré** (synchronisé depuis une
+  modification faite directement en production) — le cercle passe de 54px
+  à 78px et se centre désormais sur les deux axes de la barre
+  (`top/left: 50%` + `translate(-50%,-50%)`) plutôt qu'ancré au bord
+  supérieur, débordant élégamment au-dessus ET en dessous de la barre.
+  Même logique pour le losange de Moderne (56px, centré).
+
+### Corrigé
+- **Vrai défaut de contraste trouvé en revérifiant les 7 thèmes après cet
+  agrandissement** : sur Carnet, le blanc habituel (`--solid-fill-text`)
+  contre son orange spécifique (`#B8695E`, "Rose Poudré") ne offre que
+  4.02:1, sous le seuil de 4.5:1 à la taille de police réduite du badge.
+  Corrigé par une surcharge ciblée (noir, 5.22:1) sur ce badge précis,
+  plutôt qu'un changement de `--solid-fill-text` global qui est utilisé
+  largement ailleurs dans l'app et n'aurait pas été vérifié à cette
+  échelle.
+
 ### Ajouté
 - **Correctifs issus d'un audit design complet** — passé en revue point par
   point avant de coder (certains étaient déjà réglés, un contredisait un
