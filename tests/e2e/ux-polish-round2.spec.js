@@ -20,6 +20,18 @@ test('bouton effacer sur le champ de recherche du formulaire de notation', async
   await expect(page.locator('#search-clear-btn')).toBeHidden();
 });
 
+test('mise en page mobile : date et coeur restent alignes sur la meme ligne (regression du wrapper de recherche)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 700 });
+  await page.goto('/');
+  await page.waitForTimeout(300);
+  const dateBox = await page.locator('.date-input').boundingBox();
+  const heartBox = await page.locator('.heart-btn').boundingBox();
+  // Meme ligne : les deux doivent partager (a peu pres) la meme position Y
+  expect(Math.abs(dateBox.y - heartBox.y)).toBeLessThan(5);
+  // Le coeur ne doit pas s'etirer sur toute la largeur (signe du bug corrige)
+  expect(heartBox.width).toBeLessThan(100);
+});
+
 test('bouton effacer sur le champ de recherche de l\'historique, filtre bien la liste', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('lbx_v2', JSON.stringify([

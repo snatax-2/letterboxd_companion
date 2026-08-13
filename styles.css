@@ -1442,7 +1442,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 82%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -1721,7 +1721,7 @@
 
   /* ── MODALS ── */
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 10000;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000;
     display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none;
     transition: opacity var(--dur-base);
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
@@ -2684,7 +2684,7 @@
     .search-row { 
       grid-template-columns: 1fr auto; 
     }
-    .search-input { grid-column: 1 / -1; }
+    .search-input-wrap { grid-column: 1 / -1; }
     .date-input { width: 100%; max-width: 190px; justify-self: start; }
     .heart-btn { min-width: 54px; margin-left: 8px; }
     
@@ -2708,10 +2708,12 @@
       max-width: none;
       /* Fond semi-transparent + flou : le contenu qui défile en dessous
          glisse élégamment derrière la barre, plutôt qu'un fond plein qui
-         cache tout net. Intensité relevée (16px, était 10px) sur demande —
-         opacité du fond légèrement réduite en même temps, sinon un flou
-         plus fort mais un fond presque opaque ne se voit quasiment pas. */
-      background: color-mix(in srgb, var(--surface) 75%, transparent);
+         cache tout net. Opacité encore réduite sur demande (55%, était
+         75%) pour laisser plus transparaître à travers, flou inchangé
+         (16px) — les icônes/texte restent lisibles grâce au flou qui
+         "efface" les détails du contenu défilant derrière, même avec
+         moins de teinte opaque par-dessus. */
+      background: color-mix(in srgb, var(--surface) 55%, transparent);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }

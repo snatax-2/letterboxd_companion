@@ -12,6 +12,23 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié
+- **Effet verre dépoli plus transparent** (barre de navigation, fenêtres
+  modales, toast) — flou inchangé, opacité du fond réduite pour laisser
+  davantage transparaître le contenu en dessous, sur demande.
+
+### Corrigé
+- **Vrai bug introduit par la dernière livraison, signalé par
+  l'utilisateur** : le titre du film, la date et le cœur s'affichaient mal
+  proportionnés sur mobile dans l'onglet Noter. Cause : le bouton
+  d'effacement ajouté au champ de recherche l'a enveloppé dans
+  `.search-input-wrap`, mais la règle mobile qui plaçait ce champ sur toute
+  la largeur de la grille (`grid-column: 1 / -1`) ciblait encore
+  `.search-input` directement — comme ce n'était plus un enfant direct de
+  la grille, la règle ne s'appliquait plus, et le placement automatique de
+  la grille étirait le bouton cœur sur toute la largeur, seul sur sa
+  ligne. Corrigé en ciblant le bon élément.
+
 ### Ajouté
 - **Deuxième vague de finitions UX** (suite de l'audit design) :
   - Bouton d'effacement ("×") sur les deux champs de recherche (formulaire
