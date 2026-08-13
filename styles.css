@@ -2749,6 +2749,16 @@
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 16px; height: 16px; }
 
+    /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
+       le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
+       le seuil de 4.5:1 à cette taille de police réduite (trouvé en testant
+       les 7 thèmes après l'agrandissement du cercle). Correctif ciblé ici
+       plutôt qu'un changement de --solid-fill-text (utilisée largement
+       ailleurs dans l'app, changement non vérifié à cette échelle) : noir
+       pur pour une marge confortable (5.22:1) sur ce badge précis. */
+    [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme="carnet"] .nav-btn-primary-label { color: #000; }
+
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */
     .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
