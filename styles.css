@@ -536,7 +536,7 @@
     background-size: var(--bg-size, auto);
     color: var(--text);
     min-height: 100vh;
-    padding: 24px 16px 60px;
+    padding: calc(24px + env(safe-area-inset-top)) 16px 60px;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
   }
@@ -574,6 +574,7 @@
   }
   .app-title em { color: var(--orange); font-style: normal; }
   .header-actions { display: flex; gap: 8px; }
+  .data-management-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .icon-btn {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-sm); color: var(--text); padding: 8px 12px;
@@ -659,13 +660,14 @@
     font-weight: 400; color: var(--text); font-style: normal;
   }
   .btn-new-review {
-    background: transparent; border: 1px solid var(--border-hi);
-    color: var(--text-hi); padding: 3px 8px; border-radius: 12px;
+    background: var(--orange); border: 1px solid var(--orange);
+    color: var(--solid-fill-text, #0d1117); padding: 4px 10px; border-radius: 12px;
     font-size: 0.65rem; cursor: pointer; transition: all var(--dur-base);
-    font-family: var(--font-heading); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    font-family: var(--font-heading); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
     font-style: normal;
   }
-  .btn-new-review:hover { background: var(--surface2); color: var(--blue); border-color: var(--blue); }
+  .btn-new-review:hover { filter: brightness(1.08); }
+  .btn-new-review:active { transform: scale(0.96); }
 
   /* ── MOVIE SEARCH ── */
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }
@@ -697,6 +699,10 @@
   .search-status { font-size: 0.75rem; color: var(--blue); font-weight: 600; margin-top: 6px; display: none; }
 
   /* ── CONTEXT TAGS ── */
+  .context-row-label {
+    font-size: 0.68rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 6px;
+  }
   .context-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
   .ctx-tag {
     background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
@@ -855,6 +861,7 @@
     font-size: 0.78rem; color: var(--text); cursor: pointer; margin-bottom: 14px; user-select: none;
   }
   .weights-toggle:hover { color: var(--text-mid); }
+  .weights-toggle-chevron { width: 14px; height: 14px; transition: transform var(--dur-base) var(--ease-out); }
   .weights-panel {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
     border-width: 0; margin-bottom: 0; padding: 0 14px;
@@ -1886,13 +1893,32 @@
     resize: vertical; min-height: 64px;
   }
   .analysis-textarea:focus { outline: none; border-color: var(--orange); }
-  .analysis-submit-btn { display: block; width: 100%; margin-top: 10px; }
-  .analysis-error { margin-top: 8px; font-size: 0.78rem; color: var(--red); }
+  .analysis-submit-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 10px;
+  }
+  .analysis-submit-btn:disabled { opacity: 0.75; cursor: default; }
+  /* Réutilise l'animation de rotation déjà en place sur le bouton de
+     rechargement des suggestions (discoverSpin), plutôt qu'en définir une
+     nouvelle rien que pour ce bouton. */
+  .analysis-submit-spinner { display: inline-flex; }
+  .analysis-submit-spinner .icon { width: 16px; height: 16px; animation: discoverSpin 0.8s linear infinite; }
+
+  .analysis-error {
+    display: none; align-items: flex-start; gap: 8px; margin-top: 8px; padding: 9px 12px;
+    background: color-mix(in srgb, var(--red) 12%, var(--surface2)); border: 1px solid var(--red);
+    border-radius: var(--radius-sm); font-size: 0.78rem; color: var(--text-hi); line-height: 1.4;
+  }
+  .analysis-error-icon { flex-shrink: 0; line-height: 1; }
 
   .analysis-history { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
   .analysis-entry {
     background: var(--surface2); border-radius: var(--radius-sm); border-left: 4px solid var(--orange);
     padding: 12px 14px;
+    /* Même animation d'entrée que les autres sections de la fiche
+       (mdsSectionIn) — appliquée sur un élément DOM neuf à chaque envoi
+       (voir wireAnalysisSection), pas sur toute la liste à chaque fois. */
+    animation: mdsSectionIn .3s cubic-bezier(.2,.8,.2,1) both;
   }
   .analysis-entry-date { font-size: 0.68rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
   .analysis-synthese { margin: 0 0 8px; font-size: 0.84rem; color: var(--text-hi); font-style: italic; line-height: 1.4; }
@@ -2593,7 +2619,7 @@
   /* ── OPTIMISATION RESPONSIVE COMPLETE (ZÉRO DÉCALAGE) ── */
   @media (max-width: 860px) {
     body { 
-      padding: 12px 10px 92px 10px; 
+      padding: calc(12px + env(safe-area-inset-top)) 10px 92px 10px; 
     }
 
     /* Modales façon "bottom sheet" sur mobile : ancrées en bas, glissent vers le
@@ -2666,6 +2692,12 @@
       z-index: 1000;
       box-shadow: 0 8px 28px rgba(0,0,0,0.5);
       max-width: none;
+      /* Fond semi-transparent + flou : le contenu qui défile en dessous
+         glisse élégamment derrière la barre, plutôt qu'un fond plein qui
+         cache tout net. */
+      background: color-mix(in srgb, var(--surface) 85%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .nav-btn:first-child { border-radius: 22px 0 0 22px; }
     .nav-btn:last-child { border-radius: 0 22px 22px 0; }
@@ -2675,27 +2707,39 @@
        pas la place de déborder vers le haut). Le PRINCIPE s'applique à
        tous les thèmes, mais la FORME s'adapte à l'esprit de chacun (cercle
        par défaut, losange pour Moderne — voir plus bas — qui a délibérément
-       banni les formes rondes ailleurs dans l'app). */
-    .nav-btn-primary { position: relative; padding-top: 40px; }
+       banni les formes rondes ailleurs dans l'app). Le libellé "Noter" vit
+       DANS le cercle (icône + texte réduit empilés), pas en dehors comme
+       les autres onglets — évite tout risque de chevauchement avec le
+       reste de la barre, plus besoin de réserver de l'espace en dessous.
+       */
+    .nav-btn-primary { position: relative; padding-top: 10px; }
     .nav-btn-primary .nav-btn-icon {
-      position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
-      width: 52px; height: 52px; margin: 0; border-radius: 50%;
+      position: absolute; top: -26px; left: 50%; transform: translateX(-50%);
+      width: 54px; height: 54px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
-      display: flex; align-items: center; justify-content: center;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.45);
     }
-    .nav-btn-primary .nav-btn-icon .icon { width: 22px; height: 22px; color: var(--solid-fill-text, #0d1117); }
+    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
+    .nav-btn-primary-label {
+      font-size: 0.52rem; font-weight: 800; letter-spacing: 0.03em;
+      color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading);
+      line-height: 1;
+    }
 
     /* Moderne : pas de rond ici non plus, cohérent avec le curseur en
-       losange déjà utilisé partout ailleurs dans ce thème. Légèrement plus
-       petit qu'un cercle équivalent : la diagonale d'un carré pivoté
-       dépasse plus bas qu'un cercle de même largeur, sinon ça chevauchait
-       le texte "Noter" en dessous. */
+       losange déjà utilisé partout ailleurs dans ce thème. Un peu plus
+       grand que la version précédente (icône seule) : la diagonale d'un
+       carré pivoté doit maintenant accueillir aussi le petit texte. */
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 44px; height: 44px; top: -18px; border-radius: 6px;
+      width: 50px; height: 50px; top: -22px; border-radius: 8px;
       transform: translateX(-50%) rotate(45deg);
     }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 19px; height: 19px; transform: rotate(-45deg); }
+    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
+      transform: rotate(-45deg);
+    }
+    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

@@ -22,7 +22,6 @@ function setMode(mode) {
   
   document.getElementById('tab-detail').classList.toggle('active', mode === 'detail');
   document.getElementById('tab-quick').classList.toggle('active', mode === 'quick');
-  document.getElementById('mode-badge').textContent = mode === 'detail' ? 'Mode détaillé' : 'Mode rapide';
   
   calculateScore();
   saveDraft();
@@ -96,6 +95,7 @@ function toggleWeights() {
   weightsOpen = !weightsOpen;
   document.getElementById('weights-panel').classList.toggle('open', weightsOpen);
   document.getElementById('weights-toggle').style.color = weightsOpen ? 'var(--orange)' : '';
+  document.getElementById('weights-toggle-chevron').style.transform = weightsOpen ? 'rotate(90deg)' : '';
 }
 
 function getWeights() {

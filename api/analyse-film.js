@@ -6,10 +6,13 @@
 // en JSON. Clé API jamais exposée côté client — uniquement lue ici, côté
 // serveur, comme TMDB_KEY dans api/search.js.
 //
-// Modèle : gemini-2.5-flash — vérifié encore disponible gratuitement et pas
-// sur la liste des modèles mis à la retraite (contrairement à Gemini 2.0
-// Flash, arrêté le 1er juin 2026). Des générations plus récentes existent
-// (Gemini 3.x) mais 2.5 Flash reste un choix valide, pas obsolète.
+// Modèle : gemini-flash-latest — gemini-2.5-flash (mon choix initial,
+// pourtant listé comme disponible sur la page de tarification au moment
+// où j'ai vérifié) s'est révélé inaccessible aux nouveaux comptes/projets
+// Google ("no longer available to new users", erreur 404 rencontrée en
+// usage réel). L'alias "-latest" pointe automatiquement vers le modèle
+// Flash courant, plus robuste qu'un nom de version figé qui peut devenir
+// obsolète sans préavis.
 import { rateLimit } from './_rateLimit.js';
 
 const SYSTEM_INSTRUCTION = `Tu es un mentor en analyse filmique, exigeant mais bienveillant. L'utilisateur t'envoie sa propre analyse d'un film (technique et/ou thématique) — ton rôle est de l'aider à progresser, pas de faire l'analyse à sa place.
@@ -34,10 +37,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Méthode non autorisée' });
   }
 
-  // Limite volontairement prudente : le palier gratuit de Gemini tourne
-  // autour de 250 requêtes/jour au total pour ce modèle — mieux vaut une
-  // limite basse ici (protection contre une boucle accidentelle côté
-  // client) que de griller le quota du jour sur un bug.
+  // Limite volontairement prudente : le palier gratuit de Gemini a un
+  // quota journalier (le montant exact varie selon le modèle et n'a pas
+  // été revérifié depuis le changement de modèle) — mieux vaut une limite
+  // basse ici (protection contre une boucle accidentelle côté client) que
+  // de griller le quota du jour sur un bug.
   if (!rateLimit(req, res, { name: 'analyse-film', limit: 30, windowMs: 3600_000 })) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
@@ -114,4 +118,3 @@ export default async function handler(req, res) {
     return res.status(502).json({ error: 'Impossible de contacter Gemini. Vérifie ta connexion et réessaie.' });
   }
 }
-

@@ -78,3 +78,44 @@ test('message d\'erreur precis du serveur atteint l\'utilisateur (pas un message
   await expect(page.locator('#analysis-error')).toContainText('clé Gemini manquante');
   await expect(page.locator('.analysis-entry')).toHaveCount(0);
 });
+
+test('finitions Phase 4 : spinner visible pendant le chargement, disparu apres', async ({ page }) => {
+  let resolveRoute;
+  const routePromise = new Promise(r => { resolveRoute = r; });
+  await page.route('**/api/analyse-film', async route => {
+    await routePromise; // bloque la reponse jusqu'a ce qu'on la debloque nous-memes
+    return route.fulfill({ json: { retour: RETOUR } });
+  });
+
+  await page.goto('/');
+  await page.evaluate(() => openMovieDetailSheet(767));
+  await page.waitForSelector('#analysis-technique');
+  await page.fill('#analysis-technique', 'Un texte.');
+  await page.click('#analysis-submit-btn');
+
+  await expect(page.locator('#analysis-submit-spinner')).toBeVisible();
+  await expect(page.locator('#analysis-submit-label')).toHaveText('Analyse en cours…');
+  await expect(page.locator('#analysis-submit-btn')).toBeDisabled();
+
+  resolveRoute();
+  await page.waitForSelector('.analysis-entry');
+  await expect(page.locator('#analysis-submit-spinner')).toBeHidden();
+  await expect(page.locator('#analysis-submit-label')).toHaveText('Envoyer pour analyse');
+  await expect(page.locator('#analysis-submit-btn')).toBeEnabled();
+});
+
+test('finitions Phase 4 : le bouton garde bien son spinner apres plusieurs envois (pas de bug type textContent ecrasant)', async ({ page }) => {
+  await page.route('**/api/analyse-film', route => route.fulfill({ json: { retour: RETOUR } }));
+  await page.goto('/');
+  await page.evaluate(() => openMovieDetailSheet(767));
+  await page.waitForSelector('#analysis-technique');
+
+  for (let i = 0; i < 2; i++) {
+    await page.fill('#analysis-technique', `Texte ${i}.`);
+    await page.click('#analysis-submit-btn');
+    await page.waitForTimeout(300);
+  }
+  // Le spinner (element enfant du bouton) doit toujours exister dans le DOM
+  await expect(page.locator('#analysis-submit-spinner')).toHaveCount(1);
+  await expect(page.locator('.analysis-entry')).toHaveCount(2);
+});

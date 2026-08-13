@@ -2305,7 +2305,6 @@ function setMode(mode) {
   
   document.getElementById('tab-detail').classList.toggle('active', mode === 'detail');
   document.getElementById('tab-quick').classList.toggle('active', mode === 'quick');
-  document.getElementById('mode-badge').textContent = mode === 'detail' ? 'Mode détaillé' : 'Mode rapide';
   
   calculateScore();
   saveDraft();
@@ -2379,6 +2378,7 @@ function toggleWeights() {
   weightsOpen = !weightsOpen;
   document.getElementById('weights-panel').classList.toggle('open', weightsOpen);
   document.getElementById('weights-toggle').style.color = weightsOpen ? 'var(--orange)' : '';
+  document.getElementById('weights-toggle-chevron').style.transform = weightsOpen ? 'rotate(90deg)' : '';
 }
 
 function getWeights() {
@@ -8834,8 +8834,14 @@ function buildAnalysisSectionHtml(movieId, movieTitle) {
       <textarea class="analysis-textarea" id="analysis-technique" rows="3" placeholder="Cadrage, lumière, montage, son, mise en scène..."></textarea>
       <label class="analysis-label" for="analysis-theme">Analyse thématique</label>
       <textarea class="analysis-textarea" id="analysis-theme" rows="3" placeholder="Sujet apparent vs sujet réel, comment la forme sert le fond..."></textarea>
-      <button type="button" class="icon-btn analysis-submit-btn" id="analysis-submit-btn">Envoyer pour analyse</button>
-      <div class="analysis-error" id="analysis-error" style="display:none;" role="alert"></div>
+      <button type="button" class="icon-btn analysis-submit-btn" id="analysis-submit-btn">
+        <span class="analysis-submit-spinner" id="analysis-submit-spinner" style="display:none;" aria-hidden="true">${ICONS.refresh}</span>
+        <span id="analysis-submit-label">Envoyer pour analyse</span>
+      </button>
+      <div class="analysis-error" id="analysis-error" style="display:none;" role="alert">
+        <span class="analysis-error-icon" aria-hidden="true">⚠</span>
+        <span id="analysis-error-text"></span>
+      </div>
     </div>
     <div class="analysis-history" id="analysis-history">${past.map(renderAnalysisEntry).join('')}</div>
   `;
@@ -8868,23 +8874,27 @@ function renderAnalysisGroup(label, items) {
 function wireAnalysisSection(movieId, movieTitle) {
   const submitBtn = document.getElementById('analysis-submit-btn');
   if (!submitBtn) return; // section pas presente (fiche fermee entre temps, etc.)
+  const submitSpinner = document.getElementById('analysis-submit-spinner');
+  const submitLabel = document.getElementById('analysis-submit-label');
 
   submitBtn.addEventListener('click', async () => {
     const techniqueEl = document.getElementById('analysis-technique');
     const themeEl = document.getElementById('analysis-theme');
     const errorEl = document.getElementById('analysis-error');
+    const errorTextEl = document.getElementById('analysis-error-text');
     const technique = techniqueEl.value.trim();
     const theme = themeEl.value.trim();
     errorEl.style.display = 'none';
 
     if (!technique && !theme) {
-      errorEl.textContent = 'Écris au moins un des deux champs avant d\'envoyer.';
-      errorEl.style.display = 'block';
+      errorTextEl.textContent = 'Écris au moins un des deux champs avant d\'envoyer.';
+      errorEl.style.display = 'flex';
       return;
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Analyse en cours…';
+    submitSpinner.style.display = 'inline-flex';
+    submitLabel.textContent = 'Analyse en cours…';
 
     try {
       const res = await fetch('/api/analyse-film', {
@@ -8907,10 +8917,14 @@ function wireAnalysisSection(movieId, movieTitle) {
       all.push(entry);
       saveAnalyses(all);
 
-      // Reaffiche la section avec la nouvelle entree en tete, champs vides
-      // pour permettre d'ecrire une nouvelle analyse tout de suite si besoin.
+      // Nouvel élément DOM créé à part (pas une concaténation innerHTML) :
+      // l'animation d'entrée ne rejoue que sur lui, pas sur les entrées déjà
+      // présentes qui n'ont pas à retrembler à chaque nouvel envoi.
       const historyEl = document.getElementById('analysis-history');
-      historyEl.innerHTML = renderAnalysisEntry(entry) + historyEl.innerHTML;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = renderAnalysisEntry(entry);
+      historyEl.prepend(wrapper.firstElementChild);
+
       techniqueEl.value = '';
       themeEl.value = '';
       showToast('Analyse enregistrée.');
@@ -8919,11 +8933,12 @@ function wireAnalysisSection(movieId, movieTitle) {
       // message précis du serveur quand il y en a un (clé manquante, quota
       // épuisé...), plutôt qu'un "vérifie ta connexion" générique qui serait
       // faux dans la plupart de ces cas.
-      errorEl.textContent = describeApiFailure(err);
-      errorEl.style.display = 'block';
+      errorTextEl.textContent = describeApiFailure(err);
+      errorEl.style.display = 'flex';
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Envoyer pour analyse';
+      submitSpinner.style.display = 'none';
+      submitLabel.textContent = 'Envoyer pour analyse';
     }
   });
 }

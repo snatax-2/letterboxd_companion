@@ -13,17 +13,45 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Correctifs issus d'un audit design complet** — passé en revue point par
+  point avant de coder (certains étaient déjà réglés, un contredisait un
+  choix qu'on venait de faire ensemble, signalé avant d'y toucher) :
+  - Zone de sécurité en haut (`env(safe-area-inset-top)`) pour l'en-tête,
+    manquante jusqu'ici — celle du bas et de la barre d'onglets étaient
+    déjà correctement gérées.
+  - Export/Import déplacés de l'en-tête principal vers une nouvelle carte
+    "Données" en tête de Profil, pour aérer l'écran principal.
+  - Sous-titre "Contexte de visionnage" au-dessus des étiquettes
+    Cinéma/Re-visionnage/etc.
+  - Flou verre dépoli (`backdrop-filter`) sur la barre de navigation
+    mobile flottante, pour que le contenu glisse proprement en dessous.
+  - Chevron sur "Personnaliser les pondérations", qui pivote à
+    l'ouverture/fermeture, pour signaler que c'est cliquable.
+  - Bouton "Nouvelle critique" avec un remplissage plein (accent orange)
+    plutôt qu'un simple contour, pour mieux marquer cette action clé.
+  - Bouton "Noter" repensé sur demande explicite : le libellé vit
+    maintenant DANS le cercle/losange (icône + texte réduit empilés),
+    remplaçant le libellé externe — l'idée initiale de l'audit (retirer le
+    texte) a été affinée ensemble plutôt qu'appliquée telle quelle.
+- **Finitions visuelles du module Analyse de film (Phase 4)** — état de
+  chargement avec icône tournante (réutilise l'animation déjà en place sur
+  le bouton de rechargement des suggestions, pas une nouvelle inventée),
+  encadré d'erreur avec icône et bordure colorée plutôt qu'un simple texte
+  rouge, et une vraie transition d'entrée pour chaque nouvelle analyse
+  envoyée (réutilise l'animation déjà utilisée pour l'apparition des
+  sections de la fiche film).
 - **Module Analyse de film** (Phases 0 à 2 du document de référence) — un
   onglet Analyse sur chaque fiche film, à côté de la note. Deux champs
-  libres (technique, thématique), envoyés à un mentor IA (Gemini
-  2.5 Flash) qui renvoie un retour structuré en quatre parties : synthèse,
-  points forts, angles morts, questions pour approfondir — toujours ancré
-  dans le texte écrit, jamais générique. Chaque analyse est conservée
-  (stockage local, comme le reste de Ludex — décidé ensemble : pas de vraie
-  base de données serveur, Analyse et ProgressionUtilisateur sont des
-  données personnelles comme les autres). Nécessite une clé `GEMINI_API_KEY`
-  gratuite (aistudio.google.com) à ajouter sur Vercel — repli explicite si
-  absente, message clair plutôt qu'une erreur muette.
+  libres (technique, thématique), envoyés à un mentor IA (Gemini, modèle
+  `gemini-flash-latest`) qui renvoie un retour structuré en quatre
+  parties : synthèse, points forts, angles morts, questions pour
+  approfondir — toujours ancré dans le texte écrit, jamais générique.
+  Chaque analyse est conservée (stockage local, comme le reste de Ludex —
+  décidé ensemble : pas de vraie base de données serveur, Analyse et
+  ProgressionUtilisateur sont des données personnelles comme les autres).
+  Nécessite une clé `GEMINI_API_KEY` gratuite (aistudio.google.com) à
+  ajouter sur Vercel — repli explicite si absente, message clair plutôt
+  qu'une erreur muette.
   - Le système de connaissances (glossaire, notions à débloquer — Phase 5
     du document) est volontairement repoussé à plus tard, une fois ce
     socle vécu un moment — décision prise ensemble en amont.
@@ -31,6 +59,27 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
     (à ajouter dans un second temps).
 
 ### Corrigé
+- **Vrai bug trouvé en retirant le badge "Mode détaillé" en double** :
+  une ligne JS non protégée (`document.getElementById('mode-badge')...`)
+  référençait encore cet élément — la retirer sans corriger le JS aurait
+  fait planter le changement de mode. Trouvé en vérifiant les références
+  avant de toucher au HTML, pas après.
+- **Vrai bug trouvé en construisant les finitions Phase 4, avant même
+  qu'il n'atteigne la livraison** : remettre le texte du bouton à son état
+  de repos après un envoi (`submitBtn.textContent = ...`) aurait effacé
+  l'icône du spinner nouvellement ajoutée — exactement le même type de bug
+  que celui trouvé plus tôt sur le badge de série (`setFilmDuJourTitle`) :
+  écraser tout un conteneur au lieu de cibler le bon élément enfant.
+  Corrigé avant livraison, verrouillé par un nouveau test qui simule
+  plusieurs envois successifs.
+- **`gemini-2.5-flash` remplacé par `gemini-flash-latest`** — trouvé
+  inaccessible aux nouveaux comptes/projets Google en usage réel ("no
+  longer available to new users", erreur 404), malgré une vérification
+  préalable sur la page de tarification officielle qui le listait comme
+  disponible. Correctif identifié et déployé par l'utilisateur directement,
+  reporté ici pour rester synchronisé. L'alias "-latest" pointe
+  automatiquement vers le modèle Flash courant, plus robuste qu'un nom de
+  version figé.
 - **Vrai bug trouvé en testant le module** : le message d'erreur précis du
   serveur (ex: "clé Gemini manquante") n'atteignait jamais l'utilisateur —
   remplacé silencieusement par un "vérifie ta connexion" générique et
