@@ -55,6 +55,10 @@ npm run build:js
 
 Vercel régénère aussi `app.js` automatiquement à chaque déploiement (`npm run build`, voir `vercel.json`).
 
+### Minification (`scripts/minify.js`)
+
+`npm run build` minifie aussi `app.js` (en place) et génère `styles.min.css` à partir de `styles.css` — un gain mesuré de -47% sur le JS et -34% sur le CSS. **Règle à retenir : `styles.css` reste la source à éditer** (comme avant), c'est `styles.min.css` qui est réellement chargé par `index.html` et mis en cache par le service worker. Ne jamais éditer `styles.min.css` directement, il serait écrasé au prochain build — exactement la même règle que pour `app.js`.
+
 ## 1. Mise en place dans VS Code
 
 1. Installer [VS Code](https://code.visualstudio.com/) et l'extension **Vercel** (optionnel) + **ESLint**/**Live Server** si besoin.
@@ -229,6 +233,10 @@ Cela lance un serveur local qui simule l'environnement Vercel (fichiers statique
 ⚠️ **`vercel dev` ne relance pas automatiquement le build** (`npm run build`) à chaque modification. Si tu modifies un fichier dans `src/`, régénère `app.js` toi-même avant de tester :
 ```bash
 npm run build:js
+```
+Si tu modifies `styles.css`, il faut le build complet pour régénérer `styles.min.css` (`build:js` seul ne suffit pas, il ne touche qu'au JS) :
+```bash
+npm run build
 ```
 
 ### Tests automatisés

@@ -12,7 +12,31 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Minification JS/CSS dans le pipeline de build** — jamais mesuré
+  jusqu'ici, un audit performance complet (LCP/CLS mesurés en conditions
+  réelles, CPU ×4 + réseau dégradé) a montré un LCP de 4.7s (seuil "bon" :
+  2.5s) et 596 Ko de JS+CSS non minifiés. `app.js` : 410 Ko → 216 Ko
+  (-47%), `styles.min.css` (nouveau) : 186 Ko → 122 Ko (-34%). `styles.css`
+  reste la source éditée directement — `styles.min.css` est généré à part
+  par `scripts/minify.js`, pour ne jamais risquer d'éditer du CSS minifié
+  par erreur dans une session future. `app.js`, déjà un fichier généré
+  (jamais édité à la main), est minifié en place. Pipeline de build
+  réordonné : concaténation → lint (sur JS lisible) → minification → hash
+  du service worker (sur les octets réellement servis).
+
 ### Corrigé
+- **3 tests obsolètes trouvés en validant la minification, sans rapport
+  avec elle** — révélés par une vérification plus large que d'habitude :
+  `duels.spec.js` et une partie de `duels-reset.spec.js` naviguaient vers
+  Profil pour tester l'arène de duels (déplacée vers Découvrir il y a
+  longtemps) ou référençaient le concept "duel du jour" (retiré depuis un
+  moment) ; `desktop-layout.spec.js` échouait à cause d'un clic intercepté
+  par la fenêtre d'accueil, pas à cause de l'ancienne mise en page qu'il
+  vérifie (qui reste bien réelle et actuelle). Une erreur de correction
+  trouvée et rattrapée au passage : mon premier remplacement dans
+  `duels.spec.js` était trop large et cassait par erreur 2 tests qui
+  vérifient le classement (resté sur Profil, contrairement à l'arène).
 - **Audit UX/design complet — 4 vrais défauts trouvés et corrigés,
   vérifiés dans le code réel plutôt que devinés** :
   1. **`--gold` trop clair sur 3 thèmes** (Carnet, Cinéphile, Méridien) —

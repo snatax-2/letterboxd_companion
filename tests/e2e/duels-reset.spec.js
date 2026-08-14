@@ -12,7 +12,6 @@ test.beforeEach(async ({ page }) => {
       totalDuels: 3,
       pairs: { 'film a|2020||film b|2021': true },
     }));
-    localStorage.setItem('lbx_daily_duel_date', new Date().toISOString().slice(0, 10));
   });
 });
 
@@ -29,8 +28,6 @@ test('reinitialiser les duels efface le classement mais laisse films et notes in
 
   const duels = await page.evaluate(() => localStorage.getItem('lbx_duels'));
   expect(duels).toBeNull();
-  const dailyDate = await page.evaluate(() => localStorage.getItem('lbx_daily_duel_date'));
-  expect(dailyDate).toBeNull();
 
   // Films et notes intacts
   const history = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_v2')));
