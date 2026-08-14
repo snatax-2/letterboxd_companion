@@ -13,6 +13,24 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Widget "En cours" dans l'onglet Noter (mode Série uniquement)** — une
+  carte verticale par série ayant un épisode à regarder, tout en haut,
+  au-dessus de la recherche. Affiche à dimensions fixes, nom/durée/date
+  du prochain épisode non vu, synopsis dépliable, bouton pour valider qui
+  fait immédiatement apparaître l'épisode suivant à sa place. Une fois la
+  dernière saison connue terminée, la saison suivante est **détectée
+  automatiquement via TMDb** (pas stockée d'avance, seules les saisons
+  déjà sélectionnées étant connues localement) — si elle existe, son
+  premier épisode s'affiche ; sinon, la série disparaît simplement du
+  widget. Vérifié de bout en bout avec un vrai scénario à deux saisons.
+  - **Deux vrais défauts de contraste trouvés en testant les 7 thèmes,
+    avant livraison** : le bouton "Valider l'épisode" (fond orange direct
+    en texte sur Carnet — 13e occurrence du même piège déjà rencontré
+    plusieurs fois, ajoutée au bloc de correctif consolidé plutôt que
+    patchée isolément) et le lien "Synopsis" (`--blue`, juste sous le
+    seuil sur Carnet) — corrigé à la racine en repassant sur une couleur
+    de texte déjà éprouvée partout, plutôt qu'un correctif par thème.
+
 - **Module Séries — Phase 5 : statistiques.** Bascule Films/Séries sur le
   tableau de bord analytique (Profil) : comptage et moyenne **par série**
   (pas par saison, cohérent avec le reste du module), radar de l'ADN des

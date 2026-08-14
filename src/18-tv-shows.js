@@ -29,6 +29,7 @@ function setMediaType(type) {
   // faut d'abord qu'une saison soit sélectionnée pour que noter ait un
   // sens — selectSeason() la révèle elle-même le moment venu.
   document.getElementById('notation-card').style.display = type === 'movie' || selectedSeasonNumber != null ? '' : 'none';
+  if (type === 'tv' && typeof renderTvContinueList === 'function') renderTvContinueList();
 }
 
 // Les deux critères reformulés pour une saison — les 5 autres (scenario,
@@ -622,3 +623,147 @@ function renderTvStats() {
   });
   buildHistogram(dist);
 }
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Widget "En cours" (onglet Noter, mode Série uniquement)
+// ═══════════════════════════════════════════
+// Une carte par série ayant un épisode à regarder : soit une saison
+// entamée mais pas finie, soit — si la dernière saison connue vient
+// d'être terminée — la saison suivante si elle existe (détectée via TMDb,
+// pas stockée d'avance puisque seules les saisons déjà sélectionnées sont
+// connues localement). Si aucune suite n'existe, la série disparaît
+// simplement du widget.
+
+async function renderTvContinueList() {
+  const container = document.getElementById('tv-continue-list');
+  const shows = loadTvShows();
+  const candidates = [];
+
+  for (const show of shows) {
+    const entries = Object.entries(show.seasons || {});
+    const partial = entries
+      .filter(([, s]) => s.watchedEpisodes.length > 0 && s.watchedEpisodes.length < s.totalEpisodes)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (partial) {
+      candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
+      continue;
+    }
+    const complete = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length >= s.totalEpisodes)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (complete) {
+      candidates.push({ show, seasonKey: complete[0], seasonEntry: complete[1], needsNextSeasonCheck: true });
+    }
+  }
+
+  if (candidates.length === 0) {
+    container.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  container.style.display = 'block';
+  container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
+
+  candidates.forEach(async (cand, idx) => {
+    const resolved = await resolveNextTvEpisode(cand);
+    const placeholder = container.querySelector(`[data-continue-idx="${idx}"]`);
+    if (!placeholder) return; // le conteneur a pu être reconstruit entre-temps
+    if (!resolved) {
+      placeholder.remove();
+      if (container.children.length === 0) container.style.display = 'none';
+      return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    placeholder.replaceWith(wrapper.firstElementChild);
+  });
+}
+
+async function resolveNextTvEpisode(cand) {
+  const { show, needsNextSeasonCheck } = cand;
+  let seasonKey = cand.seasonKey;
+  let seasonEntry = cand.seasonEntry;
+
+  if (needsNextSeasonCheck) {
+    const nextNum = Number(seasonKey) + 1;
+    try {
+      const showDetail = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const nextMeta = (showDetail.seasons || []).find(s => s.season_number === nextNum);
+      if (!nextMeta) return null; // pas de saison suivante
+      const shows = loadTvShows();
+      const showEntry = shows.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      seasonKey = String(nextNum);
+      if (!showEntry.seasons[seasonKey]) {
+        showEntry.seasons[seasonKey] = { seasonName: nextMeta.name, watchedEpisodes: [], totalEpisodes: nextMeta.episode_count };
+        saveTvShows(shows);
+      }
+      seasonEntry = showEntry.seasons[seasonKey];
+    } catch { return null; }
+  }
+
+  try {
+    const seasonData = await fetch(`/api/search?tvSeasonShowId=${show.tmdbTvId}&tvSeasonNumber=${seasonKey}`).then(readApiJson);
+    const episodes = seasonData.episodes || [];
+    const nextEp = episodes.find(e => !seasonEntry.watchedEpisodes.includes(e.episode_number));
+    if (!nextEp) return null;
+    return { show, seasonKey, seasonEntry, episode: nextEp };
+  } catch { return null; }
+}
+
+function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
+  const posterUrl = show.poster_path ? `https://image.tmdb.org/t/p/w154${show.poster_path}` : '';
+  const meta = [
+    episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+    episode.runtime ? `${episode.runtime} min` : '',
+  ].filter(Boolean).join(' · ');
+  return `
+    <div class="tv-continue-card">
+      ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+      <div class="tv-continue-info">
+        <div class="tv-continue-show-title">${escAttr(show.title)}</div>
+        <div class="tv-continue-ep-title">${escAttr(seasonEntry.seasonName)} · Ép. ${episode.episode_number} — ${escAttr(episode.name || 'Sans titre')}</div>
+        ${meta ? `<div class="tv-continue-meta">${escAttr(meta)}</div>` : ''}
+        ${episode.overview ? `
+          <details class="tv-continue-synopsis">
+            <summary>Synopsis</summary>
+            <p>${escAttr(episode.overview)}</p>
+          </details>
+        ` : ''}
+        <button type="button" class="tv-continue-validate-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}">Valider l'épisode</button>
+      </div>
+    </div>
+  `;
+}
+
+document.getElementById('tv-continue-list').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.tv-continue-validate-btn');
+  if (!btn) return;
+  const showId = btn.dataset.showId;
+  const seasonKey = btn.dataset.seasonKey;
+  const episodeNumber = Number(btn.dataset.episode);
+
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  const seasonEntry = showEntry.seasons[seasonKey];
+  if (!seasonEntry.watchedEpisodes.includes(episodeNumber)) seasonEntry.watchedEpisodes.push(episodeNumber);
+  saveTvShows(shows);
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+
+  const cardEl = btn.closest('.tv-continue-card');
+  cardEl.classList.add('tv-continue-loading');
+  const resolved = await resolveNextTvEpisode({
+    show: showEntry, seasonKey, seasonEntry,
+    needsNextSeasonCheck: seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes,
+  });
+  const container = document.getElementById('tv-continue-list');
+  if (!resolved) {
+    cardEl.remove();
+    if (container.children.length === 0) container.style.display = 'none';
+  } else {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    cardEl.replaceWith(wrapper.firstElementChild);
+  }
+});
