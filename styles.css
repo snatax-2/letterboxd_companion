@@ -653,11 +653,12 @@
     border-radius: 14px; box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
   }
   .nav-btn {
-    flex: 1; padding: 12px 4px; background: transparent; border: none;
+    flex: 1; min-width: 0; padding: 12px 2px; background: transparent; border: none;
     color: var(--text); font-family: var(--font-heading);
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.05em;
+    align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .nav-btn:first-child { border-radius: 14px 0 0 14px; }
   .nav-btn:last-child { border-radius: 0 14px 14px 0; }
@@ -881,6 +882,7 @@
   .film-strip-info { flex: 1; min-width: 0; }
   .film-strip-title { color: var(--text-hi); font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-heading); }
   .film-strip-genre { color: var(--text); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
+  .tv-phase1-note { color: var(--text-mid); font-size: 0.72rem; margin-top: 6px; font-style: italic; }
 
   /* ── TABS: DÉTAILLÉ / RAPIDE ── */
   .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }

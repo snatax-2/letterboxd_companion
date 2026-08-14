@@ -13,6 +13,37 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Module Séries — Phase 1 : recherche et sélection de saison.** Bascule
+  Film/Série dans l'onglet Noter (même mécanique que Détaillé/Rapide),
+  recherche d'une série (TMDb `/search/tv`), choix d'une saison (TMDb
+  `/tv/{id}` pour la liste des saisons), bandeau récapitulatif. S'arrête
+  volontairement là — le suivi épisode par épisode et la notation de
+  saison sont les Phases 2 et 3, pas encore construites, comme convenu
+  point par point plutôt que tout d'un coup.
+  - **Note de transparence** : le fichier source de cette phase et ses
+    éléments HTML correspondants existaient déjà en tout début de cette
+    session, sans origine claire retrouvée dans l'historique de la
+    conversation malgré une recherche dans les transcriptions
+    précédentes. Plutôt que de lui faire confiance ou de le jeter sans
+    vérifier, testé indépendamment de bout en bout (bascule, recherche,
+    sélection de saison, retour vers Film) avant de le considérer comme
+    acquis — un vrai bug a été trouvé dans ce processus, mais dans le
+    test que j'écrivais pour le vérifier (mauvais ordre d'enregistrement
+    des routes simulées), pas dans le code lui-même.
+
+### Corrigé
+- **Largeurs inégales dans la barre de navigation, signalées par
+  l'utilisateur** — confirmées visuellement (jusqu'à 88px pour
+  "Historique" contre 46px pour "À voir", qui passait sur deux lignes).
+  Cause : `flex: 1` sans `min-width: 0` — un enfant flex refuse par
+  défaut de rétrécir sous la largeur de son propre contenu, laissant les
+  libellés longs ("Historique", "Découvrir") imposer leur largeur. Même
+  classe de bug déjà rencontrée deux fois dans cette app (carrousel
+  Tendances, champ de recherche). Corrigé avec `min-width: 0` + taille de
+  texte uniforme et réduite pour que rien ne passe à la ligne de façon
+  incohérente — vérifié : les 4 onglets font maintenant exactement 69px
+  chacun, sur les 7 thèmes.
+
 - **Minification JS/CSS dans le pipeline de build** — jamais mesuré
   jusqu'ici, un audit performance complet (LCP/CLS mesurés en conditions
   réelles, CPU ×4 + réseau dégradé) a montré un LCP de 4.7s (seuil "bon" :

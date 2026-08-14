@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
@@ -173,6 +173,28 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (tvId) {
+      // Cas : détails d'une série + liste de ses saisons (Phase 1 du
+      // suivi séries — recherche + sélection de saison uniquement, le
+      // détail épisode par épisode viendra en Phase 2, pas encore ici).
+      const tvRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvId}?api_key=${TMDB_KEY}&language=fr-FR`
+      );
+      const tvData = await tvRes.json();
+      setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
+      return res.status(200).json(tvData);
+
+    } else if (tvQuery) {
+      // Cas : recherche de série (équivalent de la recherche de film,
+      // voir plus bas `else` — mais TMDb sépare bien films et séries,
+      // deux catalogues distincts).
+      const tvSearchRes = await fetch(
+        `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(tvQuery)}&language=fr-FR`
+      );
+      const tvSearchData = await tvSearchRes.json();
+      setCache(3600, 86400); // 1h, comme la recherche de film
+      return res.status(200).json(tvSearchData);
+
     } else if (imdbId) {
       // Cas : notes IMDb/Rotten Tomatoes/Metacritic (OMDb), affichées
       // uniquement sur une fiche film ouverte explicitement (jamais sur les

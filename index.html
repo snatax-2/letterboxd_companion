@@ -482,10 +482,16 @@
   <div class="col-left" id="col-rating">
     <div class="card">
       <div class="card-title">
-        Film
+        <span id="film-card-title">Film</span>
         <button class="btn-new-review" id="new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nouvelle critique</button>
       </div>
 
+      <div class="mode-tabs media-type-tabs">
+        <button class="mode-tab active" id="tab-media-movie" onclick="setMediaType('movie')">🎬 Film</button>
+        <button class="mode-tab" id="tab-media-tv" onclick="setMediaType('tv')">📺 Série</button>
+      </div>
+
+      <div id="movie-only-fields">
       <div class="search-wrap">
         <div class="search-row">
           <div class="search-input-wrap">
@@ -532,9 +538,34 @@
       <input type="hidden" id="movie-actors">
       <input type="hidden" id="movie-tmdb-score">
       <input type="hidden" id="movie-tmdb-id">
+      </div>
+
+      <div id="tv-only-fields" style="display:none;">
+        <div class="search-wrap">
+          <div class="search-row" style="grid-template-columns: 1fr;">
+            <div class="search-input-wrap">
+              <input type="text" class="search-input" id="tv-search" placeholder="Titre de la série (ex: True Detective, Twin Peaks...)" autocomplete="off">
+              <button type="button" class="search-clear-btn" id="tv-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
+            </div>
+          </div>
+          <div class="search-status" id="tv-search-status"></div>
+          <div class="suggestions" id="tv-suggestions"></div>
+        </div>
+
+        <div class="tv-season-picker" id="tv-season-picker" style="display:none;"></div>
+
+        <div class="film-strip" id="tv-season-strip" style="display:none;">
+          <img class="film-strip-poster" id="tv-strip-poster" src="" alt="">
+          <div class="film-strip-info">
+            <div class="film-strip-title" id="tv-strip-title"></div>
+            <div class="film-strip-genre" id="tv-strip-genre"></div>
+            <div class="tv-phase1-note">Suivi des épisodes et notation par saison — bientôt disponible.</div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="card" style="margin-top:16px;">
+    <div class="card" id="notation-card" style="margin-top:16px;">
       <div class="card-title">
         Notation
       </div>
