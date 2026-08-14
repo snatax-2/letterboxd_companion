@@ -94,13 +94,20 @@ window.undoDelete = function() {
 //  RECHERCHE HISTORIQUE
 // ═══════════════════════════════════════════
 let histSearchTimer;
+// Dispatche vers le bon rendu selon la bascule Films/Séries — un seul
+// point d'entrée pour les 3 déclencheurs (recherche, filtres de tri,
+// bascule elle-même) plutôt que de dupliquer la condition partout.
+function renderActiveHistoryView() {
+  if (historyMediaFilter === 'tv') { if (typeof renderTvHistory === 'function') renderTvHistory(); }
+  else renderHistory();
+}
 const historySearchEl = document.getElementById('history-search');
 const historySearchClearBtn = document.getElementById('history-search-clear-btn');
 historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
   historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
   clearTimeout(histSearchTimer);
-  histSearchTimer = setTimeout(renderHistory, 150);
+  histSearchTimer = setTimeout(renderActiveHistoryView, 150);
 });
 historySearchClearBtn.addEventListener('click', () => {
   historySearchEl.value = '';
@@ -216,11 +223,12 @@ function renderHistory() {
   const container = document.getElementById('history-list');
 
   const badge = document.getElementById('hist-count-badge');
+  const tvFragment = ` · ${loadTvShows().length} série${loadTvShows().length > 1 ? 's' : ''}`;
   if (activeGenre || historySearchQuery || activeScoreFilter) {
-    badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}`;
+    badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
     badge.style.color = 'var(--orange)';
   } else {
-    badge.textContent = history.length + ' film' + (history.length > 1 ? 's' : '');
+    badge.textContent = history.length + ' film' + (history.length > 1 ? 's' : '') + tvFragment;
     badge.style.color = '';
   }
 
@@ -1550,7 +1558,7 @@ document.getElementById('filter-row').addEventListener('click', e => {
   sortOrder = btn.dataset.sort;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderHistory();
+  renderActiveHistoryView();
 });
 
 // ── Découvrabilité du swipe ──

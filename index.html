@@ -796,6 +796,11 @@
           <span class="card-title-badge" id="hist-count-badge">0 film</span>
         </div>
 
+        <div class="mode-tabs" id="hist-media-tabs">
+          <button class="mode-tab active" id="hist-tab-movie" onclick="switchHistoryMediaFilter('movie')">Films</button>
+          <button class="mode-tab" id="hist-tab-tv" onclick="switchHistoryMediaFilter('tv')">Séries</button>
+        </div>
+
         <div class="search-wrap" style="margin-bottom: 14px;">
           <div class="search-input-wrap">
             <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
@@ -820,6 +825,7 @@
         </details>
 
         <div class="history-scroller" id="history-list"></div>
+        <div class="history-scroller" id="tv-history-list" style="display:none;"></div>
       </div>
     </div> 
     

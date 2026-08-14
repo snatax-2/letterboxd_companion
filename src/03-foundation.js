@@ -53,6 +53,9 @@ let sortOrder   = 'date';
 // initialization" au chargement — trouvé en testant le flux complet de
 // notation de saison, pas visible sur des tests plus étroits.
 let currentMediaType = 'movie';
+// Bascule Films/Séries dans l'Historique — déclarée ici pour la même
+// raison que currentMediaType juste au-dessus (voir ce commentaire).
+let historyMediaFilter = 'movie';
 let activeGenre = null; 
 let weightsOpen = false;
 let pendingAction = null; 

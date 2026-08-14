@@ -406,3 +406,136 @@ document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
   card.style.display = '';
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 4 : Historique scindé Films/Séries
+// ═══════════════════════════════════════════
+// Bascule façon Détaillé/Rapide (pas un simple filtre dans une liste
+// mélangée) : une carte de saison et une carte de film n'ont pas le même
+// contenu à afficher, les mélanger aurait rendu chaque carte confuse.
+// Comptage par SÉRIE, pas par saison — noter 3 saisons de la même série
+// compte pour 1, pas 3, comme convenu.
+
+function switchHistoryMediaFilter(type) {
+  historyMediaFilter = type;
+  document.getElementById('hist-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
+  document.getElementById('history-list').style.display = type === 'movie' ? '' : 'none';
+  document.getElementById('tv-history-list').style.display = type === 'tv' ? '' : 'none';
+  // Le filtre par genre n'a pas d'équivalent série pour l'instant (pas de
+  // données de genre récupérées côté séries) — replié en mode Séries.
+  if (type === 'tv') document.getElementById('genre-fold').style.display = 'none';
+  renderActiveHistoryView();
+  updateHistoryCountBadge();
+}
+
+function updateHistoryCountBadge() {
+  const badge = document.getElementById('hist-count-badge');
+  const filmCount = loadHistory().length;
+  const showCount = loadTvShows().length;
+  badge.textContent = `${filmCount} film${filmCount > 1 ? 's' : ''} · ${showCount} série${showCount > 1 ? 's' : ''}`;
+}
+
+function getSortedTvShows() {
+  const shows = loadTvShows();
+  let s = shows;
+  if (historySearchQuery) {
+    s = s.filter(sh => sh.title && sh.title.toLowerCase().includes(historySearchQuery));
+  }
+  const avg = (sh) => computeShowAverageScore(sh);
+  if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
+  if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
+  if (sortOrder === 'title')      return [...s].sort((a, b) => a.title.localeCompare(b.title));
+  // "Récents" : dernière saison mise à jour (notée ou suivie), la plus
+  // récente d'abord — même esprit que le tri "Récents" des films.
+  const lastUpdate = (sh) => Object.values(sh.seasons || {}).reduce((max, se) => {
+    const d = se.rating?.date || '';
+    return d > max ? d : max;
+  }, '');
+  return [...s].sort((a, b) => lastUpdate(b).localeCompare(lastUpdate(a)));
+}
+
+function renderTvHistory() {
+  const shows = getSortedTvShows();
+  const container = document.getElementById('tv-history-list');
+
+  if (loadTvShows().length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
+    return;
+  }
+  if (shows.length === 0) {
+    container.innerHTML = `<div class="empty-state">Aucun résultat pour cette recherche.</div>`;
+    return;
+  }
+
+  container.innerHTML = shows.map(renderTvShowCard).join('');
+
+  container.querySelectorAll('.tv-show-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.showId;
+      const show = loadTvShows().find(s => String(s.tmdbTvId) === String(id));
+      if (!show) return;
+      openModal(
+        'Retirer cette série',
+        `"${show.title}" et toutes ses saisons suivies/notées seront définitivement retirées. Continuer ?`,
+        () => {
+          const remaining = loadTvShows().filter(s => String(s.tmdbTvId) !== String(id));
+          saveTvShows(remaining);
+          renderTvHistory();
+          updateHistoryCountBadge();
+          showToast(`"${show.title}" retirée`);
+        }
+      );
+    });
+  });
+
+  container.querySelectorAll('.tv-season-row').forEach(row => {
+    row.addEventListener('click', () => reopenTvSeason(row.dataset.showId, row.dataset.seasonKey));
+  });
+}
+
+function renderTvShowCard(show) {
+  const avg = computeShowAverageScore(show);
+  const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const ratedCount = seasons.filter(([, s]) => s.rating).length;
+  const posterUrl = show.poster_path ? `https://image.tmdb.org/t/p/w154${show.poster_path}` : '';
+
+  return `
+    <div class="tv-show-card">
+      <div class="tv-show-card-header">
+        ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
+        <div class="tv-show-card-info">
+          <div class="tv-show-card-title">${escAttr(show.title)}</div>
+          <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
+        </div>
+        <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+      </div>
+      <details class="tv-show-seasons-fold">
+        <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
+        <div class="tv-show-seasons-list">
+          ${seasons.map(([key, s]) => `
+            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}" role="button" tabindex="0">
+              <span>${escAttr(s.seasonName)}</span>
+              <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+function reopenTvSeason(showId, seasonKey) {
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (!show) return;
+  switchMobileNav('rating');
+  setMediaType('tv');
+  selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+  document.getElementById('tv-search').value = show.title;
+  document.getElementById('tv-season-picker').style.display = 'none';
+  const seasonData = show.seasons[seasonKey];
+  selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
+  document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+

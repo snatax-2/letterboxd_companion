@@ -13,6 +13,25 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Module Séries — Phase 4 : Historique scindé Films/Séries.** Bascule
+  façon Détaillé/Rapide (pas un filtre dans une liste mélangée — une carte
+  de saison et une carte de film n'ont pas le même contenu à afficher).
+  Comptage **par série**, pas par saison, comme convenu ("12 films ·
+  7 séries") — le badge existant préserve au passage son comportement de
+  compte filtré quand une recherche est active côté films, plutôt que
+  d'être écrasé. Chaque carte de série affiche sa note globale calculée
+  (moyenne des saisons notées), un décompte "X/Y saisons notées", et une
+  liste dépliable des saisons individuelles. Cliquer une saison dans cette
+  liste rouvre le formulaire de notation avec la note existante déjà
+  préremplie, pour la modifier. Suppression d'une série avec confirmation
+  (retire toutes ses saisons suivies/notées).
+  - **Une vraie lacune trouvée et corrigée dans mon propre test avant
+    livraison** : ma première vérification du préremplissage utilisait des
+    données de test avec des critères vides, laissant passer un test qui
+    ne vérifiait rien de réel (le curseur retombait silencieusement à sa
+    valeur par défaut sans que l'assertion s'en aperçoive) — corrigé avec
+    de vraies valeurs et une assertion qui vérifie la bonne valeur.
+
 - **Module Séries — Phase 3 : notation de saison.** Réutilise les 7
   curseurs déjà existants pour les films (mêmes ID, même système de
   pondération et de mode Détaillé/Rapide) — seuls deux critères sont
