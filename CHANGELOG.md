@@ -13,6 +13,24 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Module Séries — Phase 5 : statistiques.** Bascule Films/Séries sur le
+  tableau de bord analytique (Profil) : comptage et moyenne **par série**
+  (pas par saison, cohérent avec le reste du module), radar de l'ADN des
+  notes avec les libellés adaptés (Final, Cohérence — pas Photo/Rythme),
+  distribution des notes propre aux séries. "Top Réalisateurs" replié en
+  mode Séries — aucune donnée de showrunner récupérée pour l'instant, pas
+  d'affichage vide ou trompeur à la place. La heatmap et le graphique
+  "Activité (6 derniers mois)" restent **uniques** dans les deux modes
+  (décidé ensemble pour la heatmap ; étendu au graphique d'activité par
+  cohérence avec ce même principe — à confirmer si besoin).
+  - **Un vrai défaut de contraste préexistant trouvé en testant les 7
+    thèmes, sans rapport avec le travail du jour** : le pourcentage
+    "déjà vu" des classiques à explorer (`.curated-list-row-pct`)
+    échouait sur 3 thèmes (Carnet, Moderne, Méridien) — exactement le
+    même piège déjà rencontré deux fois dans ce projet (couleur d'accent
+    utilisée directement comme texte). Corrigé avec une couleur de texte
+    déjà éprouvée.
+
 - **Module Séries — Phase 4 : Historique scindé Films/Séries.** Bascule
   façon Détaillé/Rapide (pas un filtre dans une liste mélangée — une carte
   de saison et une carte de film n'ont pas le même contenu à afficher).

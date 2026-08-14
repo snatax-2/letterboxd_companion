@@ -968,11 +968,16 @@
       </div>
       <div class="card" id="stats-card">
         <div class="card-title">Dashboard Analytique</div>
-        
+
+        <div class="mode-tabs" id="stats-media-tabs">
+          <button class="mode-tab active" id="stats-tab-movie" onclick="switchStatsMediaFilter('movie')">Films</button>
+          <button class="mode-tab" id="stats-tab-tv" onclick="switchStatsMediaFilter('tv')">Séries</button>
+        </div>
+
         <div class="kpi-row">
           <div class="kpi-card">
             <div class="kpi-val" id="kpi-total">0</div>
-            <div class="kpi-label">Films notés</div>
+            <div class="kpi-label" id="kpi-total-label">Films notés</div>
           </div>
           <div class="kpi-card">
             <div class="kpi-val" id="kpi-avg" style="color:var(--gold)">-</div>
@@ -996,7 +1001,7 @@
             <div id="timeline-chart-container" style="display:flex; justify-content:center; align-items:flex-end; min-height:160px; padding-top:10px; width:100%;"></div>
           </div>
 
-          <div class="dash-box full-width">
+          <div class="dash-box full-width" id="top-directors-box">
             <div class="dash-box-title" style="display:flex; justify-content:space-between">
               <span>Top Réalisateurs</span>
               <span style="color:var(--blue); text-transform:none; font-family:var(--font-body)">Basé sur tes vues</span>

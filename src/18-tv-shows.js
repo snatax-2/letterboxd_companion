@@ -283,6 +283,17 @@ function loadSeasonRatingIntoForm() {
   calculateScore();
 }
 
+// Toutes les notes de saison, toutes séries confondues, à plat — réutilisé
+// pour le radar (moyennes par critère, même fonction pure que les films)
+// et pour fusionner l'activité films+séries dans le graphique 6 mois (voir
+// 06-history.js) : la heatmap ET ce graphique restent uniques, décidé
+// ensemble, contrairement au reste des statistiques qui bascule.
+function getAllTvSeasonRatings() {
+  return loadTvShows().flatMap(show =>
+    Object.values(show.seasons || {}).filter(s => s.rating).map(s => s.rating)
+  );
+}
+
 function refreshShowAverageDisplay() {
   const shows = loadTvShows();
   const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
@@ -328,6 +339,7 @@ function saveTvSeasonRating() {
   showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`);
   if (typeof playSaveConfirmation === 'function') playSaveConfirmation();
   refreshShowAverageDisplay();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
 }
 
 
@@ -485,6 +497,7 @@ function renderTvHistory() {
           renderTvHistory();
           updateHistoryCountBadge();
           showToast(`"${show.title}" retirée`);
+          if (typeof statsDirty !== 'undefined') statsDirty = true;
         }
       );
     });
@@ -539,3 +552,73 @@ function reopenTvSeason(showId, seasonKey) {
   document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 5 : statistiques
+// ═══════════════════════════════════════════
+// Bascule sur le tableau de bord (KPI, radar, distribution des notes) —
+// comptage par SÉRIE, pas par saison, comme partout ailleurs dans le
+// module. La heatmap ET le graphique "Activité (6 derniers mois)" restent
+// UNIQUES dans les deux modes (décidé ensemble) : ils montrent le rythme
+// de visionnage global, films et séries confondus, pas de dédoublement.
+// "Top Réalisateurs" n'a pas d'équivalent série pour l'instant (aucune
+// donnée de showrunner récupérée) — replié plutôt que vide ou trompeur.
+
+function switchStatsMediaFilter(type) {
+  statsMediaFilter = type;
+  document.getElementById('stats-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('stats-tab-tv').classList.toggle('active', type === 'tv');
+  document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
+  document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
+  if (type === 'tv') renderTvStats(); else renderStats();
+}
+
+function renderTvStats() {
+  const shows = loadTvShows();
+  animateCountUp(document.getElementById('kpi-total'), shows.length);
+
+  const showAverages = shows.map(computeShowAverageScore).filter(a => a != null);
+  if (showAverages.length === 0) {
+    document.getElementById('kpi-avg').textContent = '-';
+  } else {
+    const avg = showAverages.reduce((a, b) => a + b, 0) / showAverages.length;
+    animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
+  }
+
+  // Compte les SÉRIES ayant au moins une saison notée cette année (pas le
+  // nombre brut de saisons notées) — même logique de comptage par série.
+  const currentYear = new Date().getFullYear().toString();
+  const yearShowsCount = shows.filter(s =>
+    Object.values(s.seasons || {}).some(se => se.rating?.date?.startsWith(currentYear))
+  ).length;
+  animateCountUp(document.getElementById('kpi-year'), yearShowsCount);
+
+  const allRatings = getAllTvSeasonRatings();
+
+  if (allRatings.length === 0) {
+    document.getElementById('radar-chart-container').innerHTML = '';
+    document.getElementById('radar-empty').style.display = 'block';
+  } else {
+    const avgsByCriterion = computeCriteriaAverages(allRatings, CRITERIA);
+    const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
+    const radarSvg = createRadarSVG(avgs, 'tv');
+    if (radarSvg) {
+      document.getElementById('radar-chart-container').innerHTML = radarSvg;
+      document.getElementById('radar-empty').style.display = 'none';
+    } else {
+      document.getElementById('radar-chart-container').innerHTML = '';
+      document.getElementById('radar-empty').style.display = 'block';
+    }
+  }
+
+  // Timeline fusionnée (films + séries), identique à ce qu'affiche le mode
+  // Films — voir le commentaire en tête de section.
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(loadHistory().concat(allRatings));
+
+  const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
+  allRatings.forEach(r => {
+    const stars = Math.round((parseFloat(r.score) / 2) * 2) / 2;
+    const key = Math.round(stars * 10).toString().padStart(2, '0');
+    if (dist[key] !== undefined) dist[key]++;
+  });
+  buildHistogram(dist);
+}

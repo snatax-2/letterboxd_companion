@@ -1655,7 +1655,7 @@
   .curated-list-row-sub { font-size: 0.7rem; color: var(--text-mid); margin-top: 2px; }
   .curated-list-row-pct {
     flex-shrink: 0; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;
-    color: var(--orange); min-width: 42px; text-align: right;
+    color: var(--text-hi); min-width: 42px; text-align: right;
   }
   /* Décennies repliées par défaut (<details>/<summary> natifs — gratuit en
      accessibilité clavier, pas besoin de JS pour le toggle) : les montrer

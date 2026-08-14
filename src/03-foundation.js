@@ -56,6 +56,7 @@ let currentMediaType = 'movie';
 // Bascule Films/Séries dans l'Historique — déclarée ici pour la même
 // raison que currentMediaType juste au-dessus (voir ce commentaire).
 let historyMediaFilter = 'movie';
+let statsMediaFilter = 'movie';
 let activeGenre = null; 
 let weightsOpen = false;
 let pendingAction = null; 

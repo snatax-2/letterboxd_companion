@@ -816,7 +816,7 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   };
 })();
 
-function createRadarSVG(averages) {
+function createRadarSVG(averages, mediaType = 'movie') {
   if (averages.every(a => a === 0)) return null;
 
   // Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de
@@ -826,15 +826,9 @@ function createRadarSVG(averages) {
   // appelée une première fois de façon précoce (voir 03-foundation.js), avant
   // que 06-history.js n'ait fini de s'exécuter, ce qui provoquait un plantage
   // total de l'app au chargement pour tout utilisateur ayant déjà un historique.
-  const CRITERIA_SHORT_LABELS = {
-    scenario: 'Scén.',
-    realisation: 'Réal.',
-    photo: 'Photo',
-    acteurs: 'Casting',
-    ambiance: 'Ambiance',
-    rythme: 'Rythme',
-    affect: 'Affect',
-  };
+  const CRITERIA_SHORT_LABELS = mediaType === 'tv'
+    ? { scenario: 'Scén.', realisation: 'Réal.', photo: 'Final', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Cohér.', affect: 'Affect' }
+    : { scenario: 'Scén.', realisation: 'Réal.', photo: 'Photo', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect' };
 
   const s = 220, c = s/2, r = 72;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
@@ -987,7 +981,7 @@ function renderStats() {
     document.getElementById('radar-empty').style.display = 'block'; 
   }
 
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history);
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history.concat(typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : []));
 
   const dirs = {};
   history.forEach(h => {
@@ -1523,6 +1517,15 @@ function buildHistogram(dist) {
 
 let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
 
+// Dispatche vers le bon rendu de stats selon la bascule Films/Séries —
+// même principe que renderActiveHistoryView, pour que renderTvStats()
+// bénéficie aussi de l'optimisation "ne recalculer que si Profil est
+// visible" plutôt que de la contourner silencieusement.
+function renderActiveStatsView() {
+  if (statsMediaFilter === 'tv') { if (typeof renderTvStats === 'function') renderTvStats(); }
+  else renderStats();
+}
+
 function renderAll() {
   // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
   // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
@@ -1535,7 +1538,7 @@ function renderAll() {
   // généralement la vue qu'on regarde au moment de l'appel.
   const profileView = document.getElementById('view-profile');
   if (profileView && profileView.classList.contains('active')) {
-    renderStats();
+    renderActiveStatsView();
     statsDirty = false;
   } else {
     statsDirty = true;
@@ -1546,7 +1549,7 @@ function renderAll() {
 // Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
 // qui avait été sauté pendant que l'onglet était masqué.
 function renderProfileIfDirty() {
-  if (statsDirty) { renderStats(); statsDirty = false; }
+  if (statsDirty) { renderActiveStatsView(); statsDirty = false; }
 }
 
 // ═══════════════════════════════════════════
