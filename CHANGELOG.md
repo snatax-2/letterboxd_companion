@@ -13,6 +13,24 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Module Séries — Phase 2 : suivi épisode par épisode.** Grille
+  d'épisodes (TMDb `/tv/{id}/season/{n}`, nouveau point d'accès serveur)
+  avec case à cocher animée (coche qui se dessine + léger rebond, en CSS
+  pur, respecte `prefers-reduced-motion`), barre de progression en direct,
+  et proposition de rattrapage si on coche un épisode en avance ("Marquer
+  aussi les épisodes X à Y comme vus ?"). Un bandeau apparaît une fois
+  tous les épisodes cochés ("Saison terminée — la noter ?") — son bouton
+  affiche pour l'instant un message honnête plutôt qu'un formulaire, la
+  notation de saison étant la Phase 3, pas encore construite. Stockage :
+  `lbx_tv_shows`, une entrée par série avec ses saisons imbriquées.
+  - **Deux vrais défauts trouvés et corrigés en testant moi-même, avant
+    livraison** : le nom de saison stocké (`seasonName`) reprenait par
+    erreur le titre combiné "Série — Saison X" affiché dans le bandeau,
+    redondant avec le titre de la série déjà stocké séparément — corrigé
+    pour ne garder que le nom propre de la saison. Et une confusion dans
+    mes propres tests (pas dans le code) sur l'accord au singulier/pluriel
+    de "épisode" à 0 — le code était juste, c'est le test qui avait la
+    mauvaise attente.
 - **Module Séries — Phase 1 : recherche et sélection de saison.** Bascule
   Film/Série dans l'onglet Noter (même mécanique que Détaillé/Rapide),
   recherche d'une série (TMDb `/search/tv`), choix d'une saison (TMDb

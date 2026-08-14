@@ -884,6 +884,47 @@
   .film-strip-genre { color: var(--text); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
   .tv-phase1-note { color: var(--text-mid); font-size: 0.72rem; margin-top: 6px; font-style: italic; }
 
+  /* ── SÉRIES : suivi d'épisodes (Phase 2) ── */
+  .tv-episodes-wrap { margin-bottom: 16px; }
+  .tv-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .tv-progress-label { font-size: 0.76rem; font-weight: 700; color: var(--text-mid); white-space: nowrap; font-family: var(--font-heading); }
+  .tv-progress-bar { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .tv-progress-fill { height: 100%; background: var(--orange); border-radius: 999px; transition: width .5s var(--ease-out); }
+
+  .tv-episode-list { display: flex; flex-direction: column; gap: 2px; }
+  .tv-episode-row { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+  .tv-episode-row:last-child { border-bottom: none; }
+  .tv-episode-info { flex: 1; min-width: 0; }
+  .tv-episode-title { font-size: 0.85rem; color: var(--text-hi); font-weight: 600; line-height: 1.3; }
+  .tv-episode-meta { font-size: 0.72rem; color: var(--text-mid); margin-top: 2px; }
+
+  .tv-episode-check {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border-hi);
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; padding: 0;
+    transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+  }
+  .tv-episode-check.watched { background: var(--green); border-color: var(--green); }
+  .tv-episode-checkmark { width: 16px; height: 16px; color: var(--solid-fill-text, #0d1117); opacity: 0; transition: opacity var(--dur-fast); }
+  .tv-episode-check.watched .tv-episode-checkmark { opacity: 1; }
+  .tv-episode-checkmark path { stroke-dasharray: 20; stroke-dashoffset: 20; }
+  .tv-episode-check.watched .tv-episode-checkmark path { animation: tvCheckDraw .3s ease-out forwards; }
+  /* Rebond au moment precis de la coche (pas au premier affichage d'un
+     episode deja vu) — la classe .just-checked est ajoutee/retiree par le
+     JS, uniquement sur une vraie interaction. Respecte reduced-motion en
+     amont (verifie en JS avant meme d'ajouter la classe). */
+  .tv-episode-check.just-checked { animation: tvCheckBounce .35s var(--ease-out); }
+  @keyframes tvCheckDraw { to { stroke-dashoffset: 0; } }
+  @keyframes tvCheckBounce { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
+
+  .tv-season-complete-banner {
+    display: none; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--orange); border-radius: var(--radius-sm);
+    font-size: 0.84rem; color: var(--text-hi); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+  .tv-season-complete-banner span { flex: 1; }
+  .tv-season-complete-dismiss { background: none; border: none; color: var(--text-mid); cursor: pointer; font-size: 0.9rem; padding: 4px 6px; flex-shrink: 0; }
+
   /* ── TABS: DÉTAILLÉ / RAPIDE ── */
   .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
   .mode-tab {

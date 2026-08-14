@@ -559,8 +559,21 @@
           <div class="film-strip-info">
             <div class="film-strip-title" id="tv-strip-title"></div>
             <div class="film-strip-genre" id="tv-strip-genre"></div>
-            <div class="tv-phase1-note">Suivi des épisodes et notation par saison — bientôt disponible.</div>
           </div>
+        </div>
+
+        <div class="tv-episodes-wrap" id="tv-episodes-wrap" style="display:none;">
+          <div class="tv-progress-row">
+            <div class="tv-progress-label" id="tv-progress-label">0/0 épisode vu</div>
+            <div class="tv-progress-bar"><div class="tv-progress-fill" id="tv-progress-fill" style="width:0%;"></div></div>
+          </div>
+          <div class="tv-episode-list" id="tv-episode-list"></div>
+        </div>
+
+        <div class="tv-season-complete-banner" id="tv-season-complete-banner" style="display:none;">
+          <span>Saison terminée — la noter ?</span>
+          <button type="button" class="icon-btn" id="tv-rate-season-btn">Noter cette saison</button>
+          <button type="button" class="tv-season-complete-dismiss" id="tv-season-complete-dismiss" aria-label="Ignorer">✕</button>
         </div>
       </div>
     </div>

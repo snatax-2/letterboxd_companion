@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
@@ -183,6 +183,18 @@ export default async function handler(req, res) {
       const tvData = await tvRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
       return res.status(200).json(tvData);
+
+    } else if (tvSeasonShowId && tvSeasonNumber) {
+      // Cas : liste des épisodes d'UNE saison précise (Phase 2 — suivi
+      // épisode par épisode). Deux paramètres nécessaires (l'ID de la
+      // série ET le numéro de saison), TMDb n'expose pas cette liste
+      // autrement que via cette combinaison dans l'URL.
+      const seasonRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvSeasonShowId}/season/${tvSeasonNumber}?api_key=${TMDB_KEY}&language=fr-FR`
+      );
+      const seasonData = await seasonRes.json();
+      setCache(21600, 604800); // 6h — une liste d'épisodes ne change plus une fois la saison sortie
+      return res.status(200).json(seasonData);
 
     } else if (tvQuery) {
       // Cas : recherche de série (équivalent de la recherche de film,
