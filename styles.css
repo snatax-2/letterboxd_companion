@@ -66,7 +66,7 @@
     --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
     --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
     --orange: #B8695E; /* Rose Poudré */
-    --gold: #C9A576;   /* Sable Chaud */
+    --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
     --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
     --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
@@ -92,6 +92,32 @@
     --bg-size: 100% 27px;
     /* Tri-bande carte postale, dans la palette propre du thème (pas celle d'Anderson) */
     --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
+  }
+
+  /* Carnet : --solid-fill-text (#fff) sert à la fois du texte sur fond
+     --orange (#B8695E, ton moyen, a besoin de texte SOMBRE — 4.02:1 en
+     blanc, sous le seuil) et sur fond --green (#556B52, plus sombre, a
+     besoin de texte CLAIR — 3.61:1 en noir) : aucune valeur unique ne
+     satisfait les deux, donc changer --solid-fill-text globalement
+     casserait l'un des deux cas. Correctif ciblé sur les éléments à fond
+     orange trouvés lors de l'audit complet (12 au total, dont "Nouvelle
+     critique" et l'onglet "Détaillé" — le correctif précédent ne couvrait
+     que le bouton Noter). Noir choisi pour une marge confortable (4.70:1). */
+  [data-theme="carnet"] .btn-new-review,
+  [data-theme="carnet"] .backup-reminder-btn,
+  [data-theme="carnet"] .mode-tab.active,
+  [data-theme="carnet"] .focus-mode-toggle.active,
+  [data-theme="carnet"] .empty-state-cta,
+  [data-theme="carnet"] .wl-picker-new-form button,
+  [data-theme="carnet"] .wrapped-share-btn,
+  [data-theme="carnet"] .onboarding-next,
+  [data-theme="carnet"] #update-banner-reload-btn,
+  [data-theme="carnet"] .mds-action-btn.primary,
+  [data-theme="carnet"] .on-this-day-badge,
+  [data-theme="carnet"] .platform-chip.selected,
+  [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
+  [data-theme="carnet"] .nav-btn-primary-label {
+    color: #000;
   }
 
   [data-theme="filmnoir"] {
@@ -131,8 +157,8 @@
     --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
     --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
     --orange: #4A2E1B; /* Terre de Sienne */
-    --gold: #DAC0A3;    /* Ambre Brûlé */
-    --blue: #5C6E58;    /* Olive Vintage */
+    --gold: #7a5628;    /* Ambre Brûlé, assombri (était #DAC0A3) : 1.36:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet */
+    --blue: #4d5d4a;    /* Olive Vintage, assombri (était #5C6E58) : 4.46:1 seulement sur le badge "Impact affectif", tout juste sous le seuil — trouvé lors de l'audit complet */
     --red: #8B4226; --green: #5C6E58;
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 18px; --radius-sm: 12px;
@@ -220,10 +246,10 @@
        ("dur" au retour utilisateur) — plus de vie ici, même concept. */
     --bg: #F7F3EA; --surface: #FFFFFF; --surface2: #EDE7D8; --border: #D8CFB8;
     --border-hi: #C7B48C; /* bordures structurelles : plus douces que l'accent, pour ne pas quadriller l'écran */
-    --text: #4A4438; --text-hi: #241F17; --text-mid: #766C58;
-    --orange: #C89B4A; --gold: #C89B4A; --blue: #7A5807; /* --blue assombri (était #C89B4A, identique à l'accent) : 2.54:1 de contraste seulement sur le libellé d'onglet actif de la barre de nav (fond blanc) — trouvé en testant le nouveau bouton Noter, corrigé sans toucher orange/gold */
+    --text: #4A4438; --text-hi: #241F17; --text-mid: #635a4a; /* assombri (était #766C58) : 4.2:1 contre surface2, sous le seuil — touchait toutes les étiquettes de contexte, trouvé lors de l'audit complet */
+    --orange: #C89B4A; --gold: #7a5628; --blue: #7A5807; /* --gold assombri (était #C89B4A, identique à l'accent) : 2.06:1 seulement contre surface2 sur le gros score, et pire encore ailleurs (étiquettes de contexte, étoiles, bouton Sauvegarder) — trouvé lors de l'audit complet. Même logique que le --blue assombri plus haut : ne touche pas --orange, utilisée bien plus largement et déjà éprouvée. --blue assombri (était #C89B4A, identique à l'accent) : 2.54:1 de contraste seulement sur le libellé d'onglet actif de la barre de nav (fond blanc) — trouvé en testant le nouveau bouton Noter, corrigé sans toucher orange/gold */
     --red: #C0603A; --green: #7A9068; /* terre cuite et sauge vivantes, plus de "boue" */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #0d1117;
+    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff; /* passé au blanc (était #0d1117) : quand --blue a été assombri plus haut, ce texte n'a pas suivi — 2.91:1 sur le bouton Sauvegarder, effet de bord trouvé lors de l'audit complet */
     --solid-fill-text: #0d1117; /* le laiton est un ton moyen : texte sombre plus lisible que clair */
     --radius: 2px; --radius-sm: 2px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
@@ -232,7 +258,7 @@
     --font-body: 'Work Sans', sans-serif;
     --font-mono: 'Ubuntu Mono', monospace;
 
-    --star-color: #C89B4A; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif;
+    --star-color: #7a5628; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif; /* assombri (était #C89B4A) : 2.55:1 contre blanc, sous le seuil — trouvé lors de l'audit complet */
     --star-shadow: none; --star-symbol: '◇'; /* losange fin et discret, esprit marque de cadran solaire */
     --icon-stroke: 1.5; /* legerement plus present qu'avant (1.25), sans perdre la delicatesse */
 
@@ -2778,16 +2804,6 @@
       transform: rotate(-45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
-
-    /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
-       le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
-       le seuil de 4.5:1 à cette taille de police réduite (trouvé en testant
-       les 7 thèmes après l'agrandissement du cercle). Correctif ciblé ici
-       plutôt qu'un changement de --solid-fill-text (utilisée largement
-       ailleurs dans l'app, changement non vérifié à cette échelle) : noir
-       pur pour une marge confortable (5.22:1) sur ce badge précis. */
-    [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme="carnet"] .nav-btn-primary-label { color: #000; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

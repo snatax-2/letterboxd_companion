@@ -12,6 +12,38 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- **Audit UX/design complet — 4 vrais défauts trouvés et corrigés,
+  vérifiés dans le code réel plutôt que devinés** :
+  1. **`--gold` trop clair sur 3 thèmes** (Carnet, Cinéphile, Méridien) —
+     1.36 à 2.06:1 seulement contre leur fond, sous le minimum de 3:1
+     requis même pour du grand texte. Touchait le gros score en chiffres
+     et une quinzaine d'autres endroits (médailles de duel, badges,
+     bordures au survol...). Assombri sur les trois, marge confortable
+     partout désormais.
+  2. **Carnet : le correctif précédent (bouton Noter) ne couvrait pas
+     tout** — même défaut sur "Nouvelle critique" et l'onglet "Détaillé".
+     Cause racine trouvée : `--solid-fill-text` doit servir à la fois un
+     fond orange (a besoin de texte sombre) et un fond vert (a besoin de
+     texte clair) — aucune valeur unique ne peut satisfaire les deux. Un
+     bloc consolidé corrige maintenant les 12 éléments concernés d'un
+     coup, sans toucher `--solid-fill-text` globalement (aurait cassé le
+     cas vert).
+  3. **Méridien : 3 défauts, dont un effet de bord que j'avais moi-même
+     introduit** — en assombrissant `--blue` lors d'un correctif
+     précédent, je n'avais pas vérifié que `--blue-fill-text` (resté
+     noir) fonctionnait toujours contre ce nouveau fond plus sombre :
+     2.91:1 sur le bouton Sauvegarder. Corrigé avec `--text-mid`
+     (touchait toutes les étiquettes de contexte) et la couleur des
+     étoiles au passage.
+  4. **Cinéphile : un défaut marginal** (4.46:1 au lieu de 4.5:1) sur le
+     badge "Impact affectif" — `--blue` légèrement assombri.
+- **`item.stars` sans protection dans l'Historique** — contrairement à la
+  fiche film qui protège déjà ce même champ (`localMatch.stars || ''`),
+  l'historique ne le faisait pas : un vrai risque d'afficher littéralement
+  "undefined" à l'écran sur d'anciennes données (import/export,
+  migration). Corrigé avec la même protection.
+
 ### Modifié
 - **Effet verre dépoli plus transparent** (barre de navigation, fenêtres
   modales, toast) — flou inchangé, opacité du fond réduite pour laisser

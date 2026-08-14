@@ -3284,7 +3284,7 @@ function renderHistory() {
             <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
             <div class="hist-meta">${metaHTML}</div>
             <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-            <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
+            <div class="hist-stars">${item.stars || ''}<span class="hist-score"></span></div>
             ${reviewHTML}
           </div>
         </div>
