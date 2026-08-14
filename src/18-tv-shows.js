@@ -11,7 +11,9 @@
 // ses saisons imbriquées) — rien n'est encore sauvegardé à ce stade,
 // cette phase se limite à la sélection.
 
-let currentMediaType = 'movie';
+// currentMediaType est déclarée dans 03-foundation.js (pas ici) — voir le
+// commentaire à cet endroit pour la raison exacte (calculateScore() y
+// accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
 let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
 
 function setMediaType(type) {
@@ -21,10 +23,37 @@ function setMediaType(type) {
   document.getElementById('movie-only-fields').style.display = type === 'movie' ? '' : 'none';
   document.getElementById('tv-only-fields').style.display = type === 'tv' ? '' : 'none';
   document.getElementById('film-card-title').textContent = type === 'movie' ? 'Film' : 'Série';
-  // La carte Notation (critères, mode Détaillé/Rapide) n'a pas encore
-  // d'équivalent série (Phase 3) — masquée plutôt que de laisser un
-  // formulaire de notation film sans rapport avec une saison sélectionnée.
-  document.getElementById('notation-card').style.display = type === 'movie' ? '' : 'none';
+  applyCriteriaLabelsForMediaType(type);
+  // Pour un film, la carte Notation est toujours visible (on peut ajuster
+  // les curseurs avant même d'avoir cherché un titre). Pour une série, il
+  // faut d'abord qu'une saison soit sélectionnée pour que noter ait un
+  // sens — selectSeason() la révèle elle-même le moment venu.
+  document.getElementById('notation-card').style.display = type === 'movie' || selectedSeasonNumber != null ? '' : 'none';
+}
+
+// Les deux critères reformulés pour une saison — les 5 autres (scenario,
+// realisation, acteurs, ambiance, affect) restent identiques au film,
+// donc pas dans cette table.
+const TV_CRITERIA_LABELS = { photo: 'Qualité du final', rythme: 'Rythme & Cohérence de la saison' };
+const _originalCriteriaLabels = {};
+
+function applyCriteriaLabelsForMediaType(type) {
+  Object.keys(TV_CRITERIA_LABELS).forEach(c => {
+    const labelEl = document.getElementById(`crit-label-${c}`);
+    if (!labelEl || !labelEl.firstChild) return;
+    // Le badge de pondération (<span class="weight-badge">) est un enfant
+    // du label — on ne modifie QUE le nœud de texte qui le précède, pour
+    // ne jamais l'écraser (même classe de bug déjà rencontrée ailleurs
+    // dans ce projet : cibler le bon élément, pas tout le conteneur).
+    if (!(c in _originalCriteriaLabels)) _originalCriteriaLabels[c] = labelEl.firstChild.nodeValue;
+    const newText = (type === 'tv' ? TV_CRITERIA_LABELS[c] : _originalCriteriaLabels[c].trim()) + ' ';
+    labelEl.firstChild.nodeValue = newText;
+    const trimmed = newText.trim();
+    document.querySelectorAll(`.criterion-step-btn[data-target="${c}"]`).forEach(btn => {
+      const sign = btn.dataset.step.startsWith('-') ? 'Diminuer' : 'Augmenter';
+      btn.setAttribute('aria-label', `${sign} ${trimmed} de 0,5`);
+    });
+  });
 }
 
 const tvSearchEl = document.getElementById('tv-search');
@@ -136,6 +165,9 @@ function selectSeason(season) {
   selectedSeasonNumber = Number(season.number);
   selectedSeasonName = season.name;
   document.getElementById('tv-season-complete-banner').style.display = 'none';
+  document.getElementById('notation-card').style.display = '';
+  loadSeasonRatingIntoForm();
+  refreshShowAverageDisplay();
 
   const wrapEl = document.getElementById('tv-episodes-wrap');
   const listEl = document.getElementById('tv-episode-list');
@@ -230,6 +262,75 @@ function renderEpisodeList(episodes) {
   updateTvProgressUI(seasonEntry);
 }
 
+function loadSeasonRatingIntoForm() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const seasonEntry = showEntry && showEntry.seasons[String(selectedSeasonNumber)];
+  const rating = seasonEntry && seasonEntry.rating;
+
+  if (rating && rating.mode === 'quick' && rating.values?.quick !== undefined) {
+    setMode('quick');
+    quickRating = parseFloat(rating.values.quick);
+    const radioEl = document.getElementById('s' + (quickRating * 2));
+    if (radioEl) radioEl.checked = true;
+  } else {
+    setMode('detail');
+    CRITERIA.forEach(c => {
+      document.getElementById(c).value = rating && rating.values && rating.values[c] !== undefined ? rating.values[c] : 5;
+    });
+  }
+  document.getElementById('review-text').value = rating ? (rating.review || '') : '';
+  calculateScore();
+}
+
+function refreshShowAverageDisplay() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const avg = computeShowAverageScore(showEntry);
+  const el = document.getElementById('tv-show-average');
+  if (avg == null) {
+    el.style.display = 'none';
+    return;
+  }
+  const ratedCount = Object.values(showEntry.seasons).filter(s => s.rating).length;
+  el.textContent = `Note globale : ${avg.toFixed(1)}/10 (moyenne de ${ratedCount} saison${ratedCount > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})`;
+  el.style.display = 'block';
+}
+
+function saveTvSeasonRating() {
+  if (!selectedShow || selectedSeasonNumber == null) {
+    showToast('Sélectionne une série et une saison avant de noter.');
+    return;
+  }
+  const score = calculateScore();
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  // La saison existe deja forcement (creee des la selection, voir
+  // renderEpisodeList) — on y ajoute juste la note, sans repasser par
+  // getOrCreateTvSeason pour ne pas risquer d'ecraser totalEpisodes avec
+  // une valeur perimee.
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: currentSeasonEpisodes.length };
+  }
+  showEntry.seasons[seasonKey].rating = {
+    mode: currentMode,
+    values: currentMode === 'detail'
+      ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
+      : { quick: quickRating },
+    score: score.toFixed(1),
+    stars: document.getElementById('stars-display').textContent,
+    review: document.getElementById('review-text').value.trim(),
+    date: new Date().toISOString(),
+  };
+  saveTvShows(shows);
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`);
+  if (typeof playSaveConfirmation === 'function') playSaveConfirmation();
+  refreshShowAverageDisplay();
+}
+
+
 function onEpisodeCheckClick(episodeNumber) {
   const shows = loadTvShows();
   const showEntry = getOrCreateTvShow(shows);
@@ -300,7 +401,8 @@ document.getElementById('tv-season-complete-dismiss').addEventListener('click', 
   document.getElementById('tv-season-complete-banner').style.display = 'none';
 });
 document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
-  // La notation de saison est la Phase 3, pas encore construite — message
-  // honnête plutôt qu'un bouton qui ne fait rien silencieusement.
-  showToast('La notation par saison arrive dans une prochaine étape.');
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  const card = document.getElementById('notation-card');
+  card.style.display = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });

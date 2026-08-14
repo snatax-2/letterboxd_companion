@@ -261,7 +261,7 @@ function calculateScore() {
       criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
       const descEl = document.getElementById(`desc-${c}`);
-      descEl.textContent = getDesc(c, val);
+      descEl.textContent = getDesc(c, val, currentMediaType);
       // Repli progressif : le texte descriptif ne s'affiche qu'une fois qu'on
       // s'est écarté de la valeur neutre par défaut (5), pour ne pas noyer le
       // formulaire sous 7 blocs de texte dès l'ouverture d'une fiche vierge.
@@ -429,7 +429,12 @@ function playSaveConfirmation() {
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   hapticPulse(document.getElementById('save-btn'), 'strong');
-  
+
+  if (currentMediaType === 'tv') {
+    saveTvSeasonRating();
+    return;
+  }
+
   const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
   if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
 

@@ -13,6 +13,35 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Ajouté
+- **Module Séries — Phase 3 : notation de saison.** Réutilise les 7
+  curseurs déjà existants pour les films (mêmes ID, même système de
+  pondération et de mode Détaillé/Rapide) — seuls deux critères sont
+  reformulés pour coller au format saison : "Photographie & Esthétique" →
+  **Qualité du final**, "Rythme & Montage" → **Rythme & Cohérence de la
+  saison**. De vraies descriptions par palier ont été écrites pour ces
+  deux critères (pas un simple renommage du libellé en gardant le texte
+  film, qui n'aurait eu aucun sens pour un final de saison). Le bouton
+  "Noter cette saison" (Phase 2) fait maintenant défiler jusqu'au
+  formulaire au lieu d'afficher un message d'attente. Revenir sur une
+  saison déjà notée repeuple le formulaire avec la note existante ; une
+  saison vierge repart à des valeurs neutres.
+  - **Note globale de série calculée automatiquement** — jamais stockée,
+    toujours recalculée comme la moyenne des saisons notées (une saison
+    suivie mais pas encore notée n'entre pas dans le calcul), affichée
+    directement dans l'onglet Noter dès qu'au moins une saison a une
+    note. Nouvelle fonction pure `computeShowAverageScore`, avec ses
+    propres tests unitaires.
+  - **Deux vrais bugs trouvés et corrigés avant livraison, en testant
+    moi-même de bout en bout** : une variable (`currentMediaType`)
+    déclarée dans le mauvais fichier empêchait littéralement l'app de
+    démarrer dans certains cas (erreur "Cannot access before
+    initialization"), trouvée en inspectant la console du navigateur —
+    déplacée dans un fichier qui charge plus tôt. Et un défaut de
+    contraste sur 3 thèmes (Carnet, Moderne, Méridien) sur le nouvel
+    affichage de note globale, causé par la couleur d'accent utilisée
+    directement comme texte — un piège déjà rencontré plusieurs fois
+    dans ce projet, corrigé avec une couleur de texte déjà éprouvée.
+
 - **Module Séries — Phase 2 : suivi épisode par épisode.** Grille
   d'épisodes (TMDb `/tv/{id}/season/{n}`, nouveau point d'accès serveur)
   avec case à cocher animée (coche qui se dessine + léger rebond, en CSS

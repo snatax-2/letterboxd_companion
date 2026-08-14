@@ -43,6 +43,20 @@ function computeWeightedScore(criteriaValues, weights) {
   return totalWeight > 0 ? weightedSum / totalWeight : 5;
 }
 
+// Note globale d'une série : moyenne des saisons NOTÉES uniquement (une
+// saison sans note n'entre pas dans le calcul, plutôt que de compter comme
+// 0 et fausser la moyenne). Jamais stockée — toujours recalculée à partir
+// des saisons, exactement comme convenu : une série qui change de
+// direction en cours de route (True Detective, Twin Peaks...) n'a pas sa
+// meilleure/pire saison lissée dans une note unique figée.
+function computeShowAverageScore(showEntry) {
+  if (!showEntry || !showEntry.seasons) return null;
+  const rated = Object.values(showEntry.seasons).filter(s => s.rating && s.rating.score != null);
+  if (rated.length === 0) return null;
+  const sum = rated.reduce((acc, s) => acc + parseFloat(s.rating.score), 0);
+  return sum / rated.length;
+}
+
 // Convertit un score sur 10 en équivalent "étoiles" (pas de 0.5), pour l'affichage.
 function scoreToStars(score) {
   return Math.round((score / 2) * 2) / 2;
@@ -224,6 +238,39 @@ const DESCS = {
   ]
 };
 
+// Séries — Phase 3 : descriptions propres aux deux critères reformulés
+// pour une saison ("photo" -> Qualité du final, "rythme" -> Rythme &
+// Cohérence de la saison). Les 5 autres critères (scenario, realisation,
+// acteurs, ambiance, affect) restent transposables tels quels, mêmes
+// textes que pour un film — pas de doublon nécessaire pour eux. Même
+// structure à 10 paliers que DESCS, pour rester cohérent.
+const DESCS_TV_OVERRIDES = {
+  photo: [
+    [9.5,"Un final parfait, qui élève toute la saison et referme chaque fil narratif avec une intelligence rare."],
+    [8.5,"Une conclusion magistrale, à la hauteur de tout ce qui précède, qui restera gravée longtemps."],
+    [7.5,"Excellent épisode final. Il conclut la saison avec panache, sans faux pas majeur."],
+    [6.5,"Bon final, qui referme l'essentiel sans forcément marquer les esprits."],
+    [5.5,"Final honnête et satisfaisant, qui fait le travail sans surprendre."],
+    [4.5,"Final en demi-teinte. Quelques fils narratifs bâclés ou une résolution un peu facile."],
+    [3.5,"Conclusion décevante, qui peine à être à la hauteur de la saison."],
+    [2.5,"Final raté, qui gâche une partie de ce que la saison avait construit."],
+    [1.5,"Fin quasiment ratée, qui trahit l'attente installée par les épisodes précédents."],
+    [0,  "Un désastre. La fin détruit ce que la saison avait de mieux, ou ne conclut rien du tout."]
+  ],
+  rythme: [
+    [9.5,"Un rythme d'une précision chirurgicale sur toute la saison. Chaque épisode a sa place, aucun ventre mou, une cohérence sans faille du premier au dernier épisode."],
+    [8.5,"Excellente cohérence de saison, un tempo qui épouse parfaitement l'arc narratif du premier au dernier épisode."],
+    [7.5,"Très bonne tenue sur la durée. La saison se regarde sans effort, les épisodes s'enchaînent avec fluidité."],
+    [6.5,"Rythme globalement maîtrisé sur la saison, quelques épisodes plus faibles qui n'entament pas l'ensemble."],
+    [5.5,"Cohérence correcte mais irrégulière. Certains épisodes traînent, d'autres filent trop vite, sans que ça gâche l'ensemble."],
+    [4.5,"Rythme mal calibré sur la saison. Des épisodes de remplissage qui cassent l'élan général."],
+    [3.5,"Saison qui traîne clairement en longueur sur plusieurs épisodes, ou qui semble décousue d'un épisode à l'autre."],
+    [2.5,"Cohérence poussive sur une bonne partie de la saison, l'intérêt décroche régulièrement d'un épisode à l'autre."],
+    [1.5,"Enchaînement confus, tempo constamment à côté de la plaque sur la majorité des épisodes."],
+    [0,  "Rythme complètement raté sur toute la saison. Interminable, ou décousu au point de perdre le fil d'un épisode à l'autre."]
+  ]
+};
+
 // Le cache est attaché à la fonction elle-même (pas une const top-level) et
 // initialisé au premier appel — ainsi aucune ligne de déclaration à atteindre
 // avant de pouvoir l'utiliser. C'est exactement la même classe de bug
@@ -234,12 +281,12 @@ const DESCS = {
 // atteint sa propre déclaration. Cette fois le remède habituel ("rendre la
 // constante locale à la fonction") ne suffit pas seul, puisque ce cache doit
 // justement SURVIVRE entre les appels — d'où cette variante.
-function getDesc(criterion, val) {
+function getDesc(criterion, val, mediaType = 'movie') {
   if (!getDesc._cache) getDesc._cache = {};
   const _descCache = getDesc._cache;
-  const key = criterion + val;
+  const key = mediaType + criterion + val;
   if (_descCache[key]) return _descCache[key];
-  const tiers = DESCS[criterion];
+  const tiers = (mediaType === 'tv' && DESCS_TV_OVERRIDES[criterion]) || DESCS[criterion];
 
   for (let i = 0; i < tiers.length; i++) {
     const [thresh, text] = tiers[i];
@@ -610,6 +657,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     computeQuickScore,
     computeWeightedScore,
+    computeShowAverageScore,
     scoreToStars,
     getStarStr,
     historyItemKey,
@@ -620,6 +668,7 @@ if (typeof module !== 'undefined' && module.exports) {
     TOMBSTONE_MAX_AGE_MS,
     getDesc,
     DESCS,
+    DESCS_TV_OVERRIDES,
     computeCriteriaAverages,
     formatWatchTime,
     getISOWeekKey,

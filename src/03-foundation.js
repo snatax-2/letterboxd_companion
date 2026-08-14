@@ -42,6 +42,17 @@ let isLiked     = false;
 let currentMode = 'detail'; 
 let quickRating = 2.5;      
 let sortOrder   = 'date';
+// Bascule Film/Série (module Séries) : déclarée ici plutôt que dans
+// 18-tv-shows.js (son fichier "naturel", chargé en dernier) car
+// calculateScore() (05-rating-form.js) la lit, et calculateScore() est
+// appelée dès l'initialisation par 09-modal-init.js — AVANT que
+// 18-tv-shows.js n'ait eu la chance d'exécuter sa propre déclaration.
+// Contrairement aux fonctions (hissées entièrement), un "let" reste
+// inaccessible tant que sa ligne n'a pas été atteinte : la même variable
+// déclarée dans le fichier 18 provoquait "Cannot access before
+// initialization" au chargement — trouvé en testant le flux complet de
+// notation de saison, pas visible sur des tests plus étroits.
+let currentMediaType = 'movie';
 let activeGenre = null; 
 let weightsOpen = false;
 let pendingAction = null; 

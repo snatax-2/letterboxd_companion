@@ -882,6 +882,7 @@
   .film-strip-info { flex: 1; min-width: 0; }
   .film-strip-title { color: var(--text-hi); font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-heading); }
   .film-strip-genre { color: var(--text); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
+  .tv-show-average { color: var(--text-hi); font-size: 0.8rem; font-weight: 700; margin-top: 4px; font-family: var(--font-heading); }
   .tv-phase1-note { color: var(--text-mid); font-size: 0.72rem; margin-top: 6px; font-style: italic; }
 
   /* ── SÉRIES : suivi d'épisodes (Phase 2) ── */
