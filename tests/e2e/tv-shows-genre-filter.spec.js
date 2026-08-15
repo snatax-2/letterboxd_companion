@@ -50,6 +50,8 @@ test('genre capture directement a la selection, retrofit en arriere-plan pour un
   await page.waitForTimeout(400);
   await page.click('[data-season-number="1"]');
   await page.waitForTimeout(400);
+  await page.click('#tv-start-season-btn'); // requis depuis le nouveau flux : la selection seule ne cree plus l'entree
+  await page.waitForTimeout(500);
 
   let stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
   expect(stored.find(s => String(s.tmdbTvId) === '4607').genre).toBe('Policier, Drame');

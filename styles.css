@@ -882,6 +882,19 @@
   .tv-season-complete-banner span { flex: 1; }
   .tv-season-complete-dismiss { background: none; border: none; color: var(--text-mid); cursor: pointer; font-size: 0.9rem; padding: 4px 6px; flex-shrink: 0; }
 
+  .tv-season-start-prompt {
+    display: none; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--blue); border-radius: var(--radius-sm);
+    font-size: 0.84rem; color: var(--text-hi); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+  .tv-season-start-prompt span { flex: 1; }
+
+  .tv-season-in-progress-msg {
+    display: none; align-items: center; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--border-hi); border-radius: var(--radius-sm);
+    font-size: 0.82rem; color: var(--text-mid); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+
   /* ── SÉRIES : Historique (Phase 4) ── */
   .tv-show-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
   .tv-show-card-header { display: flex; align-items: center; gap: 6px; padding: 10px; }
@@ -931,16 +944,21 @@
 
   /* ── SÉRIES : fiche détaillée (fds), section progression par saison ── */
   .tds-season-progress-list { display: flex; flex-direction: column; }
+  .tds-season-details { border-bottom: 1px solid var(--border); }
+  .tds-season-details:last-child { border-bottom: none; }
   .tds-season-progress-row {
     display: flex; justify-content: space-between; align-items: center;
     padding: 9px 4px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer;
-    border-bottom: 1px solid var(--border); border-radius: 4px;
+    border-radius: 4px; list-style: none;
   }
-  .tds-season-progress-row:last-child { border-bottom: none; }
+  .tds-season-progress-row::-webkit-details-marker { display: none; }
   .tds-season-progress-row:hover { background: var(--surface2); }
   .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
   .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
+  .tds-season-episodes { padding: 4px 4px 14px; }
+  .tds-episode-list { display: flex; flex-direction: column; gap: 2px; }
+  .tds-rate-now-btn { display: none; width: 100%; margin-top: 10px; }
 
   /* ── SÉRIES : widget "En cours" (onglet Noter, mode Série) ── */
   .tv-continue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }

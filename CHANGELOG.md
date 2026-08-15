@@ -12,6 +12,45 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Modifié
+- **Refonte du suivi épisode par épisode : la grille complète déménage
+  entièrement dans la fiche série, l'onglet Noter devient plus léger.**
+  Choisir une saison dans Noter (recherche manuelle) ne montre plus la
+  grille à cocher — trois cas selon l'état de la saison :
+  - **Jamais touchée** → un menu "Commencer [Série] — [Saison] ?" ; la
+    confirmation crée le suivi et ajoute le premier épisode au widget
+    "En cours", sans rien afficher d'autre.
+  - **Déjà en cours** (retrouvée par recherche, pas finie) → un message
+    renvoie vers le widget "En cours" plutôt que d'ouvrir un second
+    suivi redondant.
+  - **Terminée** (par épisodes, ou déjà notée même si tous les épisodes
+    n'ont pas été cochés un par un) → le formulaire de notation s'ouvre
+    directement, préempli si une note existe déjà.
+  Toute la validation épisode par épisode se fait désormais **uniquement**
+  via le widget "En cours" (conservé tel quel) — ou via la nouvelle
+  **grille complète dans la fiche série détaillée**, dépliable saison par
+  saison, chargée à la demande au premier dépliage. Un bouton "Noter
+  cette saison" y apparaît une fois tous les épisodes cochés.
+  - **Un vrai bug trouvé et corrigé pendant le développement** : le
+    widget "En cours" excluait les saisons à 0 épisode vu (il exigeait
+    au moins 1 épisode déjà coché pour les considérer "en cours") — ce
+    qui aurait rendu invisible toute saison qu'on vient tout juste de
+    "Commencer", le scénario central de cette refonte.
+  - **Un second vrai bug trouvé en régression** : rouvrir une saison
+    déjà notée mais dont tous les épisodes n'étaient pas cochés (par
+    exemple regardée en partie hors de l'app) ouvrait le mauvais état —
+    la présence d'une note prime désormais sur le décompte d'épisodes.
+  - **Une vraie erreur commise et corrigée avant qu'elle ne cause de
+    dégâts** : en retirant l'ancienne grille de Noter, une suppression
+    par plage de lignes trop large a emporté au passage 4 fonctions à
+    conserver (dont la sauvegarde de note elle-même) — repéré par le
+    lint qui aurait échoué, restauré immédiatement.
+  - Le fichier de test `tv-shows-phase2.spec.js` (qui testait l'ancienne
+    grille dans Noter) est retiré — son scénario n'existe plus à cet
+    endroit ; sa couverture vit maintenant dans `tv-shows-noter-flow.spec.js`
+    (le nouveau flux) et `tv-shows-detail-parity.spec.js` (la grille dans
+    la fiche).
+
 ### Corrigé
 - **Parité fiche film / fiche série** — suite à un audit demandé
   explicitement, comparant les deux fiches fonction par fonction :

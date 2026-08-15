@@ -166,30 +166,62 @@ function selectSeason(season) {
   document.getElementById('tv-strip-genre').textContent = `${season.episodeCount} épisode${season.episodeCount > 1 ? 's' : ''}`;
   selectedSeasonNumber = Number(season.number);
   selectedSeasonName = season.name;
+  selectedSeasonEpisodeCount = Number(season.episodeCount);
   document.getElementById('tv-season-complete-banner').style.display = 'none';
-  document.getElementById('notation-card').style.display = '';
-  loadSeasonRatingIntoForm();
   refreshShowAverageDisplay();
 
-  const wrapEl = document.getElementById('tv-episodes-wrap');
-  const listEl = document.getElementById('tv-episode-list');
-  wrapEl.style.display = 'block';
-  listEl.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const localSeason = showEntry?.seasons?.[String(selectedSeasonNumber)];
+  const episodesComplete = localSeason && localSeason.totalEpisodes > 0 && localSeason.watchedEpisodes.length >= localSeason.totalEpisodes;
+  const isComplete = localSeason && (episodesComplete || localSeason.rating);
 
-  fetch(`/api/search?tvSeasonShowId=${selectedShow.id}&tvSeasonNumber=${season.number}`)
-    .then(readApiJson)
-    .then(data => {
-      const episodes = data.episodes || [];
-      if (episodes.length === 0) {
-        listEl.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
-        return;
-      }
-      renderEpisodeList(episodes);
-    })
-    .catch(err => {
-      listEl.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
-    });
+  const startPromptEl = document.getElementById('tv-season-start-prompt');
+  const inProgressEl = document.getElementById('tv-season-in-progress-msg');
+  const notationEl = document.getElementById('notation-card');
+
+  if (isComplete) {
+    // Saison terminée : plus rien à cocher, on passe directement à la note
+    // — pré-remplie si déjà notée, exactement le même geste que rouvrir
+    // depuis l'Historique.
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    notationEl.style.display = '';
+    loadSeasonRatingIntoForm();
+  } else if (localSeason) {
+    // Déjà entamée (via le widget En cours) mais pas finie : pas de second
+    // suivi ici, juste un rappel de où continuer plutôt qu'un doublon.
+    notationEl.style.display = 'none';
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'flex';
+    document.getElementById('tv-in-progress-text').textContent =
+      `${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} épisodes déjà vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  } else {
+    // Jamais touchée : propose de commencer plutôt que d'ouvrir directement
+    // un suivi épisode par épisode ici.
+    notationEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    startPromptEl.style.display = 'flex';
+    document.getElementById('tv-start-prompt-text').textContent = `Commencer "${selectedShow.name} — ${season.name}" ?`;
+  }
 }
+
+function startTrackingSeason() {
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+  }
+  saveTvShows(shows);
+  document.getElementById('tv-season-start-prompt').style.display = 'none';
+  document.getElementById('tv-season-in-progress-msg').style.display = 'flex';
+  document.getElementById('tv-in-progress-text').textContent =
+    `0/${selectedSeasonEpisodeCount} épisodes vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  if (typeof renderTvContinueList === 'function') renderTvContinueList();
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" ajoutée à En cours`);
+}
+document.getElementById('tv-start-season-btn').addEventListener('click', startTrackingSeason);
 
 // ═══════════════════════════════════════════
 //  SÉRIES — Phase 2 : suivi épisode par épisode
@@ -202,7 +234,7 @@ function selectSeason(season) {
 const TV_SHOWS_KEY = 'lbx_tv_shows';
 let selectedSeasonNumber = null;
 let selectedSeasonName = null;
-let currentSeasonEpisodes = []; // liste brute TMDb de la saison affichee
+let selectedSeasonEpisodeCount = 0;
 
 function loadTvShows() {
   try { return JSON.parse(localStorage.getItem(TV_SHOWS_KEY)) || []; } catch { return []; }
@@ -228,40 +260,6 @@ function getOrCreateTvSeason(showEntry, seasonName, totalEpisodes) {
   // reajuste plutot que de garder une valeur perimee.
   showEntry.seasons[key].totalEpisodes = totalEpisodes;
   return showEntry.seasons[key];
-}
-
-function renderEpisodeList(episodes) {
-  currentSeasonEpisodes = episodes;
-  const shows = loadTvShows();
-  const showEntry = getOrCreateTvShow(shows);
-  const seasonEntry = getOrCreateTvSeason(showEntry, selectedSeasonName, episodes.length);
-  saveTvShows(shows); // cree l'entree tout de suite, meme a 0 episode coche
-
-  const listEl = document.getElementById('tv-episode-list');
-  listEl.innerHTML = episodes.map(ep => {
-    const watched = seasonEntry.watchedEpisodes.includes(ep.episode_number);
-    const meta = [
-      ep.air_date ? new Date(ep.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
-      ep.runtime ? `${ep.runtime} min` : '',
-    ].filter(Boolean).join(' · ');
-    return `
-      <div class="tv-episode-row" data-episode="${ep.episode_number}">
-        <button type="button" class="tv-episode-check${watched ? ' watched' : ''}" data-episode="${ep.episode_number}" aria-pressed="${watched}" aria-label="Marquer l'épisode ${ep.episode_number} comme ${watched ? 'non vu' : 'vu'}">
-          <svg class="tv-episode-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
-        </button>
-        <div class="tv-episode-info">
-          <div class="tv-episode-title">${ep.episode_number}. ${escAttr(ep.name || 'Sans titre')}</div>
-          ${meta ? `<div class="tv-episode-meta">${escAttr(meta)}</div>` : ''}
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  listEl.querySelectorAll('.tv-episode-check').forEach(btn => {
-    btn.addEventListener('click', () => onEpisodeCheckClick(Number(btn.dataset.episode)));
-  });
-
-  updateTvProgressUI(seasonEntry);
 }
 
 function loadSeasonRatingIntoForm() {
@@ -319,12 +317,12 @@ function saveTvSeasonRating() {
   const shows = loadTvShows();
   const showEntry = getOrCreateTvShow(shows);
   const seasonKey = String(selectedSeasonNumber);
-  // La saison existe deja forcement (creee des la selection, voir
-  // renderEpisodeList) — on y ajoute juste la note, sans repasser par
-  // getOrCreateTvSeason pour ne pas risquer d'ecraser totalEpisodes avec
-  // une valeur perimee.
+  // La saison existe déjà forcément (créée dès qu'on "Commence" à la suivre,
+  // voir startTrackingSeason) — on y ajoute juste la note, sans repasser par
+  // getOrCreateTvSeason pour ne pas risquer d'écraser totalEpisodes avec
+  // une valeur périmée.
   if (!showEntry.seasons[seasonKey]) {
-    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: currentSeasonEpisodes.length };
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
   }
   showEntry.seasons[seasonKey].rating = {
     mode: currentMode,
@@ -344,78 +342,42 @@ function saveTvSeasonRating() {
   if (typeof statsDirty !== 'undefined') statsDirty = true;
 }
 
-
-function onEpisodeCheckClick(episodeNumber) {
-  const shows = loadTvShows();
-  const showEntry = getOrCreateTvShow(shows);
-  const seasonEntry = getOrCreateTvSeason(showEntry, selectedSeasonName, currentSeasonEpisodes.length);
-  const already = seasonEntry.watchedEpisodes.includes(episodeNumber);
-
-  if (already) {
-    // Decoche simple, jamais de question posee pour un retrait.
-    seasonEntry.watchedEpisodes = seasonEntry.watchedEpisodes.filter(n => n !== episodeNumber);
-    saveTvShows(shows);
-    applyEpisodeWatchedState(episodeNumber, false, false);
-    updateTvProgressUI(seasonEntry);
-    document.getElementById('tv-season-complete-banner').style.display = 'none';
-    return;
-  }
-
-  const maxWatched = seasonEntry.watchedEpisodes.length ? Math.max(...seasonEntry.watchedEpisodes) : 0;
-  const skipsAhead = episodeNumber > maxWatched + 1;
-
-  const markWatched = (numbers) => {
-    for (const n of numbers) {
-      if (!seasonEntry.watchedEpisodes.includes(n)) seasonEntry.watchedEpisodes.push(n);
-    }
-    saveTvShows(shows);
-    for (const n of numbers) applyEpisodeWatchedState(n, true, true);
-    updateTvProgressUI(seasonEntry);
-    maybeShowSeasonCompleteBanner(seasonEntry);
-  };
-
-  if (skipsAhead) {
-    const from = maxWatched + 1;
-    const proposeAll = confirm(`Marquer aussi les épisodes ${from} à ${episodeNumber - 1} comme vus ?`);
-    const toMark = [];
-    if (proposeAll) { for (let n = from; n <= episodeNumber; n++) toMark.push(n); }
-    else toMark.push(episodeNumber);
-    markWatched(toMark);
-  } else {
-    markWatched([episodeNumber]);
-  }
-}
-
-function applyEpisodeWatchedState(episodeNumber, watched, animate) {
-  const btn = document.querySelector(`.tv-episode-check[data-episode="${episodeNumber}"]`);
-  if (!btn) return;
-  btn.classList.toggle('watched', watched);
-  btn.setAttribute('aria-pressed', String(watched));
-  btn.setAttribute('aria-label', `Marquer l'épisode ${episodeNumber} comme ${watched ? 'non vu' : 'vu'}`);
-  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (watched && animate && !reduceMotion) {
-    btn.classList.add('just-checked');
-    btn.addEventListener('animationend', () => btn.classList.remove('just-checked'), { once: true });
-  }
-}
-
-function updateTvProgressUI(seasonEntry) {
-  const n = seasonEntry.watchedEpisodes.length;
-  const total = seasonEntry.totalEpisodes;
-  document.getElementById('tv-progress-label').textContent = `${n}/${total} épisode${total > 1 ? 's' : ''} vu${n > 1 ? 's' : ''}`;
-  document.getElementById('tv-progress-fill').style.width = total > 0 ? `${Math.round((n / total) * 100)}%` : '0%';
-}
-
-function maybeShowSeasonCompleteBanner(seasonEntry) {
+function maybeShowSeasonCompleteBanner(showTmdbId, seasonKey, seasonEntry) {
   if (seasonEntry.watchedEpisodes.length < seasonEntry.totalEpisodes) return;
-  document.getElementById('tv-season-complete-banner').style.display = 'flex';
+  const banner = document.getElementById('tv-season-complete-banner');
+  banner.dataset.showId = showTmdbId;
+  banner.dataset.seasonKey = seasonKey;
+  banner.style.display = 'flex';
 }
 
 document.getElementById('tv-season-complete-dismiss').addEventListener('click', () => {
   document.getElementById('tv-season-complete-banner').style.display = 'none';
 });
 document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
-  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  const banner = document.getElementById('tv-season-complete-banner');
+  const showId = banner.dataset.showId;
+  const seasonKey = banner.dataset.seasonKey;
+  banner.style.display = 'none';
+
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (show) {
+    switchMobileNav('rating');
+    setMediaType('tv');
+    selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+    document.getElementById('tv-search').value = show.title;
+    document.getElementById('tv-season-picker').style.display = 'none';
+    const seasonData = show.seasons[seasonKey];
+    selectedSeasonNumber = Number(seasonKey);
+    selectedSeasonName = seasonData.seasonName;
+    document.getElementById('tv-season-strip').style.display = 'flex';
+    document.getElementById('tv-strip-poster').src = show.poster_path ? `https://image.tmdb.org/t/p/w200${show.poster_path}` : '';
+    document.getElementById('tv-strip-title').textContent = `${show.title} — ${seasonData.seasonName}`;
+    document.getElementById('tv-strip-genre').textContent = `${seasonData.totalEpisodes} épisodes`;
+    document.getElementById('tv-season-start-prompt').style.display = 'none';
+    document.getElementById('tv-season-in-progress-msg').style.display = 'none';
+    refreshShowAverageDisplay();
+    loadSeasonRatingIntoForm();
+  }
   const card = document.getElementById('notation-card');
   card.style.display = '';
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -913,7 +875,7 @@ async function renderTvContinueList() {
   for (const show of shows) {
     const entries = Object.entries(show.seasons || {});
     const partial = entries
-      .filter(([, s]) => s.watchedEpisodes.length > 0 && s.watchedEpisodes.length < s.totalEpisodes)
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes)
       .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
     if (partial) {
       candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
@@ -1021,6 +983,7 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
   if (!seasonEntry.watchedEpisodes.includes(episodeNumber)) seasonEntry.watchedEpisodes.push(episodeNumber);
   saveTvShows(shows);
   if (typeof statsDirty !== 'undefined') statsDirty = true;
+  maybeShowSeasonCompleteBanner(showId, seasonKey, seasonEntry);
 
   const cardEl = btn.closest('.tv-continue-card');
   cardEl.classList.add('tv-continue-loading');

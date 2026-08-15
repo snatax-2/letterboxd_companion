@@ -18,7 +18,22 @@ const ONE_EPISODE = { episodes: [{ episode_number: 1, name: 'Ep 1', air_date: '2
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1600 });
-  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    // Les 3 saisons sont pré-suivies et COMPLÈTES : depuis ce changement de
+    // session, sélectionner une saison jamais commencée montre le menu
+    // "Commencer" (pas le formulaire) — ces tests portent sur la notation
+    // elle-même, donc les saisons doivent déjà être terminées pour y
+    // accéder directement, comme le prévoit la nouvelle logique.
+    localStorage.setItem('lbx_tv_shows', JSON.stringify([{
+      tmdbTvId: 4607, title: 'True Detective', poster_path: '/p1.jpg',
+      seasons: {
+        '1': { seasonName: 'Saison 1', watchedEpisodes: [1], totalEpisodes: 1 },
+        '2': { seasonName: 'Saison 2', watchedEpisodes: [1], totalEpisodes: 1 },
+        '3': { seasonName: 'Saison 3', watchedEpisodes: [1], totalEpisodes: 1 },
+      },
+    }]));
+  });
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.route('**/api/search?tvQuery=*', route => route.fulfill({ json: SEARCH_RESULT }));
   await page.route('**/api/search?tvId=4607', route => route.fulfill({ json: SHOW_3_SEASONS }));

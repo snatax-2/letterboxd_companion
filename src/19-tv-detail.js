@@ -54,10 +54,13 @@ function buildSeasonProgressionSection(data, localShow) {
       statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
     }
     return `
-      <div class="tds-season-progress-row" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
-        <span>${escAttr(ts.name)}</span>
-        ${statusHtml}
-      </div>
+      <details class="tds-season-details" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
+        <summary class="tds-season-progress-row">
+          <span>${escAttr(ts.name)}</span>
+          ${statusHtml}
+        </summary>
+        <div class="tds-season-episodes" data-loaded="false"></div>
+      </details>
     `;
   }).join('');
 
@@ -270,6 +273,7 @@ async function openTvDetailSheet(tmdbTvId) {
     setupTdsOverviewToggle();
     setupStickyHeader(tdsEl);
     if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
+    wireSeasonDetailsToggles();
   } catch (e) {
     tdsCurrentData = null;
     tdsContentEl.innerHTML = `
@@ -279,6 +283,153 @@ async function openTvDetailSheet(tmdbTvId) {
         <button type="button" class="error-retry-btn" data-retry-tv-id="${escAttr(String(tmdbTvId))}">Réessayer</button>
       </div>`;
   }
+}
+
+// ── Grille d'épisodes, uniquement dans la fiche série ──
+// Chargée à la demande au premier dépliage d'une saison (pas toutes en même
+// temps à l'ouverture de la fiche) — même mécanique de coche/rattrapage que
+// ce qui existait avant dans Noter, juste déplacée ici.
+
+function wireSeasonDetailsToggles() {
+  tdsContentEl.querySelectorAll('.tds-season-details').forEach(details => {
+    details.addEventListener('toggle', () => {
+      if (!details.open) return;
+      const episodesContainer = details.querySelector('.tds-season-episodes');
+      if (episodesContainer.dataset.loaded === 'true') return;
+      loadAndRenderSeasonEpisodes(details, episodesContainer);
+    });
+  });
+}
+
+async function loadAndRenderSeasonEpisodes(detailsEl, container) {
+  const showId = tdsCurrentData.id;
+  const seasonNumber = detailsEl.dataset.seasonNumber;
+  container.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
+  try {
+    const data = await fetch(`/api/search?tvSeasonShowId=${showId}&tvSeasonNumber=${seasonNumber}`).then(readApiJson);
+    const episodes = data.episodes || [];
+    if (episodes.length === 0) {
+      container.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
+      return;
+    }
+    renderTdsEpisodeChecklist(container, showId, String(seasonNumber), detailsEl.dataset.seasonName, episodes);
+    container.dataset.loaded = 'true';
+  } catch (err) {
+    container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
+  }
+}
+
+function renderTdsEpisodeChecklist(container, showId, seasonKey, seasonName, episodes) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const watched = seasonEntry ? seasonEntry.watchedEpisodes : [];
+
+  const rowsHtml = episodes.map(ep => {
+    const isWatched = watched.includes(ep.episode_number);
+    const meta = [
+      ep.air_date ? new Date(ep.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+      ep.runtime ? `${ep.runtime} min` : '',
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="tv-episode-row" data-episode="${ep.episode_number}">
+        <button type="button" class="tv-episode-check${isWatched ? ' watched' : ''}" data-episode="${ep.episode_number}" aria-pressed="${isWatched}" aria-label="Marquer l'épisode ${ep.episode_number} comme ${isWatched ? 'non vu' : 'vu'}">
+          <svg class="tv-episode-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+        </button>
+        <div class="tv-episode-info">
+          <div class="tv-episode-title">${ep.episode_number}. ${escAttr(ep.name || 'Sans titre')}</div>
+          ${meta ? `<div class="tv-episode-meta">${escAttr(meta)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="tds-episode-list">${rowsHtml}</div>
+    <button type="button" class="mds-action-btn primary tds-rate-now-btn" style="display:none;" data-show-id="${showId}" data-season-key="${seasonKey}">Noter cette saison</button>
+  `;
+
+  container.querySelectorAll('.tv-episode-check').forEach(btn => {
+    btn.addEventListener('click', () => onTdsEpisodeCheckClick(showId, seasonKey, seasonName, episodes.length, Number(btn.dataset.episode), container));
+  });
+
+  updateTdsRateButtonVisibility(container, showId, seasonKey);
+}
+
+function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisodes, episodeNumber, container) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  if (!showEntry.seasons[seasonKey]) {
+    // Ne devrait normalement pas arriver (la saison est censée déjà exister
+    // dès qu'elle a été "commencée" depuis Noter), créée quand même par
+    // sécurité plutôt que de planter.
+    showEntry.seasons[seasonKey] = { seasonName, watchedEpisodes: [], totalEpisodes };
+  }
+  const seasonEntry = showEntry.seasons[seasonKey];
+  const already = seasonEntry.watchedEpisodes.includes(episodeNumber);
+
+  const applyState = (num, watched) => {
+    const btn = container.querySelector(`.tv-episode-check[data-episode="${num}"]`);
+    if (!btn) return;
+    btn.classList.toggle('watched', watched);
+    btn.setAttribute('aria-pressed', String(watched));
+  };
+
+  if (already) {
+    seasonEntry.watchedEpisodes = seasonEntry.watchedEpisodes.filter(n => n !== episodeNumber);
+    saveTvShows(shows);
+    applyState(episodeNumber, false);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+    return;
+  }
+
+  const maxWatched = seasonEntry.watchedEpisodes.length ? Math.max(...seasonEntry.watchedEpisodes) : 0;
+  const skipsAhead = episodeNumber > maxWatched + 1;
+  const markWatched = (numbers) => {
+    for (const n of numbers) if (!seasonEntry.watchedEpisodes.includes(n)) seasonEntry.watchedEpisodes.push(n);
+    saveTvShows(shows);
+    for (const n of numbers) applyState(n, true);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+  };
+
+  if (skipsAhead) {
+    const from = maxWatched + 1;
+    const proposeAll = confirm(`Marquer aussi les épisodes ${from} à ${episodeNumber - 1} comme vus ?`);
+    const toMark = [];
+    if (proposeAll) { for (let n = from; n <= episodeNumber; n++) toMark.push(n); }
+    else toMark.push(episodeNumber);
+    markWatched(toMark);
+  } else {
+    markWatched([episodeNumber]);
+  }
+}
+
+function updateTdsRateButtonVisibility(container, showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const btn = container.querySelector('.tds-rate-now-btn');
+  if (!btn || !seasonEntry) return;
+  const isComplete = seasonEntry.totalEpisodes > 0 && seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes;
+  btn.style.display = isComplete ? 'block' : 'none';
+}
+
+// Met à jour le badge visible dans le <summary> (X/Y ép.) sans reconstruire
+// toute la fiche — seulement si la saison n'est pas déjà notée (une note
+// existante prime toujours sur le décompte d'épisodes dans l'affichage).
+function updateSeasonProgressRowStatus(showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  if (!seasonEntry || seasonEntry.rating) return;
+  const details = tdsContentEl.querySelector(`.tds-season-details[data-season-number="${seasonKey}"]`);
+  const statusEl = details?.querySelector('.tds-season-status');
+  if (statusEl) statusEl.textContent = `${seasonEntry.watchedEpisodes.length}/${seasonEntry.totalEpisodes} ép.`;
 }
 
 function closeTvDetailSheet() {
@@ -315,24 +466,27 @@ tdsEl.addEventListener('click', (e) => {
     return;
   }
 
-  // Clic sur une ligne de saison dans la progression : ouvre directement le
-  // suivi/notation de CETTE saison (même mécanique que reopenTvSeason,
-  // réutilisée depuis des données fraîches TMDb plutôt que forcément déjà
-  // suivies localement).
-  const seasonRow = e.target.closest('.tds-season-progress-row');
-  if (seasonRow && tdsCurrentData) {
-    closeTvDetailSheet();
-    switchMobileNav('rating');
-    setMediaType('tv');
-    selectedShow = { id: tdsCurrentData.id, name: tdsCurrentData.name, poster_path: tdsCurrentData.poster_path };
-    document.getElementById('tv-search').value = tdsCurrentData.name;
-    document.getElementById('tv-season-picker').style.display = 'none';
-    selectSeason({
-      number: seasonRow.dataset.seasonNumber,
-      name: seasonRow.dataset.seasonName,
-      episodeCount: seasonRow.dataset.episodeCount,
-      poster: seasonRow.dataset.seasonPoster,
-    });
+  // Bouton "Noter cette saison", affiché une fois tous les épisodes cochés
+  // dans la grille — même navigation que rouvrir depuis l'Historique.
+  const rateNowBtn = e.target.closest('.tds-rate-now-btn');
+  if (rateNowBtn && tdsCurrentData) {
+    const showId = rateNowBtn.dataset.showId;
+    const seasonKey = rateNowBtn.dataset.seasonKey;
+    const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+    if (show && show.seasons[seasonKey]) {
+      const seasonData = show.seasons[seasonKey];
+      closeTvDetailSheet();
+      switchMobileNav('rating');
+      setMediaType('tv');
+      selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+      document.getElementById('tv-search').value = show.title;
+      document.getElementById('tv-season-picker').style.display = 'none';
+      selectSeason({
+        number: seasonKey, name: seasonData.seasonName,
+        episodeCount: seasonData.totalEpisodes, poster: show.poster_path,
+      });
+    }
+    return;
   }
 });
 
