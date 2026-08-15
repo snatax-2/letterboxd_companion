@@ -12,6 +12,41 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- **Parité fiche film / fiche série** — suite à un audit demandé
+  explicitement, comparant les deux fiches fonction par fonction :
+  - **Casting affiché à la verticale au lieu d'un carrousel** — un vrai
+    bug, pas un choix : la fiche série utilisait `.mds-cast-card`, une
+    classe qui n'existe nulle part dans le CSS. Remplacé par
+    `.mds-cast-item` (le bon nom), avec le défilement automatique et le
+    clic vers la fiche personne, comme pour les films.
+  - **En-tête qui rétrécit au défilement** — jamais branchée pour la
+    fiche série. En généralisant la fonction, un vrai risque de
+    collision a aussi été corrigé au passage :
+    `document.querySelector('.mds-header')` cherchait dans tout le
+    document plutôt que dans la bonne fiche, un souci latent depuis que
+    les deux fiches partagent cette même classe.
+  - **Glissement vers le bas pour fermer** — branché (la fonction était
+    déjà générique, aucune modification nécessaire).
+  - **Créateurs cliquables** — ajoutés, ouvrent la fiche personne comme
+    le réalisateur pour un film. Point de transparence noté : la fiche
+    personne ne récupère que la filmographie films côté serveur, pas
+    séries — un créateur connu surtout pour la télévision pourrait donc
+    y sembler avoir peu de films, laissé tel quel pour l'instant.
+  - **"Changer l'affiche"** — absent à la fois côté client et serveur.
+    Nouveau point d'accès serveur (`tvImages`, miroir du système film),
+    bouton conditionnel (visible si la série est déjà suivie, comme pour
+    les films), sauvegarde directement sur `poster_path` (déjà le format
+    utilisé côté séries, pas besoin d'une seconde représentation).
+  - **Couleur d'accent de l'affiche** (thème Moderne) — absente de la
+    fiche et des cartes d'historique série ; la règle CSS correspondante
+    manquait aussi pour ces cartes, ajoutée en plus de l'appel JS.
+  - **Un vrai défaut de contraste trouvé en testant, préexistant côté
+    film aussi** (classe partagée `.mds-person-link`, jamais testée sur
+    Moderne jusqu'ici) : `--orange` utilisé en couleur de texte directe —
+    corrigé en préservant exactement le comportement d'origine (le
+    soulignement ne devait apparaître qu'au survol, pas en permanence).
+
 ### Ajouté
 - **Fiche série détaillée** — même structure et mécanique que la fiche
   film (squelette de chargement, sections qui apparaissent en cascade,

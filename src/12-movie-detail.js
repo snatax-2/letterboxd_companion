@@ -344,16 +344,18 @@ function setupOverviewToggle() {
 // écouteur de scroll par ouverture de fiche (retiré à la fermeture) pour ne
 // pas empiler des écouteurs orphelins à chaque nouvelle fiche ouverte.
 const STICKY_HEADER_THRESHOLD = 80;
-let stickyHeaderScrollHandler = null;
-function setupStickyHeader() {
-  const box = mdsEl.querySelector('.mds-box');
-  const header = document.querySelector('.mds-header');
+const stickyHeaderHandlers = new WeakMap(); // un gestionnaire par fiche (evite toute collision d'etat entre film et serie)
+function setupStickyHeader(sheetEl = mdsEl) {
+  const box = sheetEl.querySelector('.mds-box');
+  const header = sheetEl.querySelector('.mds-header');
   if (!box || !header) return;
-  if (stickyHeaderScrollHandler) box.removeEventListener('scroll', stickyHeaderScrollHandler);
-  stickyHeaderScrollHandler = () => {
+  const existing = stickyHeaderHandlers.get(sheetEl);
+  if (existing) box.removeEventListener('scroll', existing);
+  const handler = () => {
     header.classList.toggle('compact', box.scrollTop > STICKY_HEADER_THRESHOLD);
   };
-  box.addEventListener('scroll', stickyHeaderScrollHandler, { passive: true });
+  stickyHeaderHandlers.set(sheetEl, handler);
+  box.addEventListener('scroll', handler, { passive: true });
 }
 
 // Choisit la meilleure bande-annonce parmi les vidéos TMDb : uniquement
@@ -784,7 +786,7 @@ function applyPosterCellHeights(grid) {
   modal?.addEventListener('transitionend', maybeCleanup);
 }
 
-async function openPosterPicker(tmdbId) {
+async function openPosterPicker(tmdbId, mediaType = 'movie') {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
@@ -792,7 +794,8 @@ async function openPosterPicker(tmdbId) {
   grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
 
   try {
-    const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
+    const param = mediaType === 'tv' ? 'tvImages' : 'images';
+    const res = await fetch(`/api/search?${param}=${encodeURIComponent(tmdbId)}`);
     // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
     // réponse d'erreur passer pour "aucune affiche disponible" (voir
     // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
@@ -800,7 +803,7 @@ async function openPosterPicker(tmdbId) {
     const data = await readApiJson(res);
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
-      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
+      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
       return;
     }
     grid.innerHTML = posters.map(p => `
@@ -809,12 +812,13 @@ async function openPosterPicker(tmdbId) {
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
+    grid.dataset.mediaType = mediaType;
     applyPosterCellHeights(grid);
   } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
         <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
-        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
+        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}" data-retry-media-type="${mediaType}">Réessayer</button>
       </div>`;
   }
 }
@@ -832,12 +836,30 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
 
   const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
-  if (retry) { openPosterPicker(retry.dataset.retryPosters); return; }
+  if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
 
   const cell = e.target.closest('.poster-picker-cell[data-poster-path]');
   if (!cell) return;
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
+  const mediaType = grid.dataset.mediaType || 'movie';
+  modal.classList.remove('open');
+
+  if (mediaType === 'tv') {
+    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
+    // URL complète comme les films) — on garde ce même format plutôt que
+    // d'introduire une seconde représentation.
+    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+    if (navigator.vibrate) navigator.vibrate(15);
+    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
+    if (sheetPoster && sheetPoster.tagName === 'IMG') {
+      sheetPoster.src = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+    }
+    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+    showToast('Affiche mise à jour');
+    return;
+  }
+
   // w342 (pas w185) : c'est la résolution que la fiche film affiche en
   // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
   // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
@@ -846,7 +868,6 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   const url = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
   const touched = applyChosenPoster(tmdbId, url);
   if (navigator.vibrate) navigator.vibrate(15);
-  modal.classList.remove('open');
 
   // Rafraîchit l'affiche visible dans la fiche immédiatement (w342 pour la
   // grande vue, même chemin de fichier)

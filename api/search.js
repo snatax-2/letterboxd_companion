@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
@@ -173,6 +173,19 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (tvImages) {
+      // Cas série du même choix d'affiche que les films (voir "images"
+      // juste au-dessus) — même logique, juste /tv/ au lieu de /movie/.
+      const tvImagesRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvImages}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
+      );
+      const tvImagesData = await tvImagesRes.json();
+      const tvPosters = (tvImagesData.posters || [])
+        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+        .slice(0, 24)
+        .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
+      setCache(86400, 604800);
+      return res.status(200).json({ posters: tvPosters });
     } else if (tvId) {
       // Cas : détails d'une série + liste de ses saisons (Phase 1 du
       // suivi séries — recherche + sélection de saison uniquement, le

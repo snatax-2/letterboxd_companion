@@ -511,6 +511,11 @@ function renderTvHistory() {
 
   container.innerHTML = shows.map(renderTvShowCard).join('');
 
+  container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
+    const posterUrl = shows[i]?.poster_path ? `https://image.tmdb.org/t/p/w154${shows[i].poster_path}` : '';
+    applyPosterAccent(posterUrl, cardEl);
+  });
+
   container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
     btn.addEventListener('click', () => openTvDetailSheet(btn.dataset.showId));
   });

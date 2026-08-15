@@ -77,7 +77,10 @@ function buildTdsContent(data, localShow) {
   const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
   const year = data.first_air_date ? data.first_air_date.slice(0, 4) : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
-  const creators = (data.created_by || []).map(c => escAttr(c.name)).join(', ');
+  function personLink(p) {
+    return `<span class="mds-person-link" data-person-id="${p.id}" data-person-name="${escAttr(p.name)}">${escAttr(p.name)}</span>`;
+  }
+  const creators = (data.created_by || []).map(personLink).join(', ');
   const castList = (data.credits?.cast || []).slice(0, 5);
   const castHtml = castList.map(c => escAttr(c.name)).join(', ');
   const firstAirStr = data.first_air_date
@@ -96,6 +99,7 @@ function buildTdsContent(data, localShow) {
             : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
           ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
         </div>
+        ${localShow ? `<button type="button" class="mds-poster-change-btn" data-tv-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="tds-title">${escAttr(data.name)}</div>
@@ -171,19 +175,73 @@ function setupTdsOverviewToggle() {
   });
 }
 
-function renderTdsCastCarousel(cast) {
-  const el = document.getElementById('tds-cast-carousel');
-  if (!el) return;
-  el.innerHTML = cast.slice(0, 15).map(c => {
-    const photo = c.profile_path ? `https://image.tmdb.org/t/p/w185${c.profile_path}` : '';
+function renderTdsCastCarousel(castArray) {
+  const outer = document.getElementById('tds-cast-carousel');
+  if (!outer) return;
+  const cast = castArray.filter(c => c.id).slice(0, 20);
+  if (cast.length === 0) return;
+
+  const itemsHtml = cast.map(actor => {
+    const photoUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : '';
     return `
-      <div class="mds-cast-card">
-        ${photo ? `<img class="mds-cast-photo" src="${photo}" alt="" loading="lazy">` : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.person || ''}</div>`}
-        <div class="mds-cast-name">${escAttr(c.name)}</div>
-        <div class="mds-cast-character">${escAttr(c.character || '')}</div>
-      </div>
-    `;
+      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+        ${photoUrl
+          ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
+          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
+        <div class="mds-cast-name">${escAttr(actor.name)}</div>
+        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
+      </div>`;
   }).join('');
+
+  // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
+  // qu'il a parcouru l'équivalent d'une copie complète — même technique que
+  // la fiche film (voir renderCastCarousel).
+  outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.mds-cast-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.mds-cast-item');
+    if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
+  });
+
+  const AUTO_SCROLL_SPEED = 0.3;
+  const RESUME_DELAY_MS = 3000;
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused && tdsEl.classList.contains('open')) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    if (tdsEl.classList.contains('open')) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+}
+
+// Sauvegarde l'affiche choisie sur la série suivie localement — même geste
+// que applyChosenPoster côté film, mais écrit directement le fragment TMDb
+// brut (poster_path), déjà le format utilisé partout côté séries, plutôt
+// que de construire une URL complète comme les films en ont besoin.
+function applyChosenTvPoster(tmdbTvId, posterPath) {
+  const shows = loadTvShows();
+  const show = shows.find(s => String(s.tmdbTvId) === String(tmdbTvId));
+  if (!show) return 0;
+  show.poster_path = posterPath;
+  saveTvShows(shows);
+  return 1;
 }
 
 let tdsCurrentData = null;
@@ -207,7 +265,10 @@ async function openTvDetailSheet(tmdbTvId) {
     tdsContentEl.innerHTML = buildTdsContent(data, localShow);
     tdsCurrentData = data;
     renderTdsCastCarousel(data.credits?.cast || []);
+    const tdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+    applyPosterAccent(tdsPosterUrl, tdsEl.querySelector('.mds-box'));
     setupTdsOverviewToggle();
+    setupStickyHeader(tdsEl);
     if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
   } catch (e) {
     tdsCurrentData = null;
@@ -228,8 +289,17 @@ tdsCloseBtn.addEventListener('click', closeTvDetailSheet);
 tdsEl.addEventListener('click', (e) => {
   if (e.target === tdsEl) { closeTvDetailSheet(); return; }
 
+  const personLinkEl = e.target.closest('.mds-person-link');
+  if (personLinkEl) {
+    openPersonDetailSheet(personLinkEl.dataset.personId, personLinkEl.dataset.personName);
+    return;
+  }
+
   const retryBtn = e.target.closest('[data-retry-tv-id]');
   if (retryBtn) { openTvDetailSheet(retryBtn.dataset.retryTvId); return; }
+
+  const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
+  if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
 
   // "Noter / Suivre" : ferme la fiche, bascule vers Noter en mode Série,
   // pré-remplit la recherche avec cette série — reprend le flux normal de
@@ -265,3 +335,5 @@ tdsEl.addEventListener('click', (e) => {
     });
   }
 });
+
+initSwipeToClose(tdsEl, closeTvDetailSheet);

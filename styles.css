@@ -235,6 +235,7 @@
      si l'extraction a échoué (CORS, image non chargée, etc.). */
   [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
+  [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
@@ -2124,7 +2125,7 @@
   .mds-cast-character { font-size: 0.63rem; color: var(--text-mid); line-height: 1.2; }
 
   /* Nom de réalisateur/acteur cliquable, ouvre sa fiche personne */
-  .mds-person-link { color: var(--orange); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--dur-fast); }
+  .mds-person-link { color: var(--text-hi); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--dur-fast); font-weight: 700; }
 
   /* Saga (belongs_to_collection TMDb) : bande compacte des autres films de
      la saga en bas de fiche, avec un lien vers la fiche saga complète
