@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
   } }));
 });
 
-test('bascule Film/Serie : recherche, saisons, bandeau recap, retour vers Film', async ({ page }) => {
+test('bascule Film/Serie : recherche ouvre directement la fiche detaillee, retour vers Film', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(400);
 
@@ -34,21 +34,23 @@ test('bascule Film/Serie : recherche, saisons, bandeau recap, retour vers Film',
   await page.click('#tab-media-tv');
   await expect(page.locator('#tv-only-fields')).toBeVisible();
   await expect(page.locator('#movie-only-fields')).toBeHidden();
-  await expect(page.locator('#notation-card')).toBeHidden(); // pas d'equivalent serie encore (Phase 3)
+  await expect(page.locator('#notation-card')).toBeHidden(); // pas de saison selectionnee
 
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
   await expect(page.locator('.suggestion-item')).toHaveCount(1);
 
   await page.click('.suggestion-item');
-  await page.waitForTimeout(400);
-  await expect(page.locator('#tv-season-picker [data-season-number]')).toHaveCount(2);
+  await page.waitForTimeout(600);
 
-  await page.click('[data-season-number="1"]');
-  await page.waitForTimeout(200);
-  await expect(page.locator('#tv-season-strip')).toBeVisible();
-  await expect(page.locator('#tv-strip-title')).toContainText('True Detective');
-  await expect(page.locator('#tv-strip-title')).toContainText('Saison 1');
+  // La fiche detaillee s'ouvre directement, plus de puces de saison dans Noter
+  await expect(page.locator('#tv-detail-sheet')).toHaveClass(/open/);
+  await expect(page.locator('#tds-title')).toContainText('True Detective');
+  await expect(page.locator('#tv-season-picker')).toBeHidden();
+  await expect(page.locator('.tds-season-progress-row')).toHaveCount(2);
+
+  await page.click('#tds-close-btn');
+  await page.waitForTimeout(300);
 
   await page.click('#tab-media-movie');
   await expect(page.locator('#tv-only-fields')).toBeHidden();
@@ -62,9 +64,7 @@ test('accessibilite : zero violation sur le flux complet de selection', async ({
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
-  await page.waitForTimeout(400);
-  await page.click('[data-season-number="1"]');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(600);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toHaveLength(0);
 });
@@ -74,7 +74,7 @@ test('accessibilite : zero violation sur le flux complet de selection', async ({
 // ecrasait "A voir" sur 2 lignes, cassant la symetrie autour du bouton
 // Noter — signale par l'utilisateur, confirme visuellement avant fix).
 
-test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 7 themes', async ({ page }) => {
+test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 6 themes', async ({ page }) => {
   for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await page.goto('/');

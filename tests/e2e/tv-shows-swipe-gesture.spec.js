@@ -80,7 +80,10 @@ test('glisser a droite puis taper l\'indice ROUVRE la saison pour la noter', asy
   await page.waitForTimeout(500);
 
   await expect(page.locator('#tab-media-tv')).toHaveClass(/active/);
-  await expect(page.locator('#notation-card')).toBeVisible();
+  // Saison a 1/8 episodes, pas notee : la nouvelle logique pointe vers le
+  // widget "En cours" plutot que d'ouvrir un formulaire vide directement.
+  await expect(page.locator('#tv-season-in-progress-msg')).toBeVisible();
+  await expect(page.locator('#tv-strip-title')).toContainText('Saison 1');
 });
 
 test('un glissement court (sous le seuil) revient a sa place sans rien declencher', async ({ page }) => {

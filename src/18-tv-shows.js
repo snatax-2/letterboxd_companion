@@ -122,39 +122,9 @@ async function selectShow(show) {
   selectedShow = show;
   tvSuggestEl.style.display = 'none';
   tvSearchEl.value = show.name;
-  const pickerEl = document.getElementById('tv-season-picker');
-  pickerEl.style.display = 'block';
-  pickerEl.innerHTML = '<div class="search-status" style="display:block;">Chargement des saisons…</div>';
   document.getElementById('tv-season-strip').style.display = 'none';
-
-  try {
-    const res = await fetch(`/api/search?tvId=${show.id}`);
-    const data = await readApiJson(res);
-    selectedShow.genres = (data.genres || []).map(g => g.name).join(', ');
-    const seasons = (data.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
-    if (seasons.length === 0) {
-      pickerEl.innerHTML = '<div class="search-status" style="display:block;">Aucune saison trouvée pour cette série.</div>';
-      return;
-    }
-    pickerEl.innerHTML = `
-      <div class="context-row-label">Choisir une saison</div>
-      <div class="context-row">
-        ${seasons.map(s => `
-          <button type="button" class="ctx-tag" data-season-number="${s.season_number}" data-season-name="${escAttr(s.name)}" data-episode-count="${s.episode_count}" data-season-poster="${escAttr(s.poster_path || show.poster_path || '')}">
-            ${escAttr(s.name)} (${s.episode_count} ép.)
-          </button>
-        `).join('')}
-      </div>
-    `;
-    pickerEl.querySelectorAll('[data-season-number]').forEach(btn => {
-      btn.addEventListener('click', () => selectSeason({
-        number: btn.dataset.seasonNumber, name: btn.dataset.seasonName,
-        episodeCount: btn.dataset.episodeCount, poster: btn.dataset.seasonPoster,
-      }));
-    });
-  } catch (err) {
-    pickerEl.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
-  }
+  document.getElementById('tv-season-picker').style.display = 'none';
+  openTvDetailSheet(show.id);
 }
 
 function selectSeason(season) {
@@ -869,13 +839,14 @@ function renderTvStats() {
 
 async function renderTvContinueList() {
   const container = document.getElementById('tv-continue-list');
+  const sectionEl = document.getElementById('tv-continue-section');
   const shows = loadTvShows();
   const candidates = [];
 
   for (const show of shows) {
     const entries = Object.entries(show.seasons || {});
     const partial = entries
-      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes)
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes && !s.paused)
       .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
     if (partial) {
       candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
@@ -890,12 +861,13 @@ async function renderTvContinueList() {
   }
 
   if (candidates.length === 0) {
-    container.style.display = 'none';
+    sectionEl.style.display = 'none';
     container.innerHTML = '';
     return;
   }
 
-  container.style.display = 'block';
+  sectionEl.style.display = 'block';
+  document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
   container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
 
   candidates.forEach(async (cand, idx) => {
@@ -904,7 +876,7 @@ async function renderTvContinueList() {
     if (!placeholder) return; // le conteneur a pu être reconstruit entre-temps
     if (!resolved) {
       placeholder.remove();
-      if (container.children.length === 0) container.style.display = 'none';
+      if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
       return;
     }
     const wrapper = document.createElement('div');
@@ -952,6 +924,10 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   ].filter(Boolean).join(' · ');
   return `
     <div class="tv-continue-card">
+      <div class="tv-continue-card-actions">
+        <button type="button" class="tv-continue-pause-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Mettre en pause" title="Mettre en pause — reprends-la depuis sa fiche">${ICONS.pause}</button>
+        <button type="button" class="tv-continue-remove-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Retirer ${escAttr(show.title)} de cette liste" title="Retirer de la liste">${ICONS.close || '✕'}</button>
+      </div>
       ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
       <div class="tv-continue-info">
         <div class="tv-continue-show-title">${escAttr(show.title)}</div>
@@ -963,14 +939,45 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
             <p>${escAttr(episode.overview)}</p>
           </details>
         ` : ''}
-        <button type="button" class="tv-continue-validate-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}">Valider l'épisode</button>
       </div>
+      <button type="button" class="tv-continue-check-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}" aria-label="Valider l'épisode ${episode.episode_number} de ${escAttr(show.title)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+      </button>
     </div>
   `;
 }
 
 document.getElementById('tv-continue-list').addEventListener('click', async (e) => {
-  const btn = e.target.closest('.tv-continue-validate-btn');
+  const removeBtn = e.target.closest('.tv-continue-remove-btn');
+  if (removeBtn) {
+    // Retire uniquement de cette liste — aucune donnée touchée, la carte
+    // peut revenir au prochain rendu si les conditions correspondent
+    // encore (ex : un épisode coché ailleurs).
+    const cardEl = removeBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    return;
+  }
+
+  const pauseBtn = e.target.closest('.tv-continue-pause-btn');
+  if (pauseBtn) {
+    const shows = loadTvShows();
+    const showEntry = shows.find(s => String(s.tmdbTvId) === String(pauseBtn.dataset.showId));
+    const seasonEntry = showEntry?.seasons?.[pauseBtn.dataset.seasonKey];
+    if (seasonEntry) {
+      seasonEntry.paused = true;
+      saveTvShows(shows);
+    }
+    const cardEl = pauseBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    showToast('Mise en pause — reprends-la depuis sa fiche');
+    return;
+  }
+
+  const btn = e.target.closest('.tv-continue-check-btn');
   if (!btn) return;
   const showId = btn.dataset.showId;
   const seasonKey = btn.dataset.seasonKey;
@@ -994,10 +1001,28 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
   const container = document.getElementById('tv-continue-list');
   if (!resolved) {
     cardEl.remove();
-    if (container.children.length === 0) container.style.display = 'none';
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
   } else {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderTvContinueCard(resolved);
     cardEl.replaceWith(wrapper.firstElementChild);
   }
 });
+
+// Repli/dépliage de tout le widget — pour ne pas surcharger l'écran quand
+// plusieurs séries sont en cours. Préférence mémorisée pour rester repliée
+// d'une visite à l'autre si l'utilisateur le souhaite.
+document.getElementById('tv-continue-toggle').addEventListener('click', () => {
+  const list = document.getElementById('tv-continue-list');
+  const toggle = document.getElementById('tv-continue-toggle');
+  const collapsed = list.style.display === 'none';
+  list.style.display = collapsed ? '' : 'none';
+  toggle.setAttribute('aria-expanded', String(collapsed));
+  toggle.classList.toggle('collapsed', !collapsed);
+  localStorage.setItem('lbx_tv_continue_collapsed', collapsed ? '0' : '1');
+});
+if (localStorage.getItem('lbx_tv_continue_collapsed') === '1') {
+  document.getElementById('tv-continue-list').style.display = 'none';
+  document.getElementById('tv-continue-toggle').setAttribute('aria-expanded', 'false');
+  document.getElementById('tv-continue-toggle').classList.add('collapsed');
+}

@@ -536,7 +536,13 @@
       </div>
 
       <div id="tv-only-fields" style="display:none;">
-        <div class="tv-continue-list" id="tv-continue-list" style="display:none;"></div>
+        <div class="tv-continue-section" id="tv-continue-section" style="display:none;">
+          <button type="button" class="tv-continue-header" id="tv-continue-toggle" aria-expanded="true" aria-controls="tv-continue-list">
+            <span>En cours <span class="tv-continue-count" id="tv-continue-count"></span></span>
+            <span class="tv-continue-chevron" aria-hidden="true">▾</span>
+          </button>
+          <div class="tv-continue-list" id="tv-continue-list"></div>
+        </div>
 
         <div class="search-wrap">
           <div class="search-row" style="grid-template-columns: 1fr;">

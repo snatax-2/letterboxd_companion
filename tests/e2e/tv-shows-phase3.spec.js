@@ -49,9 +49,12 @@ async function selectShowAndSeason(page, seasonNumber = 1) {
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
-  await page.waitForTimeout(400);
-  await page.click(`[data-season-number="${seasonNumber}"]`);
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(600);
+  // Deplie la bonne saison (deja complete -> le bouton "Noter cette saison" apparait)
+  await page.click(`.tds-season-details[data-season-number="${seasonNumber}"] summary`);
+  await page.waitForTimeout(500);
+  await page.click('.tds-rate-now-btn');
+  await page.waitForTimeout(500);
 }
 
 test('libelles et descriptions adaptes a la saison pour les 2 criteres reformules', async ({ page }) => {
@@ -75,12 +78,26 @@ test('sauvegarde une note de saison et la repropose au retour, saison vierge res
   expect(stored[0].seasons['1'].rating.values.scenario).toBe('9');
   expect(stored[0].seasons['1'].rating.review).toBe('Excellente première saison.');
 
-  await page.click('[data-season-number="2"]');
-  await page.waitForTimeout(400);
+  // Changer de saison passe maintenant par la fiche (plus de puces directes
+  // dans Noter) — on y retourne via une nouvelle recherche.
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+  await page.click('.tds-season-details[data-season-number="2"] summary');
+  await page.waitForTimeout(500);
+  await page.click('.tds-rate-now-btn');
+  await page.waitForTimeout(500);
   await expect(page.locator('#scenario')).toHaveValue('5'); // pas de note existante
 
-  await page.click('[data-season-number="1"]');
-  await page.waitForTimeout(400);
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+  await page.click('.tds-season-details[data-season-number="1"] summary');
+  await page.waitForTimeout(500);
+  await page.click('.tds-rate-now-btn');
+  await page.waitForTimeout(500);
   await expect(page.locator('#scenario')).toHaveValue('9'); // repeuplee
 });
 
@@ -96,8 +113,14 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('10.0/10');
   await expect(page.locator('#tv-show-average')).toContainText('1 saison notée');
 
-  await page.click('[data-season-number="2"]');
-  await page.waitForTimeout(400);
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+  await page.click('.tds-season-details[data-season-number="2"] summary');
+  await page.waitForTimeout(500);
+  await page.click('.tds-rate-now-btn');
+  await page.waitForTimeout(500);
   for (const c of ['scenario', 'realisation', 'photo', 'acteurs', 'ambiance', 'rythme', 'affect']) {
     await page.fill(`#${c}`, '6');
   }
@@ -107,8 +130,14 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('2 saisons notées');
 
   // Saison 3 jamais notee : la selectionner ne doit pas changer la moyenne
-  await page.click('[data-season-number="3"]');
-  await page.waitForTimeout(400);
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+  await page.click('.tds-season-details[data-season-number="3"] summary');
+  await page.waitForTimeout(500);
+  await page.click('.tds-rate-now-btn');
+  await page.waitForTimeout(500);
   await expect(page.locator('#tv-show-average')).toContainText('8.0/10');
 });
 

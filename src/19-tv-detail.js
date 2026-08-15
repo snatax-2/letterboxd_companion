@@ -112,9 +112,11 @@ function buildTdsContent(data, localShow) {
       </div>
     </div>
 
+    ${!localShow ? `
     <div class="mds-actions" style="animation-delay:.02s">
-      <button type="button" class="mds-action-btn primary" id="tds-rate-btn" title="Noter cette série">${ICONS.star} Noter / Suivre</button>
+      <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>
     </div>
+    ` : ''}
 
     ${buildSeasonProgressionSection(data, localShow)}
 
@@ -452,17 +454,32 @@ tdsEl.addEventListener('click', (e) => {
   const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
   if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
 
-  // "Noter / Suivre" : ferme la fiche, bascule vers Noter en mode Série,
-  // pré-remplit la recherche avec cette série — reprend le flux normal de
-  // sélection plutôt que de dupliquer la logique de recherche/sélection.
-  if (e.target.closest('#tds-rate-btn')) {
+  // "Commencer la série" : crée le suivi de la première saison directement
+  // (sans passer par Noter), l'ajoute au widget "En cours", puis recharge
+  // la fiche sur place pour montrer la progression qui vient de démarrer.
+  if (e.target.closest('#tds-start-btn')) {
     const data = tdsCurrentData;
     if (!data) return;
-    closeTvDetailSheet();
-    switchMobileNav('rating');
-    setMediaType('tv');
-    document.getElementById('tv-search').value = data.name;
-    document.getElementById('tv-search').dispatchEvent(new Event('input'));
+    const seasons = (data.seasons || [])
+      .filter(s => s.season_number > 0 && s.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number);
+    const first = seasons[0];
+    if (!first) return;
+    const shows = loadTvShows();
+    let showEntry = shows.find(s => String(s.tmdbTvId) === String(data.id));
+    if (!showEntry) {
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      showEntry = { tmdbTvId: data.id, title: data.name, poster_path: data.poster_path, genre: genreStr, seasons: {} };
+      shows.push(showEntry);
+    }
+    const seasonKey = String(first.season_number);
+    if (!showEntry.seasons[seasonKey]) {
+      showEntry.seasons[seasonKey] = { seasonName: first.name, watchedEpisodes: [], totalEpisodes: first.episode_count };
+    }
+    saveTvShows(shows);
+    showToast(`"${data.name} — ${first.name}" ajoutée à En cours`);
+    if (typeof renderTvContinueList === 'function') renderTvContinueList();
+    openTvDetailSheet(data.id);
     return;
   }
 

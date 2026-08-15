@@ -13,6 +13,31 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Modifié
+- **Widget "En cours" : cartes redessinées, repli possible.** Rond à
+  cocher sur la partie droite du cadre (remplace le bouton "Valider
+  l'épisode" pleine largeur), petites icônes pause/retirer en coin,
+  cadres légèrement plus espacés, hauteur stable quelle que soit la
+  série (le titre d'épisode est plafonné à 2 lignes). **Retirer une
+  carte** ne touche à aucune donnée — elle peut revenir au prochain
+  rendu. **Mettre en pause** pose un indicateur persistant qui exclut
+  la saison du widget jusqu'à reprise depuis sa fiche (repris là plutôt
+  que depuis une carte qui ne serait plus affichée). Toute la section
+  peut aussi se replier/déplier, préférence mémorisée d'une visite à
+  l'autre.
+
+- **Chercher une série dans Noter ouvre directement sa fiche détaillée**
+  — les puces de choix de saison ont disparu de Noter, remplacées par la
+  fiche complète (en-tête, casting, synopsis, progression par saison).
+  Une pastille "Commencer la série" y apparaît pour toute série jamais
+  suivie : elle démarre directement la Saison 1 (sans repasser par
+  Noter), l'ajoute au widget "En cours", et recharge la fiche sur place
+  pour montrer la progression qui vient de démarrer.
+
+- **Ombre du bouton "Noter" de la barre de navigation resserrée** — le
+  flou et l'opacité de l'ombre portée créaient un effet d'encadrement
+  visible sur les deux onglets voisins ("À voir", "Découvrir").
+  Confirmé par capture d'écran avant/après.
+
 - **Refonte du suivi épisode par épisode : la grille complète déménage
   entièrement dans la fiche série, l'onglet Noter devient plus léger.**
   Choisir une saison dans Noter (recherche manuelle) ne montre plus la
@@ -47,9 +72,17 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
     lint qui aurait échoué, restauré immédiatement.
   - Le fichier de test `tv-shows-phase2.spec.js` (qui testait l'ancienne
     grille dans Noter) est retiré — son scénario n'existe plus à cet
-    endroit ; sa couverture vit maintenant dans `tv-shows-noter-flow.spec.js`
-    (le nouveau flux) et `tv-shows-detail-parity.spec.js` (la grille dans
-    la fiche).
+    endroit ; sa couverture vit maintenant dans
+    `tv-shows-search-opens-detail.spec.js` (la fiche ouverte directement)
+    et `tv-shows-detail-parity.spec.js` (la grille dans la fiche).
+  - Un second fichier de test devenu obsolète par ce même changement,
+    `tv-shows-noter-flow.spec.js` (qui testait l'ancien menu "Commencer"
+    câblé dans Noter lui-même, désormais inatteignable par toute action
+    utilisateur réelle depuis que la recherche ouvre la fiche
+    directement), a également été retiré — repéré et corrigé au fil
+    d'une reprise de session, avec au passage un doublon de tests trouvé
+    et nettoyé (`tv-shows-continue-widget-redesign.spec.js` couvrait déjà
+    ce qui avait été réécrit par erreur dans un autre fichier).
 
 ### Corrigé
 - **Parité fiche film / fiche série** — suite à un audit demandé

@@ -42,19 +42,21 @@ test('genre capture directement a la selection, retrofit en arriere-plan pour un
   await page.goto('/');
   await page.waitForTimeout(1400); // ecran de demarrage, duree minimale volontaire
 
-  // Selection d'une nouvelle serie : genre capture directement
+  // Selection d'une nouvelle serie : genre capture directement, la fiche
+  // s'ouvre directement (plus de puces de saison)
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
-  await page.waitForTimeout(400);
-  await page.click('[data-season-number="1"]');
-  await page.waitForTimeout(400);
-  await page.click('#tv-start-season-btn'); // requis depuis le nouveau flux : la selection seule ne cree plus l'entree
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(600);
+  await page.click('#tds-start-btn'); // "Commencer" demarre directement la Saison 1
+  await page.waitForTimeout(700);
 
   let stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
   expect(stored.find(s => String(s.tmdbTvId) === '4607').genre).toBe('Policier, Drame');
+
+  await page.click('#tds-close-btn');
+  await page.waitForTimeout(300);
 
   // Historique Series : la serie sans genre prealable doit s'enrichir en arriere-plan
   await page.click('#nav-history');

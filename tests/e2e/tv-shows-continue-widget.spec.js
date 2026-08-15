@@ -42,7 +42,7 @@ test('affiche le bon prochain episode, deplie le synopsis, valide et passe au su
   await page.locator('.tv-continue-synopsis summary').click();
   await expect(page.locator('.tv-continue-synopsis p')).toBeVisible();
 
-  await page.locator('.tv-continue-validate-btn').click();
+  await page.locator('.tv-continue-check-btn').click();
   await page.waitForTimeout(800);
   const textAfter = await page.locator('.tv-continue-list').textContent();
   expect(textAfter).toContain('The Locked Room');
@@ -148,3 +148,17 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);
   });
 }
+
+// Ombre du bouton Noter (barre de navigation) : signalee par l'utilisateur
+// comme debordant visuellement sur les onglets voisins ("À voir",
+// "Découvrir") — flou et opacite reduits pour rester contenus autour du
+// cercle plutot que de les assombrir.
+test('ombre du bouton Noter reste contenue (ne deborde plus sur les onglets voisins)', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(400);
+  const shadow = await page.locator('.nav-btn-primary .nav-btn-icon').evaluate(el => getComputedStyle(el).boxShadow);
+  // Le flou (3eme valeur) doit rester modeste plutot que le 14px d'origine
+  // qui debordait des 3px de marge de chaque cote de la colonne.
+  expect(shadow).toContain('8px');
+  expect(shadow).not.toContain('14px');
+});
