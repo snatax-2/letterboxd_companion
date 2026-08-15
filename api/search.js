@@ -178,7 +178,7 @@ export default async function handler(req, res) {
       // suivi séries — recherche + sélection de saison uniquement, le
       // détail épisode par épisode viendra en Phase 2, pas encore ici).
       const tvRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${tvId}?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/tv/${tvId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids`
       );
       const tvData = await tvRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable

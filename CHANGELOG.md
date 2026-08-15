@@ -12,6 +12,50 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Ajouté
+- **Fiche série détaillée** — même structure et mécanique que la fiche
+  film (squelette de chargement, sections qui apparaissent en cascade,
+  notes externes IMDb/RT/Metacritic chargées en asynchrone), ouverte au
+  tap sur une carte de série dans l'Historique. Nouveau fichier dédié
+  (`src/19-tv-detail.js`), une nouvelle fiche `#tv-detail-sheet` plutôt
+  que de réutiliser celle des films — même motif déjà établi pour la
+  fiche personne. La quasi-totalité du style se réutilise sans rien
+  dupliquer, les mêmes classes CSS étant génériques (pas spécifiques au
+  film malgré leur nom historique).
+  - **La vraie différence, comme demandé** : pas de "Ta note" unique —
+    une section Progression avec la note globale calculée, puis le
+    détail de **toutes les saisons connues via TMDb** (pas seulement
+    celles déjà suivies localement), chacune avec son statut réel
+    (notée / en cours / non suivie). Cliquer une saison non suivie
+    l'ouvre directement dans Noter avec la bonne sélection — vérifié
+    avec un vrai scénario à 3 saisons TMDb dont une seule notée et une
+    jamais touchée.
+  - Point serveur étendu (`append_to_response=credits,videos,
+    external_ids` sur l'appel `tvId` déjà utilisé ailleurs) plutôt que
+    d'ajouter un nouvel appel dédié.
+
+- **Glissement sur les lignes de saison (Historique)** — glisser à
+  gauche révèle "Supprimer", à droite "Modifier", un tap sur l'indice
+  confirme, exactement comme pour les films. **Choix d'architecture
+  assumé** : plutôt que de généraliser le système de glissement des
+  films (500+ lignes, très affiné au fil de nombreuses sessions, de
+  vrais bugs corrigés un par un — le risque de régression sur un
+  système déjà fiable et testé était réel), un second contrôleur
+  autonome a été écrit pour les séries, réutilisant les mêmes
+  paramètres physiques déjà éprouvés (seuils, ratio de détection
+  glissement/défilement) mais sans toucher au code film existant. Le
+  bouton supprimer déjà visible reste disponible en plus du geste,
+  pour ceux qui ne découvrent pas le glissement.
+  - **Un vrai souci trouvé en testant la régression, pas une régression
+    du glissement lui-même** : deux tests du système film ont échoué
+    après ce changement — creusé, la cause était une fragilité
+    préexistante dans un des tests (données injectées après le
+    chargement de la page plutôt qu'avant, laissant la fenêtre
+    d'accueil s'afficher par une course de temporisation qui passait
+    par chance avant) — révélée par la légère augmentation de la
+    taille de l'app, pas causée par le nouveau contrôleur. Corrigé à la
+    source du test plutôt que dans le code de l'app.
+
 ### Retiré
 - **Thème Méridien**, sur demande (non utilisé). Retiré entièrement :
   bloc de couleurs (jour + variante nuit), le mécanisme JS de bascule
