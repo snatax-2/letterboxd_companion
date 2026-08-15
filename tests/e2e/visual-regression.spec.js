@@ -38,7 +38,7 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'meridien', 'filmnoir', 'technicolor']) {
+for (const theme of ['default', 'filmnoir', 'technicolor']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedStableHistory(page);

@@ -69,7 +69,7 @@
     --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
     --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
     --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
+    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --solid-fill-text: #fff;
     --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
@@ -208,7 +208,7 @@
     --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
     --red: #DD6B47;
     --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
+    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --radius: 10px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
     --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
@@ -237,48 +237,6 @@
   [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
-
-  [data-theme="meridien"] {
-    /* Méridien — identité propre à Ludex, sans inspiration extérieure.
-       Esprit cadran solaire et almanach vintage : épuré, un seul accent
-       laiton qui reste IDENTIQUE de jour comme de nuit (seuls le fond et le
-       texte s'inversent, comme la même pièce d'horlogerie vue sous deux
-       lumières différentes). L'état jour/nuit (classe .meridien-night,
-       voir 02-theme.js) suit l'heure réelle, pas les préférences système.
-       Révisé : l'accent et les couleurs de note étaient trop désaturés
-       ("dur" au retour utilisateur) — plus de vie ici, même concept. */
-    --bg: #F7F3EA; --surface: #FFFFFF; --surface2: #EDE7D8; --border: #D8CFB8;
-    --border-hi: #C7B48C; /* bordures structurelles : plus douces que l'accent, pour ne pas quadriller l'écran */
-    --text: #4A4438; --text-hi: #241F17; --text-mid: #635a4a; /* assombri (était #766C58) : 4.2:1 contre surface2, sous le seuil — touchait toutes les étiquettes de contexte, trouvé lors de l'audit complet */
-    --orange: #C89B4A; --gold: #7a5628; --blue: #7A5807; /* --gold assombri (était #C89B4A, identique à l'accent) : 2.06:1 seulement contre surface2 sur le gros score, et pire encore ailleurs (étiquettes de contexte, étoiles, bouton Sauvegarder) — trouvé lors de l'audit complet. Même logique que le --blue assombri plus haut : ne touche pas --orange, utilisée bien plus largement et déjà éprouvée. --blue assombri (était #C89B4A, identique à l'accent) : 2.54:1 de contraste seulement sur le libellé d'onglet actif de la barre de nav (fond blanc) — trouvé en testant le nouveau bouton Noter, corrigé sans toucher orange/gold */
-    --red: #C0603A; --green: #7A9068; /* terre cuite et sauge vivantes, plus de "boue" */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff; /* passé au blanc (était #0d1117) : quand --blue a été assombri plus haut, ce texte n'a pas suivi — 2.91:1 sur le bouton Sauvegarder, effet de bord trouvé lors de l'audit complet */
-    --solid-fill-text: #0d1117; /* le laiton est un ton moyen : texte sombre plus lisible que clair */
-    --radius: 2px; --radius-sm: 2px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Cormorant Garamond', serif;
-    --font-body: 'Work Sans', sans-serif;
-    --font-mono: 'Ubuntu Mono', monospace;
-
-    --star-color: #7a5628; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif; /* assombri (était #C89B4A) : 2.55:1 contre blanc, sous le seuil — trouvé lors de l'audit complet */
-    --star-shadow: none; --star-symbol: '◇'; /* losange fin et discret, esprit marque de cadran solaire */
-    --icon-stroke: 1.5; /* legerement plus present qu'avant (1.25), sans perdre la delicatesse */
-
-    /* Une ombre très subtile réintroduite : l'absence totale ("none")
-       contribuait autant à la sensation de dureté que les couleurs. */
-    --box-shadow-style: 0 1px 4px rgba(176, 141, 74, 0.15);
-    --header-bar: var(--border-hi); /* simple ligne fine, pas de dégradé */
-  }
-  /* Bascule nuit : le fond et le texte s'inversent, le laiton (--orange,
-     --gold, --blue) reste identique — c'est ce qui donne l'impression d'un
-     seul et même objet vu de jour ou de nuit, pas deux thèmes différents. */
-  [data-theme="meridien"].meridien-night {
-    --bg: #171410; --surface: #201C16; --surface2: #2A251C; --border: #3A3327;
-    --text: #C9BFA8; --text-hi: #F2ECDD; --text-mid: #8F856E;
-    --red: #D4926A; --green: #96A885; /* meme correction de vivacite qu'en journee */
-    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
-  }
 
   [data-theme="technicolor"] {
     /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
@@ -429,12 +387,6 @@
 
   /* ── Méridien : revue éditoriale ── */
   /* Filets fins au-dessus des titres, rubrique de magazine */
-  [data-theme="meridien"] .card-title {
-    border-top: 1px solid var(--border-hi);
-    padding-top: 8px;
-    letter-spacing: 0.06em;
-  }
-
   /* ═══ RETOUR TACTILE SYSTÉMATIQUE ═══
      Chaque élément interactif s'enfonce légèrement sous le doigt — la
      sensation "ça répond" des apps natives. Un seul endroit, une seule
@@ -944,8 +896,16 @@
   .tv-show-seasons-fold summary { cursor: pointer; padding: 8px 10px; font-size: 0.78rem; color: var(--text-mid); border-top: 1px solid var(--border); list-style: none; }
   .tv-show-seasons-fold summary::-webkit-details-marker { display: none; }
   .tv-show-seasons-list { padding: 0 10px 8px; }
-  .tv-season-row { display: flex; justify-content: space-between; padding: 7px 4px; font-size: 0.82rem; color: var(--text-hi); cursor: pointer; border-radius: 4px; }
-  .tv-season-row:hover { background: var(--surface2); }
+  .tv-season-row { display: flex; align-items: center; gap: 6px; border-radius: 4px; }
+  .tv-season-reopen-btn {
+    flex: 1; display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 4px; font-size: 0.82rem; color: var(--text-hi); cursor: pointer;
+    background: none; border: none; font-family: var(--font-body); text-align: left; border-radius: 4px;
+  }
+  .tv-season-reopen-btn:hover { background: var(--surface2); }
+  .tv-season-delete-btn { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .tv-season-delete-btn:hover { color: var(--red); }
+  .tv-season-delete-btn .icon { width: 15px; height: 15px; }
 
   /* ── SÉRIES : widget "En cours" (onglet Noter, mode Série) ── */
   .tv-continue-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }

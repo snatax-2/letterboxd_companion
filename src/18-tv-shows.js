@@ -130,6 +130,7 @@ async function selectShow(show) {
   try {
     const res = await fetch(`/api/search?tvId=${show.id}`);
     const data = await readApiJson(res);
+    selectedShow.genres = (data.genres || []).map(g => g.name).join(', ');
     const seasons = (data.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
     if (seasons.length === 0) {
       pickerEl.innerHTML = '<div class="search-status" style="display:block;">Aucune saison trouvée pour cette série.</div>';
@@ -212,7 +213,7 @@ function saveTvShows(shows) {
 function getOrCreateTvShow(shows) {
   let entry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
   if (!entry) {
-    entry = { tmdbTvId: selectedShow.id, title: selectedShow.name, poster_path: selectedShow.poster_path, seasons: {} };
+    entry = { tmdbTvId: selectedShow.id, title: selectedShow.name, poster_path: selectedShow.poster_path, genre: selectedShow.genres || '', seasons: {} };
     shows.push(entry);
   }
   return entry;
@@ -435,18 +436,26 @@ function switchHistoryMediaFilter(type) {
   document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
   document.getElementById('history-list').style.display = type === 'movie' ? '' : 'none';
   document.getElementById('tv-history-list').style.display = type === 'tv' ? '' : 'none';
-  // Le filtre par genre n'a pas d'équivalent série pour l'instant (pas de
-  // données de genre récupérées côté séries) — replié en mode Séries.
-  if (type === 'tv') document.getElementById('genre-fold').style.display = 'none';
   renderActiveHistoryView();
-  updateHistoryCountBadge();
+  if (type === 'tv') retrofitMissingTvGenres();
 }
 
-function updateHistoryCountBadge() {
-  const badge = document.getElementById('hist-count-badge');
-  const filmCount = loadHistory().length;
-  const showCount = loadTvShows().length;
-  badge.textContent = `${filmCount} film${filmCount > 1 ? 's' : ''} · ${showCount} série${showCount > 1 ? 's' : ''}`;
+// Récupère silencieusement le genre des séries suivies avant l'ajout de ce
+// filtre (donc sans genre stocké) — une seule fois par série, en arrière-
+// plan, sans bloquer l'affichage déjà rendu avec les genres déjà connus.
+async function retrofitMissingTvGenres() {
+  const missing = loadTvShows().filter(s => !s.genre);
+  if (missing.length === 0) return;
+  for (const show of missing) {
+    try {
+      const data = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      const current = loadTvShows();
+      const entry = current.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      if (entry && genreStr) { entry.genre = genreStr; saveTvShows(current); }
+    } catch { /* silencieux — retentera au prochain passage sur l'onglet */ }
+  }
+  if (historyMediaFilter === 'tv') renderTvHistory();
 }
 
 function getSortedTvShows() {
@@ -454,6 +463,12 @@ function getSortedTvShows() {
   let s = shows;
   if (historySearchQuery) {
     s = s.filter(sh => sh.title && sh.title.toLowerCase().includes(historySearchQuery));
+  }
+  if (activeScoreFilter !== null) {
+    s = s.filter(sh => isScoreInActiveRange(computeShowAverageScore(sh)));
+  }
+  if (activeGenre) {
+    s = s.filter(sh => sh.genre && sh.genre.split(',').map(g => g.trim()).includes(activeGenre));
   }
   const avg = (sh) => computeShowAverageScore(sh);
   if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
@@ -469,15 +484,28 @@ function getSortedTvShows() {
 }
 
 function renderTvHistory() {
+  const allShows = loadTvShows();
   const shows = getSortedTvShows();
   const container = document.getElementById('tv-history-list');
+  renderGenreChips(allShows, renderTvHistory);
 
-  if (loadTvShows().length === 0) {
+  const badge = document.getElementById('hist-count-badge');
+  const filmCount = loadHistory().length;
+  const filmFragment = `${filmCount} film${filmCount > 1 ? 's' : ''}`;
+  if (historySearchQuery || activeScoreFilter) {
+    badge.textContent = `${filmFragment} · ${shows.length} / ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = 'var(--orange)';
+  } else {
+    badge.textContent = `${filmFragment} · ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = '';
+  }
+
+  if (allShows.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
     return;
   }
   if (shows.length === 0) {
-    container.innerHTML = `<div class="empty-state">Aucun résultat pour cette recherche.</div>`;
+    container.innerHTML = `<div class="empty-state">Aucun résultat pour ce filtre.</div>`;
     return;
   }
 
@@ -496,16 +524,48 @@ function renderTvHistory() {
           const remaining = loadTvShows().filter(s => String(s.tmdbTvId) !== String(id));
           saveTvShows(remaining);
           renderTvHistory();
-          updateHistoryCountBadge();
           showToast(`"${show.title}" retirée`);
           if (typeof statsDirty !== 'undefined') statsDirty = true;
-        }
+        },
+        true
       );
     });
   });
 
-  container.querySelectorAll('.tv-season-row').forEach(row => {
-    row.addEventListener('click', () => reopenTvSeason(row.dataset.showId, row.dataset.seasonKey));
+  container.querySelectorAll('.tv-season-reopen-btn').forEach(btn => {
+    btn.addEventListener('click', () => reopenTvSeason(btn.dataset.showId, btn.dataset.seasonKey));
+  });
+
+  container.querySelectorAll('.tv-season-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const showId = btn.dataset.showId;
+      const seasonKey = btn.dataset.seasonKey;
+      const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+      if (!show) return;
+      const seasonName = show.seasons[seasonKey]?.seasonName || `Saison ${seasonKey}`;
+      const isLastSeason = Object.keys(show.seasons).length === 1;
+      openModal(
+        'Retirer cette saison',
+        isLastSeason
+          ? `"${seasonName}" est la dernière saison suivie de "${show.title}" — la retirer retire toute la série. Continuer ?`
+          : `"${seasonName}" de "${show.title}" sera définitivement retirée. Continuer ?`,
+        () => {
+          const shows = loadTvShows();
+          const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+          if (!showEntry) return;
+          delete showEntry.seasons[seasonKey];
+          const remaining = Object.keys(showEntry.seasons).length === 0
+            ? shows.filter(s => String(s.tmdbTvId) !== String(showId))
+            : shows;
+          saveTvShows(remaining);
+          renderTvHistory();
+          showToast(`"${seasonName}" retirée`);
+          if (typeof statsDirty !== 'undefined') statsDirty = true;
+        },
+        true
+      );
+    });
   });
 }
 
@@ -529,9 +589,12 @@ function renderTvShowCard(show) {
         <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
         <div class="tv-show-seasons-list">
           ${seasons.map(([key, s]) => `
-            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}" role="button" tabindex="0">
-              <span>${escAttr(s.seasonName)}</span>
-              <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
+            <div class="tv-season-row">
+              <button type="button" class="tv-season-reopen-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">
+                <span>${escAttr(s.seasonName)}</span>
+                <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
+              </button>
+              <button type="button" class="tv-season-delete-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>
             </div>
           `).join('')}
         </div>

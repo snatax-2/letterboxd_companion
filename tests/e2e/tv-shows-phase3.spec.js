@@ -97,7 +97,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('8.0/10');
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'meridien', 'technicolor']) {
+for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test(`accessibilite : zero violation apres notation - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await selectShowAndSeason(page, 1);

@@ -12,7 +12,80 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Retiré
+- **Thème Méridien**, sur demande (non utilisé). Retiré entièrement :
+  bloc de couleurs (jour + variante nuit), le mécanisme JS de bascule
+  automatique jour/nuit basé sur l'heure réelle (deux fonctions
+  dédiées), la carte de sélection dans le panneau de réglages, et
+  l'aperçu de démarrage. Un repli propre a été ajouté pour quiconque
+  avait ce thème déjà enregistré — retombe sur le thème par défaut
+  plutôt que de laisser l'app sans styles cohérents. 10 fichiers de
+  test mis à jour pour ne plus itérer dessus.
+  - **Ça résout au passage le point laissé en suspens à la livraison
+    précédente** : le défaut de contraste "mystère" trouvé sur Méridien
+    était en réalité son mode nuit automatique qui s'activait pendant
+    les tests selon l'heure réelle du système — pas un bug de rendu.
+    Comprendre enfin la vraie cause, même si la question ne se pose
+    plus avec le retrait du thème.
+  - **Un vrai bug de test trouvé et corrigé au passage, sans rapport
+    avec Méridien** : un délai de 100ms s'est révélé trop court pour
+    que le filtre en niveaux de gris du thème Film Noir s'applique de
+    façon fiable dans l'environnement de test — porté à 300ms.
+
 ### Ajouté
+- **Historique — parité films/séries, 2e vague : filtre par genre.** TMDb
+  renvoie déjà les genres dans la fiche d'une série (le même appel déjà
+  utilisé pour la liste des saisons) — capturé directement au moment de
+  la sélection, sans appel supplémentaire. Pour les séries déjà suivies
+  avant ce correctif (donc sans genre stocké), une **récupération
+  silencieuse en arrière-plan** les complète dès la première visite sur
+  l'onglet Séries de l'Historique, sans bloquer l'affichage déjà rendu
+  avec les données connues. Le composant de puces de genre (déjà utilisé
+  pour les films) a été généralisé pour accepter n'importe quelle liste
+  d'éléments plutôt que dupliqué.
+  - **Un vrai bug confirmé visuellement, distinct du point non résolu de
+    la livraison précédente** : en creusant plus loin cette fois (avec
+    plus de temps), le défaut de contraste sur Méridien s'est révélé être
+    un vrai problème visible — la barre de navigation s'affiche presque
+    noire à certains endroits, alors que ce thème est conçu pour rester
+    clair partout. Confirmé par capture d'écran réelle, pas juste un
+    signalement d'outil. Cause exacte non identifiée dans le temps de
+    cette livraison (le fond semi-transparent de la barre ne se comporte
+    pas comme attendu sur ce thème précis) — à reprendre en priorité la
+    prochaine fois, plutôt que le point plus vague noté précédemment.
+
+- **Historique — parité films/séries, 1ère vague : filtre par note et
+  suppression par saison.** Le clic sur une barre de l'histogramme
+  (déjà partagé entre films et séries depuis la Phase 5) filtre
+  maintenant vraiment la liste des séries affichées, avec un badge qui
+  reflète le filtrage actif ("1 / 2 séries"). Suppression d'une seule
+  saison (pas forcément toute la série) depuis la liste dépliée, avec un
+  message de confirmation adapté si c'est la dernière saison suivie
+  (retire alors toute la série).
+  - **Un vrai bug trouvé et corrigé avant livraison** : `renderAll()` ne
+    respectait pas la vue Historique active (toujours films), ce qui
+    aurait cassé silencieusement le filtre par note côté séries. Une
+    fonction de badge devenue redondante entre-temps (et activement
+    risquée — elle écrasait le bon résultat calculé ailleurs) a été
+    retirée proprement plutôt que rafistolée.
+  - **Deux vrais défauts d'accessibilité trouvés en testant les 7
+    thèmes** : un bouton supprimer imbriqué dans une ligne
+    `role="button"` (invalide, présent sur les 7 thèmes) — corrigé en
+    restructurant la ligne en deux vrais boutons indépendants plutôt
+    qu'un élément imbriqué dans un autre. Et le bouton de confirmation
+    utilisait par erreur le style "primaire" au lieu de "danger" pour
+    une action destructive — une fois corrigé, ça a révélé que le style
+    "danger" lui-même manquait de marge de contraste sur 3 thèmes
+    (Carnet, Moderne, et Méridien plus particulièrement, où ni le texte
+    blanc ni le noir n'offrait de vraie marge — la couleur rouge de ce
+    thème a été légèrement assombrie pour donner une marge confortable
+    au texte blanc).
+  - **Un point trouvé mais non résolu, documenté honnêtement plutôt que
+    caché** : un défaut de contraste distinct est apparu sur Méridien
+    dans le widget "En cours", avec des valeurs de couleur qui ne
+    correspondent à aucune teinte Méridien touchée aujourd'hui — pas
+    élucidé dans le temps imparti pour cette livraison, à reprendre.
+
 - **Widget "En cours" dans l'onglet Noter (mode Série uniquement)** — une
   carte verticale par série ayant un épisode à regarder, tout en haut,
   au-dessus de la recherche. Affiche à dimensions fixes, nom/durée/date

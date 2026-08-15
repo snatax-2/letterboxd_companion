@@ -8,7 +8,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 // Sauvegarder...). Verrouille aussi le correctif du champ item.stars non
 // protege dans l'Historique.
 
-const THEMES = ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'meridien', 'technicolor'];
+const THEMES = ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor'];
 
 for (const theme of THEMES) {
   test(`audit complet : zero violation sur ${theme} (Noter, mode detaille)`, async ({ page }) => {

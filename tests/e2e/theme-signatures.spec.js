@@ -13,7 +13,7 @@ test('chaque theme se selectionne et applique son fond', async ({ page }) => {
   console.log('THEMES:', themeNames.join(', '));
 
   for (const name of themeNames) {
-    if (name === 'system' || name === 'meridien') continue; // dependent du systeme/heure, testes a part
+    if (name === 'system') continue; // dependent du systeme, teste a part
     const card = page.locator(`.theme-card[data-theme="${name}"]`);
     await card.scrollIntoViewIfNeeded();
     await card.click();
@@ -35,7 +35,7 @@ test('touches signatures: noir grise les affiches, carnet raye les cartes en poi
     await page.evaluate((n) => {
       document.documentElement.setAttribute('data-theme', n);
     }, name);
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
   }
 
   await page.click('#nav-history');

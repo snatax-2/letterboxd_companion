@@ -128,8 +128,8 @@ function getGenres(history) {
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 
-function renderGenreChips(history) {
-  const genres = getGenres(history);
+function renderGenreChips(items, onFilterChange = renderHistory) {
+  const genres = getGenres(items);
   const row    = document.getElementById('genre-fold');
   const chips  = document.getElementById('genre-chips');
   const currentLabel = document.getElementById('genre-fold-current');
@@ -144,7 +144,7 @@ function renderGenreChips(history) {
   const allChip = document.createElement('button');
   allChip.className = 'genre-chip all-chip' + (activeGenre === null ? ' active' : '');
   allChip.textContent = 'Tous';
-  allChip.addEventListener('click', () => { activeGenre = null; activeScoreFilter = null; renderGenreChips(history); renderHistory(); });
+  allChip.addEventListener('click', () => { activeGenre = null; activeScoreFilter = null; renderGenreChips(items, onFilterChange); onFilterChange(); });
   chips.appendChild(allChip);
 
   genres.forEach(g => {
@@ -153,11 +153,24 @@ function renderGenreChips(history) {
     chip.textContent = g;
     chip.addEventListener('click', () => {
       activeGenre = (activeGenre === g) ? null : g;
-      renderGenreChips(history);
-      renderHistory();
+      renderGenreChips(items, onFilterChange);
+      onFilterChange();
     });
     chips.appendChild(chip);
   });
+}
+
+// Tranches de note partagées entre films et séries (histogramme, filtre par
+// clic sur une barre) — extrait ici pour ne pas dupliquer cette table.
+const SCORE_RANGES = {
+  '50': [9,10], '45': [8.5,9], '40': [7.5,8.5], '35': [6.5,7.5], '30': [5.5,6.5],
+  '25': [4.5,5.5], '20': [3.5,4.5], '15': [2.5,3.5], '10': [1.5,2.5], '05': [0,1.5]
+};
+function isScoreInActiveRange(score) {
+  if (activeScoreFilter === null) return true;
+  const [lo, hi] = SCORE_RANGES[activeScoreFilter] || [0, 10];
+  const s = parseFloat(score);
+  return s >= lo && (activeScoreFilter === '50' ? s <= hi : s < hi);
 }
 
 function getSorted(history) {
@@ -168,15 +181,7 @@ function getSorted(history) {
   }
 
   if (activeScoreFilter !== null) {
-    const scoreRanges = {
-      '50': [9,10], '45': [8.5,9], '40': [7.5,8.5], '35': [6.5,7.5], '30': [5.5,6.5],
-      '25': [4.5,5.5], '20': [3.5,4.5], '15': [2.5,3.5], '10': [1.5,2.5], '05': [0,1.5]
-    };
-    const [lo, hi] = scoreRanges[activeScoreFilter] || [0,10];
-    h = h.filter(item => {
-      const s = parseFloat(item.score);
-      return s >= lo && (activeScoreFilter === '50' ? s <= hi : s < hi);
-    });
+    h = h.filter(item => isScoreInActiveRange(item.score));
   }
 
   if (historySearchQuery) {
@@ -223,7 +228,8 @@ function renderHistory() {
   const container = document.getElementById('history-list');
 
   const badge = document.getElementById('hist-count-badge');
-  const tvFragment = ` · ${loadTvShows().length} série${loadTvShows().length > 1 ? 's' : ''}`;
+  const showCount = loadTvShows().length;
+  const tvFragment = ` · ${showCount} série${showCount > 1 ? 's' : ''}`;
   if (activeGenre || historySearchQuery || activeScoreFilter) {
     badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
     badge.style.color = 'var(--orange)';
@@ -1543,7 +1549,7 @@ function renderAll() {
   } else {
     statsDirty = true;
   }
-  renderHistory();
+  renderActiveHistoryView();
 }
 
 // Appelée quand l'onglet Profil devient visible : rattrape un renderStats()

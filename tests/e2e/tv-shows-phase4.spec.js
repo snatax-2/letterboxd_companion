@@ -99,7 +99,7 @@ test('supprimer une serie retire la carte et met a jour le badge', async ({ page
   await expect(page.locator('#hist-count-badge')).toContainText('0 série');
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'meridien', 'technicolor']) {
+for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test(`accessibilite historique series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await goToTvHistory(page);

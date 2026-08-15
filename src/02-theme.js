@@ -24,30 +24,14 @@ function loadSettings() {
   }
 }
 
-// Bascule jour/nuit du thème Méridien, basée sur l'heure RÉELLE (pas les
-// préférences système comme le thème "Auto") — nuit de 20h à 7h. Le laiton
-// (accent) reste identique dans les deux cas ; seuls fond et texte s'inversent
-// (voir [data-theme="meridien"].meridien-night dans styles.css).
-function applyMeridienDayNight() {
-  const hour = new Date().getHours();
-  const isNight = hour < 7 || hour >= 20;
-  document.documentElement.classList.toggle('meridien-night', isNight);
-}
-let meridienIntervalStarted = false;
-function ensureMeridienInterval() {
-  if (meridienIntervalStarted) return;
-  meridienIntervalStarted = true;
-  // Revérifie toutes les 10 minutes : suffisant pour basculer au bon moment
-  // même si l'app reste ouverte sans être rechargée à travers la frontière jour/nuit.
-  setInterval(() => {
-    if (document.documentElement.getAttribute('data-theme') === 'meridien') applyMeridienDayNight();
-  }, 10 * 60 * 1000);
-}
-
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
   let themeToApply = settings.theme || "default";
+  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
+  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
+  // que de retomber sur des couleurs cohérentes.
+  if (themeToApply === 'meridien') themeToApply = 'default';
   
   if (themeToApply === "system") {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -62,11 +46,6 @@ function applySettings(settings) {
   }
   
   document.documentElement.setAttribute('data-theme', themeToApply);
-  if (themeToApply === 'meridien') {
-    applyMeridienDayNight();
-    ensureMeridienInterval();
-  }
-  
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
   document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
   const owned = loadOwnedProviders();
@@ -104,10 +83,6 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     if (card.dataset.theme !== "system") {
         document.documentElement.setAttribute('data-theme', card.dataset.theme);
-        if (card.dataset.theme === 'meridien') {
-          applyMeridienDayNight();
-          ensureMeridienInterval();
-        }
     } else {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");

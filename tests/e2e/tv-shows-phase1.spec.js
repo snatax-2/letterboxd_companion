@@ -75,7 +75,7 @@ test('accessibilite : zero violation sur le flux complet de selection', async ({
 // Noter — signale par l'utilisateur, confirme visuellement avant fix).
 
 test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 7 themes', async ({ page }) => {
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'meridien', 'technicolor']) {
+  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await page.goto('/');
     await page.waitForTimeout(300);

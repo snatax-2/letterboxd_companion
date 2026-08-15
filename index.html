@@ -74,15 +74,10 @@
       filmnoir:  { bg: '#050505', accent: '#ffffff' },
       cinephile: { bg: '#F9F6F0', accent: '#4A2E1B' },
       moderne:   { bg: '#F9F6F0', accent: '#1E5AA8' },
-      meridien:  { bg: '#F7F3EA', bgNight: '#171410', accent: '#C89B4A' },
       technicolor: { bg: '#101425', accent: '#DF2935' },
     };
     var p = palettes[theme] || palettes.default;
     var bg = p.bg;
-    if (theme === 'meridien') {
-      var hour = new Date().getHours();
-      if (hour < 7 || hour >= 20) bg = p.bgNight;
-    }
     var splash = document.getElementById('app-splash');
     splash.style.background = bg;
     // Contraste garanti quel que soit le thème (fonds très sombres à très
@@ -166,14 +161,6 @@
             <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#1E5AA8"></div><div class="theme-preview-dot" style="background:#DD6B47"></div><div class="theme-preview-dot" style="background:#7A5507"></div></div>
           </div>
           <div class="theme-label" style="background:#1E5AA8;color:#fff;font-family:'Syne',sans-serif;font-weight:800;">MODERNE</div>
-        </div>
-        <div class="theme-card" data-theme="meridien" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Méridien (jour/nuit automatique)">
-          <div class="theme-preview" style="background:linear-gradient(135deg, #F7F3EA 50%, #171410 50%)">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#C89B4A;flex:1;border-radius:2px"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#C89B4A;width:65%;border-radius:2px;opacity:0.7"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#C89B4A;border-radius:2px"></div><div class="theme-preview-dot" style="background:#C89B4A;border-radius:2px;opacity:0.6"></div><div class="theme-preview-dot" style="background:#C89B4A;border-radius:2px;opacity:0.3"></div></div>
-          </div>
-          <div class="theme-label" style="background:#C89B4A;color:#0d1117;font-family:'Cormorant Garamond',serif;font-weight:700;letter-spacing:.04em;">MÉRIDIEN</div>
         </div>
         <div class="theme-card" data-theme="technicolor" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Technicolor">
           <div class="theme-preview" style="background:#101425; border: 2px solid #E6AF2E;">
