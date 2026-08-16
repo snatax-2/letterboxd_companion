@@ -957,6 +957,7 @@ function renderStats() {
     document.getElementById('kpi-avg').textContent = '-'; 
     document.getElementById('kpi-year').textContent = '0';
     document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
     document.getElementById('timeline-chart-container').innerHTML = '';
     document.getElementById('top-directors-list').innerHTML = '<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>';
@@ -982,9 +983,11 @@ function renderStats() {
   const radarSvg = createRadarSVG(avgs);
   if (radarSvg) { 
     document.getElementById('radar-chart-container').innerHTML = radarSvg; 
+    document.getElementById('radar-chart-container').style.minHeight = '160px';
     document.getElementById('radar-empty').style.display = 'none'; 
   } else { 
     document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block'; 
   }
 
@@ -1027,6 +1030,10 @@ function resetProfileExtras() {
   document.getElementById('profile-streak').textContent = 'Pas de série en cours';
   renderBadges(computeBadges([], {}));
   drawProfileShareCard(null);
+  // Rien à télécharger tant que la carte est verrouillée — désactivé plutôt
+  // que de laisser un bouton actif sans effet utile derrière lui.
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) { shareBtn.disabled = true; shareBtn.title = 'Note quelques films pour débloquer ta carte'; }
   // Une rétrospective "0 film noté" n'aurait aucun sens — la carte d'entrée
   // ne s'affiche que s'il y a au moins un film à raconter.
   const wrappedCard = document.getElementById('wrapped-entry-card');
@@ -1043,6 +1050,11 @@ function renderProfileExtras(history) {
   // réapparaître si l'historique passe de vide à rempli dans la même session.
   const wrappedCard = document.getElementById('wrapped-entry-card');
   if (wrappedCard) wrappedCard.style.display = history.length > 0 ? '' : 'none';
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) {
+    shareBtn.disabled = history.length === 0;
+    shareBtn.title = history.length === 0 ? 'Note quelques films pour débloquer ta carte' : '';
+  }
   // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
   const dates = history
     .map(h => h.savedAt || h.date)
@@ -1489,12 +1501,16 @@ function drawWrappedShareCard(stats) {
 function buildHistogram(dist) {
   const container = document.getElementById('histogram');
   container.innerHTML = '';
+  const maxVal = Math.max(...Object.values(dist), 0);
+  if (maxVal === 0) {
+    container.innerHTML = '<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Note quelques films pour voir apparaître leur répartition ici.</div>';
+    return;
+  }
   const order = [50, 45, 40, 35, 30, 25, 20, 15, 10, '05'];
   const labels = {
     50: '★★★★★', 45: '★★★★½', 40: '★★★★', 35: '★★★½', 30: '★★★',
     25: '★★½',   20: '★★',    15: '★½',    10: '★',    '05': '½'
   };
-  const maxVal = Math.max(...Object.values(dist), 1);
   order.forEach(key => {
     const count   = dist[key] || 0;
     const pct     = (count / maxVal) * 100;

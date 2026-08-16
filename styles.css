@@ -667,6 +667,7 @@
   }
   .btn-new-review:hover { filter: brightness(1.08); }
   .btn-new-review:active { transform: scale(0.96); }
+  .btn-new-review:disabled { opacity: 0.4; cursor: default; filter: none; transform: none; }
 
   /* ── MOVIE SEARCH ── */
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }

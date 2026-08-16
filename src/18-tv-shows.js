@@ -930,6 +930,7 @@ function renderTvStats() {
 
   if (allRatings.length === 0) {
     document.getElementById('radar-chart-container').innerHTML = '';
+    document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
   } else {
     const avgsByCriterion = computeCriteriaAverages(allRatings, CRITERIA);
@@ -937,9 +938,11 @@ function renderTvStats() {
     const radarSvg = createRadarSVG(avgs, 'tv');
     if (radarSvg) {
       document.getElementById('radar-chart-container').innerHTML = radarSvg;
+      document.getElementById('radar-chart-container').style.minHeight = '160px';
       document.getElementById('radar-empty').style.display = 'none';
     } else {
       document.getElementById('radar-chart-container').innerHTML = '';
+      document.getElementById('radar-chart-container').style.minHeight = '0';
       document.getElementById('radar-empty').style.display = 'block';
     }
   }

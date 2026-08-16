@@ -13,6 +13,30 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Profil : les points laissés de côté lors de l'audit UX/design
+  précédent, traités maintenant sur demande explicite.**
+  - **Radar "L'ADN de tes notes"** réservait 160px de hauteur même
+    sans aucune note en mode Détaillé, avec juste une phrase au milieu
+    d'un grand vide. Se replie maintenant à moins de 20px quand il n'y
+    a rien à afficher, et retrouve sa taille normale dès que de vraies
+    notes détaillées existent — vérifié dans les deux sens.
+  - **"Distribution des notes"** affichait 10 lignes à zéro sans aucun
+    message, alors que "Top Réalisateurs" juste à côté gérait très bien
+    ce même cas avec une phrase d'aide — la même incohérence existait
+    aussi côté séries. Un vrai message remplace maintenant les lignes
+    vides, dans les deux zones.
+  - **Bouton "Télécharger l'image"** restait actif alors que la carte
+    affichait "Note quelques films pour la débloquer" — rien à
+    télécharger, mais rien ne le signalait. Désactivé tant que la carte
+    est verrouillée, avec une explication au survol.
+  - **Précision apportée en creusant** : l'espace apparemment vide de
+    la heatmap "Ton année de cinéma" n'était pas un défaut à corriger —
+    une grille calendaire affiche normalement toutes ses cases même
+    sans activité (comme sur GitHub ou Letterboxd) ; forcer un
+    changement là aurait été artificiel plutôt qu'utile.
+  - Résultat mesuré : l'écran Profil totalement vide passe de 8355px à
+    7376px de hauteur (-979px), sans rien retirer d'utile.
+
 - **Audit UX/design complet, sur demande explicite (hors Profil, exclu à
   la demande de l'utilisateur) :**
   - **Cibles tactiles trop petites** — un manque signalé il y a longtemps
