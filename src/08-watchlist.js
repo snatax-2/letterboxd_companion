@@ -281,13 +281,13 @@ async function fetchProviders(tmdbId, idx) {
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -330,7 +330,7 @@ async function addToSpecificWatchlist(movie, year, listId) {
   list.unshift({
     title: movie.title,
     year,
-    poster: movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : '',
+    poster: tmdbImage(movie.poster_path, 'w185'),
     genre,
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
@@ -467,7 +467,7 @@ wlInput.addEventListener('input', () => {
       wlSuggestEl.style.display = 'block';
 
       if (personMatch) {
-        const photoUrl = personMatch.profile_path ? `https://image.tmdb.org/t/p/w92${personMatch.profile_path}` : '';
+        const photoUrl = tmdbImage(personMatch.profile_path, 'w92');
         const personEl = document.createElement('div');
         personEl.className = 'wl-suggest-item';
         personEl.innerHTML = `
@@ -491,7 +491,7 @@ wlInput.addEventListener('input', () => {
         el.className = 'wl-suggest-item';
         el.innerHTML = `
           ${m.poster_path
-            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            ? `<img class="wl-suggest-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
             <div class="wl-suggest-title">${escAttr(m.title)}</div>

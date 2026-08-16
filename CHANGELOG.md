@@ -13,8 +13,196 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Phase 6 du plan d'exécution de l'audit expert — vérifications
+  finales.** La phase la plus courte sur le papier, mais qui a débusqué
+  le bug le plus subtil de tout ce travail.
+  - **Un vrai bug d'interaction préexistant trouvé par le balayage
+    final, invisible jusqu'ici** : une diapositive de la modale
+    d'accueil (`.onboarding-slide.active`) recevait `pointer-events:
+    auto` dès l'initialisation de la page — pas seulement à l'ouverture
+    réelle de la modale, puisque la première diapositive est marquée
+    "active" par défaut indépendamment de la classe `.open` du
+    conteneur. Résultat : un élément totalement invisible (le
+    conteneur parent a `opacity: 0` tant que la modale n'est pas
+    ouverte) mais capable d'intercepter des clics ailleurs sur la
+    page, à l'endroit précis où cette diapositive se trouve
+    positionnée. Jamais détecté avant car cet endroit précis ne
+    chevauchait aucun bouton testé jusqu'ici — la Phase 4 (largeur
+    desktop) est ce qui a fait apparaître le chevauchement avec le
+    bouton "Noter" de la barre de navigation, sur le thème Cinéphile en
+    particulier. Corrigé en limitant `pointer-events: auto` à la
+    diapositive active UNIQUEMENT quand la modale est réellement
+    ouverte. Vérifié dans les deux sens : la modale reste inerte quand
+    fermée, et le vrai parcours d'accueil pour un nouvel utilisateur
+    fonctionne toujours normalement.
+  - **2 vrais oublis de `loading="lazy"` trouvés et corrigés** (carte
+    de série dans l'Historique, carte du widget "En cours") — des
+    éléments de liste comparables à leurs équivalents films, qui eux
+    l'avaient déjà. Une 3ᵉ image sans `loading="lazy"` (l'affiche à
+    deviner du mini-jeu Découvrir) vérifiée et volontairement laissée
+    telle quelle : c'est le contenu principal et immédiat de son
+    écran, un cas d'exception légitime plutôt qu'un oubli.
+  - **Taille du bundle vérifiée après les 5 phases précédentes** : 272
+    Ko → 276 Ko de JS (+1,5 %), 128,5 Ko → 132 Ko de CSS (+3 %) — une
+    croissance proportionnée à ce qui a été ajouté (8 icônes, une
+    media query desktop, plusieurs fonctions partagées), pas un signe
+    de duplication accidentelle.
+  - **Balayage final** : les 5 écrans principaux × 6 thèmes × mobile et
+    desktop (12 combinaisons), zéro violation d'accessibilité sérieuse
+    partout, confirmé après correction du bug ci-dessus.
+
+### Modifié
+- **Phase 5 du plan d'exécution de l'audit expert — extraction de
+  code.** Le point le plus mécanique du plan, mais avec le risque le
+  plus élevé de casse silencieuse si mal fait.
+  - **Tâche 5.1 (composant carte média partagé) volontairement
+    abandonnée après vérification, pas ignorée** : le plan proposait une
+    fonction `renderMediaCard()` partagée entre 4 endroits (carte film,
+    carte série, carte Découvrir, résultat de recherche). En comparant
+    réellement leur structure HTML avant de coder quoi que ce soit, ces
+    4 cartes se sont révélées trop différentes pour une vraie
+    abstraction commune (ligne riche avec critique dépliable vs agrégat
+    de saisons vs carte pleine largeur façon Tinder vs simple ligne de
+    résultat) — les forcer ensemble aurait créé plus de branches
+    conditionnelles que ça n'en aurait simplifié, exactement ce que
+    l'audit demandait d'éviter.
+  - **`06-history.js` (1698 lignes, 6 responsabilités mêlées) scindé en
+    4 fichiers** : `06a-history-list.js` (liste, recherche, tri,
+    filtre), `06b-history-actions.js` (toast, feuille d'action),
+    `06c-profile-stats.js` (statistiques, dashboard, `renderAll()`),
+    `06d-profile-share-cards.js` (cartes à partager, dessin canvas,
+    Wrapped). Découpage fait par tranches de lignes vérifiées une par
+    une (pas par comptage d'accolades, peu fiable avec des littéraux de
+    gabarit imbriqués), équilibre des accolades confirmé pour chaque
+    morceau avant assemblage.
+  - **Un vrai échec de test trouvé en régressant, pas ignoré** : 3 tests
+    échouaient sur un défaut de contraste de l'écran de démarrage —
+    tracé jusqu'à un délai d'attente de test à 500ms, inférieur à la
+    durée minimale connue de 1200ms de cet écran. Un piège déjà
+    rencontré et corrigé ailleurs dans ce projet ; celui-ci était resté
+    non détecté jusqu'ici, probablement "chanceux" sur le timing exact
+    jusqu'à ce que le découpage déplace légèrement l'ordre de
+    concaténation. Corrigé dans le test, pas dans l'application.
+  - **Tâche 5.3 (documenter la correspondance icône → usage)** :
+    déjà faite pendant la Phase 3 sans que ce soit noté comme telle à
+    l'époque — rien à ajouter.
+  - Validé par régression complète sur plus de 100 tests E2E existants
+    plutôt que par de nouveaux tests dédiés : un découpage de fichier ne
+    change aucun comportement observable, c'est justement le but.
+
+### Ajouté
+- **Phase 4 du plan d'exécution de l'audit expert — responsive
+  desktop.** Le point le plus lourd et le plus risqué du plan.
+  - **Un vrai conflit trouvé avant de commencer, pas ignoré** : un
+    commentaire dans le code a révélé qu'une mise en page desktop à deux
+    colonnes existait avant, et avait été explicitement retirée à la
+    demande de l'utilisateur ("un système d'onglets comme sur
+    téléphone" plutôt que deux colonnes). Le plan original proposait
+    justement de réintroduire ce type de scission — confirmé auprès de
+    l'utilisateur avant de continuer plutôt que de défaire silencieusement
+    un choix produit conscient. Décision retenue : garder le principe
+    "un seul onglet à la fois", mais faire un usage réel de l'espace
+    disponible *à l'intérieur* de chaque onglet plutôt que de scinder
+    l'écran.
+  - **Conteneur élargi à 1100px** à partir de 1024px (contre 800px
+    avant, plafonné à toutes les tailles).
+  - **Historique / À voir en disposition "masonry"** (colonnes CSS)
+    plutôt qu'une grille classique — les cartes ont des hauteurs
+    variables (avec ou sans critique écrite), une vraie grille aurait
+    laissé des trous inégaux entre colonnes. Le glissement, qui
+    fonctionne en coordonnées de pixels bruts, reste inchangé et
+    fonctionnel dans cette disposition — vérifié explicitement.
+  - **Découvrir** : puces de thème sur 3 colonnes.
+  - **Profil** : le tableau de bord passe enfin réellement à 2 colonnes
+    — la règle CSS existait déjà, elle manquait juste de place pour
+    s'exprimer tant que le conteneur restait plafonné à 800px.
+  - **Noter : largeur plafonnée à part**, trouvé en vérifiant
+    visuellement plutôt que supposé correct — le formulaire complet
+    s'étirait sur toute la largeur du conteneur élargi, rendant les
+    curseurs inutilement longs à parcourir du regard sans gain de
+    lisibilité. Recentré à une largeur raisonnable, indépendamment de
+    l'élargissement des autres écrans.
+  - **Mobile entièrement revérifié inchangé** après tous ces
+    changements — 1 colonne, conteneur à 800px, comportement identique
+    à avant, confirmé par test plutôt que supposé.
+
+- **Phase 3 du plan d'exécution de l'audit expert — UI.**
+  - **Icônes emoji remplacées par du SVG cohérent** (Découvrir, "Explorer
+    par thème") — 8 nouvelles icônes ajoutées à la bibliothèque partagée,
+    dans le même style trait fin que le reste de l'app. Trois variantes
+    dessinées pour "Vengeance" avant de choisir la plus lisible (la
+    première ressemblait trop à une épingle) — comparées visuellement
+    dans une page de test isolée avant d'être câblées dans l'app.
+  - **Composant pilule unifié** (`.ctx-tag`, `.filter-btn`, `.genre-chip`)
+    — base commune factorisée pour les 3 pilules réellement similaires ;
+    `.weight-badge` (une 4ᵉ pilule de l'app) volontairement laissée à
+    part, car structurellement différente (non cliquable, police
+    différente, pas de transition) — pas de fausse unification.
+  - **Titres de section alignés sur le même token** — en vérifiant les 4
+    classes de titre avant de les migrer, elles se sont révélées être de
+    petites étiquettes en majuscules (0.70-0.75rem), pas de grands
+    titres. **Écart assumé par rapport au plan écrit**, qui suggérait
+    `--text-lg` (1.25rem) : appliqué tel quel, cela aurait cassé le style
+    de petites majuscules déjà établi. Alignées sur `--text-xs`
+    (0.72rem, déjà posé en Phase 1) à la place, qui correspondait déjà
+    exactement à l'une des 4.
+  - **Fonction `renderEmptyState()` partagée** — les 3 endroits qui
+    utilisaient un texte stylé à la main (`Top Réalisateurs`,
+    `Distribution des notes`) migrés vers cette fonction. Les états vides
+    déjà riches et fonctionnels (Historique, À voir) non retouchés.
+
+- **Phase 2 du plan d'exécution de l'audit expert — UX.**
+  - **Espace vide de "Suggestions pour toi" (Découvrir)** — le
+    conteneur réservait jusqu'à 580px pour afficher une seule phrase
+    d'aide, poussant "Duels" hors d'écran sans raison. **Un vrai piège
+    CSS trouvé en corrigeant** : `height: auto` semblait la solution
+    évidente (même logique que le radar du Profil, déjà corrigé), mais
+    ne fonctionne pas ici — `.discover-empty` est en `position:
+    absolute; inset: 0`, et un enfant en position absolue ne contribue
+    pas à la hauteur automatique de son parent. Vérifié concrètement :
+    le conteneur tombait à 0px avec `auto`, le message devenait
+    invisible malgré un `isVisible()` qui répondait pourtant vrai.
+    Corrigé avec une hauteur fixe modeste (120px) à la place, avec un
+    commentaire dans le code pour éviter qu'un futur passage ne
+    retente `auto` et retombe dans le même piège.
+  - **Transition en fondu au changement d'onglet** (Films/Séries dans
+    Historique et Profil, Film/Série dans Noter) — un léger fondu
+    plutôt qu'un changement instantané. Une fonction partagée
+    (`fadeSwitchDisplay`) couvre les deux cas qui basculent entre deux
+    éléments mutuellement exclusifs ; le cas du Profil, structurellement
+    différent (un seul conteneur redessiné sur place, pas deux listes
+    séparées), reçoit un traitement dédié plutôt que d'être forcé dans
+    la même fonction.
+
+- **Phase 1 du plan d'exécution de l'audit expert — fondations du
+  système de design.** Rien de visible pour l'utilisateur dans cette
+  phase (c'était volontaire, voir le plan) — le travail prépare les
+  phases suivantes.
+  - **Tokens d'espacement et typographiques** (`--space-1` à
+    `--space-6`, `--text-xs` à `--text-2xl`) posés dans le bloc `:root`
+    partagé — pas encore consommés par les composants existants, qui
+    gardent leurs valeurs actuelles. **Écart assumé par rapport au plan
+    écrit** : celui-ci suggérait de dupliquer ces tokens dans les 6
+    blocs de thème (comme `--radius`/`--radius-sm`) ; en creusant, un
+    bloc `:root` partagé existait déjà pour les tokens qui n'ont pas
+    besoin de varier par thème (durées, ombres) — ces nouveaux tokens y
+    ont été rattachés à la place, plus cohérent avec la convention déjà
+    en place dans le code que ce que le plan décrivait au mot près.
+  - **`--radius-pill`** introduit avec le même raisonnement, et les 23
+    valeurs `20px`/`999px` codées en dur dans `styles.css` remplacées
+    par ce token. Vérifié visuellement sur les 6 thèmes, Film Noir en
+    particulier (angles francs partout ailleurs) : la pilule reste bien
+    ronde, rien d'autre n'a changé.
+  - **Fonction `tmdbImage(path, size)` centralisée** (`03-foundation.js`)
+    remplaçant les constructions manuelles d'URL d'affiche TMDb. Un
+    audit en avait compté ~33 ; la migration fichier par fichier en a
+    trouvé 36 au passage (logos de plateformes de streaming non
+    comptés initialement). Les 7 fichiers concernés migrés un par un,
+    avec validation après chacun plutôt qu'en bloc.
+
+### Corrigé
 - **Profil : les points laissés de côté lors de l'audit UX/design
-  précédent, traités maintenant sur demande explicite.**
+  précédent, traités sur demande explicite.**
   - **Radar "L'ADN de tes notes"** réservait 160px de hauteur même
     sans aucune note en mode Détaillé, avec juste une phrase au milieu
     d'un grand vide. Se replie maintenant à moins de 20px quand il n'y

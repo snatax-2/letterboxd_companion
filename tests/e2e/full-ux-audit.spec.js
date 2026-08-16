@@ -22,7 +22,7 @@ for (const theme of THEMES) {
     }, theme);
     await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
     await page.goto('/');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1400);
     const results = await new AxeBuilder({ page }).analyze();
     const bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
     expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);

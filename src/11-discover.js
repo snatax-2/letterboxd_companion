@@ -165,7 +165,7 @@ async function loadOnThisDay() {
   strip.innerHTML = anniversaries.flatMap(a =>
     a.films.map(f => `
       <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="on-this-day-poster" src="https://image.tmdb.org/t/p/w200${f.poster_path}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <img class="on-this-day-poster" src="${tmdbImage(f.poster_path, 'w200')}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
         <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
         <div class="on-this-day-title">${escAttr(f.title)}</div>
       </div>
@@ -233,7 +233,7 @@ async function fetchFilmDuJourProviders(tmdbId) {
 
     let html = '';
     [...flat, ...rentOnly].slice(0, 6).forEach(p => {
-      html += `<img class="fdj-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+      html += `<img class="fdj-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
     });
 
     if (!html) {
@@ -340,7 +340,7 @@ function renderGuessGame(m, isWeekly) {
   wrap.style.display = 'block';
 
   const todayKey = new Date().toISOString().slice(0, 10);
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w300');
   const year = m.release_date ? m.release_date.slice(0, 4) : '';
 
   // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
@@ -567,7 +567,7 @@ async function loadTrendingCarousel() {
 function renderTrendingCarousel(movies) {
   const outer = document.getElementById('trending-carousel');
   const itemsHtml = movies.map(m => {
-    const posterUrl = `https://image.tmdb.org/t/p/w200${m.poster_path}`;
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
     return `
       <div class="trending-item" data-movie-id="${m.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
         <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
@@ -685,6 +685,7 @@ async function loadDiscoverQueue() {
 
 async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
+  discoverStack.style.height = '';
   // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
   // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
   // et la perception d'attente est bien meilleure.
@@ -700,6 +701,11 @@ async function loadDiscoverQueueInner() {
   const watchedWithId = history.filter(h => h.tmdbId);
 
   if (watchedWithId.length === 0) {
+    // Hauteur fixe modeste plutôt que 'auto' : .discover-empty est en
+    // position absolute (inset:0), donc ne contribue pas à la hauteur
+    // automatique de son parent — 'auto' donnerait 0px de haut et
+    // rendrait le message invisible malgré son contenu.
+    discoverStack.style.height = '120px';
     discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
     return;
   }
@@ -761,6 +767,7 @@ async function loadDiscoverQueueInner() {
 function renderDiscoverStack() {
   if (discoverQueue.length === 0) {
     discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '120px';
     if (discoverLoadFailed) {
       discoverStack.innerHTML = `
         <div class="error-state">
@@ -773,6 +780,7 @@ function renderDiscoverStack() {
     }
     return;
   }
+  discoverStack.style.height = '';
   discoverActionsEl.style.display = 'flex';
 
   // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
@@ -815,7 +823,7 @@ function renderDiscoverStack() {
 function buildDiscoverCardEl(m, isTop) {
   const year = m.release_date?.slice(0, 4) || '????';
   const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w500');
   let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
   if (overview.length > 160) overview = overview.slice(0, 160) + '…';
 

@@ -20,8 +20,9 @@ function setMediaType(type) {
   currentMediaType = type;
   document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
   document.getElementById('tab-media-tv').classList.toggle('active', type === 'tv');
-  document.getElementById('movie-only-fields').style.display = type === 'movie' ? '' : 'none';
-  document.getElementById('tv-only-fields').style.display = type === 'tv' ? '' : 'none';
+  const movieFields = document.getElementById('movie-only-fields');
+  const tvFields = document.getElementById('tv-only-fields');
+  if (type === 'movie') fadeSwitchDisplay(tvFields, movieFields); else fadeSwitchDisplay(movieFields, tvFields);
   document.getElementById('film-card-title').textContent = type === 'movie' ? 'Film' : 'Série';
   applyCriteriaLabelsForMediaType(type);
   // Pour un film, la carte Notation est toujours visible (on peut ajuster
@@ -99,7 +100,7 @@ async function fetchTvSuggestions(q) {
     }
     tvSuggestEl.innerHTML = results.map(s => `
       <div class="suggestion-item" data-show-id="${s.id}" data-show-name="${escAttr(s.name)}" data-show-poster="${escAttr(s.poster_path || '')}">
-        <img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${s.poster_path}" alt="" loading="lazy">
+        <img class="suggestion-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="" loading="lazy">
         <div class="suggestion-info">
           <div class="suggestion-title">${escAttr(s.name)}</div>
           <div class="suggestion-year">${s.first_air_date ? s.first_air_date.slice(0, 4) : ''}</div>
@@ -131,7 +132,7 @@ function selectSeason(season) {
   const stripEl = document.getElementById('tv-season-strip');
   stripEl.style.display = 'flex';
   const posterImg = document.getElementById('tv-strip-poster');
-  posterImg.src = season.poster ? `https://image.tmdb.org/t/p/w200${season.poster}` : '';
+  posterImg.src = tmdbImage(season.poster, 'w200');
   document.getElementById('tv-strip-title').textContent = `${selectedShow.name} — ${season.name}`;
   document.getElementById('tv-strip-genre').textContent = `${season.episodeCount} épisode${season.episodeCount > 1 ? 's' : ''}`;
   selectedSeasonNumber = Number(season.number);
@@ -340,7 +341,7 @@ document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
     selectedSeasonNumber = Number(seasonKey);
     selectedSeasonName = seasonData.seasonName;
     document.getElementById('tv-season-strip').style.display = 'flex';
-    document.getElementById('tv-strip-poster').src = show.poster_path ? `https://image.tmdb.org/t/p/w200${show.poster_path}` : '';
+    document.getElementById('tv-strip-poster').src = tmdbImage(show.poster_path, 'w200');
     document.getElementById('tv-strip-title').textContent = `${show.title} — ${seasonData.seasonName}`;
     document.getElementById('tv-strip-genre').textContent = `${seasonData.totalEpisodes} épisodes`;
     document.getElementById('tv-season-start-prompt').style.display = 'none';
@@ -366,8 +367,9 @@ function switchHistoryMediaFilter(type) {
   historyMediaFilter = type;
   document.getElementById('hist-tab-movie').classList.toggle('active', type === 'movie');
   document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
-  document.getElementById('history-list').style.display = type === 'movie' ? '' : 'none';
-  document.getElementById('tv-history-list').style.display = type === 'tv' ? '' : 'none';
+  const movieList = document.getElementById('history-list');
+  const tvList = document.getElementById('tv-history-list');
+  if (type === 'movie') fadeSwitchDisplay(tvList, movieList); else fadeSwitchDisplay(movieList, tvList);
   renderActiveHistoryView();
   if (type === 'tv') retrofitMissingTvGenres();
 }
@@ -445,7 +447,7 @@ function renderTvHistory() {
   container.innerHTML = shows.map(renderTvShowCard).join('');
 
   container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
-    const posterUrl = shows[i]?.poster_path ? `https://image.tmdb.org/t/p/w154${shows[i].poster_path}` : '';
+    const posterUrl = tmdbImage(shows[i]?.poster_path, 'w154');
     applyPosterAccent(posterUrl, cardEl);
   });
 
@@ -525,7 +527,7 @@ function renderTvShowCard(show) {
   const avg = computeShowAverageScore(show);
   const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
   const ratedCount = seasons.filter(([, s]) => s.rating).length;
-  const posterUrl = show.poster_path ? `https://image.tmdb.org/t/p/w154${show.poster_path}` : '';
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
 
   return `
     <div class="tv-show-card">
@@ -533,7 +535,7 @@ function renderTvShowCard(show) {
         <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
         <div class="tv-show-card-header">
           <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
-            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
+            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
             <div class="tv-show-card-info">
               <div class="tv-show-card-title">${escAttr(show.title)}</div>
               <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
@@ -901,9 +903,22 @@ function switchStatsMediaFilter(type) {
   statsMediaFilter = type;
   document.getElementById('stats-tab-movie').classList.toggle('active', type === 'movie');
   document.getElementById('stats-tab-tv').classList.toggle('active', type === 'tv');
-  document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
-  document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
-  if (type === 'tv') renderTvStats(); else renderStats();
+  const dashboard = document.querySelector('.dashboard-grid');
+  const applyChange = () => {
+    document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
+    document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
+    if (type === 'tv') renderTvStats(); else renderStats();
+  };
+  if (!dashboard) { applyChange(); return; }
+  dashboard.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  dashboard.style.opacity = '0';
+  setTimeout(() => {
+    applyChange();
+    requestAnimationFrame(() => {
+      dashboard.style.opacity = '1';
+      setTimeout(() => { dashboard.style.removeProperty('opacity'); dashboard.style.removeProperty('transition'); }, 150);
+    });
+  }, 140);
 }
 
 function renderTvStats() {
@@ -1050,7 +1065,7 @@ async function resolveNextTvEpisode(cand) {
 }
 
 function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
-  const posterUrl = show.poster_path ? `https://image.tmdb.org/t/p/w154${show.poster_path}` : '';
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
   const meta = [
     episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
     episode.runtime ? `${episode.runtime} min` : '',
@@ -1061,7 +1076,7 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
         <button type="button" class="tv-continue-pause-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Mettre en pause" title="Mettre en pause — reprends-la depuis sa fiche">${ICONS.pause}</button>
         <button type="button" class="tv-continue-remove-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Retirer ${escAttr(show.title)} de cette liste" title="Retirer de la liste">${ICONS.close || '✕'}</button>
       </div>
-      ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+      ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
       <div class="tv-continue-info">
         <div class="tv-continue-show-title">${escAttr(show.title)}</div>
         <div class="tv-continue-ep-title">${escAttr(seasonEntry.seasonName)} · Ép. ${episode.episode_number} — ${escAttr(episode.name || 'Sans titre')}</div>

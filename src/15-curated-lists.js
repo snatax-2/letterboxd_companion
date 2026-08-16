@@ -342,7 +342,7 @@ function renderFilmGridSheet(label, films) {
       ${withSeen.map(f => `
         <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
           ${f.poster_path
-            ? `<img class="pds-film-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">`
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
             : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
           <div class="pds-film-title">${escAttr(f.title)}</div>
           <div class="pds-film-year">${f.year || ''}</div>
@@ -427,7 +427,7 @@ function renderThemeChips() {
   if (!row) return;
   row.innerHTML = CURATED_THEMES.map(t => `
     <button type="button" class="theme-chip" data-theme-id="${t.id}" data-theme-name="${escAttr(t.name)}">
-      <span aria-hidden="true">${t.emoji}</span> ${escAttr(t.name)}
+      ${ICONS[t.icon] || ''} ${escAttr(t.name)}
     </button>
   `).join('');
   row.querySelectorAll('.theme-chip').forEach(chip => {
@@ -458,7 +458,7 @@ async function openThemeSheet(themeId, themeName) {
       ${films.map(f => `
         <div class="pds-film-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
           ${f.poster_path
-            ? `<img class="pds-film-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">`
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
             : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
           <div class="pds-film-title">${escAttr(f.title)}</div>
           <div class="pds-film-year">${f.year || ''}</div>

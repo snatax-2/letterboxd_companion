@@ -77,7 +77,7 @@ function buildSeasonProgressionSection(data, localShow) {
 }
 
 function buildTdsContent(data, localShow) {
-  const posterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+  const posterUrl = tmdbImage(data.poster_path, 'w342');
   const year = data.first_air_date ? data.first_air_date.slice(0, 4) : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
   function personLink(p) {
@@ -187,7 +187,7 @@ function renderTdsCastCarousel(castArray) {
   if (cast.length === 0) return;
 
   const itemsHtml = cast.map(actor => {
-    const photoUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : '';
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
     return `
       <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
         ${photoUrl
@@ -270,7 +270,7 @@ async function openTvDetailSheet(tmdbTvId) {
     tdsContentEl.innerHTML = buildTdsContent(data, localShow);
     tdsCurrentData = data;
     renderTdsCastCarousel(data.credits?.cast || []);
-    const tdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+    const tdsPosterUrl = tmdbImage(data.poster_path, 'w342');
     applyPosterAccent(tdsPosterUrl, tdsEl.querySelector('.mds-box'));
     setupTdsOverviewToggle();
     setupStickyHeader(tdsEl);
