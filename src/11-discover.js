@@ -86,13 +86,6 @@ let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvr
 // synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
 const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
 
-function formatMoneyShort(amount) {
-  if (!amount || amount <= 0) return null;
-  if (amount >= 1_000_000_000) return (amount / 1_000_000_000).toFixed(1).replace('.0', '') + ' Md$';
-  if (amount >= 1_000_000) return (amount / 1_000_000).toFixed(0) + ' M$';
-  return (amount / 1_000).toFixed(0) + ' k$';
-}
-
 async function loadFilmDuJour() {
   const todayKey = new Date().toISOString().slice(0, 10);
   let cached = null;

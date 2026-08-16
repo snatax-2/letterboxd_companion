@@ -82,6 +82,71 @@ function watchlistItemKey(item) {
   return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
 }
 
+function tvShowItemKey(show) {
+  return String(show.tmdbTvId);
+}
+
+// ─── Fusion cloud : séries suivies ───────────────────────────────────────────
+// Contrairement aux films/watchlist (listes plates), une série contient des
+// saisons imbriquées — la fusion se fait donc à deux niveaux : d'abord les
+// séries elles-mêmes, puis pour chaque série ses saisons une par une. Deux
+// listes de tombstones séparées (série entière / saison individuelle, clé
+// composée tmdbTvId:numéroSaison) — chaque suppression, quel que soit son
+// niveau, doit rester respectée après une synchronisation.
+function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
+  const byId = new Map();
+  for (const show of [...local, ...remote]) {
+    const key = tvShowItemKey(show);
+    if (!key || key === 'undefined') continue;
+    if (!byId.has(key)) {
+      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, seasons: {} });
+    }
+    const target = byId.get(key);
+    if (show.title) target.title = show.title;
+    if (show.poster_path) target.poster_path = show.poster_path;
+    if (show.genre) target.genre = show.genre;
+
+    for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
+      const existing = target.seasons[seasonKey];
+      if (!existing) { target.seasons[seasonKey] = season; continue; }
+      // Deux versions de la même saison : pas de vrai horodatage de dernière
+      // modification au niveau saison pour trancher finement — priorité à
+      // celle qui a une note (plus "aboutie"), puis à la date de note la
+      // plus récente, puis au nombre d'épisodes vus le plus élevé.
+      const existingRated = !!existing.rating;
+      const seasonRated = !!season.rating;
+      if (seasonRated && !existingRated) {
+        target.seasons[seasonKey] = season;
+      } else if (seasonRated && existingRated) {
+        if (new Date(season.rating.date || 0) > new Date(existing.rating.date || 0)) target.seasons[seasonKey] = season;
+      } else if (!seasonRated && !existingRated) {
+        if ((season.watchedEpisodes || []).length > (existing.watchedEpisodes || []).length) target.seasons[seasonKey] = season;
+      }
+    }
+  }
+
+  for (const show of byId.values()) {
+    for (const seasonKey of Object.keys(show.seasons)) {
+      const tomb = seasonTombstones.find(t => t.key === `${show.tmdbTvId}:${seasonKey}`);
+      if (!tomb) continue;
+      const seasonTime = new Date(show.seasons[seasonKey].rating?.date || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= seasonTime) delete show.seasons[seasonKey];
+    }
+  }
+
+  const result = [];
+  for (const show of byId.values()) {
+    const tomb = showTombstones.find(t => t.key === tvShowItemKey(show));
+    if (tomb) {
+      const latestSeasonTime = Math.max(0, ...Object.values(show.seasons).map(s => new Date(s.rating?.date || 0).getTime()));
+      if (new Date(tomb.deletedAt).getTime() >= latestSeasonTime) continue;
+    }
+    if (Object.keys(show.seasons).length === 0) continue;
+    result.push(show);
+  }
+  return result;
+}
+
 // ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
 
 // Fusionne deux listes de tombstones : garde la date de suppression la plus
@@ -662,9 +727,11 @@ if (typeof module !== 'undefined' && module.exports) {
     getStarStr,
     historyItemKey,
     watchlistItemKey,
+    tvShowItemKey,
     mergeTombstoneLists,
     mergeHistory,
     mergeWatchlist,
+    mergeTvShows,
     TOMBSTONE_MAX_AGE_MS,
     getDesc,
     DESCS,

@@ -5,8 +5,10 @@ const LAST_EXPORT_KEY = 'lbx_last_export_at';
 
 document.getElementById('export-btn').addEventListener('click', () => {
   const history = loadHistory();
-  if (!history.length) { showToast('Aucun film à exporter.'); return; }
-  const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (!history.length && !tvShows.length) { showToast('Rien à exporter.'); return; }
+  const payload = { history, tvShows };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url; a.download = `ludex-backup-${new Date().toISOString().slice(0,10)}.json`;
@@ -14,7 +16,10 @@ document.getElementById('export-btn').addEventListener('click', () => {
   localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
   const banner = document.getElementById('backup-reminder');
   if (banner) banner.remove();
-  showToast(`${history.length} film${history.length > 1 ? 's' : ''} exporté${history.length > 1 ? 's' : ''}`);
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  showToast(`${parts.join(' · ')} exporté${(history.length + tvShows.length) > 1 ? 's' : ''}`);
 });
 
 document.getElementById('import-trigger').addEventListener('click', () => {
@@ -23,20 +28,72 @@ document.getElementById('import-trigger').addEventListener('click', () => {
 
 function importLudexJson(text) {
   const data = JSON.parse(text);
-  if (!Array.isArray(data)) throw new Error('Format invalide');
+  let history, tvShows;
+  if (Array.isArray(data)) {
+    // Ancienne sauvegarde (avant l'ajout du support séries) : un simple
+    // tableau de films, sans enveloppe — toujours acceptée telle quelle.
+    history = data;
+    tvShows = [];
+  } else if (data && typeof data === 'object' && (Array.isArray(data.history) || Array.isArray(data.tvShows))) {
+    history = Array.isArray(data.history) ? data.history : [];
+    tvShows = Array.isArray(data.tvShows) ? data.tvShows : [];
+  } else {
+    throw new Error('Format invalide');
+  }
+
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  if (parts.length === 0) { showToast('Sauvegarde vide, rien à importer.'); return; }
+
   openModal(
-    "Importer l'historique",
-    `Importer ${data.length} film${data.length > 1 ? 's' : ''} ? Cela fusionnera avec votre historique actuel (les doublons seront ignorés).`,
+    "Importer la sauvegarde",
+    `Importer ${parts.join(' et ')} ? Cela fusionnera avec vos données actuelles (les doublons seront ignorés).`,
     () => {
-      const existing = loadHistory();
-      const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
-      // Normalisation au passage : une vieille sauvegarde réimportée porte
-      // l'ancienne forme du schéma — même fonction que la migration v2.
-      const toAdd = data.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
-      const merged = [...toAdd, ...existing];
-      saveHistory(merged);
+      let addedFilms = 0, addedShows = 0, addedSeasons = 0;
+
+      if (history.length) {
+        const existing = loadHistory();
+        const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+        // Normalisation au passage : une vieille sauvegarde réimportée porte
+        // l'ancienne forme du schéma — même fonction que la migration v2.
+        const toAdd = history.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
+        addedFilms = toAdd.length;
+        saveHistory([...toAdd, ...existing]);
+      }
+
+      if (tvShows.length && typeof loadTvShows === 'function') {
+        const existingShows = loadTvShows();
+        tvShows.forEach(importedShow => {
+          let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
+          if (!localShow) {
+            localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
+            existingShows.push(localShow);
+            addedShows++;
+          }
+          // Par saison : n'ajoute que celles absentes localement — même
+          // philosophie "doublons ignorés" que les films, plutôt que
+          // d'inventer une règle de fusion (plus regardée / plus récente)
+          // qui n'a pas d'équivalent côté films.
+          Object.entries(importedShow.seasons || {}).forEach(([key, season]) => {
+            if (!localShow.seasons[key]) {
+              localShow.seasons[key] = season;
+              addedSeasons++;
+            }
+          });
+        });
+        saveTvShows(existingShows);
+      }
+
       renderAll();
-      showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''}`);
+      if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+
+      const resultParts = [];
+      if (addedFilms) resultParts.push(`${addedFilms} film${addedFilms > 1 ? 's' : ''}`);
+      if (addedShows) resultParts.push(`${addedShows} série${addedShows > 1 ? 's' : ''}`);
+      if (addedSeasons > addedShows) resultParts.push(`${addedSeasons} saison${addedSeasons > 1 ? 's' : ''} au total`);
+      showToast(resultParts.length ? `${resultParts.join(' · ')} importé${(addedFilms + addedSeasons) > 1 ? 's' : ''}` : 'Rien de nouveau à importer (déjà présent)');
     }
   );
 }
@@ -100,7 +157,8 @@ document.getElementById('import-file').addEventListener('change', e => {
 const BACKUP_SNOOZE_KEY = 'lbx_backup_snoozed_at';
 function maybeShowBackupReminder() {
   const history = loadHistory();
-  if (history.length < 10) return;
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (history.length + tvShows.length < 10) return;
 
   const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
   const days = lastExport ? (Date.now() - new Date(lastExport).getTime()) / 86400000 : Infinity;
@@ -113,7 +171,7 @@ function maybeShowBackupReminder() {
   banner.id = 'backup-reminder';
   banner.className = 'backup-reminder';
   banner.innerHTML = `
-    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length} films notés, aucune sauvegarde.`}</span>
+    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length + tvShows.length} élément${(history.length + tvShows.length) > 1 ? 's' : ''} noté${(history.length + tvShows.length) > 1 ? 's' : ''}, aucune sauvegarde.`}</span>
     <button type="button" class="backup-reminder-btn" id="backup-reminder-export">Exporter</button>
     <button type="button" class="backup-reminder-close" id="backup-reminder-close" aria-label="Plus tard">✕</button>
   `;

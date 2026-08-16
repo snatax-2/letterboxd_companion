@@ -420,6 +420,7 @@ function renderTvHistory() {
   const shows = getSortedTvShows();
   const container = document.getElementById('tv-history-list');
   renderGenreChips(allShows, renderTvHistory);
+  document.getElementById('filter-row').style.display = allShows.length === 0 ? 'none' : '';
 
   const badge = document.getElementById('hist-count-badge');
   const filmCount = loadHistory().length;
@@ -464,6 +465,7 @@ function renderTvHistory() {
         () => {
           const remaining = loadTvShows().filter(s => String(s.tmdbTvId) !== String(id));
           saveTvShows(remaining);
+          if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_show_tombstones', String(id));
           renderTvHistory();
           showToast(`"${show.title}" retirée`);
           if (typeof statsDirty !== 'undefined') statsDirty = true;
@@ -503,9 +505,13 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
       const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
       if (!showEntry) return;
       delete showEntry.seasons[seasonKey];
+      if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_season_tombstones', `${showId}:${seasonKey}`);
       const remaining = Object.keys(showEntry.seasons).length === 0
         ? shows.filter(s => String(s.tmdbTvId) !== String(showId))
         : shows;
+      if (Object.keys(showEntry.seasons).length === 0 && typeof recordTombstone === 'function') {
+        recordTombstone('lbx_tv_show_tombstones', String(showId));
+      }
       saveTvShows(remaining);
       renderTvHistory();
       showToast(`"${seasonName}" retirée`);

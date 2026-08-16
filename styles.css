@@ -23,6 +23,12 @@
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
+    /* color-scheme fait correspondre les contrôles natifs du navigateur
+       (sélecteur de date, notamment) à l'ambiance du thème plutôt que de
+       toujours afficher un widget clair par défaut — sans quoi cet élément
+       reste visuellement décalé du reste de l'interface, très soignée par
+       ailleurs. */
+    color-scheme: dark;
 
     --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
     /* 1. L'Original (Letterboxd) */
@@ -54,6 +60,7 @@
   }
 
   [data-theme="carnet"] {
+    color-scheme: light;
     /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
        de Bord, et l'ancien cluster "vintage clair" trop redondant avec
        Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
@@ -119,11 +126,12 @@
   [data-theme="carnet"] .platform-chip.selected,
   [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
   [data-theme="carnet"] .nav-btn-primary-label,
-  [data-theme="carnet"] .tv-continue-validate-btn {
+  [data-theme="carnet"] .tv-continue-check-btn {
     color: #000;
   }
 
   [data-theme="filmnoir"] {
+    color-scheme: dark;
     /* 12. Film Noir - Clair-obscur véritable */
     --bg: #050505; --surface: #111111; --surface2: #1a1a1a; --border: #333333;
     --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
@@ -153,6 +161,7 @@
   }
 
   [data-theme="cinephile"] {
+    color-scheme: light;
     /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
        bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
        sur des angles nets : ici tout est délibérément arrondi et sépia,
@@ -195,6 +204,7 @@
      bouton séparément au fil des retours. */
 
   [data-theme="moderne"] {
+    color-scheme: light;
     /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
        d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
        nettes, précision géométrique, papier millimétré d'architecte. Le
@@ -240,6 +250,7 @@
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
   [data-theme="technicolor"] {
+    color-scheme: dark;
     /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
        obscure, or vintage, rouge écarlate) directement dans l'interface. */
     --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
@@ -396,19 +407,19 @@
   /* Uniquement les éléments SANS transition propre — les autres gardent la
      leur (étendue individuellement avec transform) pour ne pas perdre leurs
      animations de bordure/fond au survol. */
-  .nav-btn, .backup-reminder-btn, summary, .wl-card-btn {
+  .nav-btn, .backup-reminder-btn, summary {
     transition: transform var(--dur-fast) var(--ease-out);
   }
   .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
   .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-  .quiz-answer:active, .hist-action-btn:active, .wl-card-btn:active,
+  .quiz-answer:active, .hist-action-btn:active,
   .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
     transform: scale(0.96);
   }
   @media (prefers-reduced-motion: reduce) {
     .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
     .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-    .quiz-answer:active, .hist-action-btn:active, .wl-card-btn:active,
+    .quiz-answer:active, .hist-action-btn:active,
     .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
       transform: none;
     }
@@ -422,13 +433,13 @@
      (critiques, synopsis, titres) reste sélectionnable, lui. */
   .btn, .nav-btn, .icon-btn, .genre-chip, .filter-btn, .theme-card,
   .duel-side, .duel-skip, .quiz-answer, .hist-action-btn,
-  .bottom-nav, summary, .hist-swipe-hint, .stars {
+  summary, .hist-swipe-hint, .stars {
     -webkit-user-select: none;
     user-select: none;
   }
   /* Le défilement d'une modale/feuille ne doit jamais "déborder" sur la
      page derrière (chaînage de scroll) */
-  .mds-box, .modal-overlay, .wl-picker-box, .settings-box {
+  .mds-box, .modal-overlay, .wl-picker-box {
     overscroll-behavior: contain;
   }
   /* Chiffres tabulaires : les compteurs ne "dansent" plus quand ils
@@ -492,11 +503,11 @@
      donne l'impression de "ne pas réagir" au toucher. On applique une légère
      réduction d'échelle sur les principaux éléments cliquables. */
   .icon-btn, .nav-btn, .theme-card, .hist-action-btn, .right-tab, .modal-btn,
-  .wl-btn, .carousel-item, .suggestion-item, .wl-suggest-item, .ctx-tag, .criterion-step-btn {
+  .wl-btn, .suggestion-item, .wl-suggest-item, .ctx-tag, .criterion-step-btn {
     transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   }
   .icon-btn:active, .nav-btn:active, .theme-card:active, .hist-action-btn:active,
-  .right-tab:active, .modal-btn:active, .wl-btn:active, .carousel-item:active,
+  .right-tab:active, .modal-btn:active, .wl-btn:active,
   .suggestion-item:active, .wl-suggest-item:active, .ctx-tag:active, .criterion-step-btn:active {
     transform: scale(.94);
   }
@@ -566,6 +577,11 @@
     box-shadow: var(--box-shadow-style, none);
   }
   .icon-btn:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text-hi); }
+  /* #settings-btn est un icon-btn sans texte (juste l'icône) — zone tactile
+     étendue ciblée sur lui seul, pas sur la classe .icon-btn partagée avec
+     d'autres boutons texte+icône déjà assez grands. */
+  #settings-btn { position: relative; }
+  #settings-btn::after { content: ''; position: absolute; inset: -7px; }
 
   /* ── LAYOUT ── */
   /* Une seule vue à la fois, à toutes les tailles d'écran (voir switchMobileNav
@@ -695,10 +711,10 @@
     font-size: 0.68rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase;
     letter-spacing: 0.06em; margin-bottom: 6px;
   }
-  .context-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .context-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
   .ctx-tag {
     background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
-    padding: 4px 10px; font-size: 0.72rem; color: var(--text-mid); cursor: pointer;
+    padding: 9px 12px; font-size: 0.72rem; color: var(--text-mid); cursor: pointer;
     font-family: var(--font-heading); font-weight: 600;
     transition: all var(--dur-fast);
   }
@@ -839,16 +855,8 @@
   .film-strip-title { color: var(--text-hi); font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-heading); }
   .film-strip-genre { color: var(--text); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
   .tv-show-average { color: var(--text-hi); font-size: 0.8rem; font-weight: 700; margin-top: 4px; font-family: var(--font-heading); }
-  .tv-phase1-note { color: var(--text-mid); font-size: 0.72rem; margin-top: 6px; font-style: italic; }
 
-  /* ── SÉRIES : suivi d'épisodes (Phase 2) ── */
-  .tv-episodes-wrap { margin-bottom: 16px; }
-  .tv-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .tv-progress-label { font-size: 0.76rem; font-weight: 700; color: var(--text-mid); white-space: nowrap; font-family: var(--font-heading); }
-  .tv-progress-bar { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
-  .tv-progress-fill { height: 100%; background: var(--orange); border-radius: 999px; transition: width .5s var(--ease-out); }
-
-  .tv-episode-list { display: flex; flex-direction: column; gap: 2px; }
+  /* ── SÉRIES : grille d'épisodes (fiche série détaillée) ── */
   .tv-episode-row { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
   .tv-episode-row:last-child { border-bottom: none; }
   .tv-episode-info { flex: 1; min-width: 0; }
@@ -1149,7 +1157,12 @@
     font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1; padding: 0;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
     transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    position: relative;
   }
+  /* Zone tactile étendue à ~44px (recommandation Apple/WCAG), même technique
+     déjà éprouvée sur .hist-action-btn — sûr ici : ces boutons sont aux
+     extrémités de la rangée curseur, pas collés à un autre bouton. */
+  .criterion-step-btn::after { content: ''; position: absolute; inset: -7px; }
   .criterion-step-btn:hover { border-color: var(--orange); color: var(--orange); }
   .affect-block .criterion-step-btn:hover { border-color: var(--blue); color: var(--blue); }
 
@@ -1362,11 +1375,7 @@
   .btn-save { background: var(--blue); color: var(--blue-fill-text, #0d1117); font-weight: 800; }
 
   /* ── STATS COLUMN ── */
-  .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; border: 1px solid var(--border); margin-bottom: 10px; transition: border-color var(--dur-fast); }
-  .stat-row:hover { border-color: var(--border-hi); }
-  .stat-row span:first-child { font-size: 0.82rem; }
-  .stat-num { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 600; color: var(--text-hi); }
-  .stat-group-title { font-family: var(--font-heading); font-size: 0.65rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  
   
   .histo { display: flex; flex-direction: column; gap: 7px; }
   .histo-row { display: flex; align-items: center; gap: 8px; font-size: 0.76rem; cursor: pointer; border-radius: var(--radius-sm); padding: 2px 4px; transition: background var(--dur-fast); }
@@ -1377,16 +1386,11 @@
   .histo-bar { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; transition: width var(--dur-slow) var(--ease-out); }
   .histo-count { width: 18px; text-align: right; font-family: var(--font-mono); color: var(--text-hi); font-size: 0.74rem; }
   
-  .top-genre-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid var(--border); cursor: pointer; transition: background var(--dur-fast), border-color var(--dur-fast); }
-  .top-genre-row:hover { border-color: var(--border-hi) !important; background: var(--surface2) !important; }
-  .top-genre-row.active { background: rgba(255,128,0,0.1) !important; border-color: var(--orange) !important; }
-  .top-genre-name { font-family: var(--font-heading); font-weight: 600; color: var(--text-hi); font-size: 0.85rem; }
-  .top-genre-meta { font-size: 0.75rem; color: var(--text); display: flex; gap: 8px; align-items: center; }
-  .top-genre-avg { font-family: var(--font-mono); color: var(--star-color); text-shadow: var(--star-shadow); font-weight: 600; }
+  
   
   /* Filter row */
-  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .filter-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.74rem; color: var(--text); cursor: pointer; transition: all var(--dur-fast); font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.04em; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 9px 12px; font-size: 0.74rem; color: var(--text); cursor: pointer; transition: all var(--dur-fast); font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.04em; }
   .filter-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .filter-btn.active { background: color-mix(in srgb, var(--orange) 18%, var(--surface)); border-color: var(--orange); color: var(--text-hi); }
 
@@ -1498,7 +1502,6 @@
   .hist-action-btn.del:hover { color: var(--red); }
 
   /* ── GENRE FILTER ── */
-  .genre-filter-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
   .genre-fold { margin-bottom: 10px; }
   .genre-fold-summary {
     list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -1556,6 +1559,7 @@
   .wl-card-content {
     display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%;
   }
+  .wl-card-open { display: flex; gap: 10px; flex: 1; min-width: 0; cursor: pointer; text-align: left; }
   .wl-card:not(.wl-dragging) .wl-card-content { transition: transform var(--dur-base) var(--ease-out); }
   .wl-card.wl-swipe-out-left .wl-card-content,
   .wl-card.wl-swipe-out-right .wl-card-content { transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); opacity: 0; }
@@ -1665,7 +1669,6 @@
   .duel-empty { text-align: center; color: var(--text-mid); font-size: 0.85rem; padding: 14px 0; }
   .duel-counter { font-size: 0.7rem; color: var(--text-mid); font-weight: 400; text-transform: none; letter-spacing: 0; }
   .duel-ranking { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
-  .duel-ranking-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px; }
   .duel-rank-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.84rem; }
   .duel-rank-pos { width: 26px; flex-shrink: 0; text-align: center; }
   .duel-medal { display: inline-flex; }
@@ -2697,7 +2700,6 @@
   }
   .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; }
   .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
-  .trending-item-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--text-mid); }
   .trending-item-title {
     font-size: 0.68rem; color: var(--text-mid); margin-top: 4px; text-align: center;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;

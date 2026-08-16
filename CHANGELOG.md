@@ -13,6 +13,76 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Audit UX/design complet, sur demande explicite (hors Profil, exclu à
+  la demande de l'utilisateur) :**
+  - **Cibles tactiles trop petites** — un manque signalé il y a longtemps
+    mais jamais traité jusqu'ici, confirmé avec de vraies mesures.
+    Étiquettes de contexte (23px → 33px de hauteur), filtres de tri
+    (24px → 34px), boutons pas-à-pas et bouton réglages (zone tactile
+    invisible étendue, la même technique déjà éprouvée ailleurs dans
+    l'app). Chaque correction vérifiée par un clic délibérément décalé
+    de plusieurs pixels du bouton visuel, pas juste une mesure statique.
+    - **Une bonne surprise en creusant** : le bouton Modifier/Supprimer
+      de l'Historique, initialement signalé comme trop petit, avait en
+      réalité déjà cette même zone tactile étendue en place — vérifié
+      en cliquant à 8px du bouton visuel, la suppression s'est bien
+      déclenchée. Rien touché sur cet élément pour ne pas casser ce qui
+      fonctionnait déjà.
+  - **Filtres de tri visibles même sans rien à trier** — Historique
+    cache maintenant ses boutons "Récents/Mieux notés..." à vide, côté
+    film et série, comme À voir le fait déjà pour ses propres contrôles.
+  - **Coquille de contenu** : le champ de recherche film suggérait
+    "Twin Peaks" comme exemple de film — une série, déjà utilisée comme
+    exemple côté séries. Remplacé par un vrai exemple de film.
+  - **Champ de date décalé visuellement** du reste de l'interface,
+    pourtant très soignée par ailleurs — `color-scheme` ajouté à chaque
+    thème pour que le sélecteur natif du navigateur s'accorde à
+    l'ambiance claire ou sombre plutôt que de rester figé.
+  - **Points volontairement laissés de côté**, propres au Profil (hors
+    du périmètre demandé) : la longueur de l'écran vide (~8000px),
+    l'espace vide du radar et de la heatmap sans données, l'incohérence
+    entre sections sur la gestion des cas vides, et le bouton
+    "Télécharger l'image" actif sans rien à télécharger.
+
+- **Audit complet de l'application (données/accessibilité), sur demande
+  explicite — 4 vrais problèmes trouvés et corrigés :**
+  - 🔴 **Les séries étaient absentes de l'export manuel ET de la
+    synchronisation cloud** — un vrai risque de perte de données (vider
+    le navigateur ou changer d'appareil effaçait tout le suivi de
+    séries, sans filet, alors que les films étaient protégés).
+    L'export inclut maintenant les séries, avec un ancien format de
+    sauvegarde qui reste lisible (rétrocompatibilité). La
+    synchronisation cloud fusionne désormais aussi les séries entre
+    appareils — à deux niveaux (série entière, puis saison individuelle
+    de chacune), avec ses propres traces de suppression respectées
+    séparément à chaque niveau, pour qu'une suppression sur un appareil
+    ne réapparaisse pas au prochain passage d'un autre. Une fonction de
+    fusion pure dédiée, testée avec 7 scénarios distincts.
+  - 🟠 **Bouton imbriqué dans un `role="button"` sur les cartes de la
+    watchlist** (onglet À voir) — le même défaut déjà corrigé deux fois
+    ailleurs dans ce projet, mais jamais détecté ici. Restructuré sans
+    toucher au geste de glissement existant ni au routage de clic déjà
+    en place.
+  - 🟡 **Code mort nettoyé** — une fonction JS jamais appelée, et une
+    vingtaine de classes CSS jamais utilisées (dont plusieurs restes
+    directs de l'ancienne grille d'épisodes retirée de Noter il y a
+    deux livraisons).
+  - **Une vraie régression trouvée en nettoyant, pas juste du
+    ménage** : un correctif de contraste pour le thème Carnet pointait
+    vers un nom de classe qui n'existait plus (`tv-continue-validate-btn`,
+    renommé en `tv-continue-check-btn` lors de la refonte du widget) —
+    il s'était donc arrêté silencieusement de s'appliquer. Confirmé
+    mathématiquement (4.02:1, sous le seuil) avant de le rattacher au
+    bon nom.
+  - **Une fausse alerte écartée avant d'être signalée comme un bug** :
+    en testant le bouton "Retirer" de la watchlist, une vérification
+    semblait montrer que la suppression ne fonctionnait pas — creusé
+    jusqu'à trouver que c'était le test lui-même qui vérifiait l'ancienne
+    clé de stockage (`lbx_watchlist`), migrée depuis longtemps vers
+    `lbx_watchlist_default` et jamais relue par l'app ensuite. La
+    fonctionnalité elle-même fonctionne correctement — corrigé le test,
+    pas l'application.
+
 - **Ombre du bouton "Noter" — vraie correction cette fois.** Le
   correctif de la session précédente (flou réduit de 14px à 8px) n'a
   pas suffi — l'utilisateur a confirmé que le problème persistait.

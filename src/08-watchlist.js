@@ -206,13 +206,15 @@ function renderWatchlist() {
     div.innerHTML = `
       <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
       <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
-      <div class="wl-card-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-        ${posterHtml}
-        <div class="wl-body">
-          <div class="wl-title">${escAttr(item.title)}</div>
-          <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
-          <div class="wl-providers" id="wl-providers-${i}">
-            <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+      <div class="wl-card-content">
+        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${posterHtml}
+          <div class="wl-body">
+            <div class="wl-title">${escAttr(item.title)}</div>
+            <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+            <div class="wl-providers" id="wl-providers-${i}">
+              <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+            </div>
           </div>
         </div>
         <div class="wl-actions">

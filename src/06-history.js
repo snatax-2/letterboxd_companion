@@ -239,6 +239,7 @@ function renderHistory() {
   }
 
   renderGenreChips(history);
+  document.getElementById('filter-row').style.display = history.length === 0 ? 'none' : '';
 
   if (history.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
