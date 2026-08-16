@@ -12,6 +12,41 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 
 ## [Non publié]
 
+### Corrigé
+- **Ombre du bouton "Noter" — vraie correction cette fois.** Le
+  correctif de la session précédente (flou réduit de 14px à 8px) n'a
+  pas suffi — l'utilisateur a confirmé que le problème persistait.
+  En zoomant sur les 6 thèmes, l'effet s'est révélé nettement plus
+  sévère sur les thèmes à fond clair (Carnet en premier lieu) qu'estimé
+  la première fois : une vraie tache sombre rectangulaire, pas juste un
+  léger débordement. Le flou est réduit une seconde fois, plus
+  significativement (8px → 4px), avec l'opacité aussi abaissée (0.35 →
+  0.25) — confirmé par capture d'écran zoomée sur les 6 thèmes cette
+  fois, pas un seul. Un test permanent verrouille maintenant le flou et
+  l'opacité dans une plage raisonnable, pour qu'un futur ajustement ne
+  puisse pas re-dériver silencieusement vers une valeur trop large sans
+  qu'un test échoue.
+  - **Un vrai bug de test préexistant trouvé au passage, sans rapport
+    avec cette ombre** : un délai de 400ms avant une vérification
+    d'accessibilité s'est révélé trop court face à la durée minimale
+    volontaire de l'écran de démarrage (1200ms) — corrigé.
+
+- **Glissement sur la carte de série entière (Historique)** — jusqu'ici
+  le glissement n'existait que sur les lignes de saison, une fois la
+  liste dépliée ; il fallait donc déplier avant de pouvoir supprimer.
+  Glisser directement sur l'en-tête d'une carte de série (affiche +
+  titre, sans rien déplier) révèle "Supprimer" et confirme la
+  suppression de toute la série — réutilise la même fenêtre de
+  confirmation que le bouton corbeille déjà visible, pas un second
+  chemin de suppression séparé. Uniquement vers la gauche : contrairement
+  à une saison, une série entière n'a pas d'action "Modifier" unique
+  vers laquelle glisser à droite.
+  - Contrôleur de glissement séparé de celui des saisons (comme pour le
+    choix déjà fait entre films et séries) : n'agit que sur l'en-tête de
+    la carte, jamais sur la liste de saisons dépliée juste en dessous,
+    pour qu'aucun conflit ne soit possible entre les deux niveaux de
+    glissement — vérifié explicitement.
+
 ### Modifié
 - **Widget "En cours" : cartes redessinées, repli possible.** Rond à
   cocher sur la partie droite du cadre (remplace le bouton "Valider

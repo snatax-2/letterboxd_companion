@@ -897,7 +897,16 @@
 
   /* ── SÉRIES : Historique (Phase 4) ── */
   .tv-show-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
-  .tv-show-card-header { display: flex; align-items: center; gap: 6px; padding: 10px; }
+  .tv-show-card-header-wrap { position: relative; overflow: hidden; touch-action: pan-y; }
+  .tv-show-card-header { display: flex; align-items: center; gap: 6px; padding: 10px; position: relative; z-index: 1; background: var(--bg); }
+  .tv-show-card-header-wrap:not(.hist-dragging) .tv-show-card-header { transition: transform var(--dur-base) var(--ease-out); }
+  .tv-show-card-header-wrap.hist-dragging .tv-show-card-header,
+  .tv-show-card-header-wrap.hist-swipe-armed-left .tv-show-card-header { will-change: transform; }
+  .tv-show-card-header-wrap.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
+  .tv-show-card-header-wrap.hist-swipe-armed-left .hist-swipe-hint-left {
+    cursor: pointer;
+    animation: armedHintPulse 1s ease-in-out infinite;
+  }
   .tv-show-card-open-btn {
     flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0;
     background: none; border: none; cursor: pointer; text-align: left; padding: 0; border-radius: 4px;
@@ -2906,7 +2915,7 @@
       width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
     .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
     .nav-btn-primary-label {

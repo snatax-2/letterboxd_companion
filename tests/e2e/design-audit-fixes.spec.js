@@ -71,7 +71,7 @@ test('bouton Noter : texte integre au cercle (pas de libelle externe separe)', a
 test('accessibilite : zero violation serieuse sur Notation et Profil apres les correctifs', async ({ page }) => {
   const AxeBuilder = require('@axe-core/playwright').default;
   await page.goto('/');
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(1400);
   let results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toHaveLength(0);
 

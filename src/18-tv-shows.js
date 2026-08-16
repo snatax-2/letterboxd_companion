@@ -485,6 +485,7 @@ function renderTvHistory() {
   });
 
   initTvSeasonSwipeGestures(container);
+  initTvShowCardSwipeGestures(container);
 }
 
 function deleteTvSeasonWithConfirm(showId, seasonKey) {
@@ -522,15 +523,18 @@ function renderTvShowCard(show) {
 
   return `
     <div class="tv-show-card">
-      <div class="tv-show-card-header">
-        <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
-          ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
-          <div class="tv-show-card-info">
-            <div class="tv-show-card-title">${escAttr(show.title)}</div>
-            <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
-          </div>
-        </button>
-        <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+      <div class="tv-show-card-header-wrap" data-show-id="${show.tmdbTvId}">
+        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+        <div class="tv-show-card-header">
+          <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
+            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
+            <div class="tv-show-card-info">
+              <div class="tv-show-card-title">${escAttr(show.title)}</div>
+              <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
+            </div>
+          </button>
+          <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+        </div>
       </div>
       <details class="tv-show-seasons-fold">
         <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
@@ -737,6 +741,126 @@ function initTvSeasonSwipeGestures(container) {
       if (wasArmedItself) return;
     }
   }, true); // capture : s'exécute avant les listeners de clic sur les boutons internes (reopen/delete)
+
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+}
+
+// Glissement sur la carte de série elle-même — supprime toute la série
+// (pas juste une saison). Uniquement vers la gauche : contrairement à une
+// saison, une série entière n'a pas d'action "Modifier" unique vers
+// laquelle glisser à droite, donc pas de second sens ici. Contrôleur
+// séparé plutôt que de généraliser initTvSeasonSwipeGestures : n'agit que
+// sur l'en-tête de la carte (pas sur la liste de saisons dépliée juste en
+// dessous), pour ne jamais entrer en conflit avec le glissement des
+// lignes de saison qui vit dans une zone distincte du DOM.
+function initTvShowCardSwipeGestures(container) {
+  const MOVE_CANCEL_PX = 12;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let startX = 0, startY = 0;
+  let pressedItem = null, pressedContent = null;
+  let swipeMode = null;
+  let dx = 0;
+  let armedItem = null;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.tv-show-card-header');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-left');
+    armedItem = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const showId = armedItem.dataset.showId;
+    armedItem = null;
+    const btn = container.querySelector(`.tv-show-delete-btn[data-show-id="${showId}"]`);
+    if (btn) btn.click(); // réutilise exactement la même confirmation/suppression que le bouton visible
+  }
+
+  function resetGesture() {
+    if (pressedItem) pressedItem.classList.remove('hist-dragging');
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.tv-show-card-header-wrap');
+    if (!item || e.target.closest('.tv-show-card-open-btn') || e.target.closest('.tv-show-delete-btn')) { resetGesture(); return; }
+    e.stopPropagation();
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-show-card-header');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const rawDx = e.touches[0].clientX - startX;
+    const rawDy = e.touches[0].clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    // Seulement vers la gauche : un glissement vers la droite ne fait rien
+    // (pas de deuxième action), donc plafonné à 0 plutôt que de suivre le doigt.
+    dx = Math.max(-MAX_DRAG, Math.min(0, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    if (!pressedItem) return;
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left');
+      }
+    }
+    resetGesture();
+  });
+  container.addEventListener('touchcancel', () => {
+    if (pressedItem && pressedContent) {
+      pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+      pressedContent.style.transform = '';
+      pressedItem.classList.remove('hist-swipe-left');
+    }
+    resetGesture();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (!armedItem) return;
+    const hint = e.target.closest('.hist-swipe-hint');
+    const clickedItem = e.target.closest('.tv-show-card-header-wrap');
+    if (hint && clickedItem === armedItem) { confirmArmed(); return; }
+    const wasArmedItself = clickedItem === armedItem;
+    cancelArmed();
+    if (wasArmedItself) return;
+  }, true);
 
   document.addEventListener('click', (e) => {
     if (armedItem && !container.contains(e.target)) cancelArmed();
