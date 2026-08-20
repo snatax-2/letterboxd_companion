@@ -86,13 +86,6 @@ let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvr
 // synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
 const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
 
-function formatMoneyShort(amount) {
-  if (!amount || amount <= 0) return null;
-  if (amount >= 1_000_000_000) return (amount / 1_000_000_000).toFixed(1).replace('.0', '') + ' Md$';
-  if (amount >= 1_000_000) return (amount / 1_000_000).toFixed(0) + ' M$';
-  return (amount / 1_000).toFixed(0) + ' k$';
-}
-
 async function loadFilmDuJour() {
   const todayKey = new Date().toISOString().slice(0, 10);
   let cached = null;
@@ -172,7 +165,7 @@ async function loadOnThisDay() {
   strip.innerHTML = anniversaries.flatMap(a =>
     a.films.map(f => `
       <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="on-this-day-poster" src="https://image.tmdb.org/t/p/w200${f.poster_path}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <img class="on-this-day-poster" src="${tmdbImage(f.poster_path, 'w200')}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
         <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
         <div class="on-this-day-title">${escAttr(f.title)}</div>
       </div>
@@ -240,7 +233,7 @@ async function fetchFilmDuJourProviders(tmdbId) {
 
     let html = '';
     [...flat, ...rentOnly].slice(0, 6).forEach(p => {
-      html += `<img class="fdj-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+      html += `<img class="fdj-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
     });
 
     if (!html) {
@@ -347,7 +340,7 @@ function renderGuessGame(m, isWeekly) {
   wrap.style.display = 'block';
 
   const todayKey = new Date().toISOString().slice(0, 10);
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w300');
   const year = m.release_date ? m.release_date.slice(0, 4) : '';
 
   // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
@@ -388,17 +381,42 @@ function renderGuessGame(m, isWeekly) {
 
   card.classList.add('fdj-guessing');
   card.classList.remove('fdj-revealed');
+  // Ludex 2.0 : reprend le traitement plein cadre du swipe — .guess-poster
+  // (toujours une <img>, testée par plusieurs specs e2e sur son tag et son
+  // filter inline) devient le FOND plein cadre plutôt qu'une vignette en
+  // ligne, via repositionnement CSS uniquement (voir .guess-poster dans
+  // styles.css) — le DOM/JS ne change pas de forme, juste son habillage.
+  // .guess-attempts est conservée telle quelle (texte "Essai X/Y", utilisée
+  // aussi comme cible de clic neutre par guess-suggestions.spec.js) ; les
+  // pastilles d'essai sont un ajout purement visuel à côté.
+  const attemptDots = Array.from({ length: GUESS_MAX_ATTEMPTS }, (_, i) =>
+    `<span class="fdj-attempt-dot${i < state.attempts ? ' used' : ''}"></span>`
+  ).join('');
   card.innerHTML = `
     <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
-    <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
-    ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
-    <form class="guess-form" id="guess-form" autocomplete="off">
-      <div class="guess-input-wrap">
-        <input type="text" class="guess-input" id="guess-input" placeholder="Titre du film…" aria-label="Ta proposition" autocomplete="off">
-        <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+    <div class="fdj-hero-overlay"></div>
+    <div class="fdj-hero-top">
+      <span class="fdj-hero-badge">Film du jour</span>
+      <div class="fdj-attempt-dots">
+        ${attemptDots}
+        <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
       </div>
-      <button type="submit" class="guess-submit-btn">Valider</button>
-    </form>
+    </div>
+    <div class="fdj-hero-body">
+      <div class="fdj-title-mask" aria-hidden="true">? ? ? ? ? ? ?</div>
+      <div class="fdj-hero-pills">
+        ${year ? `<span class="fdj-hero-pill accent">${escAttr(year)}</span>` : ''}
+        ${m.genres?.[0]?.name ? `<span class="fdj-hero-pill">${escAttr(m.genres[0].name)}</span>` : '<span class="fdj-hero-pill">Genre</span>'}
+      </div>
+      ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
+      <form class="guess-form" id="guess-form" autocomplete="off">
+        <div class="guess-input-wrap">
+          <input type="text" class="guess-input" id="guess-input" placeholder="Devine le titre…" aria-label="Ta proposition" autocomplete="off">
+          <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+        </div>
+        <button type="submit" class="guess-submit-btn">Valider</button>
+      </form>
+    </div>
   `;
 
   // Suggestions de titres en tapant — même recherche TMDb que le formulaire
@@ -562,23 +580,31 @@ async function loadTrendingCarousel() {
   try {
     const res = await fetch('/api/search?trending=true');
     const data = await res.json();
-    const movies = (data.results || []).filter(m => m.poster_path).slice(0, 15);
-    if (movies.length === 0) return;
-    renderTrendingCarousel(movies);
+    // "trending/all/week" mélange films et séries (et parfois des personnes,
+    // sans poster_path — écartées par le filtre) ; media_type distingue les
+    // deux pour le tag par vignette et le bon gestionnaire de clic.
+    const items = (data.results || [])
+      .filter(m => m.poster_path && (m.media_type === 'movie' || m.media_type === 'tv'))
+      .slice(0, 15);
+    if (items.length === 0) return;
+    renderTrendingCarousel(items);
     document.getElementById('trending-carousel-wrap').style.display = 'block';
   } catch (e) {
     console.warn('Impossible de charger les tendances du moment', e);
   }
 }
 
-function renderTrendingCarousel(movies) {
+function renderTrendingCarousel(items) {
   const outer = document.getElementById('trending-carousel');
-  const itemsHtml = movies.map(m => {
-    const posterUrl = `https://image.tmdb.org/t/p/w200${m.poster_path}`;
+  const itemsHtml = items.map(m => {
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    const title = m.title || m.name || '';
+    const isTv = m.media_type === 'tv';
     return `
-      <div class="trending-item" data-movie-id="${m.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
-        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
-        <div class="trending-item-title">${escAttr(m.title)}</div>
+      <div class="trending-item" data-media-id="${m.id}" data-media-type="${m.media_type}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(title)}">
+        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(title)}" loading="lazy">
+        <span class="trending-item-type">${isTv ? 'Série' : 'Film'}</span>
+        <div class="trending-item-title">${escAttr(title)}</div>
       </div>`;
   }).join('');
 
@@ -590,7 +616,9 @@ function renderTrendingCarousel(movies) {
 
   outer.addEventListener('click', (e) => {
     const item = e.target.closest('.trending-item');
-    if (item) openMovieDetailSheet(item.dataset.movieId);
+    if (!item) return;
+    if (item.dataset.mediaType === 'tv') openTvDetailSheet(item.dataset.mediaId);
+    else openMovieDetailSheet(item.dataset.mediaId);
   });
 
   // Défilement automatique piloté en JS (pas une animation CSS) : ça permet
@@ -692,6 +720,7 @@ async function loadDiscoverQueue() {
 
 async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
+  discoverStack.style.height = '';
   // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
   // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
   // et la perception d'attente est bien meilleure.
@@ -707,6 +736,11 @@ async function loadDiscoverQueueInner() {
   const watchedWithId = history.filter(h => h.tmdbId);
 
   if (watchedWithId.length === 0) {
+    // Hauteur fixe modeste plutôt que 'auto' : .discover-empty est en
+    // position absolute (inset:0), donc ne contribue pas à la hauteur
+    // automatique de son parent — 'auto' donnerait 0px de haut et
+    // rendrait le message invisible malgré son contenu.
+    discoverStack.style.height = '120px';
     discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
     return;
   }
@@ -762,12 +796,25 @@ async function loadDiscoverQueueInner() {
 
   discoverQueue = uniqueRecs.slice(0, 15);
   discoverLoaded = true;
-  renderDiscoverStack();
+  renderDiscoverCards();
+}
+
+// Ludex 2.0 : bascule entre la pile à glisser (comportement historique) et
+// la liste compacte (réglage optionnel, voir Réglages > "Suggestions en
+// liste compacte") — un seul point d'entrée, pour que loadDiscoverQueueInner
+// et le bouton de rechargement n'aient jamais à connaître ce choix.
+function renderDiscoverCards() {
+  if (document.documentElement.classList.contains('discover-swipe-compact')) {
+    renderDiscoverCompactList();
+  } else {
+    renderDiscoverStack();
+  }
 }
 
 function renderDiscoverStack() {
   if (discoverQueue.length === 0) {
     discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '120px';
     if (discoverLoadFailed) {
       discoverStack.innerHTML = `
         <div class="error-state">
@@ -780,6 +827,7 @@ function renderDiscoverStack() {
     }
     return;
   }
+  discoverStack.style.height = '';
   discoverActionsEl.style.display = 'flex';
 
   // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
@@ -822,7 +870,7 @@ function renderDiscoverStack() {
 function buildDiscoverCardEl(m, isTop) {
   const year = m.release_date?.slice(0, 4) || '????';
   const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w500');
   let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
   if (overview.length > 160) overview = overview.slice(0, 160) + '…';
 
@@ -868,6 +916,83 @@ function resolveDiscoverSwipe(direction) {
   hapticPulse(discoverStack, 'medium');
   renderDiscoverStack();
 }
+
+// ── Ludex 2.0 : liste compacte (réglage optionnel) ──
+// Même file (discoverQueue), même logique d'action (watchlist/passer), mais
+// chaque ligne a ses propres boutons plutôt qu'un geste de glissement sur
+// une seule carte à la fois — toute la file reste visible et actionnable
+// d'un coup, pas juste le film du dessus de la pile.
+function renderDiscoverCompactList() {
+  if (discoverQueue.length === 0) {
+    discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '';
+    if (discoverLoadFailed) {
+      discoverStack.innerHTML = `
+        <div class="error-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
+          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
+        </div>`;
+    } else {
+      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    }
+    return;
+  }
+  discoverActionsEl.style.display = 'none'; // boutons pass/like par ligne, plus besoin de la paire globale sous la pile
+  discoverStack.style.height = '';
+
+  discoverStack.innerHTML = `<div class="discover-compact-list">${discoverQueue.map(m => {
+    const year = m.release_date?.slice(0, 4) || '????';
+    const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    return `
+      <div class="discover-compact-row" data-movie-id="${m.id}">
+        <div class="discover-compact-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
+          ${posterUrl
+            ? `<img class="discover-compact-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            : `<div class="discover-compact-poster-ph">${ICONS.clapper}</div>`}
+          <div class="discover-compact-info">
+            <div class="discover-compact-title">${escAttr(m.title)}</div>
+            <div class="discover-compact-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
+          </div>
+        </div>
+        <div class="discover-compact-actions">
+          <button type="button" class="discover-compact-btn pass" data-action="pass" aria-label="Passer ${escAttr(m.title)}" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button type="button" class="discover-compact-btn like" data-action="like" aria-label="Ajouter ${escAttr(m.title)} à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+// Résout l'action d'UNE ligne de la liste compacte (pas forcément la
+// première de la file, contrairement à resolveDiscoverSwipe) : retrouve le
+// film par son id, applique la même action que le swipe, réaffiche la liste.
+function resolveDiscoverCompact(movieId, direction) {
+  const idx = discoverQueue.findIndex(m => String(m.id) === String(movieId));
+  if (idx === -1) return;
+  const [movie] = discoverQueue.splice(idx, 1);
+
+  if (direction === 'like') {
+    const year = movie.release_date?.slice(0, 4) || '????';
+    addToWatchlistFromTMDb(movie, year);
+    if (navigator.vibrate) navigator.vibrate(20);
+  } else {
+    markDiscoverPassed(movie.id);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+  renderDiscoverCompactList();
+}
+
+discoverStack?.addEventListener('click', (e) => {
+  const row = e.target.closest('.discover-compact-row');
+  if (!row) return;
+  const actionBtn = e.target.closest('.discover-compact-btn');
+  if (actionBtn) {
+    resolveDiscoverCompact(row.dataset.movieId, actionBtn.dataset.action);
+    return;
+  }
+  if (e.target.closest('.discover-compact-open')) openMovieDetailSheet(row.dataset.movieId);
+});
 
 function attachSwipeHandlers(cardEl, movie) {
   let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
@@ -1134,3 +1259,24 @@ discoverStack?.addEventListener('click', (e) => {
   discoverLoadFailed = false;
   loadDiscoverQueue();
 });
+
+// ═══════════════════════════════════════════
+//  "PARCOURIR" — sous-onglets Par thème / Classiques (Ludex 2.0 §06)
+// ═══════════════════════════════════════════
+// Bascule sur classList uniquement (jamais .style.display) : ces deux
+// panneaux sont aussi manipulés en .style.display par 00e-feature-flags.js
+// (activation/désactivation de fonctionnalité) — voir le commentaire dans
+// styles.css (.browse-panel) pour pourquoi ça évite tout conflit.
+const browseTabTheme = document.getElementById('browse-tab-theme');
+const browseTabClassics = document.getElementById('browse-tab-classics');
+const browsePanelTheme = document.getElementById('theme-explorer-wrap');
+const browsePanelClassics = document.getElementById('curated-lists-shortcut-wrap');
+function setBrowseTab(which) {
+  const themeActive = which === 'theme';
+  browseTabTheme?.classList.toggle('active', themeActive);
+  browseTabClassics?.classList.toggle('active', !themeActive);
+  browsePanelTheme?.classList.toggle('active', themeActive);
+  browsePanelClassics?.classList.toggle('active', !themeActive);
+}
+browseTabTheme?.addEventListener('click', () => setBrowseTab('theme'));
+browseTabClassics?.addEventListener('click', () => setBrowseTab('classics'));

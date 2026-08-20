@@ -32,6 +32,8 @@ test.beforeEach(async ({ page }) => {
 test('les 4 reponses ont une pastille lettre A/B/C/D', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   const letters = await page.locator('.quiz-answer-letter').allTextContents();
@@ -41,6 +43,8 @@ test('les 4 reponses ont une pastille lettre A/B/C/D', async ({ page }) => {
 test('bonne reponse : icone check visible sur la bonne pastille', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   await page.locator('.quiz-answer-btn', { hasText: 'Quentin Tarantino' }).click();
@@ -50,6 +54,8 @@ test('bonne reponse : icone check visible sur la bonne pastille', async ({ page 
 test('mauvaise reponse : icones check ET croix visibles sur les deux pastilles concernees', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   await page.locator('.quiz-answer-btn', { hasText: 'Martin Scorsese' }).click();
@@ -61,6 +67,8 @@ test('les couleurs correct/faux suivent le theme actif (pas de rgba code en dur)
   await page.addInitScript(() => localStorage.setItem('lbx_settings', JSON.stringify({ theme: 'technicolor' })));
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   await page.locator('.quiz-answer-btn', { hasText: 'Quentin Tarantino' }).click();

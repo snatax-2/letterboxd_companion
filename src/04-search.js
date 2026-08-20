@@ -21,7 +21,21 @@ document.querySelectorAll('.ctx-tag').forEach(btn => {
 const searchEl  = document.getElementById('movie-search');
 const suggestEl = document.getElementById('suggestions');
 const searchStatus = document.getElementById('search-status');
+const searchClearBtn = document.getElementById('search-clear-btn');
 let searchTimer;
+
+// Bouton d'effacement : visible dès qu'il y a du texte, évite d'avoir à
+// tout effacer au clavier pour relancer une recherche. Redéclenche
+// l'événement 'input' plutôt que de dupliquer sa logique (masquage des
+// suggestions, sauvegarde du brouillon) — une seule source de vérité.
+searchEl.addEventListener('input', () => {
+  searchClearBtn.style.display = searchEl.value ? 'flex' : 'none';
+});
+searchClearBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  searchEl.dispatchEvent(new Event('input'));
+  searchEl.focus();
+});
 
 // Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
 // tapé — partagée entre la recherche du formulaire de notation et celle de la
@@ -41,7 +55,7 @@ async function fetchPersonMatch(q) {
 }
 
 function buildPersonSuggestionEl(person) {
-  const photoUrl = person.profile_path ? `https://image.tmdb.org/t/p/w92${person.profile_path}` : '';
+  const photoUrl = tmdbImage(person.profile_path, 'w92');
   const item = document.createElement('div');
   item.className = 'suggestion-item suggestion-person';
   const imgHtml = photoUrl
@@ -132,7 +146,7 @@ async function fetchSuggestions(q) {
       const item = document.createElement('div');
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
-        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        ? `<img class="suggestion-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${escAttr(m.title)}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
@@ -153,7 +167,7 @@ async function fetchSuggestions(q) {
 async function selectMovie(m, year) {
   document.getElementById('movie-title').value  = m.title;
   document.getElementById('movie-year').value   = year;
-  document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
+  document.getElementById('movie-poster').value = tmdbImage(m.poster_path, 'w185');
   document.getElementById('movie-tmdb-id').value = m.id;
   searchEl.value = `${escAttr(m.title)} (${year})`;
   suggestEl.style.display = 'none';
@@ -218,7 +232,7 @@ async function selectMovie(m, year) {
   strip.classList.add('visible');
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
-    document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
+    document.getElementById('strip-poster').src = tmdbImage(m.poster_path, 'w92');
     document.getElementById('strip-poster').alt = `Affiche de ${escAttr(m.title)}`;
     document.getElementById('strip-poster').style.display = 'block';
   }

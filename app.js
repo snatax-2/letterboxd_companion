@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06-history.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 16-blind-spots.js, 17-film-analysis.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06a-history-list.js, 06b-history-actions.js, 06c-profile-stats.js, 06d-profile-share-cards.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 16-blind-spots.js, 17-film-analysis.js, 18-tv-shows.js, 19-tv-detail.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -194,11 +194,26 @@ const ICONS = {
 
   close: `<svg ${ICON_ATTRS}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
 
+  pause: `<svg ${ICON_ATTRS}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
+
+  play: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg>`,
+
   star: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>`,
 
   popcorn: `<svg ${ICON_ATTRS}><path d="M6 8h12l-1.4 12.1a1 1 0 0 1-1 .9H8.4a1 1 0 0 1-1-.9L6 8z"/><path d="M9 8v13M12 8v13M15 8v13"/><path d="M5 8a2 2 0 0 1 2-3h10a2 2 0 0 1 2 3"/></svg>`,
 
   sofa: `<svg ${ICON_ATTRS}><path d="M5 12a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3H5v-3z"/><path d="M4 15v4M20 15v4"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>`,
+
+  // ── Thèmes Découvrir (remplacent les emoji, cohérence avec le reste de
+  //    l'app) : voir 00f-curated-lists-data.js pour l'association thème → icône.
+  moneyBag: `<svg ${ICON_ATTRS}><path d="M9 6a3 3 0 0 1 6 0"/><path d="M6.5 6h11l1.3 11a2 2 0 0 1-2 2.2H7.2a2 2 0 0 1-2-2.2L6.5 6z"/><line x1="12" y1="10" x2="12" y2="15"/></svg>`,
+  timeLoop: `<svg ${ICON_ATTRS}><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2"/><path d="M9 2l3 3 3-3"/></svg>`,
+  sword: `<svg ${ICON_ATTRS}><line x1="5" y1="19" x2="19" y2="5"/><line x1="14" y1="8" x2="17" y2="11"/><line x1="4" y1="20" x2="6" y2="18"/></svg>`,
+  sprout: `<svg ${ICON_ATTRS}><path d="M12 22v-9"/><path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6z"/><path d="M12 9c0-3 2-5 6-5 0 3-2 5-6 5z"/></svg>`,
+  compass: `<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>`,
+  road: `<svg ${ICON_ATTRS}><path d="M9 3L5 21"/><path d="M15 3l4 18"/><line x1="12" y1="5" x2="12" y2="8"/><line x1="12" y1="11" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="20"/></svg>`,
+  hauntedHouse: `<svg ${ICON_ATTRS}><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5a2 2 0 0 1 4 0v5"/><circle cx="9" cy="14" r="0.7" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="0.7" fill="currentColor" stroke="none"/></svg>`,
+  skyline: `<svg ${ICON_ATTRS}><rect x="3" y="10" width="4" height="11"/><rect x="9" y="5" width="4" height="16"/><rect x="15" y="13" width="4" height="8"/></svg>`,
 };
 
 if (typeof module !== 'undefined' && module.exports) {
@@ -679,14 +694,14 @@ const CURATED_COUNTRIES = [
 // canonique de films : vit dans Découvrir comme un outil de
 // navigation/suggestion, pas de suivi de complétion.
 const CURATED_THEMES = [
-  { id: 10051, name: 'Braquage', emoji: '💰' },
-  { id: 10854, name: 'Boucle temporelle', emoji: '🔁' },
-  { id: 9748, name: 'Vengeance', emoji: '⚔️' },
-  { id: 10683, name: "Passage à l'âge adulte", emoji: '🌱' },
-  { id: 10349, name: 'Survie', emoji: '🏝️' },
-  { id: 7312, name: 'Road trip', emoji: '🚗' },
-  { id: 3358, name: 'Maison hantée', emoji: '👻' },
-  { id: 4565, name: 'Dystopie', emoji: '🏙️' },
+  { id: 10051, name: 'Braquage', icon: 'moneyBag' },
+  { id: 10854, name: 'Boucle temporelle', icon: 'timeLoop' },
+  { id: 9748, name: 'Vengeance', icon: 'sword' },
+  { id: 10683, name: "Passage à l'âge adulte", icon: 'sprout' },
+  { id: 10349, name: 'Survie', icon: 'compass' },
+  { id: 7312, name: 'Road trip', icon: 'road' },
+  { id: 3358, name: 'Maison hantée', icon: 'hauntedHouse' },
+  { id: 4565, name: 'Dystopie', icon: 'skyline' },
 ];
 
 // ═══════════════════════════════════════════
@@ -1010,30 +1025,14 @@ function loadSettings() {
   }
 }
 
-// Bascule jour/nuit du thème Méridien, basée sur l'heure RÉELLE (pas les
-// préférences système comme le thème "Auto") — nuit de 20h à 7h. Le laiton
-// (accent) reste identique dans les deux cas ; seuls fond et texte s'inversent
-// (voir [data-theme="meridien"].meridien-night dans styles.css).
-function applyMeridienDayNight() {
-  const hour = new Date().getHours();
-  const isNight = hour < 7 || hour >= 20;
-  document.documentElement.classList.toggle('meridien-night', isNight);
-}
-let meridienIntervalStarted = false;
-function ensureMeridienInterval() {
-  if (meridienIntervalStarted) return;
-  meridienIntervalStarted = true;
-  // Revérifie toutes les 10 minutes : suffisant pour basculer au bon moment
-  // même si l'app reste ouverte sans être rechargée à travers la frontière jour/nuit.
-  setInterval(() => {
-    if (document.documentElement.getAttribute('data-theme') === 'meridien') applyMeridienDayNight();
-  }, 10 * 60 * 1000);
-}
-
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
   let themeToApply = settings.theme || "default";
+  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
+  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
+  // que de retomber sur des couleurs cohérentes.
+  if (themeToApply === 'meridien') themeToApply = 'default';
   
   if (themeToApply === "system") {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1048,13 +1047,14 @@ function applySettings(settings) {
   }
   
   document.documentElement.setAttribute('data-theme', themeToApply);
-  if (themeToApply === 'meridien') {
-    applyMeridienDayNight();
-    ensureMeridienInterval();
-  }
-  
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
   document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
+  // Suggestions Découvrir en liste compacte plutôt qu'en pile à glisser —
+  // false par défaut (comportement historique conservé). Le changement de
+  // mise en page proprement dit vit dans 11-discover.js (renderDiscoverCards
+  // lit ce même data-attribute au moment du rendu).
+  document.getElementById('setting-discover-swipe-compact').checked = settings.discoverSwipeCompact === true;
+  document.documentElement.classList.toggle('discover-swipe-compact', settings.discoverSwipeCompact === true);
   const owned = loadOwnedProviders();
   document.querySelectorAll('.platform-chip').forEach(chip => {
     chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
@@ -1090,10 +1090,6 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     if (card.dataset.theme !== "system") {
         document.documentElement.setAttribute('data-theme', card.dataset.theme);
-        if (card.dataset.theme === 'meridien') {
-          applyMeridienDayNight();
-          ensureMeridienInterval();
-        }
     } else {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
@@ -1143,12 +1139,17 @@ document.getElementById('settings-save').addEventListener('click', () => {
     appName: formattedName,
     theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
+    discoverSwipeCompact: document.getElementById('setting-discover-swipe-compact').checked,
   };
   
   localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
   const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
   saveOwnedProviders(selectedProviders);
   applySettings(newSettings);
+  // Le mode d'affichage a pu changer : redessine la pile de suggestions dans
+  // sa nouvelle forme si elle a déjà des films chargés (sinon rien à faire,
+  // le prochain chargement lira directement la classe posée par applySettings).
+  if (typeof renderDiscoverCards === 'function' && discoverQueue.length > 0) renderDiscoverCards();
   renderAll();
   document.getElementById('settings-modal').classList.remove('open');
   document.getElementById('settings-btn').focus();
@@ -1214,6 +1215,38 @@ function escAttr(str) {
     .replace(/>/g, '&gt;');
 }
 
+// Construit une URL d'affiche/photo TMDb à partir d'un chemin brut — évite
+// de répéter "https://image.tmdb.org/t/p/..." à la main à chaque appelant
+// (un audit en a compté ~33 occurrences dispersées). Retourne une chaîne
+// vide si path est absent, pour que les appelants gardent leur `? :` habituel
+// sans avoir à vérifier deux fois.
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois +
+// grille d'affiches watchlist" est spécifique au thème par défaut (voir
+// "Vers Ludex 2.0" §01 — les 6 autres thèmes gardent leur composition
+// d'origine). Un seul point de vérité, partagé par l'historique, la
+// watchlist et l'écran Noter.
+function isDefaultComposition() {
+  const t = document.documentElement.dataset.theme;
+  return !t || t === 'default';
+}
+
+function tmdbImage(path, size = 'w185') {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+}
+
+// État vide unifié — soit compact (juste un texte, pour une section déjà
+// titrée comme "Top Réalisateurs" ou "Distribution des notes"), soit
+// complet (icône + message + CTA optionnel, pour un écran autonome comme
+// Historique/À voir vides). Les états déjà riches et fonctionnels ne sont
+// pas retouchés par cette fonction — elle sert à ne plus avoir à
+// réinventer le motif à la main à chaque nouvel endroit qui en a besoin.
+function renderEmptyState({ icon = null, message, ctaLabel = null, ctaId = null } = {}) {
+  const iconHtml = icon ? `<div class="empty-state-icon">${icon}</div>` : '';
+  const ctaHtml = ctaLabel ? `<button type="button" class="empty-state-cta"${ctaId ? ` id="${ctaId}"` : ''}>${escAttr(ctaLabel)}</button>` : '';
+  const cls = icon || ctaLabel ? 'empty-state' : 'empty-state empty-state-compact';
+  return `<div class="${cls}">${iconHtml}${escAttr(message)}${ctaHtml}</div>`;
+}
+
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
@@ -1221,6 +1254,21 @@ let isLiked     = false;
 let currentMode = 'detail'; 
 let quickRating = 2.5;      
 let sortOrder   = 'date';
+// Bascule Film/Série (module Séries) : déclarée ici plutôt que dans
+// 18-tv-shows.js (son fichier "naturel", chargé en dernier) car
+// calculateScore() (05-rating-form.js) la lit, et calculateScore() est
+// appelée dès l'initialisation par 09-modal-init.js — AVANT que
+// 18-tv-shows.js n'ait eu la chance d'exécuter sa propre déclaration.
+// Contrairement aux fonctions (hissées entièrement), un "let" reste
+// inaccessible tant que sa ligne n'a pas été atteinte : la même variable
+// déclarée dans le fichier 18 provoquait "Cannot access before
+// initialization" au chargement — trouvé en testant le flux complet de
+// notation de saison, pas visible sur des tests plus étroits.
+let currentMediaType = 'movie';
+// Bascule Films/Séries dans l'Historique — déclarée ici pour la même
+// raison que currentMediaType juste au-dessus (voir ce commentaire).
+let historyMediaFilter = 'movie';
+let statsMediaFilter = 'movie';
 let activeGenre = null; 
 let weightsOpen = false;
 let pendingAction = null; 
@@ -1368,6 +1416,32 @@ function hapticPulse(el, intensity = 'light') {
   });
 }
 
+// Bascule l'affichage entre deux éléments mutuellement exclusifs (onglets
+// Films/Séries, dans Historique/Statistiques/Noter) avec un léger fondu
+// plutôt qu'un changement instantané — motif répété à 3 endroits, d'où
+// cette fonction partagée. Reste sobre (juste opacity, pas de mouvement)
+// pour rester cohérent avec le reste de l'app, jamais chargée en effets.
+function fadeSwitchDisplay(hideEl, showEl) {
+  if (!hideEl || !showEl || hideEl === showEl) return;
+  hideEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  hideEl.style.opacity = '0';
+  setTimeout(() => {
+    hideEl.style.display = 'none';
+    hideEl.style.removeProperty('opacity');
+    hideEl.style.removeProperty('transition');
+    showEl.style.display = '';
+    showEl.style.opacity = '0';
+    requestAnimationFrame(() => {
+      showEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+      showEl.style.opacity = '1';
+      setTimeout(() => {
+        showEl.style.removeProperty('opacity');
+        showEl.style.removeProperty('transition');
+      }, 150);
+    });
+  }, 140);
+}
+
 // Différé au tick suivant (setTimeout 0) plutôt qu'appelé immédiatement ici :
 // app.js est la concaténation de 16 fichiers exécutés dans l'ordre, et ce
 // fichier-ci (03-foundation.js) est encore tôt dans cet ordre. Un appel
@@ -1456,6 +1530,20 @@ function computeWeightedScore(criteriaValues, weights) {
   return totalWeight > 0 ? weightedSum / totalWeight : 5;
 }
 
+// Note globale d'une série : moyenne des saisons NOTÉES uniquement (une
+// saison sans note n'entre pas dans le calcul, plutôt que de compter comme
+// 0 et fausser la moyenne). Jamais stockée — toujours recalculée à partir
+// des saisons, exactement comme convenu : une série qui change de
+// direction en cours de route (True Detective, Twin Peaks...) n'a pas sa
+// meilleure/pire saison lissée dans une note unique figée.
+function computeShowAverageScore(showEntry) {
+  if (!showEntry || !showEntry.seasons) return null;
+  const rated = Object.values(showEntry.seasons).filter(s => s.rating && s.rating.score != null);
+  if (rated.length === 0) return null;
+  const sum = rated.reduce((acc, s) => acc + parseFloat(s.rating.score), 0);
+  return sum / rated.length;
+}
+
 // Convertit un score sur 10 en équivalent "étoiles" (pas de 0.5), pour l'affichage.
 function scoreToStars(score) {
   return Math.round((score / 2) * 2) / 2;
@@ -1479,6 +1567,71 @@ function historyItemKey(item) {
 
 function watchlistItemKey(item) {
   return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
+}
+
+function tvShowItemKey(show) {
+  return String(show.tmdbTvId);
+}
+
+// ─── Fusion cloud : séries suivies ───────────────────────────────────────────
+// Contrairement aux films/watchlist (listes plates), une série contient des
+// saisons imbriquées — la fusion se fait donc à deux niveaux : d'abord les
+// séries elles-mêmes, puis pour chaque série ses saisons une par une. Deux
+// listes de tombstones séparées (série entière / saison individuelle, clé
+// composée tmdbTvId:numéroSaison) — chaque suppression, quel que soit son
+// niveau, doit rester respectée après une synchronisation.
+function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
+  const byId = new Map();
+  for (const show of [...local, ...remote]) {
+    const key = tvShowItemKey(show);
+    if (!key || key === 'undefined') continue;
+    if (!byId.has(key)) {
+      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, seasons: {} });
+    }
+    const target = byId.get(key);
+    if (show.title) target.title = show.title;
+    if (show.poster_path) target.poster_path = show.poster_path;
+    if (show.genre) target.genre = show.genre;
+
+    for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
+      const existing = target.seasons[seasonKey];
+      if (!existing) { target.seasons[seasonKey] = season; continue; }
+      // Deux versions de la même saison : pas de vrai horodatage de dernière
+      // modification au niveau saison pour trancher finement — priorité à
+      // celle qui a une note (plus "aboutie"), puis à la date de note la
+      // plus récente, puis au nombre d'épisodes vus le plus élevé.
+      const existingRated = !!existing.rating;
+      const seasonRated = !!season.rating;
+      if (seasonRated && !existingRated) {
+        target.seasons[seasonKey] = season;
+      } else if (seasonRated && existingRated) {
+        if (new Date(season.rating.date || 0) > new Date(existing.rating.date || 0)) target.seasons[seasonKey] = season;
+      } else if (!seasonRated && !existingRated) {
+        if ((season.watchedEpisodes || []).length > (existing.watchedEpisodes || []).length) target.seasons[seasonKey] = season;
+      }
+    }
+  }
+
+  for (const show of byId.values()) {
+    for (const seasonKey of Object.keys(show.seasons)) {
+      const tomb = seasonTombstones.find(t => t.key === `${show.tmdbTvId}:${seasonKey}`);
+      if (!tomb) continue;
+      const seasonTime = new Date(show.seasons[seasonKey].rating?.date || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= seasonTime) delete show.seasons[seasonKey];
+    }
+  }
+
+  const result = [];
+  for (const show of byId.values()) {
+    const tomb = showTombstones.find(t => t.key === tvShowItemKey(show));
+    if (tomb) {
+      const latestSeasonTime = Math.max(0, ...Object.values(show.seasons).map(s => new Date(s.rating?.date || 0).getTime()));
+      if (new Date(tomb.deletedAt).getTime() >= latestSeasonTime) continue;
+    }
+    if (Object.keys(show.seasons).length === 0) continue;
+    result.push(show);
+  }
+  return result;
 }
 
 // ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
@@ -1637,6 +1790,39 @@ const DESCS = {
   ]
 };
 
+// Séries — Phase 3 : descriptions propres aux deux critères reformulés
+// pour une saison ("photo" -> Qualité du final, "rythme" -> Rythme &
+// Cohérence de la saison). Les 5 autres critères (scenario, realisation,
+// acteurs, ambiance, affect) restent transposables tels quels, mêmes
+// textes que pour un film — pas de doublon nécessaire pour eux. Même
+// structure à 10 paliers que DESCS, pour rester cohérent.
+const DESCS_TV_OVERRIDES = {
+  photo: [
+    [9.5,"Un final parfait, qui élève toute la saison et referme chaque fil narratif avec une intelligence rare."],
+    [8.5,"Une conclusion magistrale, à la hauteur de tout ce qui précède, qui restera gravée longtemps."],
+    [7.5,"Excellent épisode final. Il conclut la saison avec panache, sans faux pas majeur."],
+    [6.5,"Bon final, qui referme l'essentiel sans forcément marquer les esprits."],
+    [5.5,"Final honnête et satisfaisant, qui fait le travail sans surprendre."],
+    [4.5,"Final en demi-teinte. Quelques fils narratifs bâclés ou une résolution un peu facile."],
+    [3.5,"Conclusion décevante, qui peine à être à la hauteur de la saison."],
+    [2.5,"Final raté, qui gâche une partie de ce que la saison avait construit."],
+    [1.5,"Fin quasiment ratée, qui trahit l'attente installée par les épisodes précédents."],
+    [0,  "Un désastre. La fin détruit ce que la saison avait de mieux, ou ne conclut rien du tout."]
+  ],
+  rythme: [
+    [9.5,"Un rythme d'une précision chirurgicale sur toute la saison. Chaque épisode a sa place, aucun ventre mou, une cohérence sans faille du premier au dernier épisode."],
+    [8.5,"Excellente cohérence de saison, un tempo qui épouse parfaitement l'arc narratif du premier au dernier épisode."],
+    [7.5,"Très bonne tenue sur la durée. La saison se regarde sans effort, les épisodes s'enchaînent avec fluidité."],
+    [6.5,"Rythme globalement maîtrisé sur la saison, quelques épisodes plus faibles qui n'entament pas l'ensemble."],
+    [5.5,"Cohérence correcte mais irrégulière. Certains épisodes traînent, d'autres filent trop vite, sans que ça gâche l'ensemble."],
+    [4.5,"Rythme mal calibré sur la saison. Des épisodes de remplissage qui cassent l'élan général."],
+    [3.5,"Saison qui traîne clairement en longueur sur plusieurs épisodes, ou qui semble décousue d'un épisode à l'autre."],
+    [2.5,"Cohérence poussive sur une bonne partie de la saison, l'intérêt décroche régulièrement d'un épisode à l'autre."],
+    [1.5,"Enchaînement confus, tempo constamment à côté de la plaque sur la majorité des épisodes."],
+    [0,  "Rythme complètement raté sur toute la saison. Interminable, ou décousu au point de perdre le fil d'un épisode à l'autre."]
+  ]
+};
+
 // Le cache est attaché à la fonction elle-même (pas une const top-level) et
 // initialisé au premier appel — ainsi aucune ligne de déclaration à atteindre
 // avant de pouvoir l'utiliser. C'est exactement la même classe de bug
@@ -1647,12 +1833,12 @@ const DESCS = {
 // atteint sa propre déclaration. Cette fois le remède habituel ("rendre la
 // constante locale à la fonction") ne suffit pas seul, puisque ce cache doit
 // justement SURVIVRE entre les appels — d'où cette variante.
-function getDesc(criterion, val) {
+function getDesc(criterion, val, mediaType = 'movie') {
   if (!getDesc._cache) getDesc._cache = {};
   const _descCache = getDesc._cache;
-  const key = criterion + val;
+  const key = mediaType + criterion + val;
   if (_descCache[key]) return _descCache[key];
-  const tiers = DESCS[criterion];
+  const tiers = (mediaType === 'tv' && DESCS_TV_OVERRIDES[criterion]) || DESCS[criterion];
 
   for (let i = 0; i < tiers.length; i++) {
     const [thresh, text] = tiers[i];
@@ -2023,16 +2209,20 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     computeQuickScore,
     computeWeightedScore,
+    computeShowAverageScore,
     scoreToStars,
     getStarStr,
     historyItemKey,
     watchlistItemKey,
+    tvShowItemKey,
     mergeTombstoneLists,
     mergeHistory,
     mergeWatchlist,
+    mergeTvShows,
     TOMBSTONE_MAX_AGE_MS,
     getDesc,
     DESCS,
+    DESCS_TV_OVERRIDES,
     computeCriteriaAverages,
     formatWatchTime,
     getISOWeekKey,
@@ -2072,7 +2262,21 @@ document.querySelectorAll('.ctx-tag').forEach(btn => {
 const searchEl  = document.getElementById('movie-search');
 const suggestEl = document.getElementById('suggestions');
 const searchStatus = document.getElementById('search-status');
+const searchClearBtn = document.getElementById('search-clear-btn');
 let searchTimer;
+
+// Bouton d'effacement : visible dès qu'il y a du texte, évite d'avoir à
+// tout effacer au clavier pour relancer une recherche. Redéclenche
+// l'événement 'input' plutôt que de dupliquer sa logique (masquage des
+// suggestions, sauvegarde du brouillon) — une seule source de vérité.
+searchEl.addEventListener('input', () => {
+  searchClearBtn.style.display = searchEl.value ? 'flex' : 'none';
+});
+searchClearBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  searchEl.dispatchEvent(new Event('input'));
+  searchEl.focus();
+});
 
 // Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
 // tapé — partagée entre la recherche du formulaire de notation et celle de la
@@ -2092,7 +2296,7 @@ async function fetchPersonMatch(q) {
 }
 
 function buildPersonSuggestionEl(person) {
-  const photoUrl = person.profile_path ? `https://image.tmdb.org/t/p/w92${person.profile_path}` : '';
+  const photoUrl = tmdbImage(person.profile_path, 'w92');
   const item = document.createElement('div');
   item.className = 'suggestion-item suggestion-person';
   const imgHtml = photoUrl
@@ -2183,7 +2387,7 @@ async function fetchSuggestions(q) {
       const item = document.createElement('div');
       item.className = 'suggestion-item';
       const imgHtml = m.poster_path
-        ? `<img class="suggestion-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        ? `<img class="suggestion-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
         : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
       item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${escAttr(m.title)}</div><div class="suggestion-year">${year}</div></div>`;
       item.addEventListener('click', () => selectMovie(m, year));
@@ -2204,7 +2408,7 @@ async function fetchSuggestions(q) {
 async function selectMovie(m, year) {
   document.getElementById('movie-title').value  = m.title;
   document.getElementById('movie-year').value   = year;
-  document.getElementById('movie-poster').value = m.poster_path ? `https://image.tmdb.org/t/p/w185${m.poster_path}` : '';
+  document.getElementById('movie-poster').value = tmdbImage(m.poster_path, 'w185');
   document.getElementById('movie-tmdb-id').value = m.id;
   searchEl.value = `${escAttr(m.title)} (${year})`;
   suggestEl.style.display = 'none';
@@ -2269,7 +2473,7 @@ async function selectMovie(m, year) {
   strip.classList.add('visible');
   document.getElementById('strip-title').textContent = m.title;
   if (m.poster_path) {
-    document.getElementById('strip-poster').src = `https://image.tmdb.org/t/p/w92${m.poster_path}`;
+    document.getElementById('strip-poster').src = tmdbImage(m.poster_path, 'w92');
     document.getElementById('strip-poster').alt = `Affiche de ${escAttr(m.title)}`;
     document.getElementById('strip-poster').style.display = 'block';
   }
@@ -2544,7 +2748,7 @@ function calculateScore() {
       criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
       const descEl = document.getElementById(`desc-${c}`);
-      descEl.textContent = getDesc(c, val);
+      descEl.textContent = getDesc(c, val, currentMediaType);
       // Repli progressif : le texte descriptif ne s'affiche qu'une fois qu'on
       // s'est écarté de la valeur neutre par défaut (5), pour ne pas noyer le
       // formulaire sous 7 blocs de texte dès l'ouverture d'une fiche vierge.
@@ -2712,13 +2916,30 @@ function playSaveConfirmation() {
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   hapticPulse(document.getElementById('save-btn'), 'strong');
-  
+
+  if (currentMediaType === 'tv') {
+    saveTvSeasonRating();
+    return;
+  }
+
   const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
   if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
 
   const history  = loadHistory();
   const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
   const score    = calculateScore();
+
+  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
+  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
+  // la validation — retire puis réapplique la classe (avec un reflow forcé
+  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
+  // suivante dans la même session, pas juste la toute première.
+  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
+  if (scoreMainEl) {
+    scoreMainEl.classList.remove('stamp-pulse');
+    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
+    scoreMainEl.classList.add('stamp-pulse');
+  }
 
   const movie = {
     title,
@@ -2969,18 +3190,15 @@ focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
 applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
 
 // ═══════════════════════════════════════════
-//  TOAST & DELETE WITH UNDO
+//  HISTORIQUE — liste, recherche, tri, filtre par genre
 // ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js (1698 lignes, 6
+// responsabilités mêlées) — ce fichier ne couvre que le rendu de la
+// LISTE elle-même : recherche, tri, filtre par genre, l'indice de
+// glissement au premier chargement. Les actions (feuille d'action,
+// toast) vivent dans 06b-history-actions.js ; les statistiques du
+// Profil et les cartes à partager dans 06c/06d.
 
-// Associe chaque tag de contexte stocké (avec son emoji d'origine, jamais
-// changé pour ne pas casser les films déjà notés) à son icône SVG équivalente,
-// utilisée uniquement à l'affichage — voir tagsHTML plus bas.
-// Déclaré ICI (local à la fonction), pas en haut du fichier : un `const`
-// top-level serait dans sa "zone morte temporelle" tant que l'exécution du
-// script n'a pas atteint cette ligne — or `renderAll()` est appelée une
-// première fois de façon précoce (voir 03-foundation.js), avant que
-// 06-history.js n'ait fini de s'exécuter (même bug que rencontré et corrigé
-// pour CRITERIA_SHORT_LABELS dans createRadarSVG).
 function renderTagLabel(tagText) {
   const CONTEXT_TAG_ICONS = {
     '🍿': ICONS.popcorn,
@@ -2993,6 +3211,388 @@ function renderTagLabel(tagText) {
   const icon = CONTEXT_TAG_ICONS[emoji];
   return icon ? `${icon} ${rest.join(' ')}` : tagText;
 }
+
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois" est
+// spécifique au thème par défaut (voir "Vers Ludex 2.0" §01 — les 6 autres
+// thèmes gardent leur liste de cartes intacte). isDefaultComposition() vit
+// désormais dans 03-foundation.js (partagée avec la watchlist).
+
+const MONTH_LABELS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+// item.date / item.savedAt sont des chaînes ISO (YYYY-MM-DD...) — on prend
+// les 7 premiers caractères comme clé de regroupement (année-mois), sans
+// dépendre d'un format plus permissif que ce que loadHistory() garantit déjà.
+function monthKeyOf(item) {
+  const raw = item.date || item.savedAt || '';
+  return raw.slice(0, 7); // "YYYY-MM"
+}
+function monthLabelOf(key) {
+  const [y, m] = key.split('-');
+  const idx = parseInt(m, 10) - 1;
+  if (!y || idx < 0 || idx > 11) return 'Date inconnue';
+  return `${MONTH_LABELS_FR[idx]} ${y}`;
+}
+
+// Entrée vedette : le film le plus récemment noté, en grand, au-dessus de la
+// liste — alimentée par la même donnée que la liste (aucun calcul dupliqué).
+// N'apparaît qu'en tri chronologique (sortOrder === 'date'), seul contexte où
+// "le plus récent" a un sens pour l'utilisateur.
+function renderHistoryHero(sorted) {
+  const hero = document.getElementById('history-hero');
+  if (!hero) return;
+  if (!isDefaultComposition() || sortOrder !== 'date' || sorted.length === 0) {
+    hero.innerHTML = '';
+    return;
+  }
+  const item = sorted[0];
+  const imgHtml = item.poster
+    ? `<img class="hero-entry-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+    : `<div class="hero-entry-poster"></div>`;
+  hero.innerHTML = `
+    <div class="hero-entry">
+      ${imgHtml}
+      <div class="hero-entry-body">
+        <div class="hero-entry-eyebrow">Dernier film noté</div>
+        <div class="hero-entry-title">${escAttr(item.title)}</div>
+        <div class="hero-entry-score">${item.score}<small>/10</small></div>
+      </div>
+    </div>`;
+}
+
+let histSearchTimer;
+// Dispatche vers le bon rendu selon la bascule Films/Séries — un seul
+// point d'entrée pour les 3 déclencheurs (recherche, filtres de tri,
+// bascule elle-même) plutôt que de dupliquer la condition partout.
+function renderActiveHistoryView() {
+  if (historyMediaFilter === 'tv') { if (typeof renderTvHistory === 'function') renderTvHistory(); }
+  else renderHistory();
+}
+const historySearchEl = document.getElementById('history-search');
+const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+historySearchEl.addEventListener('input', (e) => {
+  historySearchQuery = e.target.value.toLowerCase();
+  historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
+  clearTimeout(histSearchTimer);
+  histSearchTimer = setTimeout(renderActiveHistoryView, 150);
+});
+historySearchClearBtn.addEventListener('click', () => {
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  historySearchEl.focus();
+});
+
+// ═══════════════════════════════════════════
+//  RENDER HISTORY / DASHBOARD / STATS
+// ═══════════════════════════════════════════
+function getGenres(history) {
+  const set = new Set();
+  history.forEach(item => {
+    if (item.genre) {
+      item.genre.split(',').forEach(g => { const t = g.trim(); if (t) set.add(t); });
+    }
+  });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+function renderGenreChips(items, onFilterChange = renderHistory) {
+  const genres = getGenres(items);
+  const row    = document.getElementById('genre-fold');
+  const chips  = document.getElementById('genre-chips');
+  const currentLabel = document.getElementById('genre-fold-current');
+
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  // Le genre actif reste lisible plié : c'est ce qui rend le pliage acceptable
+  // (l'état du filtre n'est jamais caché, seule la liste des options l'est).
+  if (currentLabel) currentLabel.textContent = activeGenre || 'Tous';
+  chips.innerHTML = '';
+
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (activeGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { activeGenre = null; activeScoreFilter = null; renderGenreChips(items, onFilterChange); onFilterChange(); });
+  chips.appendChild(allChip);
+
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (activeGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => {
+      activeGenre = (activeGenre === g) ? null : g;
+      renderGenreChips(items, onFilterChange);
+      onFilterChange();
+    });
+    chips.appendChild(chip);
+  });
+}
+
+// Tranches de note partagées entre films et séries (histogramme, filtre par
+// clic sur une barre) — extrait ici pour ne pas dupliquer cette table.
+const SCORE_RANGES = {
+  '50': [9,10], '45': [8.5,9], '40': [7.5,8.5], '35': [6.5,7.5], '30': [5.5,6.5],
+  '25': [4.5,5.5], '20': [3.5,4.5], '15': [2.5,3.5], '10': [1.5,2.5], '05': [0,1.5]
+};
+function isScoreInActiveRange(score) {
+  if (activeScoreFilter === null) return true;
+  const [lo, hi] = SCORE_RANGES[activeScoreFilter] || [0, 10];
+  const s = parseFloat(score);
+  return s >= lo && (activeScoreFilter === '50' ? s <= hi : s < hi);
+}
+
+function getSorted(history) {
+  let h = history;
+
+  if (activeGenre) {
+    h = h.filter(item => item.genre && item.genre.split(',').map(g => g.trim()).includes(activeGenre));
+  }
+
+  if (activeScoreFilter !== null) {
+    h = h.filter(item => isScoreInActiveRange(item.score));
+  }
+
+  if (historySearchQuery) {
+    // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
+    // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
+    // année/décennie sans UI supplémentaire — combinable avec les puces de
+    // genre et le filtre de note comme le reste.
+    const isYearQuery = /^\d{3,4}$/.test(historySearchQuery.trim());
+    h = h.filter(item => {
+      const titleMatch = item.title && item.title.toLowerCase().includes(historySearchQuery);
+      const dirMatch = item.director && item.director.toLowerCase().includes(historySearchQuery);
+      const actMatch = item.actors && item.actors.toLowerCase().includes(historySearchQuery);
+      const yearMatch = isYearQuery && item.year && String(item.year).startsWith(historySearchQuery.trim());
+      return titleMatch || dirMatch || actMatch || yearMatch;
+    });
+  }
+
+  if (sortOrder === 'date') {
+    return [...h].sort((a, b) => {
+      const dateA = a.date || a.savedAt || "";
+      const dateB = b.date || b.savedAt || "";
+      return dateB.localeCompare(dateA); 
+    });
+  }
+
+  if (sortOrder === 'score-desc') return [...h].sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+  if (sortOrder === 'score-asc')  return [...h].sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
+  if (sortOrder === 'title')      return [...h].sort((a, b) => a.title.localeCompare(b.title));
+  
+  return h; 
+}
+
+function renderHistory() {
+  // Capture tout geste "armé" AVANT de reconstruire le DOM (voir
+  // captureArmedHistoryState/reapplyArmedHistoryState dans initHistoryGestures) —
+  // sinon l'état visuel armé disparaîtrait silencieusement sur le nouvel
+  // élément si un re-rendu (synchro en arrière-plan, tirer-pour-rafraîchir,
+  // une autre suppression confirmée en parallèle...) s'intercale pendant que
+  // l'utilisateur attend de confirmer un swipe.
+  const capturedArmedState = window.captureArmedHistoryState ? window.captureArmedHistoryState() : null;
+
+  const history   = loadHistory();
+  const sorted    = getSorted(history);
+  const container = document.getElementById('history-list');
+
+  const badge = document.getElementById('hist-count-badge');
+  const showCount = loadTvShows().length;
+  const tvFragment = ` · ${showCount} série${showCount > 1 ? 's' : ''}`;
+  if (activeGenre || historySearchQuery || activeScoreFilter) {
+    badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
+    badge.style.color = 'var(--orange)';
+  } else {
+    badge.textContent = history.length + ' film' + (history.length > 1 ? 's' : '') + tvFragment;
+    badge.style.color = '';
+  }
+
+  renderGenreChips(history);
+  document.getElementById('filter-row').style.display = history.length === 0 ? 'none' : '';
+
+  if (history.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    window._justSavedHistoryTitle = null;
+    return;
+  }
+
+  if (sorted.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
+    window._justSavedHistoryTitle = null;
+    return;
+  }
+
+  renderHistoryHero(sorted);
+
+  const groupByMonth = isDefaultComposition() && sortOrder === 'date';
+  let lastMonthKey = null;
+  // Cascade d'entrée réservée au tout premier affichage de l'onglet Historique
+  // dans cette session (pas à chaque changement de filtre/tri, qui redessine
+  // aussi la liste — même principe déjà appliqué à hist-item-entering
+  // juste en dessous, pour ne jamais rejouer une animation sur toute une
+  // longue liste à cause d'une simple interaction de filtrage).
+  // Cascade d'entrée réservée au tout premier affichage RÉEL de l'onglet
+  // Historique (pas un rendu déclenché en arrière-plan par renderAll() au
+  // démarrage pendant qu'un autre onglet est affiché — l'animation serait
+  // consommée silencieusement sans jamais être vue). Même principe que
+  // renderStats()/statsDirty pour Profil, voir 06c-profile-stats.js.
+  const historyViewVisible = document.getElementById('view-history')?.classList.contains('active');
+  const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
+  if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
+
+  container.innerHTML = '';
+  sorted.forEach((item, i) => {
+    const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
+
+    if (groupByMonth) {
+      const key = monthKeyOf(item);
+      if (key !== lastMonthKey) {
+        const sep = document.createElement('div');
+        sep.className = 'hist-month-sep';
+        sep.textContent = monthLabelOf(key);
+        if (cascadeEntrance) sep.classList.add('hist-cascade-in');
+        container.appendChild(sep);
+        lastMonthKey = key;
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    div.dataset.idx = realIdx;
+    div.dataset.savedAt = item.savedAt || '';
+    div.dataset.titleKey = item.title.toLowerCase();
+    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
+    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
+    // l'animation à chaque re-rendu (changement de filtre, etc.).
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    } else if (cascadeEntrance) {
+      // Délai croissant plafonné : au-delà d'une vingtaine de lignes, les
+      // faire toutes attendre leur tour rendrait l'affichage perceptiblement
+      // lent à se stabiliser — les suivantes entrent toutes au même instant,
+      // dernier de la cascade.
+      div.classList.add('hist-cascade-in');
+      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
+    }
+
+    const scoreNum = parseFloat(item.score);
+    let scoreColor = 'var(--red)';
+    if(scoreNum >= 7.5) scoreColor = 'var(--green)';
+    else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
+
+    const imgHtml = item.poster
+      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
+      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
+
+    const tmdbHtml = item.tmdbScore
+      ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
+      : '';
+
+    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
+    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
+    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
+    let metaHTML = '';
+    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
+    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
+    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
+    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
+
+    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
+    // c'était la dernière source de hauteurs inégales entre cartes — un film
+    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
+    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
+
+    let reviewHTML = '';
+    if (item.review) {
+      reviewHTML = `
+        <div class="hist-review" onclick="this.classList.toggle('expanded')">
+          <div class="hist-review-content">"${escAttr(item.review)}"</div>
+          <span class="hist-review-toggle"></span>
+        </div>
+      `;
+    }
+
+    div.innerHTML = `
+      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
+      <div class="hist-item-content">
+        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${imgHtml}
+          <div class="hist-body">
+            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+            <div class="hist-meta">${metaHTML}</div>
+            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
+            <div class="hist-stars">${item.stars || ''}<span class="hist-score"></span></div>
+            ${reviewHTML}
+          </div>
+        </div>
+        <div class="hist-actions">
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
+        </div>
+      </div>`;
+    container.appendChild(div);
+    applyPosterAccent(item.poster, div);
+  });
+  window._justSavedHistoryTitle = null;
+  if (window.reapplyArmedHistoryState) window.reapplyArmedHistoryState(capturedArmedState);
+}
+
+// ═══════════════════════════════════════════
+//  ACTIONS RAPIDES (appui long sur un film de l'historique)
+// ═══════════════════════════════════════════
+
+// Reconstruit le même texte partageable que le bouton "Copier" du formulaire,
+// mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
+// dans le formulaire d'abord). Garde les deux textes strictement identiques.
+document.getElementById('filter-row').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  sortOrder = btn.dataset.sort;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderActiveHistoryView();
+});
+
+// ── Découvrabilité du swipe ──
+// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
+// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
+// l'historique (avec au moins un film), la première carte fait un petit
+// aperçu automatique — elle glisse brièvement, révélant l'action cachée
+// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
+const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
+function maybePlaySwipeHint() {
+  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+  const firstItem = document.querySelector('.hist-item');
+  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
+  const content = firstItem.querySelector('.hist-item-content');
+  if (!content) return;
+  localStorage.setItem(SWIPE_HINT_KEY, '1');
+
+  // Respecte la préférence de réduction des animations
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  setTimeout(() => {
+    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
+    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
+    content.style.transform = 'translateX(-56px)';
+    setTimeout(() => {
+      content.style.transform = '';
+      setTimeout(() => {
+        firstItem.classList.remove('hist-swipe-left');
+        content.style.transition = '';
+      }, 450);
+    }, 900);
+  }, 600);
+}
+// ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
+
+// ═══════════════════════════════════════════
+//  HISTORIQUE — actions rapides (toast, feuille d'action, appui long)
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre les
+// actions déclenchées DEPUIS une carte d'historique (toast avec
+// annulation, feuille d'action à l'appui long, copier le détail,
+// aimer/ne plus aimer). Le rendu de la liste elle-même vit dans
+// 06a-history-list.js.
 
 let toastTimer;
 let deletedItemCache = null; 
@@ -3063,228 +3663,6 @@ window.undoDelete = function() {
 // ═══════════════════════════════════════════
 //  RECHERCHE HISTORIQUE
 // ═══════════════════════════════════════════
-let histSearchTimer;
-document.getElementById('history-search').addEventListener('input', (e) => {
-  historySearchQuery = e.target.value.toLowerCase();
-  clearTimeout(histSearchTimer);
-  histSearchTimer = setTimeout(renderHistory, 150);
-});
-
-// ═══════════════════════════════════════════
-//  RENDER HISTORY / DASHBOARD / STATS
-// ═══════════════════════════════════════════
-function getGenres(history) {
-  const set = new Set();
-  history.forEach(item => {
-    if (item.genre) {
-      item.genre.split(',').forEach(g => { const t = g.trim(); if (t) set.add(t); });
-    }
-  });
-  return [...set].sort((a, b) => a.localeCompare(b));
-}
-
-function renderGenreChips(history) {
-  const genres = getGenres(history);
-  const row    = document.getElementById('genre-fold');
-  const chips  = document.getElementById('genre-chips');
-  const currentLabel = document.getElementById('genre-fold-current');
-
-  if (genres.length === 0) { row.style.display = 'none'; return; }
-  row.style.display = 'block';
-  // Le genre actif reste lisible plié : c'est ce qui rend le pliage acceptable
-  // (l'état du filtre n'est jamais caché, seule la liste des options l'est).
-  if (currentLabel) currentLabel.textContent = activeGenre || 'Tous';
-  chips.innerHTML = '';
-
-  const allChip = document.createElement('button');
-  allChip.className = 'genre-chip all-chip' + (activeGenre === null ? ' active' : '');
-  allChip.textContent = 'Tous';
-  allChip.addEventListener('click', () => { activeGenre = null; activeScoreFilter = null; renderGenreChips(history); renderHistory(); });
-  chips.appendChild(allChip);
-
-  genres.forEach(g => {
-    const chip = document.createElement('button');
-    chip.className = 'genre-chip' + (activeGenre === g ? ' active' : '');
-    chip.textContent = g;
-    chip.addEventListener('click', () => {
-      activeGenre = (activeGenre === g) ? null : g;
-      renderGenreChips(history);
-      renderHistory();
-    });
-    chips.appendChild(chip);
-  });
-}
-
-function getSorted(history) {
-  let h = history;
-
-  if (activeGenre) {
-    h = h.filter(item => item.genre && item.genre.split(',').map(g => g.trim()).includes(activeGenre));
-  }
-
-  if (activeScoreFilter !== null) {
-    const scoreRanges = {
-      '50': [9,10], '45': [8.5,9], '40': [7.5,8.5], '35': [6.5,7.5], '30': [5.5,6.5],
-      '25': [4.5,5.5], '20': [3.5,4.5], '15': [2.5,3.5], '10': [1.5,2.5], '05': [0,1.5]
-    };
-    const [lo, hi] = scoreRanges[activeScoreFilter] || [0,10];
-    h = h.filter(item => {
-      const s = parseFloat(item.score);
-      return s >= lo && (activeScoreFilter === '50' ? s <= hi : s < hi);
-    });
-  }
-
-  if (historySearchQuery) {
-    // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
-    // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
-    // année/décennie sans UI supplémentaire — combinable avec les puces de
-    // genre et le filtre de note comme le reste.
-    const isYearQuery = /^\d{3,4}$/.test(historySearchQuery.trim());
-    h = h.filter(item => {
-      const titleMatch = item.title && item.title.toLowerCase().includes(historySearchQuery);
-      const dirMatch = item.director && item.director.toLowerCase().includes(historySearchQuery);
-      const actMatch = item.actors && item.actors.toLowerCase().includes(historySearchQuery);
-      const yearMatch = isYearQuery && item.year && String(item.year).startsWith(historySearchQuery.trim());
-      return titleMatch || dirMatch || actMatch || yearMatch;
-    });
-  }
-
-  if (sortOrder === 'date') {
-    return [...h].sort((a, b) => {
-      const dateA = a.date || a.savedAt || "";
-      const dateB = b.date || b.savedAt || "";
-      return dateB.localeCompare(dateA); 
-    });
-  }
-
-  if (sortOrder === 'score-desc') return [...h].sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
-  if (sortOrder === 'score-asc')  return [...h].sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
-  if (sortOrder === 'title')      return [...h].sort((a, b) => a.title.localeCompare(b.title));
-  
-  return h; 
-}
-
-function renderHistory() {
-  // Capture tout geste "armé" AVANT de reconstruire le DOM (voir
-  // captureArmedHistoryState/reapplyArmedHistoryState dans initHistoryGestures) —
-  // sinon l'état visuel armé disparaîtrait silencieusement sur le nouvel
-  // élément si un re-rendu (synchro en arrière-plan, tirer-pour-rafraîchir,
-  // une autre suppression confirmée en parallèle...) s'intercale pendant que
-  // l'utilisateur attend de confirmer un swipe.
-  const capturedArmedState = window.captureArmedHistoryState ? window.captureArmedHistoryState() : null;
-
-  const history   = loadHistory();
-  const sorted    = getSorted(history);
-  const container = document.getElementById('history-list');
-
-  const badge = document.getElementById('hist-count-badge');
-  if (activeGenre || historySearchQuery || activeScoreFilter) {
-    badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}`;
-    badge.style.color = 'var(--orange)';
-  } else {
-    badge.textContent = history.length + ' film' + (history.length > 1 ? 's' : '');
-    badge.style.color = '';
-  }
-
-  renderGenreChips(history);
-
-  if (history.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
-    window._justSavedHistoryTitle = null;
-    return;
-  }
-
-  if (sorted.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
-    window._justSavedHistoryTitle = null;
-    return;
-  }
-
-  container.innerHTML = '';
-  sorted.forEach((item, i) => {
-    const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
-    const div = document.createElement('div');
-    div.className = 'hist-item';
-    div.dataset.idx = realIdx;
-    div.dataset.savedAt = item.savedAt || '';
-    div.dataset.titleKey = item.title.toLowerCase();
-    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
-    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
-    // l'animation à chaque re-rendu (changement de filtre, etc.).
-    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
-      div.classList.add('hist-item-entering');
-    }
-
-    const scoreNum = parseFloat(item.score);
-    let scoreColor = 'var(--red)';
-    if(scoreNum >= 7.5) scoreColor = 'var(--green)';
-    else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
-
-    const imgHtml = item.poster
-      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
-      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
-
-    const tmdbHtml = item.tmdbScore
-      ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
-      : '';
-
-    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
-    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
-    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
-    let metaHTML = '';
-    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
-    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
-    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
-    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
-
-    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
-    // c'était la dernière source de hauteurs inégales entre cartes — un film
-    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
-    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
-
-    let reviewHTML = '';
-    if (item.review) {
-      reviewHTML = `
-        <div class="hist-review" onclick="this.classList.toggle('expanded')">
-          <div class="hist-review-content">"${escAttr(item.review)}"</div>
-          <span class="hist-review-toggle"></span>
-        </div>
-      `;
-    }
-
-    div.innerHTML = `
-      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-      <div class="hist-item-content">
-        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-          ${imgHtml}
-          <div class="hist-body">
-            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-            <div class="hist-meta">${metaHTML}</div>
-            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-            <div class="hist-stars">${item.stars}<span class="hist-score"></span></div>
-            ${reviewHTML}
-          </div>
-        </div>
-        <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
-        </div>
-      </div>`;
-    container.appendChild(div);
-    applyPosterAccent(item.poster, div);
-  });
-  window._justSavedHistoryTitle = null;
-  if (window.reapplyArmedHistoryState) window.reapplyArmedHistoryState(capturedArmedState);
-}
-
-// ═══════════════════════════════════════════
-//  ACTIONS RAPIDES (appui long sur un film de l'historique)
-// ═══════════════════════════════════════════
-
-// Reconstruit le même texte partageable que le bouton "Copier" du formulaire,
-// mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
-// dans le formulaire d'abord). Garde les deux textes strictement identiques.
 function buildCopyTextForItem(item) {
   const heartStr = item.liked ? ' ❤️' : '';
   const dateStr = item.date
@@ -3770,7 +4148,18 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
   };
 })();
 
-function createRadarSVG(averages) {
+// ═══════════════════════════════════════════
+//  PROFIL — statistiques et tableau de bord
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre le
+// calcul et le rendu des statistiques du Profil (radar, timeline,
+// distribution des notes, badges, heatmap, décennies, classiques à
+// explorer) ainsi que renderAll()/renderProfileIfDirty(), les points
+// d'entrée appelés après chaque changement de données. Le dessin des
+// cartes à partager (canvas) vit séparément dans
+// 06d-profile-share-cards.js.
+
+function createRadarSVG(averages, mediaType = 'movie') {
   if (averages.every(a => a === 0)) return null;
 
   // Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de
@@ -3780,15 +4169,9 @@ function createRadarSVG(averages) {
   // appelée une première fois de façon précoce (voir 03-foundation.js), avant
   // que 06-history.js n'ait fini de s'exécuter, ce qui provoquait un plantage
   // total de l'app au chargement pour tout utilisateur ayant déjà un historique.
-  const CRITERIA_SHORT_LABELS = {
-    scenario: 'Scén.',
-    realisation: 'Réal.',
-    photo: 'Photo',
-    acteurs: 'Casting',
-    ambiance: 'Ambiance',
-    rythme: 'Rythme',
-    affect: 'Affect',
-  };
+  const CRITERIA_SHORT_LABELS = mediaType === 'tv'
+    ? { scenario: 'Scén.', realisation: 'Réal.', photo: 'Final', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Cohér.', affect: 'Affect' }
+    : { scenario: 'Scén.', realisation: 'Réal.', photo: 'Photo', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect' };
 
   const s = 220, c = s/2, r = 72;
   // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
@@ -3910,9 +4293,10 @@ function renderStats() {
     document.getElementById('kpi-avg').textContent = '-'; 
     document.getElementById('kpi-year').textContent = '0';
     document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
     document.getElementById('timeline-chart-container').innerHTML = '';
-    document.getElementById('top-directors-list').innerHTML = '<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>';
+    document.getElementById('top-directors-list').innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' });
     buildHistogram({});
     resetProfileExtras();
     return;
@@ -3935,13 +4319,15 @@ function renderStats() {
   const radarSvg = createRadarSVG(avgs);
   if (radarSvg) { 
     document.getElementById('radar-chart-container').innerHTML = radarSvg; 
+    document.getElementById('radar-chart-container').style.minHeight = '160px';
     document.getElementById('radar-empty').style.display = 'none'; 
   } else { 
     document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block'; 
   }
 
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history);
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history.concat(typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : []));
 
   const dirs = {};
   history.forEach(h => {
@@ -3958,7 +4344,7 @@ function renderStats() {
   if(topD.length > 0) {
     dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(d.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(d.name)}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
   } else { 
-    dirCont.innerHTML = `<div style="font-size:0.8rem;color:var(--text-mid);text-align:center">Enregistrez plus de films avec un réalisateur pour générer ce top.</div>`; 
+    dirCont.innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' }); 
   }
 
   const dist = { '50':0, '45':0, '40':0, '35':0, '30':0, '25':0, '20':0, '15':0, '10':0, '05':0 };
@@ -3980,6 +4366,10 @@ function resetProfileExtras() {
   document.getElementById('profile-streak').textContent = 'Pas de série en cours';
   renderBadges(computeBadges([], {}));
   drawProfileShareCard(null);
+  // Rien à télécharger tant que la carte est verrouillée — désactivé plutôt
+  // que de laisser un bouton actif sans effet utile derrière lui.
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) { shareBtn.disabled = true; shareBtn.title = 'Note quelques films pour débloquer ta carte'; }
   // Une rétrospective "0 film noté" n'aurait aucun sens — la carte d'entrée
   // ne s'affiche que s'il y a au moins un film à raconter.
   const wrappedCard = document.getElementById('wrapped-entry-card');
@@ -3996,6 +4386,11 @@ function renderProfileExtras(history) {
   // réapparaître si l'historique passe de vide à rempli dans la même session.
   const wrappedCard = document.getElementById('wrapped-entry-card');
   if (wrappedCard) wrappedCard.style.display = history.length > 0 ? '' : 'none';
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) {
+    shareBtn.disabled = history.length === 0;
+    shareBtn.title = history.length === 0 ? 'Note quelques films pour débloquer ta carte' : '';
+  }
   // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
   const dates = history
     .map(h => h.savedAt || h.date)
@@ -4089,6 +4484,173 @@ function renderBadges(badges) {
 // l'extraction de couleur dominante (00c-poster-color.js).
 // Dessine un petit radar (moyennes par critère) sur le canvas — même principe
 // que createRadarSVG (06-history.js) mais en dessin canvas natif, pas du SVG.
+function buildHistogram(dist) {
+  const container = document.getElementById('histogram');
+  container.innerHTML = '';
+  const maxVal = Math.max(...Object.values(dist), 0);
+  if (maxVal === 0) {
+    container.innerHTML = renderEmptyState({ message: 'Note quelques films pour voir apparaître leur répartition ici.' });
+    return;
+  }
+  const order = [50, 45, 40, 35, 30, 25, 20, 15, 10, '05'];
+  const labels = {
+    50: '★★★★★', 45: '★★★★½', 40: '★★★★', 35: '★★★½', 30: '★★★',
+    25: '★★½',   20: '★★',    15: '★½',    10: '★',    '05': '½'
+  };
+  order.forEach(key => {
+    const count   = dist[key] || 0;
+    const pct     = (count / maxVal) * 100;
+    const row     = document.createElement('div');
+    const isActive = activeScoreFilter === String(key);
+    row.className = 'histo-row' + (isActive ? ' active' : '');
+    row.title = count > 0 ? `Filtrer par ${labels[key]}` : '';
+    row.innerHTML = `
+      <span class="histo-label">${labels[key]}</span>
+      <div class="histo-track"><div class="histo-bar" style="width:${pct}%"></div></div>
+      <span class="histo-count">${count}</span>`;
+    if (count > 0) {
+      row.addEventListener('click', () => {
+        if (activeScoreFilter === String(key)) {
+          activeScoreFilter = null;
+        } else {
+          activeScoreFilter = String(key);
+          activeGenre = null; 
+        }
+        renderAll();
+        document.querySelector('.history-scroller')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    container.appendChild(row);
+  });
+}
+
+let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
+
+// Dispatche vers le bon rendu de stats selon la bascule Films/Séries —
+// même principe que renderActiveHistoryView, pour que renderTvStats()
+// bénéficie aussi de l'optimisation "ne recalculer que si Profil est
+// visible" plutôt que de la contourner silencieusement.
+function renderActiveStatsView() {
+  if (statsMediaFilter === 'tv') { if (typeof renderTvStats === 'function') renderTvStats(); }
+  else renderStats();
+}
+
+function renderAll() {
+  // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
+  // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
+  // payé jusqu'ici à CHAQUE sauvegarde/suppression/import, même quand l'onglet
+  // Profil n'est pas à l'écran (souvent le cas : on reste sur Noter ou
+  // Historique). On ne le calcule que si Profil est réellement visible ;
+  // sinon on le marque "à jour ultérieurement" — rattrapé par
+  // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
+  // 01-navigation.js). renderHistory() reste inconditionnel : c'est
+  // généralement la vue qu'on regarde au moment de l'appel.
+  const profileView = document.getElementById('view-profile');
+  if (profileView && profileView.classList.contains('active')) {
+    renderActiveStatsView();
+    statsDirty = false;
+  } else {
+    statsDirty = true;
+  }
+  renderActiveHistoryView();
+}
+
+// Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
+// qui avait été sauté pendant que l'onglet était masqué.
+function renderProfileIfDirty() {
+  if (statsDirty) { renderActiveStatsView(); statsDirty = false; }
+}
+
+// ═══════════════════════════════════════════
+//  SORT FILTERS
+// ═══════════════════════════════════════════
+function renderYearAgoCard(history) {
+  const card = document.getElementById('year-ago-card');
+  const body = document.getElementById('year-ago-body');
+  if (!card || !body) return;
+  const found = findOneYearAgoFilm(history, new Date());
+  if (!found) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const { item } = found;
+  const posterHtml = item.poster
+    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
+  body.innerHTML = `
+    ${posterHtml}
+    <div>
+      <div class="year-ago-title">${escAttr(item.title)}</div>
+      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
+      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
+    </div>
+  `;
+}
+
+function renderHeatmap(history) {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  const counts = computeDailyCounts(history);
+
+  // 53 colonnes de semaines, en remontant depuis aujourd'hui jusqu'à ~1 an.
+  // On démarre au lundi de la semaine d'il y a 52 semaines pour des colonnes alignées.
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 364);
+  const dayOfWeek = (start.getDay() + 6) % 7; // lundi=0
+  start.setDate(start.getDate() - dayOfWeek);
+
+  let html = '';
+  const cur = new Date(start);
+  while (cur <= today) {
+    const key = cur.toISOString().slice(0, 10);
+    const n = counts[key] || 0;
+    const lvl = n === 0 ? 'l0' : n === 1 ? 'l1' : n === 2 ? 'l2' : 'l3';
+    html += `<div class="heatmap-cell ${lvl}" title="${key}${n > 0 ? ` — ${n} film${n > 1 ? 's' : ''}` : ''}"></div>`;
+    cur.setDate(cur.getDate() + 1);
+  }
+  grid.innerHTML = html;
+  // Amène la vue sur la fin (les semaines récentes), pas le début d'il y a un an
+  const scroll = grid.parentElement;
+  if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+}
+
+function renderDecades(history) {
+  const card = document.getElementById('decades-card');
+  const list = document.getElementById('decades-list');
+  if (!card || !list) return;
+  const stats = computeDecadeStats(history);
+  if (stats.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const max = stats[0].count;
+  list.innerHTML = stats.slice(0, 6).map(d => `
+    <div class="decade-row">
+      <span class="decade-label">${d.decade}s</span>
+      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
+      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
+    </div>
+  `).join('');
+}
+
+// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
+// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
+// portaient le même nom à un moment, et la seconde écrasait silencieusement
+// la première par hissage — cassant toute la carte "Ton profil" (Membre
+// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
+function renderProfileDiscoveryCards() {
+  const history = loadHistory();
+  renderYearAgoCard(history);
+  renderHeatmap(history);
+  renderDecades(history);
+}
+
+// ═══════════════════════════════════════════
+//  PROFIL — cartes à partager (dessin sur <canvas>)
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre le
+// dessin sur <canvas> des images à télécharger/partager : la carte de
+// profil ("Mon profil cinéphile") et la rétrospective annuelle
+// ("Wrapped"). Les données qu'elles affichent sont calculées dans
+// 06c-profile-stats.js.
+
 function drawMiniRadarOnCanvas(ctx, cx, cy, radius, criteriaAverages, color, gridColor) {
   const keys = CRITERIA;
   const angleStep = (Math.PI * 2) / keys.length;
@@ -4439,192 +5001,6 @@ function drawWrappedShareCard(stats) {
   closeBtn.addEventListener('click', () => closeModal(modal));
 })();
 
-function buildHistogram(dist) {
-  const container = document.getElementById('histogram');
-  container.innerHTML = '';
-  const order = [50, 45, 40, 35, 30, 25, 20, 15, 10, '05'];
-  const labels = {
-    50: '★★★★★', 45: '★★★★½', 40: '★★★★', 35: '★★★½', 30: '★★★',
-    25: '★★½',   20: '★★',    15: '★½',    10: '★',    '05': '½'
-  };
-  const maxVal = Math.max(...Object.values(dist), 1);
-  order.forEach(key => {
-    const count   = dist[key] || 0;
-    const pct     = (count / maxVal) * 100;
-    const row     = document.createElement('div');
-    const isActive = activeScoreFilter === String(key);
-    row.className = 'histo-row' + (isActive ? ' active' : '');
-    row.title = count > 0 ? `Filtrer par ${labels[key]}` : '';
-    row.innerHTML = `
-      <span class="histo-label">${labels[key]}</span>
-      <div class="histo-track"><div class="histo-bar" style="width:${pct}%"></div></div>
-      <span class="histo-count">${count}</span>`;
-    if (count > 0) {
-      row.addEventListener('click', () => {
-        if (activeScoreFilter === String(key)) {
-          activeScoreFilter = null;
-        } else {
-          activeScoreFilter = String(key);
-          activeGenre = null; 
-        }
-        renderAll();
-        document.querySelector('.history-scroller')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-    container.appendChild(row);
-  });
-}
-
-let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
-
-function renderAll() {
-  // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
-  // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
-  // payé jusqu'ici à CHAQUE sauvegarde/suppression/import, même quand l'onglet
-  // Profil n'est pas à l'écran (souvent le cas : on reste sur Noter ou
-  // Historique). On ne le calcule que si Profil est réellement visible ;
-  // sinon on le marque "à jour ultérieurement" — rattrapé par
-  // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
-  // 01-navigation.js). renderHistory() reste inconditionnel : c'est
-  // généralement la vue qu'on regarde au moment de l'appel.
-  const profileView = document.getElementById('view-profile');
-  if (profileView && profileView.classList.contains('active')) {
-    renderStats();
-    statsDirty = false;
-  } else {
-    statsDirty = true;
-  }
-  renderHistory();
-}
-
-// Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
-// qui avait été sauté pendant que l'onglet était masqué.
-function renderProfileIfDirty() {
-  if (statsDirty) { renderStats(); statsDirty = false; }
-}
-
-// ═══════════════════════════════════════════
-//  SORT FILTERS
-// ═══════════════════════════════════════════
-document.getElementById('filter-row').addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
-  if (!btn) return;
-  sortOrder = btn.dataset.sort;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderHistory();
-});
-
-// ── Découvrabilité du swipe ──
-// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
-// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
-// l'historique (avec au moins un film), la première carte fait un petit
-// aperçu automatique — elle glisse brièvement, révélant l'action cachée
-// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
-const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
-function maybePlaySwipeHint() {
-  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
-  const firstItem = document.querySelector('.hist-item');
-  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
-  const content = firstItem.querySelector('.hist-item-content');
-  if (!content) return;
-  localStorage.setItem(SWIPE_HINT_KEY, '1');
-
-  // Respecte la préférence de réduction des animations
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  setTimeout(() => {
-    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
-    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
-    content.style.transform = 'translateX(-56px)';
-    setTimeout(() => {
-      content.style.transform = '';
-      setTimeout(() => {
-        firstItem.classList.remove('hist-swipe-left');
-        content.style.transition = '';
-      }, 450);
-    }, 900);
-  }, 600);
-}
-// ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
-function renderYearAgoCard(history) {
-  const card = document.getElementById('year-ago-card');
-  const body = document.getElementById('year-ago-body');
-  if (!card || !body) return;
-  const found = findOneYearAgoFilm(history, new Date());
-  if (!found) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const { item } = found;
-  const posterHtml = item.poster
-    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
-    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
-  body.innerHTML = `
-    ${posterHtml}
-    <div>
-      <div class="year-ago-title">${escAttr(item.title)}</div>
-      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
-      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
-    </div>
-  `;
-}
-
-function renderHeatmap(history) {
-  const grid = document.getElementById('heatmap-grid');
-  if (!grid) return;
-  const counts = computeDailyCounts(history);
-
-  // 53 colonnes de semaines, en remontant depuis aujourd'hui jusqu'à ~1 an.
-  // On démarre au lundi de la semaine d'il y a 52 semaines pour des colonnes alignées.
-  const today = new Date(); today.setHours(12, 0, 0, 0);
-  const start = new Date(today);
-  start.setDate(start.getDate() - 364);
-  const dayOfWeek = (start.getDay() + 6) % 7; // lundi=0
-  start.setDate(start.getDate() - dayOfWeek);
-
-  let html = '';
-  const cur = new Date(start);
-  while (cur <= today) {
-    const key = cur.toISOString().slice(0, 10);
-    const n = counts[key] || 0;
-    const lvl = n === 0 ? 'l0' : n === 1 ? 'l1' : n === 2 ? 'l2' : 'l3';
-    html += `<div class="heatmap-cell ${lvl}" title="${key}${n > 0 ? ` — ${n} film${n > 1 ? 's' : ''}` : ''}"></div>`;
-    cur.setDate(cur.getDate() + 1);
-  }
-  grid.innerHTML = html;
-  // Amène la vue sur la fin (les semaines récentes), pas le début d'il y a un an
-  const scroll = grid.parentElement;
-  if (scroll) scroll.scrollLeft = scroll.scrollWidth;
-}
-
-function renderDecades(history) {
-  const card = document.getElementById('decades-card');
-  const list = document.getElementById('decades-list');
-  if (!card || !list) return;
-  const stats = computeDecadeStats(history);
-  if (stats.length === 0) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const max = stats[0].count;
-  list.innerHTML = stats.slice(0, 6).map(d => `
-    <div class="decade-row">
-      <span class="decade-label">${d.decade}s</span>
-      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
-      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
-    </div>
-  `).join('');
-}
-
-// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
-// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
-// portaient le même nom à un moment, et la seconde écrasait silencieusement
-// la première par hissage — cassant toute la carte "Ton profil" (Membre
-// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
-function renderProfileDiscoveryCards() {
-  const history = loadHistory();
-  renderYearAgoCard(history);
-  renderHeatmap(history);
-  renderDecades(history);
-}
-
 // ═══════════════════════════════════════════
 //  EXPORT / IMPORT
 // ═══════════════════════════════════════════
@@ -4632,8 +5008,10 @@ const LAST_EXPORT_KEY = 'lbx_last_export_at';
 
 document.getElementById('export-btn').addEventListener('click', () => {
   const history = loadHistory();
-  if (!history.length) { showToast('Aucun film à exporter.'); return; }
-  const blob = new Blob([JSON.stringify(history, null, 2)], { type: 'application/json' });
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (!history.length && !tvShows.length) { showToast('Rien à exporter.'); return; }
+  const payload = { history, tvShows };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url; a.download = `ludex-backup-${new Date().toISOString().slice(0,10)}.json`;
@@ -4641,7 +5019,10 @@ document.getElementById('export-btn').addEventListener('click', () => {
   localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
   const banner = document.getElementById('backup-reminder');
   if (banner) banner.remove();
-  showToast(`${history.length} film${history.length > 1 ? 's' : ''} exporté${history.length > 1 ? 's' : ''}`);
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  showToast(`${parts.join(' · ')} exporté${(history.length + tvShows.length) > 1 ? 's' : ''}`);
 });
 
 document.getElementById('import-trigger').addEventListener('click', () => {
@@ -4650,20 +5031,72 @@ document.getElementById('import-trigger').addEventListener('click', () => {
 
 function importLudexJson(text) {
   const data = JSON.parse(text);
-  if (!Array.isArray(data)) throw new Error('Format invalide');
+  let history, tvShows;
+  if (Array.isArray(data)) {
+    // Ancienne sauvegarde (avant l'ajout du support séries) : un simple
+    // tableau de films, sans enveloppe — toujours acceptée telle quelle.
+    history = data;
+    tvShows = [];
+  } else if (data && typeof data === 'object' && (Array.isArray(data.history) || Array.isArray(data.tvShows))) {
+    history = Array.isArray(data.history) ? data.history : [];
+    tvShows = Array.isArray(data.tvShows) ? data.tvShows : [];
+  } else {
+    throw new Error('Format invalide');
+  }
+
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  if (parts.length === 0) { showToast('Sauvegarde vide, rien à importer.'); return; }
+
   openModal(
-    "Importer l'historique",
-    `Importer ${data.length} film${data.length > 1 ? 's' : ''} ? Cela fusionnera avec votre historique actuel (les doublons seront ignorés).`,
+    "Importer la sauvegarde",
+    `Importer ${parts.join(' et ')} ? Cela fusionnera avec vos données actuelles (les doublons seront ignorés).`,
     () => {
-      const existing = loadHistory();
-      const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
-      // Normalisation au passage : une vieille sauvegarde réimportée porte
-      // l'ancienne forme du schéma — même fonction que la migration v2.
-      const toAdd = data.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
-      const merged = [...toAdd, ...existing];
-      saveHistory(merged);
+      let addedFilms = 0, addedShows = 0, addedSeasons = 0;
+
+      if (history.length) {
+        const existing = loadHistory();
+        const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+        // Normalisation au passage : une vieille sauvegarde réimportée porte
+        // l'ancienne forme du schéma — même fonction que la migration v2.
+        const toAdd = history.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
+        addedFilms = toAdd.length;
+        saveHistory([...toAdd, ...existing]);
+      }
+
+      if (tvShows.length && typeof loadTvShows === 'function') {
+        const existingShows = loadTvShows();
+        tvShows.forEach(importedShow => {
+          let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
+          if (!localShow) {
+            localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
+            existingShows.push(localShow);
+            addedShows++;
+          }
+          // Par saison : n'ajoute que celles absentes localement — même
+          // philosophie "doublons ignorés" que les films, plutôt que
+          // d'inventer une règle de fusion (plus regardée / plus récente)
+          // qui n'a pas d'équivalent côté films.
+          Object.entries(importedShow.seasons || {}).forEach(([key, season]) => {
+            if (!localShow.seasons[key]) {
+              localShow.seasons[key] = season;
+              addedSeasons++;
+            }
+          });
+        });
+        saveTvShows(existingShows);
+      }
+
       renderAll();
-      showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''}`);
+      if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+
+      const resultParts = [];
+      if (addedFilms) resultParts.push(`${addedFilms} film${addedFilms > 1 ? 's' : ''}`);
+      if (addedShows) resultParts.push(`${addedShows} série${addedShows > 1 ? 's' : ''}`);
+      if (addedSeasons > addedShows) resultParts.push(`${addedSeasons} saison${addedSeasons > 1 ? 's' : ''} au total`);
+      showToast(resultParts.length ? `${resultParts.join(' · ')} importé${(addedFilms + addedSeasons) > 1 ? 's' : ''}` : 'Rien de nouveau à importer (déjà présent)');
     }
   );
 }
@@ -4727,7 +5160,8 @@ document.getElementById('import-file').addEventListener('change', e => {
 const BACKUP_SNOOZE_KEY = 'lbx_backup_snoozed_at';
 function maybeShowBackupReminder() {
   const history = loadHistory();
-  if (history.length < 10) return;
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (history.length + tvShows.length < 10) return;
 
   const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
   const days = lastExport ? (Date.now() - new Date(lastExport).getTime()) / 86400000 : Infinity;
@@ -4740,7 +5174,7 @@ function maybeShowBackupReminder() {
   banner.id = 'backup-reminder';
   banner.className = 'backup-reminder';
   banner.innerHTML = `
-    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length} films notés, aucune sauvegarde.`}</span>
+    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length + tvShows.length} élément${(history.length + tvShows.length) > 1 ? 's' : ''} noté${(history.length + tvShows.length) > 1 ? 's' : ''}, aucune sauvegarde.`}</span>
     <button type="button" class="backup-reminder-btn" id="backup-reminder-export">Exporter</button>
     <button type="button" class="backup-reminder-close" id="backup-reminder-close" aria-label="Plus tard">✕</button>
   `;
@@ -4850,6 +5284,12 @@ function saveWatchlist(list, listId) {
 // nouvelle logique). stopPropagation() évite que ce geste horizontal ne
 // déclenche AUSSI le swipe global de changement d'onglet.
 function attachWatchlistSwipeHandlers(cardEl, idx) {
+  // Ludex 2.0 : en grille d'affiches (thème par défaut), le swipe horizontal
+  // sur une cellule étroite n'a plus vraiment de sens visuellement — les
+  // actions (noter / retirer) restent disponibles via les boutons toujours
+  // visibles en overlay (voir styles.css, .wl-actions en mode grille).
+  if (isDefaultComposition()) return;
+
   const SWIPE_THRESHOLD = 80;
   const MAX_DRAG = 130;
   const contentEl = cardEl.querySelector('.wl-card-content');
@@ -4964,13 +5404,15 @@ function renderWatchlist() {
     div.innerHTML = `
       <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
       <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
-      <div class="wl-card-content" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-        ${posterHtml}
-        <div class="wl-body">
-          <div class="wl-title">${escAttr(item.title)}</div>
-          <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
-          <div class="wl-providers" id="wl-providers-${i}">
-            <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+      <div class="wl-card-content">
+        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${posterHtml}
+          <div class="wl-body">
+            <div class="wl-title">${escAttr(item.title)}</div>
+            <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+            <div class="wl-providers" id="wl-providers-${i}">
+              <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+            </div>
           </div>
         </div>
         <div class="wl-actions">
@@ -5037,13 +5479,13 @@ async function fetchProviders(tmdbId, idx) {
     if (flat.length > 0) {
       html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
       flat.slice(0, 5).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
     if (rentOnly.length > 0) {
       html += `<span class="wl-provider-tag rent">Location</span>`;
       rentOnly.slice(0, 4).forEach(p => {
-        html += `<img class="wl-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
       });
     }
 
@@ -5086,7 +5528,7 @@ async function addToSpecificWatchlist(movie, year, listId) {
   list.unshift({
     title: movie.title,
     year,
-    poster: movie.poster_path ? `https://image.tmdb.org/t/p/w185${movie.poster_path}` : '',
+    poster: tmdbImage(movie.poster_path, 'w185'),
     genre,
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
@@ -5223,7 +5665,7 @@ wlInput.addEventListener('input', () => {
       wlSuggestEl.style.display = 'block';
 
       if (personMatch) {
-        const photoUrl = personMatch.profile_path ? `https://image.tmdb.org/t/p/w92${personMatch.profile_path}` : '';
+        const photoUrl = tmdbImage(personMatch.profile_path, 'w92');
         const personEl = document.createElement('div');
         personEl.className = 'wl-suggest-item';
         personEl.innerHTML = `
@@ -5247,7 +5689,7 @@ wlInput.addEventListener('input', () => {
         el.className = 'wl-suggest-item';
         el.innerHTML = `
           ${m.poster_path
-            ? `<img class="wl-suggest-poster" src="https://image.tmdb.org/t/p/w92${m.poster_path}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            ? `<img class="wl-suggest-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
             : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
           <div>
             <div class="wl-suggest-title">${escAttr(m.title)}</div>
@@ -5601,6 +6043,8 @@ const SYNC_CODE_KEY = 'lbx_sync_code';
 const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
+const TV_SHOW_TOMBSTONES_KEY = 'lbx_tv_show_tombstones';
+const TV_SEASON_TOMBSTONES_KEY = 'lbx_tv_season_tombstones';
 // TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
 // watchlistTombstonesKey(id) et WATCHLIST_LIST_TOMBSTONES_KEY sont définis dans 08-watchlist.js
 
@@ -5666,6 +6110,20 @@ function mergeWithRemote(remotePayload) {
   saveHistory(mergedHistory);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
 
+  // ─── Séries suivies ────────────────────────────────────────────────────
+  const localTvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  const remoteTvShows = Array.isArray(remotePayload?.tvShows) ? remotePayload.tvShows : [];
+  const localShowTomb = loadTombstones(TV_SHOW_TOMBSTONES_KEY);
+  const remoteShowTomb = Array.isArray(remotePayload?.tvShowTombstones) ? remotePayload.tvShowTombstones : [];
+  const mergedShowTomb = mergeTombstoneLists(localShowTomb, remoteShowTomb);
+  const localSeasonTomb = loadTombstones(TV_SEASON_TOMBSTONES_KEY);
+  const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
+  const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
+  const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
+  if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows);
+  saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
+  saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
+
   // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
   const localMeta = loadWatchlistsMeta();
   const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
@@ -5720,10 +6178,15 @@ function mergeWithRemote(remotePayload) {
   renderAll();
   if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
   renderWatchlist();
+  if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
 
   return {
     history: mergedHistory,
     historyTombstones: mergedHistTomb,
+    tvShows: mergedTvShows,
+    tvShowTombstones: mergedShowTomb,
+    tvSeasonTombstones: mergedSeasonTomb,
     watchlistsMeta: mergedMeta,
     watchlists: mergedWatchlists,
     watchlistTombstones: mergedWlTombs,
@@ -5754,6 +6217,9 @@ function currentLocalSnapshot() {
   return {
     history: loadHistory(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
+    tvShows: typeof loadTvShows === 'function' ? loadTvShows() : [],
+    tvShowTombstones: loadTombstones(TV_SHOW_TOMBSTONES_KEY),
+    tvSeasonTombstones: loadTombstones(TV_SEASON_TOMBSTONES_KEY),
     watchlistsMeta: meta,
     watchlists,
     watchlistTombstones,
@@ -5970,13 +6436,6 @@ let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvr
 // synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
 const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
 
-function formatMoneyShort(amount) {
-  if (!amount || amount <= 0) return null;
-  if (amount >= 1_000_000_000) return (amount / 1_000_000_000).toFixed(1).replace('.0', '') + ' Md$';
-  if (amount >= 1_000_000) return (amount / 1_000_000).toFixed(0) + ' M$';
-  return (amount / 1_000).toFixed(0) + ' k$';
-}
-
 async function loadFilmDuJour() {
   const todayKey = new Date().toISOString().slice(0, 10);
   let cached = null;
@@ -6056,7 +6515,7 @@ async function loadOnThisDay() {
   strip.innerHTML = anniversaries.flatMap(a =>
     a.films.map(f => `
       <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="on-this-day-poster" src="https://image.tmdb.org/t/p/w200${f.poster_path}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <img class="on-this-day-poster" src="${tmdbImage(f.poster_path, 'w200')}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
         <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
         <div class="on-this-day-title">${escAttr(f.title)}</div>
       </div>
@@ -6124,7 +6583,7 @@ async function fetchFilmDuJourProviders(tmdbId) {
 
     let html = '';
     [...flat, ...rentOnly].slice(0, 6).forEach(p => {
-      html += `<img class="fdj-provider-logo" src="https://image.tmdb.org/t/p/original${p.logo_path}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+      html += `<img class="fdj-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
     });
 
     if (!html) {
@@ -6231,7 +6690,7 @@ function renderGuessGame(m, isWeekly) {
   wrap.style.display = 'block';
 
   const todayKey = new Date().toISOString().slice(0, 10);
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w300${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w300');
   const year = m.release_date ? m.release_date.slice(0, 4) : '';
 
   // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
@@ -6272,17 +6731,42 @@ function renderGuessGame(m, isWeekly) {
 
   card.classList.add('fdj-guessing');
   card.classList.remove('fdj-revealed');
+  // Ludex 2.0 : reprend le traitement plein cadre du swipe — .guess-poster
+  // (toujours une <img>, testée par plusieurs specs e2e sur son tag et son
+  // filter inline) devient le FOND plein cadre plutôt qu'une vignette en
+  // ligne, via repositionnement CSS uniquement (voir .guess-poster dans
+  // styles.css) — le DOM/JS ne change pas de forme, juste son habillage.
+  // .guess-attempts est conservée telle quelle (texte "Essai X/Y", utilisée
+  // aussi comme cible de clic neutre par guess-suggestions.spec.js) ; les
+  // pastilles d'essai sont un ajout purement visuel à côté.
+  const attemptDots = Array.from({ length: GUESS_MAX_ATTEMPTS }, (_, i) =>
+    `<span class="fdj-attempt-dot${i < state.attempts ? ' used' : ''}"></span>`
+  ).join('');
   card.innerHTML = `
     <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
-    <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
-    ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
-    <form class="guess-form" id="guess-form" autocomplete="off">
-      <div class="guess-input-wrap">
-        <input type="text" class="guess-input" id="guess-input" placeholder="Titre du film…" aria-label="Ta proposition" autocomplete="off">
-        <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+    <div class="fdj-hero-overlay"></div>
+    <div class="fdj-hero-top">
+      <span class="fdj-hero-badge">Film du jour</span>
+      <div class="fdj-attempt-dots">
+        ${attemptDots}
+        <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
       </div>
-      <button type="submit" class="guess-submit-btn">Valider</button>
-    </form>
+    </div>
+    <div class="fdj-hero-body">
+      <div class="fdj-title-mask" aria-hidden="true">? ? ? ? ? ? ?</div>
+      <div class="fdj-hero-pills">
+        ${year ? `<span class="fdj-hero-pill accent">${escAttr(year)}</span>` : ''}
+        ${m.genres?.[0]?.name ? `<span class="fdj-hero-pill">${escAttr(m.genres[0].name)}</span>` : '<span class="fdj-hero-pill">Genre</span>'}
+      </div>
+      ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
+      <form class="guess-form" id="guess-form" autocomplete="off">
+        <div class="guess-input-wrap">
+          <input type="text" class="guess-input" id="guess-input" placeholder="Devine le titre…" aria-label="Ta proposition" autocomplete="off">
+          <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+        </div>
+        <button type="submit" class="guess-submit-btn">Valider</button>
+      </form>
+    </div>
   `;
 
   // Suggestions de titres en tapant — même recherche TMDb que le formulaire
@@ -6446,23 +6930,31 @@ async function loadTrendingCarousel() {
   try {
     const res = await fetch('/api/search?trending=true');
     const data = await res.json();
-    const movies = (data.results || []).filter(m => m.poster_path).slice(0, 15);
-    if (movies.length === 0) return;
-    renderTrendingCarousel(movies);
+    // "trending/all/week" mélange films et séries (et parfois des personnes,
+    // sans poster_path — écartées par le filtre) ; media_type distingue les
+    // deux pour le tag par vignette et le bon gestionnaire de clic.
+    const items = (data.results || [])
+      .filter(m => m.poster_path && (m.media_type === 'movie' || m.media_type === 'tv'))
+      .slice(0, 15);
+    if (items.length === 0) return;
+    renderTrendingCarousel(items);
     document.getElementById('trending-carousel-wrap').style.display = 'block';
   } catch (e) {
     console.warn('Impossible de charger les tendances du moment', e);
   }
 }
 
-function renderTrendingCarousel(movies) {
+function renderTrendingCarousel(items) {
   const outer = document.getElementById('trending-carousel');
-  const itemsHtml = movies.map(m => {
-    const posterUrl = `https://image.tmdb.org/t/p/w200${m.poster_path}`;
+  const itemsHtml = items.map(m => {
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    const title = m.title || m.name || '';
+    const isTv = m.media_type === 'tv';
     return `
-      <div class="trending-item" data-movie-id="${m.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
-        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
-        <div class="trending-item-title">${escAttr(m.title)}</div>
+      <div class="trending-item" data-media-id="${m.id}" data-media-type="${m.media_type}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(title)}">
+        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(title)}" loading="lazy">
+        <span class="trending-item-type">${isTv ? 'Série' : 'Film'}</span>
+        <div class="trending-item-title">${escAttr(title)}</div>
       </div>`;
   }).join('');
 
@@ -6474,7 +6966,9 @@ function renderTrendingCarousel(movies) {
 
   outer.addEventListener('click', (e) => {
     const item = e.target.closest('.trending-item');
-    if (item) openMovieDetailSheet(item.dataset.movieId);
+    if (!item) return;
+    if (item.dataset.mediaType === 'tv') openTvDetailSheet(item.dataset.mediaId);
+    else openMovieDetailSheet(item.dataset.mediaId);
   });
 
   // Défilement automatique piloté en JS (pas une animation CSS) : ça permet
@@ -6576,6 +7070,7 @@ async function loadDiscoverQueue() {
 
 async function loadDiscoverQueueInner() {
   discoverActionsEl.style.display = 'none';
+  discoverStack.style.height = '';
   // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
   // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
   // et la perception d'attente est bien meilleure.
@@ -6591,6 +7086,11 @@ async function loadDiscoverQueueInner() {
   const watchedWithId = history.filter(h => h.tmdbId);
 
   if (watchedWithId.length === 0) {
+    // Hauteur fixe modeste plutôt que 'auto' : .discover-empty est en
+    // position absolute (inset:0), donc ne contribue pas à la hauteur
+    // automatique de son parent — 'auto' donnerait 0px de haut et
+    // rendrait le message invisible malgré son contenu.
+    discoverStack.style.height = '120px';
     discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
     return;
   }
@@ -6646,12 +7146,25 @@ async function loadDiscoverQueueInner() {
 
   discoverQueue = uniqueRecs.slice(0, 15);
   discoverLoaded = true;
-  renderDiscoverStack();
+  renderDiscoverCards();
+}
+
+// Ludex 2.0 : bascule entre la pile à glisser (comportement historique) et
+// la liste compacte (réglage optionnel, voir Réglages > "Suggestions en
+// liste compacte") — un seul point d'entrée, pour que loadDiscoverQueueInner
+// et le bouton de rechargement n'aient jamais à connaître ce choix.
+function renderDiscoverCards() {
+  if (document.documentElement.classList.contains('discover-swipe-compact')) {
+    renderDiscoverCompactList();
+  } else {
+    renderDiscoverStack();
+  }
 }
 
 function renderDiscoverStack() {
   if (discoverQueue.length === 0) {
     discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '120px';
     if (discoverLoadFailed) {
       discoverStack.innerHTML = `
         <div class="error-state">
@@ -6664,6 +7177,7 @@ function renderDiscoverStack() {
     }
     return;
   }
+  discoverStack.style.height = '';
   discoverActionsEl.style.display = 'flex';
 
   // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
@@ -6706,7 +7220,7 @@ function renderDiscoverStack() {
 function buildDiscoverCardEl(m, isTop) {
   const year = m.release_date?.slice(0, 4) || '????';
   const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-  const posterUrl = m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : '';
+  const posterUrl = tmdbImage(m.poster_path, 'w500');
   let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
   if (overview.length > 160) overview = overview.slice(0, 160) + '…';
 
@@ -6752,6 +7266,83 @@ function resolveDiscoverSwipe(direction) {
   hapticPulse(discoverStack, 'medium');
   renderDiscoverStack();
 }
+
+// ── Ludex 2.0 : liste compacte (réglage optionnel) ──
+// Même file (discoverQueue), même logique d'action (watchlist/passer), mais
+// chaque ligne a ses propres boutons plutôt qu'un geste de glissement sur
+// une seule carte à la fois — toute la file reste visible et actionnable
+// d'un coup, pas juste le film du dessus de la pile.
+function renderDiscoverCompactList() {
+  if (discoverQueue.length === 0) {
+    discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '';
+    if (discoverLoadFailed) {
+      discoverStack.innerHTML = `
+        <div class="error-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
+          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
+        </div>`;
+    } else {
+      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    }
+    return;
+  }
+  discoverActionsEl.style.display = 'none'; // boutons pass/like par ligne, plus besoin de la paire globale sous la pile
+  discoverStack.style.height = '';
+
+  discoverStack.innerHTML = `<div class="discover-compact-list">${discoverQueue.map(m => {
+    const year = m.release_date?.slice(0, 4) || '????';
+    const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    return `
+      <div class="discover-compact-row" data-movie-id="${m.id}">
+        <div class="discover-compact-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
+          ${posterUrl
+            ? `<img class="discover-compact-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            : `<div class="discover-compact-poster-ph">${ICONS.clapper}</div>`}
+          <div class="discover-compact-info">
+            <div class="discover-compact-title">${escAttr(m.title)}</div>
+            <div class="discover-compact-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
+          </div>
+        </div>
+        <div class="discover-compact-actions">
+          <button type="button" class="discover-compact-btn pass" data-action="pass" aria-label="Passer ${escAttr(m.title)}" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button type="button" class="discover-compact-btn like" data-action="like" aria-label="Ajouter ${escAttr(m.title)} à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+// Résout l'action d'UNE ligne de la liste compacte (pas forcément la
+// première de la file, contrairement à resolveDiscoverSwipe) : retrouve le
+// film par son id, applique la même action que le swipe, réaffiche la liste.
+function resolveDiscoverCompact(movieId, direction) {
+  const idx = discoverQueue.findIndex(m => String(m.id) === String(movieId));
+  if (idx === -1) return;
+  const [movie] = discoverQueue.splice(idx, 1);
+
+  if (direction === 'like') {
+    const year = movie.release_date?.slice(0, 4) || '????';
+    addToWatchlistFromTMDb(movie, year);
+    if (navigator.vibrate) navigator.vibrate(20);
+  } else {
+    markDiscoverPassed(movie.id);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+  renderDiscoverCompactList();
+}
+
+discoverStack?.addEventListener('click', (e) => {
+  const row = e.target.closest('.discover-compact-row');
+  if (!row) return;
+  const actionBtn = e.target.closest('.discover-compact-btn');
+  if (actionBtn) {
+    resolveDiscoverCompact(row.dataset.movieId, actionBtn.dataset.action);
+    return;
+  }
+  if (e.target.closest('.discover-compact-open')) openMovieDetailSheet(row.dataset.movieId);
+});
 
 function attachSwipeHandlers(cardEl, movie) {
   let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
@@ -7020,6 +7611,27 @@ discoverStack?.addEventListener('click', (e) => {
 });
 
 // ═══════════════════════════════════════════
+//  "PARCOURIR" — sous-onglets Par thème / Classiques (Ludex 2.0 §06)
+// ═══════════════════════════════════════════
+// Bascule sur classList uniquement (jamais .style.display) : ces deux
+// panneaux sont aussi manipulés en .style.display par 00e-feature-flags.js
+// (activation/désactivation de fonctionnalité) — voir le commentaire dans
+// styles.css (.browse-panel) pour pourquoi ça évite tout conflit.
+const browseTabTheme = document.getElementById('browse-tab-theme');
+const browseTabClassics = document.getElementById('browse-tab-classics');
+const browsePanelTheme = document.getElementById('theme-explorer-wrap');
+const browsePanelClassics = document.getElementById('curated-lists-shortcut-wrap');
+function setBrowseTab(which) {
+  const themeActive = which === 'theme';
+  browseTabTheme?.classList.toggle('active', themeActive);
+  browseTabClassics?.classList.toggle('active', !themeActive);
+  browsePanelTheme?.classList.toggle('active', themeActive);
+  browsePanelClassics?.classList.toggle('active', !themeActive);
+}
+browseTabTheme?.addEventListener('click', () => setBrowseTab('theme'));
+browseTabClassics?.addEventListener('click', () => setBrowseTab('classics'));
+
+// ═══════════════════════════════════════════
 //  FICHE FILM DÉTAILLÉE
 // ═══════════════════════════════════════════
 // Ouverte au tap sur un film (historique, watchlist, découvrir). Récupère la
@@ -7089,7 +7701,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   // (toujours frais depuis l'API), sans jamais consulter ce qui avait été
   // sauvegardé. C'était le vrai bug derrière "ça ne se sauvegarde pas".
   const savedPoster = findSavedPosterUrl(data.id, localMatch);
-  const posterUrl = savedPoster || (data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '');
+  const posterUrl = savedPoster || (tmdbImage(data.poster_path, 'w342'));
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
@@ -7122,7 +7734,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   }
 
   return `
-    <div class="mds-header" style="animation-delay:0s">
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl
@@ -7247,7 +7859,7 @@ function renderCastCarousel(castArray) {
   if (cast.length === 0) return;
 
   const itemsHtml = cast.map(actor => {
-    const photoUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : '';
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
     return `
       <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
         ${photoUrl
@@ -7313,7 +7925,7 @@ async function populateSagaStrip(collectionId, currentMovieId) {
     if (parts.length === 0) { stripEl.innerHTML = ''; return; }
     stripEl.innerHTML = parts.map(f => `
       <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="mds-saga-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">
+        <img class="mds-saga-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">
         <div class="mds-saga-title">${escAttr(f.title)}</div>
       </div>
     `).join('');
@@ -7365,16 +7977,18 @@ function setupOverviewToggle() {
 // écouteur de scroll par ouverture de fiche (retiré à la fermeture) pour ne
 // pas empiler des écouteurs orphelins à chaque nouvelle fiche ouverte.
 const STICKY_HEADER_THRESHOLD = 80;
-let stickyHeaderScrollHandler = null;
-function setupStickyHeader() {
-  const box = mdsEl.querySelector('.mds-box');
-  const header = document.querySelector('.mds-header');
+const stickyHeaderHandlers = new WeakMap(); // un gestionnaire par fiche (evite toute collision d'etat entre film et serie)
+function setupStickyHeader(sheetEl = mdsEl) {
+  const box = sheetEl.querySelector('.mds-box');
+  const header = sheetEl.querySelector('.mds-header');
   if (!box || !header) return;
-  if (stickyHeaderScrollHandler) box.removeEventListener('scroll', stickyHeaderScrollHandler);
-  stickyHeaderScrollHandler = () => {
+  const existing = stickyHeaderHandlers.get(sheetEl);
+  if (existing) box.removeEventListener('scroll', existing);
+  const handler = () => {
     header.classList.toggle('compact', box.scrollTop > STICKY_HEADER_THRESHOLD);
   };
-  box.addEventListener('scroll', stickyHeaderScrollHandler, { passive: true });
+  stickyHeaderHandlers.set(sheetEl, handler);
+  box.addEventListener('scroll', handler, { passive: true });
 }
 
 // Choisit la meilleure bande-annonce parmi les vidéos TMDb : uniquement
@@ -7423,7 +8037,7 @@ async function openMovieDetailSheet(tmdbId) {
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
     setupStickyHeader();
-    const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+    const mdsPosterUrl = tmdbImage(data.poster_path, 'w342');
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
@@ -7577,7 +8191,7 @@ function computeSeenPercentage(films) {
 function buildPdsContent(data) {
   const films = buildPersonFilmography(data);
   const { seenCount, total, pct } = computeSeenPercentage(films);
-  const photoUrl = data.profile_path ? `https://image.tmdb.org/t/p/w185${data.profile_path}` : '';
+  const photoUrl = tmdbImage(data.profile_path, 'w185');
   const bio = data.biography
     ? (data.biography.length > 400 ? data.biography.slice(0, 400) + '…' : data.biography)
     : '';
@@ -7609,7 +8223,7 @@ function buildPdsContent(data) {
       <div class="mds-section-title">Filmographie (${total})</div>
       <div class="pds-filmography">
         ${films.map(f => {
-          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w185${f.poster_path}` : '';
+          const posterUrl = tmdbImage(f.poster_path, 'w185');
           const year = f.release_date ? f.release_date.slice(0, 4) : '';
           return `
             <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
@@ -7805,7 +8419,7 @@ function applyPosterCellHeights(grid) {
   modal?.addEventListener('transitionend', maybeCleanup);
 }
 
-async function openPosterPicker(tmdbId) {
+async function openPosterPicker(tmdbId, mediaType = 'movie') {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
@@ -7813,7 +8427,8 @@ async function openPosterPicker(tmdbId) {
   grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
 
   try {
-    const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
+    const param = mediaType === 'tv' ? 'tvImages' : 'images';
+    const res = await fetch(`/api/search?${param}=${encodeURIComponent(tmdbId)}`);
     // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
     // réponse d'erreur passer pour "aucune affiche disponible" (voir
     // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
@@ -7821,21 +8436,22 @@ async function openPosterPicker(tmdbId) {
     const data = await readApiJson(res);
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
-      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
+      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
       return;
     }
     grid.innerHTML = posters.map(p => `
       <button type="button" class="poster-picker-cell" data-poster-path="${escAttr(p.file_path)}" aria-label="Choisir cette affiche">
-        <img src="https://image.tmdb.org/t/p/w185${p.file_path}" alt="" loading="lazy" decoding="async">
+        <img src="${tmdbImage(p.file_path, 'w185')}" alt="" loading="lazy" decoding="async">
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
+    grid.dataset.mediaType = mediaType;
     applyPosterCellHeights(grid);
   } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
         <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
-        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
+        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}" data-retry-media-type="${mediaType}">Réessayer</button>
       </div>`;
   }
 }
@@ -7853,27 +8469,44 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
 
   const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
-  if (retry) { openPosterPicker(retry.dataset.retryPosters); return; }
+  if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
 
   const cell = e.target.closest('.poster-picker-cell[data-poster-path]');
   if (!cell) return;
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
+  const mediaType = grid.dataset.mediaType || 'movie';
+  modal.classList.remove('open');
+
+  if (mediaType === 'tv') {
+    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
+    // URL complète comme les films) — on garde ce même format plutôt que
+    // d'introduire une seconde représentation.
+    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+    if (navigator.vibrate) navigator.vibrate(15);
+    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
+    if (sheetPoster && sheetPoster.tagName === 'IMG') {
+      sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
+    }
+    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+    showToast('Affiche mise à jour');
+    return;
+  }
+
   // w342 (pas w185) : c'est la résolution que la fiche film affiche en
   // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
   // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
   // (historique, watchlist) se contentent très bien de la redimensionner
   // vers le bas.
-  const url = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+  const url = tmdbImage(cell.dataset.posterPath, 'w342');
   const touched = applyChosenPoster(tmdbId, url);
   if (navigator.vibrate) navigator.vibrate(15);
-  modal.classList.remove('open');
 
   // Rafraîchit l'affiche visible dans la fiche immédiatement (w342 pour la
   // grande vue, même chemin de fichier)
   const sheetPoster = document.querySelector('#movie-detail-sheet .mds-poster');
   if (sheetPoster && sheetPoster.tagName === 'IMG') {
-    sheetPoster.src = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+    sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
   }
   renderAll();
   showToast(touched > 0 ? 'Affiche mise à jour dans ta collection' : 'Affiche mise à jour');
@@ -8495,7 +9128,7 @@ function renderFilmGridSheet(label, films) {
       ${withSeen.map(f => `
         <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
           ${f.poster_path
-            ? `<img class="pds-film-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">`
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
             : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
           <div class="pds-film-title">${escAttr(f.title)}</div>
           <div class="pds-film-year">${f.year || ''}</div>
@@ -8580,7 +9213,7 @@ function renderThemeChips() {
   if (!row) return;
   row.innerHTML = CURATED_THEMES.map(t => `
     <button type="button" class="theme-chip" data-theme-id="${t.id}" data-theme-name="${escAttr(t.name)}">
-      <span aria-hidden="true">${t.emoji}</span> ${escAttr(t.name)}
+      ${ICONS[t.icon] || ''} ${escAttr(t.name)}
     </button>
   `).join('');
   row.querySelectorAll('.theme-chip').forEach(chip => {
@@ -8611,7 +9244,7 @@ async function openThemeSheet(themeId, themeName) {
       ${films.map(f => `
         <div class="pds-film-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
           ${f.poster_path
-            ? `<img class="pds-film-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">`
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
             : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
           <div class="pds-film-title">${escAttr(f.title)}</div>
           <div class="pds-film-year">${f.year || ''}</div>
@@ -8942,3 +9575,1691 @@ function wireAnalysisSection(movieId, movieTitle) {
     }
   });
 }
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 1 : recherche + sélection de saison
+// ═══════════════════════════════════════════
+// Bascule Film/Série dans l'onglet Noter, recherche d'une série (TMDb
+// /search/tv), puis choix d'une saison (TMDb /tv/{id} pour la liste des
+// saisons). S'arrête volontairement là : le suivi épisode par épisode et
+// la notation de saison sont les Phases 2 et 3, pas encore construites —
+// on avance point par point plutôt que tout d'un coup, comme convenu.
+//
+// Stockage à venir en Phase 2+ (lbx_tv_shows, une entrée par SÉRIE avec
+// ses saisons imbriquées) — rien n'est encore sauvegardé à ce stade,
+// cette phase se limite à la sélection.
+
+// currentMediaType est déclarée dans 03-foundation.js (pas ici) — voir le
+// commentaire à cet endroit pour la raison exacte (calculateScore() y
+// accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
+let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
+
+function setMediaType(type) {
+  currentMediaType = type;
+  document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('tab-media-tv').classList.toggle('active', type === 'tv');
+  const movieFields = document.getElementById('movie-only-fields');
+  const tvFields = document.getElementById('tv-only-fields');
+  if (type === 'movie') fadeSwitchDisplay(tvFields, movieFields); else fadeSwitchDisplay(movieFields, tvFields);
+  document.getElementById('film-card-title').textContent = type === 'movie' ? 'Film' : 'Série';
+  applyCriteriaLabelsForMediaType(type);
+  // Pour un film, la carte Notation est toujours visible (on peut ajuster
+  // les curseurs avant même d'avoir cherché un titre). Pour une série, il
+  // faut d'abord qu'une saison soit sélectionnée pour que noter ait un
+  // sens — selectSeason() la révèle elle-même le moment venu.
+  document.getElementById('notation-card').style.display = type === 'movie' || selectedSeasonNumber != null ? '' : 'none';
+  if (type === 'tv' && typeof renderTvContinueList === 'function') renderTvContinueList();
+}
+
+// Les deux critères reformulés pour une saison — les 5 autres (scenario,
+// realisation, acteurs, ambiance, affect) restent identiques au film,
+// donc pas dans cette table.
+const TV_CRITERIA_LABELS = { photo: 'Qualité du final', rythme: 'Rythme & Cohérence de la saison' };
+const _originalCriteriaLabels = {};
+
+function applyCriteriaLabelsForMediaType(type) {
+  Object.keys(TV_CRITERIA_LABELS).forEach(c => {
+    const labelEl = document.getElementById(`crit-label-${c}`);
+    if (!labelEl || !labelEl.firstChild) return;
+    // Le badge de pondération (<span class="weight-badge">) est un enfant
+    // du label — on ne modifie QUE le nœud de texte qui le précède, pour
+    // ne jamais l'écraser (même classe de bug déjà rencontrée ailleurs
+    // dans ce projet : cibler le bon élément, pas tout le conteneur).
+    if (!(c in _originalCriteriaLabels)) _originalCriteriaLabels[c] = labelEl.firstChild.nodeValue;
+    const newText = (type === 'tv' ? TV_CRITERIA_LABELS[c] : _originalCriteriaLabels[c].trim()) + ' ';
+    labelEl.firstChild.nodeValue = newText;
+    const trimmed = newText.trim();
+    document.querySelectorAll(`.criterion-step-btn[data-target="${c}"]`).forEach(btn => {
+      const sign = btn.dataset.step.startsWith('-') ? 'Diminuer' : 'Augmenter';
+      btn.setAttribute('aria-label', `${sign} ${trimmed} de 0,5`);
+    });
+  });
+}
+
+const tvSearchEl = document.getElementById('tv-search');
+const tvSuggestEl = document.getElementById('tv-suggestions');
+const tvSearchStatus = document.getElementById('tv-search-status');
+const tvSearchClearBtn = document.getElementById('tv-search-clear-btn');
+let tvSearchTimer;
+
+tvSearchEl.addEventListener('input', () => {
+  clearTimeout(tvSearchTimer);
+  tvSearchClearBtn.style.display = tvSearchEl.value ? 'flex' : 'none';
+  const q = tvSearchEl.value.trim();
+  if (q.length < 2) {
+    tvSuggestEl.style.display = 'none';
+    tvSearchStatus.style.display = 'none';
+    return;
+  }
+  tvSearchStatus.style.display = 'none';
+  tvSuggestEl.style.display = 'block';
+  tvSuggestEl.innerHTML = `
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+  `;
+  tvSearchTimer = setTimeout(() => fetchTvSuggestions(q), 280);
+});
+tvSearchClearBtn.addEventListener('click', () => {
+  tvSearchEl.value = '';
+  tvSearchEl.dispatchEvent(new Event('input'));
+  tvSearchEl.focus();
+});
+
+async function fetchTvSuggestions(q) {
+  try {
+    const res = await fetch(`/api/search?tvQuery=${encodeURIComponent(q)}`);
+    const data = await readApiJson(res);
+    const results = (data.results || []).filter(s => s.poster_path).slice(0, 8);
+    if (results.length === 0) {
+      tvSuggestEl.style.display = 'none';
+      tvSearchStatus.textContent = 'Aucune série trouvée.';
+      tvSearchStatus.style.display = 'block';
+      return;
+    }
+    tvSuggestEl.innerHTML = results.map(s => `
+      <div class="suggestion-item" data-show-id="${s.id}" data-show-name="${escAttr(s.name)}" data-show-poster="${escAttr(s.poster_path || '')}">
+        <img class="suggestion-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="" loading="lazy">
+        <div class="suggestion-info">
+          <div class="suggestion-title">${escAttr(s.name)}</div>
+          <div class="suggestion-year">${s.first_air_date ? s.first_air_date.slice(0, 4) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+    tvSuggestEl.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => selectShow({
+        id: item.dataset.showId, name: item.dataset.showName, poster_path: item.dataset.showPoster,
+      }));
+    });
+  } catch (err) {
+    tvSuggestEl.style.display = 'none';
+    tvSearchStatus.textContent = describeApiFailure(err);
+    tvSearchStatus.style.display = 'block';
+  }
+}
+
+async function selectShow(show) {
+  selectedShow = show;
+  tvSuggestEl.style.display = 'none';
+  tvSearchEl.value = show.name;
+  document.getElementById('tv-season-strip').style.display = 'none';
+  document.getElementById('tv-season-picker').style.display = 'none';
+  openTvDetailSheet(show.id);
+}
+
+function selectSeason(season) {
+  const stripEl = document.getElementById('tv-season-strip');
+  stripEl.style.display = 'flex';
+  const posterImg = document.getElementById('tv-strip-poster');
+  posterImg.src = tmdbImage(season.poster, 'w200');
+  document.getElementById('tv-strip-title').textContent = `${selectedShow.name} — ${season.name}`;
+  document.getElementById('tv-strip-genre').textContent = `${season.episodeCount} épisode${season.episodeCount > 1 ? 's' : ''}`;
+  selectedSeasonNumber = Number(season.number);
+  selectedSeasonName = season.name;
+  selectedSeasonEpisodeCount = Number(season.episodeCount);
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  refreshShowAverageDisplay();
+
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const localSeason = showEntry?.seasons?.[String(selectedSeasonNumber)];
+  const episodesComplete = localSeason && localSeason.totalEpisodes > 0 && localSeason.watchedEpisodes.length >= localSeason.totalEpisodes;
+  const isComplete = localSeason && (episodesComplete || localSeason.rating);
+
+  const startPromptEl = document.getElementById('tv-season-start-prompt');
+  const inProgressEl = document.getElementById('tv-season-in-progress-msg');
+  const notationEl = document.getElementById('notation-card');
+
+  if (isComplete) {
+    // Saison terminée : plus rien à cocher, on passe directement à la note
+    // — pré-remplie si déjà notée, exactement le même geste que rouvrir
+    // depuis l'Historique.
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    notationEl.style.display = '';
+    loadSeasonRatingIntoForm();
+  } else if (localSeason) {
+    // Déjà entamée (via le widget En cours) mais pas finie : pas de second
+    // suivi ici, juste un rappel de où continuer plutôt qu'un doublon.
+    notationEl.style.display = 'none';
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'flex';
+    document.getElementById('tv-in-progress-text').textContent =
+      `${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} épisodes déjà vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  } else {
+    // Jamais touchée : propose de commencer plutôt que d'ouvrir directement
+    // un suivi épisode par épisode ici.
+    notationEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    startPromptEl.style.display = 'flex';
+    document.getElementById('tv-start-prompt-text').textContent = `Commencer "${selectedShow.name} — ${season.name}" ?`;
+  }
+}
+
+function startTrackingSeason() {
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+  }
+  saveTvShows(shows);
+  document.getElementById('tv-season-start-prompt').style.display = 'none';
+  document.getElementById('tv-season-in-progress-msg').style.display = 'flex';
+  document.getElementById('tv-in-progress-text').textContent =
+    `0/${selectedSeasonEpisodeCount} épisodes vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  if (typeof renderTvContinueList === 'function') renderTvContinueList();
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" ajoutée à En cours`);
+}
+document.getElementById('tv-start-season-btn').addEventListener('click', startTrackingSeason);
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 2 : suivi épisode par épisode
+// ═══════════════════════════════════════════
+// Stockage : une entrée par SÉRIE (lbx_tv_shows), avec ses saisons
+// imbriquées — chaque saison garde la liste des épisodes vus et son
+// total. Aucune note stockée ici (Phase 3) : la note de saison viendra
+// plus tard, la note globale de série ne sera jamais stockée du tout,
+// toujours recalculée à la volée à partir des saisons notées.
+const TV_SHOWS_KEY = 'lbx_tv_shows';
+let selectedSeasonNumber = null;
+let selectedSeasonName = null;
+let selectedSeasonEpisodeCount = 0;
+
+function loadTvShows() {
+  try { return JSON.parse(localStorage.getItem(TV_SHOWS_KEY)) || []; } catch { return []; }
+}
+function saveTvShows(shows) {
+  localStorage.setItem(TV_SHOWS_KEY, JSON.stringify(shows));
+}
+function getOrCreateTvShow(shows) {
+  let entry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  if (!entry) {
+    entry = { tmdbTvId: selectedShow.id, title: selectedShow.name, poster_path: selectedShow.poster_path, genre: selectedShow.genres || '', seasons: {} };
+    shows.push(entry);
+  }
+  return entry;
+}
+function getOrCreateTvSeason(showEntry, seasonName, totalEpisodes) {
+  const key = String(selectedSeasonNumber);
+  if (!showEntry.seasons[key]) {
+    showEntry.seasons[key] = { seasonName, watchedEpisodes: [], totalEpisodes };
+  }
+  // Le total peut differer de ce qu'on avait stocke si TMDb ajoute un
+  // episode entre deux visites (saison en cours de diffusion) — on le
+  // reajuste plutot que de garder une valeur perimee.
+  showEntry.seasons[key].totalEpisodes = totalEpisodes;
+  return showEntry.seasons[key];
+}
+
+function loadSeasonRatingIntoForm() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const seasonEntry = showEntry && showEntry.seasons[String(selectedSeasonNumber)];
+  const rating = seasonEntry && seasonEntry.rating;
+
+  if (rating && rating.mode === 'quick' && rating.values?.quick !== undefined) {
+    setMode('quick');
+    quickRating = parseFloat(rating.values.quick);
+    const radioEl = document.getElementById('s' + (quickRating * 2));
+    if (radioEl) radioEl.checked = true;
+  } else {
+    setMode('detail');
+    CRITERIA.forEach(c => {
+      document.getElementById(c).value = rating && rating.values && rating.values[c] !== undefined ? rating.values[c] : 5;
+    });
+  }
+  document.getElementById('review-text').value = rating ? (rating.review || '') : '';
+  calculateScore();
+}
+
+// Toutes les notes de saison, toutes séries confondues, à plat — réutilisé
+// pour le radar (moyennes par critère, même fonction pure que les films)
+// et pour fusionner l'activité films+séries dans le graphique 6 mois (voir
+// 06-history.js) : la heatmap ET ce graphique restent uniques, décidé
+// ensemble, contrairement au reste des statistiques qui bascule.
+function getAllTvSeasonRatings() {
+  return loadTvShows().flatMap(show =>
+    Object.values(show.seasons || {}).filter(s => s.rating).map(s => s.rating)
+  );
+}
+
+function refreshShowAverageDisplay() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const avg = computeShowAverageScore(showEntry);
+  const el = document.getElementById('tv-show-average');
+  if (avg == null) {
+    el.style.display = 'none';
+    return;
+  }
+  const ratedCount = Object.values(showEntry.seasons).filter(s => s.rating).length;
+  el.textContent = `Note globale : ${avg.toFixed(1)}/10 (moyenne de ${ratedCount} saison${ratedCount > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})`;
+  el.style.display = 'block';
+}
+
+function saveTvSeasonRating() {
+  if (!selectedShow || selectedSeasonNumber == null) {
+    showToast('Sélectionne une série et une saison avant de noter.');
+    return;
+  }
+  const score = calculateScore();
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  // La saison existe déjà forcément (créée dès qu'on "Commence" à la suivre,
+  // voir startTrackingSeason) — on y ajoute juste la note, sans repasser par
+  // getOrCreateTvSeason pour ne pas risquer d'écraser totalEpisodes avec
+  // une valeur périmée.
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+  }
+  showEntry.seasons[seasonKey].rating = {
+    mode: currentMode,
+    values: currentMode === 'detail'
+      ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
+      : { quick: quickRating },
+    score: score.toFixed(1),
+    stars: document.getElementById('stars-display').textContent,
+    review: document.getElementById('review-text').value.trim(),
+    date: new Date().toISOString(),
+  };
+  saveTvShows(shows);
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`);
+  if (typeof playSaveConfirmation === 'function') playSaveConfirmation();
+  refreshShowAverageDisplay();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+}
+
+function maybeShowSeasonCompleteBanner(showTmdbId, seasonKey, seasonEntry) {
+  if (seasonEntry.watchedEpisodes.length < seasonEntry.totalEpisodes) return;
+  const banner = document.getElementById('tv-season-complete-banner');
+  banner.dataset.showId = showTmdbId;
+  banner.dataset.seasonKey = seasonKey;
+  banner.style.display = 'flex';
+}
+
+document.getElementById('tv-season-complete-dismiss').addEventListener('click', () => {
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+});
+document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
+  const banner = document.getElementById('tv-season-complete-banner');
+  const showId = banner.dataset.showId;
+  const seasonKey = banner.dataset.seasonKey;
+  banner.style.display = 'none';
+
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (show) {
+    switchMobileNav('rating');
+    setMediaType('tv');
+    selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+    document.getElementById('tv-search').value = show.title;
+    document.getElementById('tv-season-picker').style.display = 'none';
+    const seasonData = show.seasons[seasonKey];
+    selectedSeasonNumber = Number(seasonKey);
+    selectedSeasonName = seasonData.seasonName;
+    document.getElementById('tv-season-strip').style.display = 'flex';
+    document.getElementById('tv-strip-poster').src = tmdbImage(show.poster_path, 'w200');
+    document.getElementById('tv-strip-title').textContent = `${show.title} — ${seasonData.seasonName}`;
+    document.getElementById('tv-strip-genre').textContent = `${seasonData.totalEpisodes} épisodes`;
+    document.getElementById('tv-season-start-prompt').style.display = 'none';
+    document.getElementById('tv-season-in-progress-msg').style.display = 'none';
+    refreshShowAverageDisplay();
+    loadSeasonRatingIntoForm();
+  }
+  const card = document.getElementById('notation-card');
+  card.style.display = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 4 : Historique scindé Films/Séries
+// ═══════════════════════════════════════════
+// Bascule façon Détaillé/Rapide (pas un simple filtre dans une liste
+// mélangée) : une carte de saison et une carte de film n'ont pas le même
+// contenu à afficher, les mélanger aurait rendu chaque carte confuse.
+// Comptage par SÉRIE, pas par saison — noter 3 saisons de la même série
+// compte pour 1, pas 3, comme convenu.
+
+function switchHistoryMediaFilter(type) {
+  historyMediaFilter = type;
+  document.getElementById('hist-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
+  const movieList = document.getElementById('history-list');
+  const tvList = document.getElementById('tv-history-list');
+  if (type === 'movie') fadeSwitchDisplay(tvList, movieList); else fadeSwitchDisplay(movieList, tvList);
+  renderActiveHistoryView();
+  if (type === 'tv') retrofitMissingTvGenres();
+}
+
+// Récupère silencieusement le genre des séries suivies avant l'ajout de ce
+// filtre (donc sans genre stocké) — une seule fois par série, en arrière-
+// plan, sans bloquer l'affichage déjà rendu avec les genres déjà connus.
+async function retrofitMissingTvGenres() {
+  const missing = loadTvShows().filter(s => !s.genre);
+  if (missing.length === 0) return;
+  for (const show of missing) {
+    try {
+      const data = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      const current = loadTvShows();
+      const entry = current.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      if (entry && genreStr) { entry.genre = genreStr; saveTvShows(current); }
+    } catch { /* silencieux — retentera au prochain passage sur l'onglet */ }
+  }
+  if (historyMediaFilter === 'tv') renderTvHistory();
+}
+
+function getSortedTvShows() {
+  const shows = loadTvShows();
+  let s = shows;
+  if (historySearchQuery) {
+    s = s.filter(sh => sh.title && sh.title.toLowerCase().includes(historySearchQuery));
+  }
+  if (activeScoreFilter !== null) {
+    s = s.filter(sh => isScoreInActiveRange(computeShowAverageScore(sh)));
+  }
+  if (activeGenre) {
+    s = s.filter(sh => sh.genre && sh.genre.split(',').map(g => g.trim()).includes(activeGenre));
+  }
+  const avg = (sh) => computeShowAverageScore(sh);
+  if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
+  if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
+  if (sortOrder === 'title')      return [...s].sort((a, b) => a.title.localeCompare(b.title));
+  // "Récents" : dernière saison mise à jour (notée ou suivie), la plus
+  // récente d'abord — même esprit que le tri "Récents" des films.
+  const lastUpdate = (sh) => Object.values(sh.seasons || {}).reduce((max, se) => {
+    const d = se.rating?.date || '';
+    return d > max ? d : max;
+  }, '');
+  return [...s].sort((a, b) => lastUpdate(b).localeCompare(lastUpdate(a)));
+}
+
+function renderTvHistory() {
+  const allShows = loadTvShows();
+  const shows = getSortedTvShows();
+  const container = document.getElementById('tv-history-list');
+  renderGenreChips(allShows, renderTvHistory);
+  document.getElementById('filter-row').style.display = allShows.length === 0 ? 'none' : '';
+
+  const badge = document.getElementById('hist-count-badge');
+  const filmCount = loadHistory().length;
+  const filmFragment = `${filmCount} film${filmCount > 1 ? 's' : ''}`;
+  if (historySearchQuery || activeScoreFilter) {
+    badge.textContent = `${filmFragment} · ${shows.length} / ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = 'var(--orange)';
+  } else {
+    badge.textContent = `${filmFragment} · ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = '';
+  }
+
+  if (allShows.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
+    return;
+  }
+  if (shows.length === 0) {
+    container.innerHTML = `<div class="empty-state">Aucun résultat pour ce filtre.</div>`;
+    return;
+  }
+
+  container.innerHTML = shows.map(renderTvShowCard).join('');
+
+  container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
+    const posterUrl = tmdbImage(shows[i]?.poster_path, 'w154');
+    applyPosterAccent(posterUrl, cardEl);
+  });
+
+  container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => openTvDetailSheet(btn.dataset.showId));
+  });
+
+  container.querySelectorAll('.tv-show-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.showId;
+      const show = loadTvShows().find(s => String(s.tmdbTvId) === String(id));
+      if (!show) return;
+      openModal(
+        'Retirer cette série',
+        `"${show.title}" et toutes ses saisons suivies/notées seront définitivement retirées. Continuer ?`,
+        () => {
+          const remaining = loadTvShows().filter(s => String(s.tmdbTvId) !== String(id));
+          saveTvShows(remaining);
+          if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_show_tombstones', String(id));
+          renderTvHistory();
+          showToast(`"${show.title}" retirée`);
+          if (typeof statsDirty !== 'undefined') statsDirty = true;
+        },
+        true
+      );
+    });
+  });
+
+  container.querySelectorAll('.tv-season-reopen-btn').forEach(btn => {
+    btn.addEventListener('click', () => reopenTvSeason(btn.dataset.showId, btn.dataset.seasonKey));
+  });
+
+  container.querySelectorAll('.tv-season-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteTvSeasonWithConfirm(btn.dataset.showId, btn.dataset.seasonKey);
+    });
+  });
+
+  initTvSeasonSwipeGestures(container);
+  initTvShowCardSwipeGestures(container);
+}
+
+function deleteTvSeasonWithConfirm(showId, seasonKey) {
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (!show) return;
+  const seasonName = show.seasons[seasonKey]?.seasonName || `Saison ${seasonKey}`;
+  const isLastSeason = Object.keys(show.seasons).length === 1;
+  openModal(
+    'Retirer cette saison',
+    isLastSeason
+      ? `"${seasonName}" est la dernière saison suivie de "${show.title}" — la retirer retire toute la série. Continuer ?`
+      : `"${seasonName}" de "${show.title}" sera définitivement retirée. Continuer ?`,
+    () => {
+      const shows = loadTvShows();
+      const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+      if (!showEntry) return;
+      delete showEntry.seasons[seasonKey];
+      if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_season_tombstones', `${showId}:${seasonKey}`);
+      const remaining = Object.keys(showEntry.seasons).length === 0
+        ? shows.filter(s => String(s.tmdbTvId) !== String(showId))
+        : shows;
+      if (Object.keys(showEntry.seasons).length === 0 && typeof recordTombstone === 'function') {
+        recordTombstone('lbx_tv_show_tombstones', String(showId));
+      }
+      saveTvShows(remaining);
+      renderTvHistory();
+      showToast(`"${seasonName}" retirée`);
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+    },
+    true
+  );
+}
+
+function renderTvShowCard(show) {
+  const avg = computeShowAverageScore(show);
+  const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const ratedCount = seasons.filter(([, s]) => s.rating).length;
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
+
+  return `
+    <div class="tv-show-card">
+      <div class="tv-show-card-header-wrap" data-show-id="${show.tmdbTvId}">
+        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+        <div class="tv-show-card-header">
+          <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
+            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
+            <div class="tv-show-card-info">
+              <div class="tv-show-card-title">${escAttr(show.title)}</div>
+              <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
+            </div>
+          </button>
+          <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+        </div>
+      </div>
+      <details class="tv-show-seasons-fold">
+        <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
+        <div class="tv-show-seasons-list">
+          ${seasons.map(([key, s]) => `
+            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}">
+              <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+              <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
+              <div class="tv-season-row-content">
+                <button type="button" class="tv-season-reopen-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">
+                  <span>${escAttr(s.seasonName)}</span>
+                  <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
+                </button>
+                <button type="button" class="tv-season-delete-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+// Glissement sur les lignes de saison — mêmes paramètres physiques déjà
+// éprouvés que l'historique films (voir initHistoryGestures), mais
+// contrôleur séparé plutôt qu'une généralisation complète : le système
+// film est ancien, très affiné (de nombreux bugs corrigés un par un au
+// fil de plusieurs sessions), le réécrire pour le rendre générique aurait
+// un vrai risque de régression sur un comportement déjà fiable et testé.
+// Version allégée ici : pas de menu d'appui long (pas d'équivalent série
+// pour l'instant), pas de survie à un nouveau rendu complexe (un
+// re-rendu annule simplement un geste armé, acceptable sur cette liste
+// moins sollicitée que l'historique principal).
+function initTvSeasonSwipeGestures(container) {
+  const MOVE_CANCEL_PX = 12;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let startX = 0, startY = 0;
+  let pressedItem = null, pressedContent = null;
+  let wasSwipe = false;
+  let swipeMode = null;
+  let dx = 0;
+  let armedItem = null, armedDirection = null;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.tv-season-row-content');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
+    armedItem = null;
+    armedDirection = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const showId = armedItem.dataset.showId;
+    const seasonKey = armedItem.dataset.seasonKey;
+    const dir = armedDirection;
+    armedItem = null;
+    armedDirection = null;
+    if (dir === 'left') {
+      deleteTvSeasonWithConfirm(showId, seasonKey);
+    } else {
+      reopenTvSeason(showId, seasonKey);
+    }
+  }
+
+  function resetGesture() {
+    if (pressedItem) pressedItem.classList.remove('hist-dragging');
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  function cancelGestureFully() {
+    if (pressedItem) {
+      if (pressedContent) {
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = '';
+      }
+      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+    }
+    resetGesture();
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.tv-season-row');
+    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) { resetGesture(); return; }
+    e.stopPropagation();
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-season-row-content');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const rawDx = e.touches[0].clientX - startX;
+    const rawDy = e.touches[0].clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  }, { passive: true });
+
+  function resolveGesture() {
+    if (!pressedItem) return;
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        armedDirection = 'left';
+        hapticPulse(pressedItem, 'medium');
+      } else if (dx >= SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(120px)';
+        pressedItem.classList.add('hist-swipe-armed-right');
+        armedItem = pressedItem;
+        armedDirection = 'right';
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+      }
+      wasSwipe = true;
+      setTimeout(() => { wasSwipe = false; }, 300);
+    }
+    resetGesture();
+  }
+  container.addEventListener('touchend', resolveGesture);
+  container.addEventListener('touchcancel', cancelGestureFully);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  let mouseActive = false;
+  container.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.tv-season-row');
+    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) return;
+    mouseActive = true;
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-season-row-content');
+    startX = e.clientX;
+    startY = e.clientY;
+    swipeMode = null;
+    dx = 0;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!mouseActive || !pressedItem) return;
+    const rawDx = e.clientX - startX;
+    const rawDy = e.clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!mouseActive) return;
+    mouseActive = false;
+    resolveGesture();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (armedItem) {
+      const hint = e.target.closest('.hist-swipe-hint');
+      const clickedItem = e.target.closest('.tv-season-row');
+      if (hint && clickedItem === armedItem) {
+        confirmArmed();
+        return;
+      }
+      const wasArmedItself = clickedItem === armedItem;
+      cancelArmed();
+      if (wasArmedItself) return;
+    }
+  }, true); // capture : s'exécute avant les listeners de clic sur les boutons internes (reopen/delete)
+
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+}
+
+// Glissement sur la carte de série elle-même — supprime toute la série
+// (pas juste une saison). Uniquement vers la gauche : contrairement à une
+// saison, une série entière n'a pas d'action "Modifier" unique vers
+// laquelle glisser à droite, donc pas de second sens ici. Contrôleur
+// séparé plutôt que de généraliser initTvSeasonSwipeGestures : n'agit que
+// sur l'en-tête de la carte (pas sur la liste de saisons dépliée juste en
+// dessous), pour ne jamais entrer en conflit avec le glissement des
+// lignes de saison qui vit dans une zone distincte du DOM.
+function initTvShowCardSwipeGestures(container) {
+  const MOVE_CANCEL_PX = 12;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let startX = 0, startY = 0;
+  let pressedItem = null, pressedContent = null;
+  let swipeMode = null;
+  let dx = 0;
+  let armedItem = null;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.tv-show-card-header');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-left');
+    armedItem = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const showId = armedItem.dataset.showId;
+    armedItem = null;
+    const btn = container.querySelector(`.tv-show-delete-btn[data-show-id="${showId}"]`);
+    if (btn) btn.click(); // réutilise exactement la même confirmation/suppression que le bouton visible
+  }
+
+  function resetGesture() {
+    if (pressedItem) pressedItem.classList.remove('hist-dragging');
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.tv-show-card-header-wrap');
+    if (!item || e.target.closest('.tv-show-card-open-btn') || e.target.closest('.tv-show-delete-btn')) { resetGesture(); return; }
+    e.stopPropagation();
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-show-card-header');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const rawDx = e.touches[0].clientX - startX;
+    const rawDy = e.touches[0].clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    // Seulement vers la gauche : un glissement vers la droite ne fait rien
+    // (pas de deuxième action), donc plafonné à 0 plutôt que de suivre le doigt.
+    dx = Math.max(-MAX_DRAG, Math.min(0, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    if (!pressedItem) return;
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left');
+      }
+    }
+    resetGesture();
+  });
+  container.addEventListener('touchcancel', () => {
+    if (pressedItem && pressedContent) {
+      pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+      pressedContent.style.transform = '';
+      pressedItem.classList.remove('hist-swipe-left');
+    }
+    resetGesture();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (!armedItem) return;
+    const hint = e.target.closest('.hist-swipe-hint');
+    const clickedItem = e.target.closest('.tv-show-card-header-wrap');
+    if (hint && clickedItem === armedItem) { confirmArmed(); return; }
+    const wasArmedItself = clickedItem === armedItem;
+    cancelArmed();
+    if (wasArmedItself) return;
+  }, true);
+
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+}
+
+function reopenTvSeason(showId, seasonKey) {
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (!show) return;
+  switchMobileNav('rating');
+  setMediaType('tv');
+  selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+  document.getElementById('tv-search').value = show.title;
+  document.getElementById('tv-season-picker').style.display = 'none';
+  const seasonData = show.seasons[seasonKey];
+  selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
+  document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 5 : statistiques
+// ═══════════════════════════════════════════
+// Bascule sur le tableau de bord (KPI, radar, distribution des notes) —
+// comptage par SÉRIE, pas par saison, comme partout ailleurs dans le
+// module. La heatmap ET le graphique "Activité (6 derniers mois)" restent
+// UNIQUES dans les deux modes (décidé ensemble) : ils montrent le rythme
+// de visionnage global, films et séries confondus, pas de dédoublement.
+// "Top Réalisateurs" n'a pas d'équivalent série pour l'instant (aucune
+// donnée de showrunner récupérée) — replié plutôt que vide ou trompeur.
+
+function switchStatsMediaFilter(type) {
+  statsMediaFilter = type;
+  document.getElementById('stats-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('stats-tab-tv').classList.toggle('active', type === 'tv');
+  const dashboard = document.querySelector('.dashboard-grid');
+  const applyChange = () => {
+    document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
+    document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
+    if (type === 'tv') renderTvStats(); else renderStats();
+  };
+  if (!dashboard) { applyChange(); return; }
+  dashboard.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  dashboard.style.opacity = '0';
+  setTimeout(() => {
+    applyChange();
+    requestAnimationFrame(() => {
+      dashboard.style.opacity = '1';
+      setTimeout(() => { dashboard.style.removeProperty('opacity'); dashboard.style.removeProperty('transition'); }, 150);
+    });
+  }, 140);
+}
+
+function renderTvStats() {
+  const shows = loadTvShows();
+  animateCountUp(document.getElementById('kpi-total'), shows.length);
+
+  const showAverages = shows.map(computeShowAverageScore).filter(a => a != null);
+  if (showAverages.length === 0) {
+    document.getElementById('kpi-avg').textContent = '-';
+  } else {
+    const avg = showAverages.reduce((a, b) => a + b, 0) / showAverages.length;
+    animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
+  }
+
+  // Compte les SÉRIES ayant au moins une saison notée cette année (pas le
+  // nombre brut de saisons notées) — même logique de comptage par série.
+  const currentYear = new Date().getFullYear().toString();
+  const yearShowsCount = shows.filter(s =>
+    Object.values(s.seasons || {}).some(se => se.rating?.date?.startsWith(currentYear))
+  ).length;
+  animateCountUp(document.getElementById('kpi-year'), yearShowsCount);
+
+  const allRatings = getAllTvSeasonRatings();
+
+  if (allRatings.length === 0) {
+    document.getElementById('radar-chart-container').innerHTML = '';
+    document.getElementById('radar-chart-container').style.minHeight = '0';
+    document.getElementById('radar-empty').style.display = 'block';
+  } else {
+    const avgsByCriterion = computeCriteriaAverages(allRatings, CRITERIA);
+    const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
+    const radarSvg = createRadarSVG(avgs, 'tv');
+    if (radarSvg) {
+      document.getElementById('radar-chart-container').innerHTML = radarSvg;
+      document.getElementById('radar-chart-container').style.minHeight = '160px';
+      document.getElementById('radar-empty').style.display = 'none';
+    } else {
+      document.getElementById('radar-chart-container').innerHTML = '';
+      document.getElementById('radar-chart-container').style.minHeight = '0';
+      document.getElementById('radar-empty').style.display = 'block';
+    }
+  }
+
+  // Timeline fusionnée (films + séries), identique à ce qu'affiche le mode
+  // Films — voir le commentaire en tête de section.
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(loadHistory().concat(allRatings));
+
+  const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
+  allRatings.forEach(r => {
+    const stars = Math.round((parseFloat(r.score) / 2) * 2) / 2;
+    const key = Math.round(stars * 10).toString().padStart(2, '0');
+    if (dist[key] !== undefined) dist[key]++;
+  });
+  buildHistogram(dist);
+}
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Widget "En cours" (onglet Noter, mode Série uniquement)
+// ═══════════════════════════════════════════
+// Une carte par série ayant un épisode à regarder : soit une saison
+// entamée mais pas finie, soit — si la dernière saison connue vient
+// d'être terminée — la saison suivante si elle existe (détectée via TMDb,
+// pas stockée d'avance puisque seules les saisons déjà sélectionnées sont
+// connues localement). Si aucune suite n'existe, la série disparaît
+// simplement du widget.
+
+async function renderTvContinueList() {
+  const container = document.getElementById('tv-continue-list');
+  const sectionEl = document.getElementById('tv-continue-section');
+  const shows = loadTvShows();
+  const candidates = [];
+
+  for (const show of shows) {
+    const entries = Object.entries(show.seasons || {});
+    const partial = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes && !s.paused)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (partial) {
+      candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
+      continue;
+    }
+    const complete = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length >= s.totalEpisodes)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (complete) {
+      candidates.push({ show, seasonKey: complete[0], seasonEntry: complete[1], needsNextSeasonCheck: true });
+    }
+  }
+
+  if (candidates.length === 0) {
+    sectionEl.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  sectionEl.style.display = 'block';
+  document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
+  container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
+
+  candidates.forEach(async (cand, idx) => {
+    const resolved = await resolveNextTvEpisode(cand);
+    const placeholder = container.querySelector(`[data-continue-idx="${idx}"]`);
+    if (!placeholder) return; // le conteneur a pu être reconstruit entre-temps
+    if (!resolved) {
+      placeholder.remove();
+      if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+      return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    placeholder.replaceWith(wrapper.firstElementChild);
+  });
+}
+
+async function resolveNextTvEpisode(cand) {
+  const { show, needsNextSeasonCheck } = cand;
+  let seasonKey = cand.seasonKey;
+  let seasonEntry = cand.seasonEntry;
+
+  if (needsNextSeasonCheck) {
+    const nextNum = Number(seasonKey) + 1;
+    try {
+      const showDetail = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const nextMeta = (showDetail.seasons || []).find(s => s.season_number === nextNum);
+      if (!nextMeta) return null; // pas de saison suivante
+      const shows = loadTvShows();
+      const showEntry = shows.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      seasonKey = String(nextNum);
+      if (!showEntry.seasons[seasonKey]) {
+        showEntry.seasons[seasonKey] = { seasonName: nextMeta.name, watchedEpisodes: [], totalEpisodes: nextMeta.episode_count };
+        saveTvShows(shows);
+      }
+      seasonEntry = showEntry.seasons[seasonKey];
+    } catch { return null; }
+  }
+
+  try {
+    const seasonData = await fetch(`/api/search?tvSeasonShowId=${show.tmdbTvId}&tvSeasonNumber=${seasonKey}`).then(readApiJson);
+    const episodes = seasonData.episodes || [];
+    const nextEp = episodes.find(e => !seasonEntry.watchedEpisodes.includes(e.episode_number));
+    if (!nextEp) return null;
+    return { show, seasonKey, seasonEntry, episode: nextEp };
+  } catch { return null; }
+}
+
+function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
+  const meta = [
+    episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+    episode.runtime ? `${episode.runtime} min` : '',
+  ].filter(Boolean).join(' · ');
+  return `
+    <div class="tv-continue-card">
+      <div class="tv-continue-card-actions">
+        <button type="button" class="tv-continue-pause-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Mettre en pause" title="Mettre en pause — reprends-la depuis sa fiche">${ICONS.pause}</button>
+        <button type="button" class="tv-continue-remove-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Retirer ${escAttr(show.title)} de cette liste" title="Retirer de la liste">${ICONS.close || '✕'}</button>
+      </div>
+      ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+      <div class="tv-continue-info">
+        <div class="tv-continue-show-title">${escAttr(show.title)}</div>
+        <div class="tv-continue-ep-title">${escAttr(seasonEntry.seasonName)} · Ép. ${episode.episode_number} — ${escAttr(episode.name || 'Sans titre')}</div>
+        ${meta ? `<div class="tv-continue-meta">${escAttr(meta)}</div>` : ''}
+        ${episode.overview ? `
+          <details class="tv-continue-synopsis">
+            <summary>Synopsis</summary>
+            <p>${escAttr(episode.overview)}</p>
+          </details>
+        ` : ''}
+      </div>
+      <button type="button" class="tv-continue-check-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}" aria-label="Valider l'épisode ${episode.episode_number} de ${escAttr(show.title)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+document.getElementById('tv-continue-list').addEventListener('click', async (e) => {
+  const removeBtn = e.target.closest('.tv-continue-remove-btn');
+  if (removeBtn) {
+    // Retire uniquement de cette liste — aucune donnée touchée, la carte
+    // peut revenir au prochain rendu si les conditions correspondent
+    // encore (ex : un épisode coché ailleurs).
+    const cardEl = removeBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    return;
+  }
+
+  const pauseBtn = e.target.closest('.tv-continue-pause-btn');
+  if (pauseBtn) {
+    const shows = loadTvShows();
+    const showEntry = shows.find(s => String(s.tmdbTvId) === String(pauseBtn.dataset.showId));
+    const seasonEntry = showEntry?.seasons?.[pauseBtn.dataset.seasonKey];
+    if (seasonEntry) {
+      seasonEntry.paused = true;
+      saveTvShows(shows);
+    }
+    const cardEl = pauseBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    showToast('Mise en pause — reprends-la depuis sa fiche');
+    return;
+  }
+
+  const btn = e.target.closest('.tv-continue-check-btn');
+  if (!btn) return;
+  const showId = btn.dataset.showId;
+  const seasonKey = btn.dataset.seasonKey;
+  const episodeNumber = Number(btn.dataset.episode);
+
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  const seasonEntry = showEntry.seasons[seasonKey];
+  if (!seasonEntry.watchedEpisodes.includes(episodeNumber)) seasonEntry.watchedEpisodes.push(episodeNumber);
+  saveTvShows(shows);
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+  maybeShowSeasonCompleteBanner(showId, seasonKey, seasonEntry);
+
+  const cardEl = btn.closest('.tv-continue-card');
+  cardEl.classList.add('tv-continue-loading');
+  const resolved = await resolveNextTvEpisode({
+    show: showEntry, seasonKey, seasonEntry,
+    needsNextSeasonCheck: seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes,
+  });
+  const container = document.getElementById('tv-continue-list');
+  if (!resolved) {
+    cardEl.remove();
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+  } else {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    cardEl.replaceWith(wrapper.firstElementChild);
+  }
+});
+
+// Repli/dépliage de tout le widget — pour ne pas surcharger l'écran quand
+// plusieurs séries sont en cours. Préférence mémorisée pour rester repliée
+// d'une visite à l'autre si l'utilisateur le souhaite.
+document.getElementById('tv-continue-toggle').addEventListener('click', () => {
+  const list = document.getElementById('tv-continue-list');
+  const toggle = document.getElementById('tv-continue-toggle');
+  const collapsed = list.style.display === 'none';
+  list.style.display = collapsed ? '' : 'none';
+  toggle.setAttribute('aria-expanded', String(collapsed));
+  toggle.classList.toggle('collapsed', !collapsed);
+  localStorage.setItem('lbx_tv_continue_collapsed', collapsed ? '0' : '1');
+});
+if (localStorage.getItem('lbx_tv_continue_collapsed') === '1') {
+  document.getElementById('tv-continue-list').style.display = 'none';
+  document.getElementById('tv-continue-toggle').setAttribute('aria-expanded', 'false');
+  document.getElementById('tv-continue-toggle').classList.add('collapsed');
+}
+
+// ═══════════════════════════════════════════
+//  FICHE SÉRIE DÉTAILLÉE
+// ═══════════════════════════════════════════
+// Ouverte au tap sur une série (carte dans l'Historique). Même structure et
+// mécanique que la fiche film (voir 12-movie-detail.js) : squelette de
+// chargement, récupération à la demande, sections qui apparaissent en
+// cascade. Adaptée où le format série le demande — la vraie différence :
+// pas de "Ta note" unique, mais la progression par saison + note globale.
+
+const tdsEl = document.getElementById('tv-detail-sheet');
+const tdsContentEl = document.getElementById('tds-content');
+const tdsCloseBtn = document.getElementById('tds-close-btn');
+
+tdsContentEl.addEventListener('click', (e) => {
+  const trailerWrap = e.target.closest('.mds-trailer-wrap');
+  if (!trailerWrap || trailerWrap.querySelector('iframe')) return;
+  const key = trailerWrap.dataset.videoKey;
+  trailerWrap.innerHTML = `<iframe class="mds-trailer" src="https://www.youtube.com/embed/${key}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+});
+
+function buildTdsSkeleton() {
+  return `
+    <div class="mds-skeleton">
+      <div class="mds-skeleton-poster skeleton-bg"></div>
+      <div class="mds-skeleton-lines">
+        <div class="skeleton-text long skeleton-bg" style="height:18px;"></div>
+        <div class="skeleton-text short skeleton-bg"></div>
+      </div>
+    </div>
+    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>
+    <div class="skeleton-text long skeleton-bg"></div>
+    <div class="skeleton-text short skeleton-bg"></div>
+  `;
+}
+
+function buildSeasonProgressionSection(data, localShow) {
+  const tmdbSeasons = (data.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
+  if (tmdbSeasons.length === 0) return '';
+
+  const avg = localShow ? computeShowAverageScore(localShow) : null;
+  const avgHtml = avg != null
+    ? `<div class="mds-personal-score">${avg.toFixed(1)}/10 <span class="mds-personal-stars">note globale</span></div>`
+    : `<div class="mds-row"><span class="mds-label">—</span><span>Pas encore notée</span></div>`;
+
+  const rowsHtml = tmdbSeasons.map(ts => {
+    const key = String(ts.season_number);
+    const localSeason = localShow?.seasons?.[key];
+    let statusHtml;
+    if (localSeason?.rating) {
+      statusHtml = `<span class="tds-season-status tds-season-rated">${localSeason.rating.score}/10</span>`;
+    } else if (localSeason) {
+      statusHtml = `<span class="tds-season-status">${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} ép.</span>`;
+    } else {
+      statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
+    }
+    return `
+      <details class="tds-season-details" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
+        <summary class="tds-season-progress-row">
+          <span>${escAttr(ts.name)}</span>
+          ${statusHtml}
+        </summary>
+        <div class="tds-season-episodes" data-loaded="false"></div>
+      </details>
+    `;
+  }).join('');
+
+  return `
+    <div class="mds-section mds-personal" style="animation-delay:.05s">
+      <div class="mds-section-title">Progression</div>
+      ${avgHtml}
+    </div>
+    <div class="mds-section" style="animation-delay:.08s">
+      <div class="mds-section-title">Détail par saison</div>
+      <div class="tds-season-progress-list">${rowsHtml}</div>
+    </div>
+  `;
+}
+
+function buildTdsContent(data, localShow) {
+  const posterUrl = tmdbImage(data.poster_path, 'w342');
+  const year = data.first_air_date ? data.first_air_date.slice(0, 4) : '';
+  const genres = (data.genres || []).map(g => g.name).join(', ');
+  function personLink(p) {
+    return `<span class="mds-person-link" data-person-id="${p.id}" data-person-name="${escAttr(p.name)}">${escAttr(p.name)}</span>`;
+  }
+  const creators = (data.created_by || []).map(personLink).join(', ');
+  const castList = (data.credits?.cast || []).slice(0, 5);
+  const castHtml = castList.map(c => escAttr(c.name)).join(', ');
+  const firstAirStr = data.first_air_date
+    ? new Date(data.first_air_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'Inconnue';
+  const statusLabels = { 'Returning Series': 'En cours', 'Ended': 'Terminée', 'Canceled': 'Annulée' };
+  const statusStr = statusLabels[data.status] || data.status || 'Inconnu';
+  const seasonCount = (data.seasons || []).filter(s => s.season_number > 0).length;
+
+  return `
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
+      <div class="mds-header-left">
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.name)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
+        ${localShow ? `<button type="button" class="mds-poster-change-btn" data-tv-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
+      </div>
+      <div class="mds-header-info">
+        <div class="mds-title" id="tds-title">${escAttr(data.name)}</div>
+        <div class="mds-meta">${[year, `${seasonCount} saison${seasonCount > 1 ? 's' : ''}`, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="tds-external-ratings"></div>
+        ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
+      </div>
+    </div>
+
+    ${!localShow ? `
+    <div class="mds-actions" style="animation-delay:.02s">
+      <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>
+    </div>
+    ` : ''}
+
+    ${buildSeasonProgressionSection(data, localShow)}
+
+    ${(() => {
+      const trailer = pickBestTrailer(data.videos?.results || []);
+      if (!trailer) return '';
+      return `
+      <div class="mds-section" style="animation-delay:.12s">
+        <div class="mds-section-title">Bande-annonce</div>
+        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.name)}">
+          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
+          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+      </div>`;
+    })()}
+
+    ${data.overview ? `
+      <div class="mds-section" style="animation-delay:.15s">
+        <div class="mds-section-title">Synopsis</div>
+        <div class="mds-overview" id="tds-overview">${escAttr(data.overview)}</div>
+        <button type="button" class="mds-overview-toggle" id="tds-overview-toggle">Lire la suite ▾</button>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.18s">
+      <div class="mds-section-title">Détails</div>
+      <div class="mds-row"><span class="mds-label">Première diffusion</span><span>${firstAirStr}</span></div>
+      <div class="mds-row"><span class="mds-label">Statut</span><span>${escAttr(statusStr)}</span></div>
+      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
+    </div>
+
+    ${(data.credits?.cast || []).length > 0 ? `
+      <div class="mds-section" style="animation-delay:.22s">
+        <div class="mds-section-title">Casting</div>
+        <div class="mds-cast-carousel" id="tds-cast-carousel"></div>
+      </div>` : ''}
+  `;
+}
+
+async function populateTdsExternalRatings(imdbId) {
+  const el = document.getElementById('tds-external-ratings');
+  if (!el || !imdbId) return;
+  try {
+    const res = await fetch(`/api/search?imdbId=${imdbId}`);
+    const data = await readApiJson(res);
+    const ratings = data.ratings || [];
+    if (ratings.length === 0) return;
+    const labels = { 'Internet Movie Database': 'IMDb', 'Rotten Tomatoes': 'RT', 'Metacritic': 'Metacritic' };
+    el.innerHTML = ratings
+      .filter(r => labels[r.Source])
+      .map(r => `<span class="mds-external-rating"><b>${labels[r.Source]}</b> ${escAttr(r.Value)}</span>`)
+      .join('');
+  } catch { /* silencieux : la note TMDb deja affichee suffit */ }
+}
+
+function setupTdsOverviewToggle() {
+  const overview = document.getElementById('tds-overview');
+  const toggle = document.getElementById('tds-overview-toggle');
+  if (!overview || !toggle) return;
+  requestAnimationFrame(() => {
+    if (overview.scrollHeight <= overview.clientHeight + 2) toggle.style.display = 'none';
+  });
+}
+
+function renderTdsCastCarousel(castArray) {
+  const outer = document.getElementById('tds-cast-carousel');
+  if (!outer) return;
+  const cast = castArray.filter(c => c.id).slice(0, 20);
+  if (cast.length === 0) return;
+
+  const itemsHtml = cast.map(actor => {
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
+    return `
+      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+        ${photoUrl
+          ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
+          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
+        <div class="mds-cast-name">${escAttr(actor.name)}</div>
+        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
+  // qu'il a parcouru l'équivalent d'une copie complète — même technique que
+  // la fiche film (voir renderCastCarousel).
+  outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.mds-cast-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.mds-cast-item');
+    if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
+  });
+
+  const AUTO_SCROLL_SPEED = 0.3;
+  const RESUME_DELAY_MS = 3000;
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused && tdsEl.classList.contains('open')) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    if (tdsEl.classList.contains('open')) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+}
+
+// Sauvegarde l'affiche choisie sur la série suivie localement — même geste
+// que applyChosenPoster côté film, mais écrit directement le fragment TMDb
+// brut (poster_path), déjà le format utilisé partout côté séries, plutôt
+// que de construire une URL complète comme les films en ont besoin.
+function applyChosenTvPoster(tmdbTvId, posterPath) {
+  const shows = loadTvShows();
+  const show = shows.find(s => String(s.tmdbTvId) === String(tmdbTvId));
+  if (!show) return 0;
+  show.poster_path = posterPath;
+  saveTvShows(shows);
+  return 1;
+}
+
+let tdsCurrentData = null;
+
+async function openTvDetailSheet(tmdbTvId) {
+  if (!tmdbTvId) return;
+  lastFocusedBeforeModal = document.activeElement;
+  tdsContentEl.innerHTML = buildTdsSkeleton();
+  tdsEl.classList.add('open');
+  tdsCloseBtn.focus();
+  const tdsBoxEl = tdsEl.querySelector('.mds-box');
+  if (tdsBoxEl) tdsBoxEl.scrollTop = 0;
+
+  try {
+    const res = await fetch(`/api/search?tvId=${tmdbTvId}`);
+    if (!res.ok) throw new Error('bad status');
+    const data = await readApiJson(res);
+    if (!data || !data.name) throw new Error('no data');
+
+    const localShow = loadTvShows().find(s => String(s.tmdbTvId) === String(tmdbTvId));
+    tdsContentEl.innerHTML = buildTdsContent(data, localShow);
+    tdsCurrentData = data;
+    renderTdsCastCarousel(data.credits?.cast || []);
+    const tdsPosterUrl = tmdbImage(data.poster_path, 'w342');
+    applyPosterAccent(tdsPosterUrl, tdsEl.querySelector('.mds-box'));
+    setupTdsOverviewToggle();
+    setupStickyHeader(tdsEl);
+    if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
+    wireSeasonDetailsToggles();
+  } catch (e) {
+    tdsCurrentData = null;
+    tdsContentEl.innerHTML = `
+      <div class="error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <div class="error-state-msg">Impossible de charger les détails de la série. Vérifie ta connexion.</div>
+        <button type="button" class="error-retry-btn" data-retry-tv-id="${escAttr(String(tmdbTvId))}">Réessayer</button>
+      </div>`;
+  }
+}
+
+// ── Grille d'épisodes, uniquement dans la fiche série ──
+// Chargée à la demande au premier dépliage d'une saison (pas toutes en même
+// temps à l'ouverture de la fiche) — même mécanique de coche/rattrapage que
+// ce qui existait avant dans Noter, juste déplacée ici.
+
+function wireSeasonDetailsToggles() {
+  tdsContentEl.querySelectorAll('.tds-season-details').forEach(details => {
+    details.addEventListener('toggle', () => {
+      if (!details.open) return;
+      const episodesContainer = details.querySelector('.tds-season-episodes');
+      if (episodesContainer.dataset.loaded === 'true') return;
+      loadAndRenderSeasonEpisodes(details, episodesContainer);
+    });
+  });
+}
+
+async function loadAndRenderSeasonEpisodes(detailsEl, container) {
+  const showId = tdsCurrentData.id;
+  const seasonNumber = detailsEl.dataset.seasonNumber;
+  container.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
+  try {
+    const data = await fetch(`/api/search?tvSeasonShowId=${showId}&tvSeasonNumber=${seasonNumber}`).then(readApiJson);
+    const episodes = data.episodes || [];
+    if (episodes.length === 0) {
+      container.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
+      return;
+    }
+    renderTdsEpisodeChecklist(container, showId, String(seasonNumber), detailsEl.dataset.seasonName, episodes);
+    container.dataset.loaded = 'true';
+  } catch (err) {
+    container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
+  }
+}
+
+function renderTdsEpisodeChecklist(container, showId, seasonKey, seasonName, episodes) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const watched = seasonEntry ? seasonEntry.watchedEpisodes : [];
+
+  const rowsHtml = episodes.map(ep => {
+    const isWatched = watched.includes(ep.episode_number);
+    const meta = [
+      ep.air_date ? new Date(ep.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+      ep.runtime ? `${ep.runtime} min` : '',
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="tv-episode-row" data-episode="${ep.episode_number}">
+        <button type="button" class="tv-episode-check${isWatched ? ' watched' : ''}" data-episode="${ep.episode_number}" aria-pressed="${isWatched}" aria-label="Marquer l'épisode ${ep.episode_number} comme ${isWatched ? 'non vu' : 'vu'}">
+          <svg class="tv-episode-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+        </button>
+        <div class="tv-episode-info">
+          <div class="tv-episode-title">${ep.episode_number}. ${escAttr(ep.name || 'Sans titre')}</div>
+          ${meta ? `<div class="tv-episode-meta">${escAttr(meta)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="tds-episode-list">${rowsHtml}</div>
+    <button type="button" class="mds-action-btn primary tds-rate-now-btn" style="display:none;" data-show-id="${showId}" data-season-key="${seasonKey}">Noter cette saison</button>
+  `;
+
+  container.querySelectorAll('.tv-episode-check').forEach(btn => {
+    btn.addEventListener('click', () => onTdsEpisodeCheckClick(showId, seasonKey, seasonName, episodes.length, Number(btn.dataset.episode), container));
+  });
+
+  updateTdsRateButtonVisibility(container, showId, seasonKey);
+}
+
+function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisodes, episodeNumber, container) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  if (!showEntry.seasons[seasonKey]) {
+    // Ne devrait normalement pas arriver (la saison est censée déjà exister
+    // dès qu'elle a été "commencée" depuis Noter), créée quand même par
+    // sécurité plutôt que de planter.
+    showEntry.seasons[seasonKey] = { seasonName, watchedEpisodes: [], totalEpisodes };
+  }
+  const seasonEntry = showEntry.seasons[seasonKey];
+  const already = seasonEntry.watchedEpisodes.includes(episodeNumber);
+
+  const applyState = (num, watched) => {
+    const btn = container.querySelector(`.tv-episode-check[data-episode="${num}"]`);
+    if (!btn) return;
+    btn.classList.toggle('watched', watched);
+    btn.setAttribute('aria-pressed', String(watched));
+  };
+
+  if (already) {
+    seasonEntry.watchedEpisodes = seasonEntry.watchedEpisodes.filter(n => n !== episodeNumber);
+    saveTvShows(shows);
+    applyState(episodeNumber, false);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+    return;
+  }
+
+  const maxWatched = seasonEntry.watchedEpisodes.length ? Math.max(...seasonEntry.watchedEpisodes) : 0;
+  const skipsAhead = episodeNumber > maxWatched + 1;
+  const markWatched = (numbers) => {
+    for (const n of numbers) if (!seasonEntry.watchedEpisodes.includes(n)) seasonEntry.watchedEpisodes.push(n);
+    saveTvShows(shows);
+    for (const n of numbers) applyState(n, true);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+  };
+
+  if (skipsAhead) {
+    const from = maxWatched + 1;
+    const proposeAll = confirm(`Marquer aussi les épisodes ${from} à ${episodeNumber - 1} comme vus ?`);
+    const toMark = [];
+    if (proposeAll) { for (let n = from; n <= episodeNumber; n++) toMark.push(n); }
+    else toMark.push(episodeNumber);
+    markWatched(toMark);
+  } else {
+    markWatched([episodeNumber]);
+  }
+}
+
+function updateTdsRateButtonVisibility(container, showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const btn = container.querySelector('.tds-rate-now-btn');
+  if (!btn || !seasonEntry) return;
+  const isComplete = seasonEntry.totalEpisodes > 0 && seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes;
+  btn.style.display = isComplete ? 'block' : 'none';
+}
+
+// Met à jour le badge visible dans le <summary> (X/Y ép.) sans reconstruire
+// toute la fiche — seulement si la saison n'est pas déjà notée (une note
+// existante prime toujours sur le décompte d'épisodes dans l'affichage).
+function updateSeasonProgressRowStatus(showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  if (!seasonEntry || seasonEntry.rating) return;
+  const details = tdsContentEl.querySelector(`.tds-season-details[data-season-number="${seasonKey}"]`);
+  const statusEl = details?.querySelector('.tds-season-status');
+  if (statusEl) statusEl.textContent = `${seasonEntry.watchedEpisodes.length}/${seasonEntry.totalEpisodes} ép.`;
+}
+
+function closeTvDetailSheet() {
+  closeModal(tdsEl);
+}
+
+tdsCloseBtn.addEventListener('click', closeTvDetailSheet);
+tdsEl.addEventListener('click', (e) => {
+  if (e.target === tdsEl) { closeTvDetailSheet(); return; }
+
+  const personLinkEl = e.target.closest('.mds-person-link');
+  if (personLinkEl) {
+    openPersonDetailSheet(personLinkEl.dataset.personId, personLinkEl.dataset.personName);
+    return;
+  }
+
+  const retryBtn = e.target.closest('[data-retry-tv-id]');
+  if (retryBtn) { openTvDetailSheet(retryBtn.dataset.retryTvId); return; }
+
+  const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
+  if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
+
+  // "Commencer la série" : crée le suivi de la première saison directement
+  // (sans passer par Noter), l'ajoute au widget "En cours", puis recharge
+  // la fiche sur place pour montrer la progression qui vient de démarrer.
+  if (e.target.closest('#tds-start-btn')) {
+    const data = tdsCurrentData;
+    if (!data) return;
+    const seasons = (data.seasons || [])
+      .filter(s => s.season_number > 0 && s.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number);
+    const first = seasons[0];
+    if (!first) return;
+    const shows = loadTvShows();
+    let showEntry = shows.find(s => String(s.tmdbTvId) === String(data.id));
+    if (!showEntry) {
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      showEntry = { tmdbTvId: data.id, title: data.name, poster_path: data.poster_path, genre: genreStr, seasons: {} };
+      shows.push(showEntry);
+    }
+    const seasonKey = String(first.season_number);
+    if (!showEntry.seasons[seasonKey]) {
+      showEntry.seasons[seasonKey] = { seasonName: first.name, watchedEpisodes: [], totalEpisodes: first.episode_count };
+    }
+    saveTvShows(shows);
+    showToast(`"${data.name} — ${first.name}" ajoutée à En cours`);
+    if (typeof renderTvContinueList === 'function') renderTvContinueList();
+    openTvDetailSheet(data.id);
+    return;
+  }
+
+  // Bouton "Noter cette saison", affiché une fois tous les épisodes cochés
+  // dans la grille — même navigation que rouvrir depuis l'Historique.
+  const rateNowBtn = e.target.closest('.tds-rate-now-btn');
+  if (rateNowBtn && tdsCurrentData) {
+    const showId = rateNowBtn.dataset.showId;
+    const seasonKey = rateNowBtn.dataset.seasonKey;
+    const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+    if (show && show.seasons[seasonKey]) {
+      const seasonData = show.seasons[seasonKey];
+      closeTvDetailSheet();
+      switchMobileNav('rating');
+      setMediaType('tv');
+      selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+      document.getElementById('tv-search').value = show.title;
+      document.getElementById('tv-season-picker').style.display = 'none';
+      selectSeason({
+        number: seasonKey, name: seasonData.seasonName,
+        episodeCount: seasonData.totalEpisodes, poster: show.poster_path,
+      });
+    }
+    return;
+  }
+});
+
+initSwipeToClose(tdsEl, closeTvDetailSheet);

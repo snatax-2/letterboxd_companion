@@ -68,7 +68,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   // (toujours frais depuis l'API), sans jamais consulter ce qui avait été
   // sauvegardé. C'était le vrai bug derrière "ça ne se sauvegarde pas".
   const savedPoster = findSavedPosterUrl(data.id, localMatch);
-  const posterUrl = savedPoster || (data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '');
+  const posterUrl = savedPoster || (tmdbImage(data.poster_path, 'w342'));
   const year = data.release_date ? data.release_date.slice(0, 4) : '';
   const runtime = data.runtime ? `${data.runtime} min` : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
@@ -101,7 +101,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   }
 
   return `
-    <div class="mds-header" style="animation-delay:0s">
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl
@@ -226,7 +226,7 @@ function renderCastCarousel(castArray) {
   if (cast.length === 0) return;
 
   const itemsHtml = cast.map(actor => {
-    const photoUrl = actor.profile_path ? `https://image.tmdb.org/t/p/w185${actor.profile_path}` : '';
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
     return `
       <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
         ${photoUrl
@@ -292,7 +292,7 @@ async function populateSagaStrip(collectionId, currentMovieId) {
     if (parts.length === 0) { stripEl.innerHTML = ''; return; }
     stripEl.innerHTML = parts.map(f => `
       <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="mds-saga-poster" src="https://image.tmdb.org/t/p/w185${f.poster_path}" alt="" loading="lazy">
+        <img class="mds-saga-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">
         <div class="mds-saga-title">${escAttr(f.title)}</div>
       </div>
     `).join('');
@@ -344,16 +344,18 @@ function setupOverviewToggle() {
 // écouteur de scroll par ouverture de fiche (retiré à la fermeture) pour ne
 // pas empiler des écouteurs orphelins à chaque nouvelle fiche ouverte.
 const STICKY_HEADER_THRESHOLD = 80;
-let stickyHeaderScrollHandler = null;
-function setupStickyHeader() {
-  const box = mdsEl.querySelector('.mds-box');
-  const header = document.querySelector('.mds-header');
+const stickyHeaderHandlers = new WeakMap(); // un gestionnaire par fiche (evite toute collision d'etat entre film et serie)
+function setupStickyHeader(sheetEl = mdsEl) {
+  const box = sheetEl.querySelector('.mds-box');
+  const header = sheetEl.querySelector('.mds-header');
   if (!box || !header) return;
-  if (stickyHeaderScrollHandler) box.removeEventListener('scroll', stickyHeaderScrollHandler);
-  stickyHeaderScrollHandler = () => {
+  const existing = stickyHeaderHandlers.get(sheetEl);
+  if (existing) box.removeEventListener('scroll', existing);
+  const handler = () => {
     header.classList.toggle('compact', box.scrollTop > STICKY_HEADER_THRESHOLD);
   };
-  box.addEventListener('scroll', stickyHeaderScrollHandler, { passive: true });
+  stickyHeaderHandlers.set(sheetEl, handler);
+  box.addEventListener('scroll', handler, { passive: true });
 }
 
 // Choisit la meilleure bande-annonce parmi les vidéos TMDb : uniquement
@@ -402,7 +404,7 @@ async function openMovieDetailSheet(tmdbId) {
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
     setupStickyHeader();
-    const mdsPosterUrl = data.poster_path ? `https://image.tmdb.org/t/p/w342${data.poster_path}` : '';
+    const mdsPosterUrl = tmdbImage(data.poster_path, 'w342');
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
@@ -556,7 +558,7 @@ function computeSeenPercentage(films) {
 function buildPdsContent(data) {
   const films = buildPersonFilmography(data);
   const { seenCount, total, pct } = computeSeenPercentage(films);
-  const photoUrl = data.profile_path ? `https://image.tmdb.org/t/p/w185${data.profile_path}` : '';
+  const photoUrl = tmdbImage(data.profile_path, 'w185');
   const bio = data.biography
     ? (data.biography.length > 400 ? data.biography.slice(0, 400) + '…' : data.biography)
     : '';
@@ -588,7 +590,7 @@ function buildPdsContent(data) {
       <div class="mds-section-title">Filmographie (${total})</div>
       <div class="pds-filmography">
         ${films.map(f => {
-          const posterUrl = f.poster_path ? `https://image.tmdb.org/t/p/w185${f.poster_path}` : '';
+          const posterUrl = tmdbImage(f.poster_path, 'w185');
           const year = f.release_date ? f.release_date.slice(0, 4) : '';
           return `
             <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
@@ -784,7 +786,7 @@ function applyPosterCellHeights(grid) {
   modal?.addEventListener('transitionend', maybeCleanup);
 }
 
-async function openPosterPicker(tmdbId) {
+async function openPosterPicker(tmdbId, mediaType = 'movie') {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
@@ -792,7 +794,8 @@ async function openPosterPicker(tmdbId) {
   grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
 
   try {
-    const res = await fetch(`/api/search?images=${encodeURIComponent(tmdbId)}`);
+    const param = mediaType === 'tv' ? 'tvImages' : 'images';
+    const res = await fetch(`/api/search?${param}=${encodeURIComponent(tmdbId)}`);
     // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
     // réponse d'erreur passer pour "aucune affiche disponible" (voir
     // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
@@ -800,21 +803,22 @@ async function openPosterPicker(tmdbId) {
     const data = await readApiJson(res);
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
-      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ce film.</div>`;
+      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
       return;
     }
     grid.innerHTML = posters.map(p => `
       <button type="button" class="poster-picker-cell" data-poster-path="${escAttr(p.file_path)}" aria-label="Choisir cette affiche">
-        <img src="https://image.tmdb.org/t/p/w185${p.file_path}" alt="" loading="lazy" decoding="async">
+        <img src="${tmdbImage(p.file_path, 'w185')}" alt="" loading="lazy" decoding="async">
       </button>
     `).join('');
     grid.dataset.tmdbId = String(tmdbId);
+    grid.dataset.mediaType = mediaType;
     applyPosterCellHeights(grid);
   } catch (err) {
     grid.innerHTML = `
       <div class="error-state">
         <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
-        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}">Réessayer</button>
+        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}" data-retry-media-type="${mediaType}">Réessayer</button>
       </div>`;
   }
 }
@@ -832,27 +836,44 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
 
   const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
-  if (retry) { openPosterPicker(retry.dataset.retryPosters); return; }
+  if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
 
   const cell = e.target.closest('.poster-picker-cell[data-poster-path]');
   if (!cell) return;
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
+  const mediaType = grid.dataset.mediaType || 'movie';
+  modal.classList.remove('open');
+
+  if (mediaType === 'tv') {
+    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
+    // URL complète comme les films) — on garde ce même format plutôt que
+    // d'introduire une seconde représentation.
+    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+    if (navigator.vibrate) navigator.vibrate(15);
+    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
+    if (sheetPoster && sheetPoster.tagName === 'IMG') {
+      sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
+    }
+    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+    showToast('Affiche mise à jour');
+    return;
+  }
+
   // w342 (pas w185) : c'est la résolution que la fiche film affiche en
   // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
   // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
   // (historique, watchlist) se contentent très bien de la redimensionner
   // vers le bas.
-  const url = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+  const url = tmdbImage(cell.dataset.posterPath, 'w342');
   const touched = applyChosenPoster(tmdbId, url);
   if (navigator.vibrate) navigator.vibrate(15);
-  modal.classList.remove('open');
 
   // Rafraîchit l'affiche visible dans la fiche immédiatement (w342 pour la
   // grande vue, même chemin de fichier)
   const sheetPoster = document.querySelector('#movie-detail-sheet .mds-poster');
   if (sheetPoster && sheetPoster.tagName === 'IMG') {
-    sheetPoster.src = `https://image.tmdb.org/t/p/w342${cell.dataset.posterPath}`;
+    sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
   }
   renderAll();
   showToast(touched > 0 ? 'Affiche mise à jour dans ta collection' : 'Affiche mise à jour');

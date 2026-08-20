@@ -10,6 +10,7 @@ test.beforeEach(async ({ page }) => {
     if (url.includes('trending=true')) {
       const results = Array.from({ length: 8 }, (_, i) => ({
         id: 100 + i, title: `Film Tendance ${i}`, poster_path: `/fake-poster-${i}.jpg`,
+        media_type: i % 3 === 0 ? 'tv' : 'movie',
       }));
       return route.fulfill({ json: { results } });
     }

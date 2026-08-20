@@ -17,6 +17,8 @@ test('le duel du jour se joue une seule fois par jour', async ({ page }) => {
     seed([{ title: 'A' }, { title: 'B' }, { title: 'C' }, { title: 'D' }]));
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#daily-duel-wrap[style*="display: block"]', { timeout: 8000 });
 
   await page.locator('#daily-duel-card .duel-side').first().click();
@@ -30,6 +32,8 @@ test('le duel du jour se joue une seule fois par jour', async ({ page }) => {
   // Quitter et revenir : toujours "deja joue"
   await page.click('#nav-rating');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(300);
   await expect(page.locator('#daily-duel-card .quiz-already-played')).toBeVisible();
 });
@@ -90,6 +94,8 @@ test('duel du jour : message explicite quand toutes les paires ont ete jouees', 
   });
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(500);
 
   await expect(page.locator('#daily-duel-wrap')).toBeVisible();

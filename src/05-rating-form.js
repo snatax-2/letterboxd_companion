@@ -261,7 +261,7 @@ function calculateScore() {
       criteriaValues[c] = val;
       document.getElementById(`val-${c}`).textContent = val.toFixed(1);
       const descEl = document.getElementById(`desc-${c}`);
-      descEl.textContent = getDesc(c, val);
+      descEl.textContent = getDesc(c, val, currentMediaType);
       // Repli progressif : le texte descriptif ne s'affiche qu'une fois qu'on
       // s'est écarté de la valeur neutre par défaut (5), pour ne pas noyer le
       // formulaire sous 7 blocs de texte dès l'ouverture d'une fiche vierge.
@@ -429,13 +429,30 @@ function playSaveConfirmation() {
 document.getElementById('save-btn').addEventListener('click', () => {
   if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
   hapticPulse(document.getElementById('save-btn'), 'strong');
-  
+
+  if (currentMediaType === 'tv') {
+    saveTvSeasonRating();
+    return;
+  }
+
   const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
   if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
 
   const history  = loadHistory();
   const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
   const score    = calculateScore();
+
+  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
+  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
+  // la validation — retire puis réapplique la classe (avec un reflow forcé
+  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
+  // suivante dans la même session, pas juste la toute première.
+  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
+  if (scoreMainEl) {
+    scoreMainEl.classList.remove('stamp-pulse');
+    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
+    scoreMainEl.classList.add('stamp-pulse');
+  }
 
   const movie = {
     title,

@@ -15,7 +15,9 @@ test.beforeEach(async ({ page }) => {
 test('un duel se joue : choisir un film met a jour les cotes et propose une nouvelle paire', async ({ page }) => {
   await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seedHistory(4));
   await page.goto('/');
-  await page.click('#nav-profile');
+  await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('.duel-side');
 
   const firstPairTitles = await page.locator('.duel-title').allTextContents();
@@ -40,7 +42,9 @@ test('un duel se joue : choisir un film met a jour les cotes et propose une nouv
 test('passer un duel change la paire sans toucher aux cotes', async ({ page }) => {
   await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seedHistory(6));
   await page.goto('/');
-  await page.click('#nav-profile');
+  await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('.duel-side');
 
   await page.click('#duel-skip-btn');
@@ -52,7 +56,9 @@ test('passer un duel change la paire sans toucher aux cotes', async ({ page }) =
 test('avec moins de 2 films, message explicite au lieu de l\'arene', async ({ page }) => {
   await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seedHistory(1));
   await page.goto('/');
-  await page.click('#nav-profile');
+  await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await expect(page.locator('#duel-empty')).toBeVisible();
   await expect(page.locator('#duel-empty')).toContainText('au moins 2 films');
 });
@@ -83,7 +89,9 @@ test('le classement apparait apres 3 duels du meme film', async ({ page }) => {
 test('deux films qui se sont deja affrontes ne se recroisent jamais (etat epuise avec 2 films)', async ({ page }) => {
   await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seedHistory(2));
   await page.goto('/');
-  await page.click('#nav-profile');
+  await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('.duel-side');
 
   // Avec exactement 2 films, il n'existe qu'UNE paire possible. Apres l'avoir

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber } = req.query;
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
@@ -106,9 +106,12 @@ export default async function handler(req, res) {
 
     } else if (trending) {
       // Cas 6 : Tendances du moment (carrousel Découvrir), pas liées à
-      // l'historique de l'utilisateur — TMDb "trending/movie/week".
+      // l'historique de l'utilisateur — "trending/all/week" mélange films ET
+      // séries dans une même réponse (chaque item porte déjà media_type
+      // 'movie'/'tv' côté TMDb), au lieu de deux appels séparés à fusionner
+      // nous-mêmes (Vers Ludex 2.0 §06 : "Tendances mixte films/séries").
       const trendRes = await fetch(
-        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const trendData = await trendRes.json();
       setCache(10800, 43200); // 3h, revalidation jusqu'à 12h (les tendances évoluent dans la journée)
@@ -173,6 +176,53 @@ export default async function handler(req, res) {
         .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
       setCache(86400, 604800); // 24h, revalidation jusqu'à 7 jours (catalogue très stable)
       return res.status(200).json({ posters });
+    } else if (tvImages) {
+      // Cas série du même choix d'affiche que les films (voir "images"
+      // juste au-dessus) — même logique, juste /tv/ au lieu de /movie/.
+      const tvImagesRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvImages}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
+      );
+      const tvImagesData = await tvImagesRes.json();
+      const tvPosters = (tvImagesData.posters || [])
+        .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
+        .slice(0, 24)
+        .map(p => ({ file_path: p.file_path, iso_639_1: p.iso_639_1 }));
+      setCache(86400, 604800);
+      return res.status(200).json({ posters: tvPosters });
+    } else if (tvId) {
+      // Cas : détails d'une série + liste de ses saisons (Phase 1 du
+      // suivi séries — recherche + sélection de saison uniquement, le
+      // détail épisode par épisode viendra en Phase 2, pas encore ici).
+      const tvRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids`
+      );
+      const tvData = await tvRes.json();
+      setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
+      return res.status(200).json(tvData);
+
+    } else if (tvSeasonShowId && tvSeasonNumber) {
+      // Cas : liste des épisodes d'UNE saison précise (Phase 2 — suivi
+      // épisode par épisode). Deux paramètres nécessaires (l'ID de la
+      // série ET le numéro de saison), TMDb n'expose pas cette liste
+      // autrement que via cette combinaison dans l'URL.
+      const seasonRes = await fetch(
+        `https://api.themoviedb.org/3/tv/${tvSeasonShowId}/season/${tvSeasonNumber}?api_key=${TMDB_KEY}&language=fr-FR`
+      );
+      const seasonData = await seasonRes.json();
+      setCache(21600, 604800); // 6h — une liste d'épisodes ne change plus une fois la saison sortie
+      return res.status(200).json(seasonData);
+
+    } else if (tvQuery) {
+      // Cas : recherche de série (équivalent de la recherche de film,
+      // voir plus bas `else` — mais TMDb sépare bien films et séries,
+      // deux catalogues distincts).
+      const tvSearchRes = await fetch(
+        `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(tvQuery)}&language=fr-FR`
+      );
+      const tvSearchData = await tvSearchRes.json();
+      setCache(3600, 86400); // 1h, comme la recherche de film
+      return res.status(200).json(tvSearchData);
+
     } else if (imdbId) {
       // Cas : notes IMDb/Rotten Tomatoes/Metacritic (OMDb), affichées
       // uniquement sur une fiche film ouverte explicitement (jamais sur les

@@ -35,6 +35,11 @@ test('le carrousel Tendances (10 films) ne fait plus deborder la page en largeur
 test('la barre a 5 onglets est visible en haut sur PC, un seul onglet actif a la fois', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(600);
+  // Filet de sécurité : ferme la fenêtre d'accueil si jamais elle apparaît
+  // malgré le flag lbx_onboarding_seen déjà positionné (timing propre à ce
+  // test) — retire directement l'overlay plutôt que de cliquer dessus, pour
+  // ne pas dépendre d'un clic qui peut lui-même être intercepté.
+  await page.evaluate(() => document.getElementById('onboarding-modal')?.remove());
 
   await expect(page.locator('#mobile-nav')).toBeVisible();
   await expect(page.locator('.nav-btn')).toHaveCount(5);

@@ -30,6 +30,8 @@ const SYNC_CODE_KEY = 'lbx_sync_code';
 const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
 const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
 const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
+const TV_SHOW_TOMBSTONES_KEY = 'lbx_tv_show_tombstones';
+const TV_SEASON_TOMBSTONES_KEY = 'lbx_tv_season_tombstones';
 // TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
 // watchlistTombstonesKey(id) et WATCHLIST_LIST_TOMBSTONES_KEY sont définis dans 08-watchlist.js
 
@@ -95,6 +97,20 @@ function mergeWithRemote(remotePayload) {
   saveHistory(mergedHistory);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
 
+  // ─── Séries suivies ────────────────────────────────────────────────────
+  const localTvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  const remoteTvShows = Array.isArray(remotePayload?.tvShows) ? remotePayload.tvShows : [];
+  const localShowTomb = loadTombstones(TV_SHOW_TOMBSTONES_KEY);
+  const remoteShowTomb = Array.isArray(remotePayload?.tvShowTombstones) ? remotePayload.tvShowTombstones : [];
+  const mergedShowTomb = mergeTombstoneLists(localShowTomb, remoteShowTomb);
+  const localSeasonTomb = loadTombstones(TV_SEASON_TOMBSTONES_KEY);
+  const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
+  const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
+  const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
+  if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows);
+  saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
+  saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
+
   // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
   const localMeta = loadWatchlistsMeta();
   const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
@@ -149,10 +165,15 @@ function mergeWithRemote(remotePayload) {
   renderAll();
   if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
   renderWatchlist();
+  if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
 
   return {
     history: mergedHistory,
     historyTombstones: mergedHistTomb,
+    tvShows: mergedTvShows,
+    tvShowTombstones: mergedShowTomb,
+    tvSeasonTombstones: mergedSeasonTomb,
     watchlistsMeta: mergedMeta,
     watchlists: mergedWatchlists,
     watchlistTombstones: mergedWlTombs,
@@ -183,6 +204,9 @@ function currentLocalSnapshot() {
   return {
     history: loadHistory(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
+    tvShows: typeof loadTvShows === 'function' ? loadTvShows() : [],
+    tvShowTombstones: loadTombstones(TV_SHOW_TOMBSTONES_KEY),
+    tvSeasonTombstones: loadTombstones(TV_SEASON_TOMBSTONES_KEY),
     watchlistsMeta: meta,
     watchlists,
     watchlistTombstones,

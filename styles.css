@@ -24,36 +24,79 @@
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
 
+    /* ── Échelle d'espacement ──
+       Six paliers plutôt que des valeurs de gap/padding choisies au cas par
+       cas. Un audit a compté 14 valeurs de gap différentes (1px à 22px)
+       avant l'introduction de cette échelle — la migration se fait
+       progressivement, composant par composant, pas d'un coup. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    /* ── Échelle typographique ──
+       Sept paliers nommés par usage plutôt que par valeur, pour remplacer
+       progressivement les 42 tailles de police distinctes trouvées lors
+       d'un audit. xs=labels/badges, sm=corps secondaire, base=corps
+       principal, md=sous-titres, lg=titres de section, xl=titres d'écran,
+       2xl=chiffres clés (KPI). */
+    --text-xs: 0.72rem;
+    --text-sm: 0.8rem;
+    --text-base: 0.88rem;
+    --text-md: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.6rem;
+    --text-2xl: 2.5rem;
+
+    /* Une pilule reste une pilule quel que soit le thème — contrairement à
+       --radius/--radius-sm (qui varient par thème pour la personnalité
+       visuelle de chacun), ce rayon-ci ne doit jamais varier : sinon une
+       pilule sur un thème à faible --radius ne serait plus une pilule. */
+    --radius-pill: 999px;
+
+    /* color-scheme fait correspondre les contrôles natifs du navigateur
+       (sélecteur de date, notamment) à l'ambiance du thème plutôt que de
+       toujours afficher un widget clair par défaut — sans quoi cet élément
+       reste visuellement décalé du reste de l'interface, très soignée par
+       ailleurs. */
+    color-scheme: dark;
+
     --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
-    /* 1. L'Original (Letterboxd) */
-    --bg: #14181c; --surface: #1f2935; --surface2: #263240; --border: #283040;
-    --border-hi: #445566; --text: #94a4b5; --text-hi: #fff; --text-mid: #9ab;
-    --orange: #ff8000; --gold: #ff8000; --blue: #40bcf4; --red: #ff4040; --green: #00e054;
+    /* Ludex 2.0 — palette par défaut : inspirée de Technicolor (bleu nuit +
+       or) mais redessinée pour ce rôle précis, une seule couleur chaude
+       dominante plutôt que la palette Letterboxd (orange/bleu/vert)
+       héritée de l'ancien thème "Méridien", retiré. Le lie-de-vin reste
+       rare — fonds d'affiche et dégradés, jamais un accent interactif. */
+    --bg: #0E1116; --surface: #181C22; --surface2: #212B38; --border: #2A3340;
+    --border-hi: #3D4A5C; --text: #8A90A0; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
+    --orange: #C89B3C; --gold: #C89B3C; --blue: #C89B3C; --red: #8B2E2E; --green: #7C8B6F;
     /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
        de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
        bon choix (blanc ou noir) varie selon la couleur ET selon le thème,
        parfois même à l'intérieur d'un même thème (ex: rouge très saturé mais
        bleu clair). Voir l'audit complet dans la conversation. */
-    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
+    --red-fill-text: #EDE6D8; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 4px; --radius-sm: 3px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%;
     --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --font-heading: 'Titillium Web', sans-serif;
-    --font-body: 'Titillium Web', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-heading: 'Fraunces', serif;
+    --font-body: 'Work Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
     
     /* Variables de personnalisation des étoiles */
-    --star-color: #ff8000;
-    --star-empty-color: #445566;
+    --star-color: #C89B3C;
+    --star-empty-color: #3D4A5C;
     --star-font: Arial, sans-serif;
     --star-shadow: none;
     --star-symbol: '★';
-    --icon-stroke: 2;
-    
-    --header-bar: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
+    --icon-stroke: 1.6;
+    --icon-linecap: round; --icon-linejoin: round;
   }
 
   [data-theme="carnet"] {
+    color-scheme: light;
     /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
        de Bord, et l'ancien cluster "vintage clair" trop redondant avec
        Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
@@ -66,10 +109,10 @@
     --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
     --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
     --orange: #B8695E; /* Rose Poudré */
-    --gold: #C9A576;   /* Sable Chaud */
+    --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
     --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
     --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
+    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --solid-fill-text: #fff;
     --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
@@ -86,6 +129,7 @@
     --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
     --star-symbol: '❂';
     --icon-stroke: 1.5;
+    --icon-linecap: round; --icon-linejoin: round;
 
     --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
     --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
@@ -94,7 +138,37 @@
     --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
   }
 
+  /* Carnet : --solid-fill-text (#fff) sert à la fois du texte sur fond
+     --orange (#B8695E, ton moyen, a besoin de texte SOMBRE — 4.02:1 en
+     blanc, sous le seuil) et sur fond --green (#556B52, plus sombre, a
+     besoin de texte CLAIR — 3.61:1 en noir) : aucune valeur unique ne
+     satisfait les deux, donc changer --solid-fill-text globalement
+     casserait l'un des deux cas. Correctif ciblé sur les éléments à fond
+     orange trouvés lors de l'audit complet (13 au total, dont "Nouvelle
+     critique", l'onglet "Détaillé" et "Valider l'épisode" du widget En
+     cours — chaque nouvel élément à fond orange doit rejoindre cette
+     liste, pas être patché isolément). Noir choisi pour une marge
+     confortable (4.70:1). */
+  [data-theme="carnet"] .btn-new-review,
+  [data-theme="carnet"] .backup-reminder-btn,
+  [data-theme="carnet"] .mode-tab.active,
+  [data-theme="carnet"] .focus-mode-toggle.active,
+  [data-theme="carnet"] .empty-state-cta,
+  [data-theme="carnet"] .wl-picker-new-form button,
+  [data-theme="carnet"] .wrapped-share-btn,
+  [data-theme="carnet"] .onboarding-next,
+  [data-theme="carnet"] #update-banner-reload-btn,
+  [data-theme="carnet"] .mds-action-btn.primary,
+  [data-theme="carnet"] .on-this-day-badge,
+  [data-theme="carnet"] .platform-chip.selected,
+  [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
+  [data-theme="carnet"] .nav-btn-primary-label,
+  [data-theme="carnet"] .tv-continue-check-btn {
+    color: #000;
+  }
+
   [data-theme="filmnoir"] {
+    color-scheme: dark;
     /* 12. Film Noir - Clair-obscur véritable */
     --bg: #050505; --surface: #111111; --surface2: #1a1a1a; --border: #333333;
     --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
@@ -116,6 +190,9 @@
     --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
     --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
     --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
+    /* Angles francs plutôt qu'arrondis, cohérent avec le radius:0 de ce
+       thème — même logique que l'icône Noter en losange sur Moderne. */
+    --icon-linecap: square; --icon-linejoin: miter;
     
     --review-font: var(--font-mono); 
     --review-bg: #000000;
@@ -124,6 +201,7 @@
   }
 
   [data-theme="cinephile"] {
+    color-scheme: light;
     /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
        bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
        sur des angles nets : ici tout est délibérément arrondi et sépia,
@@ -131,8 +209,8 @@
     --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
     --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
     --orange: #4A2E1B; /* Terre de Sienne */
-    --gold: #DAC0A3;    /* Ambre Brûlé */
-    --blue: #5C6E58;    /* Olive Vintage */
+    --gold: #7a5628;    /* Ambre Brûlé, assombri (était #DAC0A3) : 1.36:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet */
+    --blue: #4d5d4a;    /* Olive Vintage, assombri (était #5C6E58) : 4.46:1 seulement sur le badge "Impact affectif", tout juste sous le seuil — trouvé lors de l'audit complet */
     --red: #8B4226; --green: #5C6E58;
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 18px; --radius-sm: 12px;
@@ -149,6 +227,7 @@
     --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
     --star-symbol: '◉';
     --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
+    --icon-linecap: round; --icon-linejoin: round;
     --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
 
     --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
@@ -166,6 +245,7 @@
      bouton séparément au fil des retours. */
 
   [data-theme="moderne"] {
+    color-scheme: light;
     /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
        d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
        nettes, précision géométrique, papier millimétré d'architecte. Le
@@ -179,7 +259,7 @@
     --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
     --red: #DD6B47;
     --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
+    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --radius: 10px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
     --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
@@ -190,6 +270,9 @@
     --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
     --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
     --icon-stroke: 2.25;
+    /* Angles francs, cohérent avec le losange du bouton Noter et le refus
+       général des formes rondes dans ce thème. */
+    --icon-linecap: square; --icon-linejoin: miter;
 
     --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
     /* Grille fine façon papier millimétré d'architecte, à peine visible —
@@ -206,52 +289,12 @@
      si l'extraction a échoué (CORS, image non chargée, etc.). */
   [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
+  [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
-  [data-theme="meridien"] {
-    /* Méridien — identité propre à Ludex, sans inspiration extérieure.
-       Esprit cadran solaire et almanach vintage : épuré, un seul accent
-       laiton qui reste IDENTIQUE de jour comme de nuit (seuls le fond et le
-       texte s'inversent, comme la même pièce d'horlogerie vue sous deux
-       lumières différentes). L'état jour/nuit (classe .meridien-night,
-       voir 02-theme.js) suit l'heure réelle, pas les préférences système.
-       Révisé : l'accent et les couleurs de note étaient trop désaturés
-       ("dur" au retour utilisateur) — plus de vie ici, même concept. */
-    --bg: #F7F3EA; --surface: #FFFFFF; --surface2: #EDE7D8; --border: #D8CFB8;
-    --border-hi: #C7B48C; /* bordures structurelles : plus douces que l'accent, pour ne pas quadriller l'écran */
-    --text: #4A4438; --text-hi: #241F17; --text-mid: #766C58;
-    --orange: #C89B4A; --gold: #C89B4A; --blue: #7A5807; /* --blue assombri (était #C89B4A, identique à l'accent) : 2.54:1 de contraste seulement sur le libellé d'onglet actif de la barre de nav (fond blanc) — trouvé en testant le nouveau bouton Noter, corrigé sans toucher orange/gold */
-    --red: #C0603A; --green: #7A9068; /* terre cuite et sauge vivantes, plus de "boue" */
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #0d1117;
-    --solid-fill-text: #0d1117; /* le laiton est un ton moyen : texte sombre plus lisible que clair */
-    --radius: 2px; --radius-sm: 2px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Cormorant Garamond', serif;
-    --font-body: 'Work Sans', sans-serif;
-    --font-mono: 'Ubuntu Mono', monospace;
-
-    --star-color: #C89B4A; --star-empty-color: #D8CFB8; --star-font: 'Cormorant Garamond', serif;
-    --star-shadow: none; --star-symbol: '◇'; /* losange fin et discret, esprit marque de cadran solaire */
-    --icon-stroke: 1.5; /* legerement plus present qu'avant (1.25), sans perdre la delicatesse */
-
-    /* Une ombre très subtile réintroduite : l'absence totale ("none")
-       contribuait autant à la sensation de dureté que les couleurs. */
-    --box-shadow-style: 0 1px 4px rgba(176, 141, 74, 0.15);
-    --header-bar: var(--border-hi); /* simple ligne fine, pas de dégradé */
-  }
-  /* Bascule nuit : le fond et le texte s'inversent, le laiton (--orange,
-     --gold, --blue) reste identique — c'est ce qui donne l'impression d'un
-     seul et même objet vu de jour ou de nuit, pas deux thèmes différents. */
-  [data-theme="meridien"].meridien-night {
-    --bg: #171410; --surface: #201C16; --surface2: #2A251C; --border: #3A3327;
-    --text: #C9BFA8; --text-hi: #F2ECDD; --text-mid: #8F856E;
-    --red: #D4926A; --green: #96A885; /* meme correction de vivacite qu'en journee */
-    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
-  }
-
   [data-theme="technicolor"] {
+    color-scheme: dark;
     /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
        obscure, or vintage, rouge écarlate) directement dans l'interface. */
     --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
@@ -272,6 +315,7 @@
     --star-shadow: 0 0 5px rgba(230, 175, 46, 0.45);
     --star-symbol: '★';
     --icon-stroke: 2;
+    --icon-linecap: round; --icon-linejoin: round;
 
     --title-style: normal;
     --title-spacing: 0.06em;
@@ -328,19 +372,171 @@
      détails fidèles à SON concept, peu coûteux (rien qui repeint au
      défilement — les textures vivent sur des pseudo-éléments fixes). */
 
-  /* ── L'Original (défaut, Letterboxd) : les trois pastilles ── */
+  /* ── L'Original (défaut) ── */
   html:not([data-theme]) .card:hover,
   [data-theme="default"] .card:hover {
     border-color: var(--border-hi);
   }
-  /* L'onglet actif de la nav porte le tricolore emblématique */
-  html:not([data-theme]) .nav-btn.active,
-  [data-theme="default"] .nav-btn.active {
-    background-image: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
-    background-repeat: no-repeat;
-    background-size: 40% 3px;
-    background-position: top center;
+  /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
+     "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
+     libellé d'interface — l'italique Fraunces reste le traitement par
+     défaut ailleurs (ex: .hero-entry-title de l'historique). */
+  html:not([data-theme]) .mds-title,
+  [data-theme="default"] .mds-title {
+    font-style: normal; text-transform: uppercase; font-weight: 700;
+    letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
+  html:not([data-theme]) .mds-header-director,
+  [data-theme="default"] .mds-header-director {
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+  html:not([data-theme]) .mds-meta,
+  [data-theme="default"] .mds-meta {
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Fond tiré du backdrop TMDb derrière le bloc poster+infos existant —
+     structure et mécanisme sticky/compact INCHANGÉS (voir .mds-header plus
+     bas). Disparaît en mode compact (repli au scroll) : une bande fine n'a
+     pas besoin d'image derrière. --mds-backdrop est posée en style inline
+     par buildMdsContent()/buildTdsContent(), 'none' si pas de backdrop. */
+  html:not([data-theme]) .mds-header,
+  [data-theme="default"] .mds-header {
+    background-image:
+      linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
+      var(--mds-backdrop, none);
+    background-size: cover;
+    background-position: center;
+  }
+  html:not([data-theme]) .mds-header.compact,
+  [data-theme="default"] .mds-header.compact {
+    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--poster-accent, var(--bg)) 22%, var(--bg)), var(--bg));
+  }
+
+  /* ── Ludex 2.0 : composition de l'Historique — filets + séparateurs de
+     mois plutôt que des cartes empilées en boîte. Scopé au thème par
+     défaut UNIQUEMENT (voir "Vers Ludex 2.0" §01 : la composition change
+     pour ce thème précis, les 6 autres gardent leur look carte intact —
+     .hist-item-content garde son propre background: var(--bg), donc le
+     mécanisme de swipe/révélation n'est pas affecté par ce changement,
+     seul le contour extérieur de la carte disparaît). */
+  html:not([data-theme]) .hist-item,
+  [data-theme="default"] .hist-item {
+    background: transparent; border: none; border-radius: 0;
+    margin-bottom: 0; border-bottom: 1px solid var(--border);
+  }
+  html:not([data-theme]) .hist-item:last-child,
+  [data-theme="default"] .hist-item:last-child {
+    border-bottom: none;
+  }
+  html:not([data-theme]) .hist-item-content,
+  [data-theme="default"] .hist-item-content {
+    padding: 12px 4px;
+  }
+  /* Séparateur de mois, injecté par renderHistory() uniquement en tri
+     chronologique — voir 06a-history-list.js */
+  html:not([data-theme]) .hist-month-sep,
+  [data-theme="default"] .hist-month-sep {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-mid);
+    padding: 18px 4px 6px; border-bottom: none;
+  }
+  html:not([data-theme]) .hist-month-sep:first-child,
+  [data-theme="default"] .hist-month-sep:first-child {
+    padding-top: 2px;
+  }
+
+  /* Entrée vedette : le dernier film noté, en grand, au-dessus de la liste
+     groupée. Un seul bloc réutilisable (voir #history-hero) — même
+     principe visuel prévu pour le score héros de l'écran Noter. */
+  html:not([data-theme]) .hero-entry,
+  [data-theme="default"] .hero-entry {
+    display: flex; gap: 16px; padding: 4px 4px 20px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  html:not([data-theme]) .hero-entry-poster,
+  [data-theme="default"] .hero-entry-poster {
+    width: 96px; flex-shrink: 0; border-radius: 6px; aspect-ratio: 2/3;
+    object-fit: cover; background: var(--surface2);
+  }
+  html:not([data-theme]) .hero-entry-body,
+  [data-theme="default"] .hero-entry-body {
+    display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0;
+  }
+  html:not([data-theme]) .hero-entry-eyebrow,
+  [data-theme="default"] .hero-entry-eyebrow {
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-mid);
+  }
+  html:not([data-theme]) .hero-entry-title,
+  [data-theme="default"] .hero-entry-title {
+    font-family: var(--font-heading); font-style: italic; font-weight: 600;
+    font-size: 1.3rem; color: var(--text-hi); line-height: 1.2; margin: 2px 0 6px;
+  }
+  html:not([data-theme]) .hero-entry-score,
+  [data-theme="default"] .hero-entry-score {
+    font-family: var(--font-heading); font-style: normal; font-weight: 700;
+    font-size: 2.1rem; color: var(--gold); line-height: 1;
+  }
+  html:not([data-theme]) .hero-entry-score small,
+  [data-theme="default"] .hero-entry-score small {
+    font-size: 1rem; color: var(--text-mid); font-weight: 400;
+  }
+
+  /* ── Ludex 2.0 : Watchlist en grille d'affiches 3 colonnes plutôt qu'une
+     liste de lignes — "une watchlist se parcourt des yeux, elle ne se lit
+     pas comme une liste" (Vers Ludex 2.0 §03). Le swipe horizontal est
+     désactivé pour ce mode (voir isDefaultComposition() dans
+     attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste le
+     chemin d'action, déjà toujours visible en overlay (position absolute)
+     indépendamment du swipe, donc rien à ajouter côté DOM. */
+  html:not([data-theme]) #watchlist-list,
+  [data-theme="default"] #watchlist-list {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  html:not([data-theme]) .wl-card,
+  [data-theme="default"] .wl-card {
+    background: transparent; border: none; margin-bottom: 0;
+  }
+  html:not([data-theme]) .wl-card-content,
+  [data-theme="default"] .wl-card-content {
+    flex-direction: column; padding: 0; gap: 6px;
+  }
+  html:not([data-theme]) .wl-card-open,
+  [data-theme="default"] .wl-card-open {
+    flex-direction: column; gap: 6px;
+  }
+  html:not([data-theme]) .wl-poster,
+  [data-theme="default"] .wl-poster {
+    width: 100%; height: auto; aspect-ratio: 2/3; border-radius: 8px; font-size: 2rem;
+  }
+  html:not([data-theme]) .wl-poster img,
+  [data-theme="default"] .wl-poster img {
+    width: 100%; height: 100%; border-radius: 8px;
+  }
+  html:not([data-theme]) .wl-title,
+  [data-theme="default"] .wl-title {
+    font-size: 0.72rem; font-style: italic; white-space: normal;
+    line-height: 1.25; padding-right: 0; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  /* Pas la place pour le genre/année ni le statut streaming dans une
+     cellule de grille — restent visibles dans la fiche film. */
+  html:not([data-theme]) .wl-meta,
+  [data-theme="default"] .wl-meta,
+  html:not([data-theme]) .wl-providers,
+  [data-theme="default"] .wl-providers {
+    display: none;
+  }
+  html:not([data-theme]) .wl-actions,
+  [data-theme="default"] .wl-actions {
+    top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
+    backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
+  }
+
+  /* L'ancien tricolore Letterboxd de l'onglet actif est retiré : l'indicateur
+     actif est désormais une capsule pleine, partagée par tous les thèmes
+     (voir .nav-btn.active dans le bloc nav commun). */
 
   /* ── Film Noir : clair-obscur ── */
   /* Vignettage permanent, comme un tirage argentique contrasté */
@@ -400,12 +596,6 @@
 
   /* ── Méridien : revue éditoriale ── */
   /* Filets fins au-dessus des titres, rubrique de magazine */
-  [data-theme="meridien"] .card-title {
-    border-top: 1px solid var(--border-hi);
-    padding-top: 8px;
-    letter-spacing: 0.06em;
-  }
-
   /* ═══ RETOUR TACTILE SYSTÉMATIQUE ═══
      Chaque élément interactif s'enfonce légèrement sous le doigt — la
      sensation "ça répond" des apps natives. Un seul endroit, une seule
@@ -414,19 +604,19 @@
   /* Uniquement les éléments SANS transition propre — les autres gardent la
      leur (étendue individuellement avec transform) pour ne pas perdre leurs
      animations de bordure/fond au survol. */
-  .nav-btn, .backup-reminder-btn, summary, .wl-card-btn {
+  .nav-btn, .backup-reminder-btn, summary {
     transition: transform var(--dur-fast) var(--ease-out);
   }
   .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
   .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-  .quiz-answer:active, .hist-action-btn:active, .wl-card-btn:active,
+  .quiz-answer:active, .hist-action-btn:active,
   .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
     transform: scale(0.96);
   }
   @media (prefers-reduced-motion: reduce) {
     .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
     .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-    .quiz-answer:active, .hist-action-btn:active, .wl-card-btn:active,
+    .quiz-answer:active, .hist-action-btn:active,
     .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
       transform: none;
     }
@@ -440,13 +630,13 @@
      (critiques, synopsis, titres) reste sélectionnable, lui. */
   .btn, .nav-btn, .icon-btn, .genre-chip, .filter-btn, .theme-card,
   .duel-side, .duel-skip, .quiz-answer, .hist-action-btn,
-  .bottom-nav, summary, .hist-swipe-hint, .stars {
+  summary, .hist-swipe-hint, .stars {
     -webkit-user-select: none;
     user-select: none;
   }
   /* Le défilement d'une modale/feuille ne doit jamais "déborder" sur la
      page derrière (chaînage de scroll) */
-  .mds-box, .modal-overlay, .wl-picker-box, .settings-box {
+  .mds-box, .modal-overlay, .wl-picker-box {
     overscroll-behavior: contain;
   }
   /* Chiffres tabulaires : les compteurs ne "dansent" plus quand ils
@@ -491,6 +681,13 @@
   .icon {
     width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0;
     display: inline-block;
+    /* Vers Ludex 2.0 §05 : deux tokens par thème pour que le style des
+       icônes (arrondi ou anguleux) suive l'identité de chacun sans
+       redessiner un seul tracé SVG — la CSS l'emporte sur les attributs de
+       présentation stroke-linecap/linejoin déjà posés en HTML. Valeurs de
+       repli au cas où un thème ne déclarerait pas ces tokens. */
+    stroke-linecap: var(--icon-linecap, round);
+    stroke-linejoin: var(--icon-linejoin, round);
   }
 
   body, .card, .btn, .hist-item, .wl-card, .right-tab, .search-input, .review-textarea, .modal-box, .dash-box {
@@ -510,11 +707,11 @@
      donne l'impression de "ne pas réagir" au toucher. On applique une légère
      réduction d'échelle sur les principaux éléments cliquables. */
   .icon-btn, .nav-btn, .theme-card, .hist-action-btn, .right-tab, .modal-btn,
-  .wl-btn, .carousel-item, .suggestion-item, .wl-suggest-item, .ctx-tag, .criterion-step-btn {
+  .wl-btn, .suggestion-item, .wl-suggest-item, .ctx-tag, .criterion-step-btn {
     transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   }
   .icon-btn:active, .nav-btn:active, .theme-card:active, .hist-action-btn:active,
-  .right-tab:active, .modal-btn:active, .wl-btn:active, .carousel-item:active,
+  .right-tab:active, .modal-btn:active, .wl-btn:active,
   .suggestion-item:active, .wl-suggest-item:active, .ctx-tag:active, .criterion-step-btn:active {
     transform: scale(.94);
   }
@@ -584,6 +781,11 @@
     box-shadow: var(--box-shadow-style, none);
   }
   .icon-btn:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text-hi); }
+  /* #settings-btn est un icon-btn sans texte (juste l'icône) — zone tactile
+     étendue ciblée sur lui seul, pas sur la classe .icon-btn partagée avec
+     d'autres boutons texte+icône déjà assez grands. */
+  #settings-btn { position: relative; }
+  #settings-btn::after { content: ''; position: absolute; inset: -7px; }
 
   /* ── LAYOUT ── */
   /* Une seule vue à la fois, à toutes les tailles d'écran (voir switchMobileNav
@@ -623,19 +825,31 @@
      grille à deux colonnes, à la demande de l'utilisateur). */
   .mobile-nav {
     display: flex; margin: 0 auto 16px auto; max-width: 800px;
-    background: var(--surface); border: 1px solid var(--border-hi);
-    border-radius: 14px; box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--border-hi); border-radius: 999px;
+    box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+    padding: 4px;
   }
   .nav-btn {
-    flex: 1; padding: 12px 4px; background: transparent; border: none;
+    flex: 1; min-width: 0; padding: 10px 2px; background: transparent; border: none;
     color: var(--text); font-family: var(--font-heading);
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.05em;
+    align-items: center; gap: 3px; transition: color var(--dur-base), background var(--dur-base);
+    letter-spacing: 0.02em; border-radius: 999px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .nav-btn:first-child { border-radius: 14px 0 0 14px; }
-  .nav-btn:last-child { border-radius: 0 14px 14px 0; }
-  .nav-btn.active { color: var(--blue); }
+  /* Indicateur d'état actif partagé par les 6 thèmes : une capsule pleine
+     plutôt qu'un simple changement de couleur de texte — repéré comme un
+     vrai souci d'accessibilité perçue (l'onglet actif se distinguait à
+     peine). Remplace l'ancien soulignement tricolore spécifique au thème
+     par défaut. */
+  .nav-btn.active {
+    color: var(--bg);
+    background: var(--orange);
+  }
   .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
   .nav-btn:hover:not(.active) { color: var(--text-hi); }
 
@@ -647,7 +861,7 @@
     width: 100%;
   }
   .card-title {
-    font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text);
+    font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; color: var(--text);
     margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center;
     font-family: var(--font-heading);
@@ -656,7 +870,7 @@
   }
   .card-title-badge {
     font-size: 0.72rem; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 20px; padding: 2px 8px; text-transform: none; letter-spacing: 0;
+    border-radius: var(--radius-pill); padding: 2px 8px; text-transform: none; letter-spacing: 0;
     font-weight: 400; color: var(--text); font-style: normal;
   }
   .btn-new-review {
@@ -668,19 +882,29 @@
   }
   .btn-new-review:hover { filter: brightness(1.08); }
   .btn-new-review:active { transform: scale(0.96); }
+  .btn-new-review:disabled { opacity: 0.4; cursor: default; filter: none; transform: none; }
 
   /* ── MOVIE SEARCH ── */
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }
   .search-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 12px; width: 100%; }
+  .search-input-wrap { position: relative; width: 100%; }
   .search-input {
     background: var(--bg); border: 1px solid var(--blue);
-    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 14px;
+    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 36px 10px 14px;
     font-family: var(--font-heading); font-size: 0.9rem; outline: none;
     width: 100%;
     box-shadow: var(--box-shadow-style, none);
   }
   .search-input:focus { box-shadow: var(--box-shadow-style, 0 0 0 3px rgba(64,188,244,0.18)); border-color: var(--blue); }
   .search-input::placeholder { color: var(--text); }
+  .search-clear-btn {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%; border: none;
+    background: var(--surface2); color: var(--text-mid); cursor: pointer;
+    font-size: 0.68rem; padding: 0; line-height: 1;
+  }
+  .search-clear-btn:hover { background: var(--border-hi); color: var(--text-hi); }
 
   .date-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
@@ -703,11 +927,23 @@
     font-size: 0.68rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase;
     letter-spacing: 0.06em; margin-bottom: 6px;
   }
-  .context-row { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .context-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  /* Base commune aux pilules cliquables (étiquette de contexte, filtre de
+     tri, puce de genre) — mêmes propriétés structurelles ; seuls le fond,
+     le texte et le padding varient par usage, gardés dans chaque règle
+     individuelle ci-dessous. .weight-badge (autre pilule de l'app) reste
+     volontairement à part : elle n'est pas cliquable, n'a pas de
+     transition, et utilise une police différente (mono) — une vraie
+     différence structurelle, pas juste un détail, donc pas de fausse
+     unification ici. */
+  .ctx-tag, .filter-btn, .genre-chip {
+    border: 1px solid var(--border); border-radius: var(--radius-pill);
+    font-family: var(--font-heading); font-weight: 600; cursor: pointer;
+    transition: all var(--dur-fast);
+  }
   .ctx-tag {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 20px;
-    padding: 4px 10px; font-size: 0.72rem; color: var(--text-mid); cursor: pointer;
-    font-family: var(--font-heading); font-weight: 600;
+    background: var(--surface2);
+    padding: 9px 12px; font-size: 0.72rem; color: var(--text-mid);
     transition: all var(--dur-fast);
   }
   .ctx-tag:hover { color: var(--text-hi); border-color: var(--border-hi); }
@@ -846,6 +1082,178 @@
   .film-strip-info { flex: 1; min-width: 0; }
   .film-strip-title { color: var(--text-hi); font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-heading); }
   .film-strip-genre { color: var(--text); font-size: 0.78rem; margin-top: 2px; line-height: 1.4; }
+  .tv-show-average { color: var(--text-hi); font-size: 0.8rem; font-weight: 700; margin-top: 4px; font-family: var(--font-heading); }
+
+  /* ── SÉRIES : grille d'épisodes (fiche série détaillée) ── */
+  .tv-episode-row { display: flex; align-items: center; gap: 12px; padding: 8px 4px; border-bottom: 1px solid var(--border); }
+  .tv-episode-row:last-child { border-bottom: none; }
+  .tv-episode-info { flex: 1; min-width: 0; }
+  .tv-episode-title { font-size: 0.85rem; color: var(--text-hi); font-weight: 600; line-height: 1.3; }
+  .tv-episode-meta { font-size: 0.72rem; color: var(--text-mid); margin-top: 2px; }
+
+  .tv-episode-check {
+    width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--border-hi);
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; padding: 0;
+    transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+  }
+  .tv-episode-check.watched { background: var(--green); border-color: var(--green); }
+  .tv-episode-checkmark { width: 16px; height: 16px; color: var(--solid-fill-text, #0d1117); opacity: 0; transition: opacity var(--dur-fast); }
+  .tv-episode-check.watched .tv-episode-checkmark { opacity: 1; }
+  .tv-episode-checkmark path { stroke-dasharray: 20; stroke-dashoffset: 20; }
+  .tv-episode-check.watched .tv-episode-checkmark path { animation: tvCheckDraw .3s ease-out forwards; }
+  /* Rebond au moment precis de la coche (pas au premier affichage d'un
+     episode deja vu) — la classe .just-checked est ajoutee/retiree par le
+     JS, uniquement sur une vraie interaction. Respecte reduced-motion en
+     amont (verifie en JS avant meme d'ajouter la classe). */
+  .tv-episode-check.just-checked { animation: tvCheckBounce .35s var(--ease-out); }
+  @keyframes tvCheckDraw { to { stroke-dashoffset: 0; } }
+  @keyframes tvCheckBounce { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
+
+  .tv-season-complete-banner {
+    display: none; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--orange); border-radius: var(--radius-sm);
+    font-size: 0.84rem; color: var(--text-hi); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+  .tv-season-complete-banner span { flex: 1; }
+  .tv-season-complete-dismiss { background: none; border: none; color: var(--text-mid); cursor: pointer; font-size: 0.9rem; padding: 4px 6px; flex-shrink: 0; }
+
+  .tv-season-start-prompt {
+    display: none; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--blue); border-radius: var(--radius-sm);
+    font-size: 0.84rem; color: var(--text-hi); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+  .tv-season-start-prompt span { flex: 1; }
+
+  .tv-season-in-progress-msg {
+    display: none; align-items: center; margin-top: 12px; padding: 12px 14px;
+    background: var(--surface2); border-left: 4px solid var(--border-hi); border-radius: var(--radius-sm);
+    font-size: 0.82rem; color: var(--text-mid); animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+
+  /* ── SÉRIES : Historique (Phase 4) ── */
+  .tv-show-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
+  .tv-show-card-header-wrap { position: relative; overflow: hidden; touch-action: pan-y; }
+  .tv-show-card-header { display: flex; align-items: center; gap: 6px; padding: 10px; position: relative; z-index: 1; background: var(--bg); }
+  .tv-show-card-header-wrap:not(.hist-dragging) .tv-show-card-header { transition: transform var(--dur-base) var(--ease-out); }
+  .tv-show-card-header-wrap.hist-dragging .tv-show-card-header,
+  .tv-show-card-header-wrap.hist-swipe-armed-left .tv-show-card-header { will-change: transform; }
+  .tv-show-card-header-wrap.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
+  .tv-show-card-header-wrap.hist-swipe-armed-left .hist-swipe-hint-left {
+    cursor: pointer;
+    animation: armedHintPulse 1s ease-in-out infinite;
+  }
+  .tv-show-card-open-btn {
+    flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0;
+    background: none; border: none; cursor: pointer; text-align: left; padding: 0; border-radius: 4px;
+  }
+  .tv-show-card-open-btn:hover { background: var(--surface2); }
+  .tv-show-card-poster { width: 46px; height: 68px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
+  .tv-show-card-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .tv-show-card-info { flex: 1; min-width: 0; }
+  .tv-show-card-title { font-size: 0.9rem; font-weight: 700; color: var(--text-hi); }
+  .tv-show-card-score { font-size: 0.8rem; color: var(--text-mid); margin-top: 2px; }
+  .tv-show-card-count { font-size: 0.72rem; }
+  .tv-show-delete-btn { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 6px; flex-shrink: 0; }
+  .tv-show-delete-btn:hover { color: var(--red); }
+  .tv-show-delete-btn .icon { width: 18px; height: 18px; }
+  .tv-show-seasons-fold summary { cursor: pointer; padding: 8px 10px; font-size: 0.78rem; color: var(--text-mid); border-top: 1px solid var(--border); list-style: none; }
+  .tv-show-seasons-fold summary::-webkit-details-marker { display: none; }
+  .tv-show-seasons-list { padding: 0 10px 8px; }
+  .tv-season-row {
+    position: relative; border-radius: 4px; margin-bottom: 4px; overflow: hidden; touch-action: pan-y;
+  }
+  .tv-season-row-content {
+    display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; background: var(--surface2);
+  }
+  .tv-season-row:not(.hist-dragging) .tv-season-row-content { transition: transform var(--dur-base) var(--ease-out); }
+  .tv-season-row.hist-dragging .tv-season-row-content,
+  .tv-season-row.hist-swipe-armed-left .tv-season-row-content,
+  .tv-season-row.hist-swipe-armed-right .tv-season-row-content { will-change: transform; }
+  .tv-season-row.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
+  .tv-season-row.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
+  .tv-season-row.hist-swipe-armed-left .hist-swipe-hint-left,
+  .tv-season-row.hist-swipe-armed-right .hist-swipe-hint-right {
+    cursor: pointer;
+    animation: armedHintPulse 1s ease-in-out infinite;
+  }
+  .tv-season-reopen-btn {
+    flex: 1; display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 4px; font-size: 0.82rem; color: var(--text-hi); cursor: pointer;
+    background: none; border: none; font-family: var(--font-body); text-align: left; border-radius: 4px;
+  }
+  .tv-season-reopen-btn:hover { background: var(--surface2); }
+  .tv-season-delete-btn { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 4px; flex-shrink: 0; }
+  .tv-season-delete-btn:hover { color: var(--red); }
+  .tv-season-delete-btn .icon { width: 15px; height: 15px; }
+
+  /* ── SÉRIES : fiche détaillée (fds), section progression par saison ── */
+  .tds-season-progress-list { display: flex; flex-direction: column; }
+  .tds-season-details { border-bottom: 1px solid var(--border); }
+  .tds-season-details:last-child { border-bottom: none; }
+  .tds-season-progress-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 4px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer;
+    border-radius: 4px; list-style: none;
+  }
+  .tds-season-progress-row::-webkit-details-marker { display: none; }
+  .tds-season-progress-row:hover { background: var(--surface2); }
+  .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
+  .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
+  .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
+  .tds-season-episodes { padding: 4px 4px 14px; }
+  .tds-episode-list { display: flex; flex-direction: column; gap: 2px; }
+  .tds-rate-now-btn { display: none; width: 100%; margin-top: 10px; }
+
+  /* ── SÉRIES : widget "En cours" (onglet Noter, mode Série) ── */
+  .tv-continue-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+  .tv-continue-card {
+    position: relative; display: flex; align-items: center; gap: 12px; min-height: 106px;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm); padding: 12px 56px 12px 12px; animation: mdsSectionIn .3s var(--ease-out) both;
+  }
+  .tv-continue-card.tv-continue-loading { align-items: center; justify-content: center; color: var(--text-mid); font-size: 0.8rem; min-height: 106px; padding-right: 12px; }
+  /* Dimensions fixes, quelle que soit la série — jamais de saut de mise en
+     page d'une carte à l'autre (le titre d'épisode est plafonné à 2
+     lignes ; le synopsis déplié reste libre de grandir, c'est voulu). */
+  .tv-continue-poster { width: 60px; height: 90px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface); }
+  .tv-continue-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--text-mid); }
+  .tv-continue-info { flex: 1; min-width: 0; }
+  .tv-continue-show-title { font-size: 0.7rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.04em; }
+  .tv-continue-ep-title {
+    font-size: 0.88rem; font-weight: 700; color: var(--text-hi); margin-top: 2px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .tv-continue-meta { font-size: 0.74rem; color: var(--text-mid); margin-top: 2px; }
+  .tv-continue-synopsis { margin-top: 6px; }
+  .tv-continue-synopsis summary { cursor: pointer; font-size: 0.74rem; color: var(--text-hi); font-weight: 700; list-style: none; }
+  .tv-continue-synopsis summary::-webkit-details-marker { display: none; }
+  .tv-continue-synopsis p { font-size: 0.78rem; color: var(--text); line-height: 1.4; margin: 6px 0 0; }
+
+  .tv-continue-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 1px; }
+  .tv-continue-pause-btn, .tv-continue-remove-btn {
+    background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 5px; border-radius: 4px;
+  }
+  .tv-continue-pause-btn:hover, .tv-continue-remove-btn:hover { background: var(--surface); color: var(--text-hi); }
+  .tv-continue-pause-btn .icon, .tv-continue-remove-btn .icon { width: 13px; height: 13px; }
+
+  .tv-continue-check-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--orange); border: none; color: var(--solid-fill-text, #0d1117);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .tv-continue-check-btn svg { width: 18px; height: 18px; }
+  .tv-continue-check-btn:active { transform: translateY(-50%) scale(0.88); }
+
+  .tv-continue-header {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: none; border: none; cursor: pointer; padding: 4px 2px 10px;
+    font-family: var(--font-heading); font-size: 0.9rem; font-weight: 800; color: var(--text-hi);
+  }
+  .tv-continue-count { color: var(--text-mid); font-weight: 700; }
+  .tv-continue-chevron { transition: transform var(--dur-fast); color: var(--text-mid); }
+  .tv-continue-header.collapsed .tv-continue-chevron { transform: rotate(-90deg); }
 
   /* ── TABS: DÉTAILLÉ / RAPIDE ── */
   .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
@@ -890,7 +1298,7 @@
   .criteria-list-controls { display: flex; justify-content: flex-end; margin-bottom: 8px; }
   .focus-mode-toggle {
     font-family: var(--font-heading); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
-    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border-hi);
+    padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border-hi);
     background: var(--surface2); color: var(--text-mid); cursor: pointer;
     transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   }
@@ -977,7 +1385,12 @@
     font-family: var(--font-heading); font-size: 1rem; font-weight: 700; line-height: 1; padding: 0;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
     transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+    position: relative;
   }
+  /* Zone tactile étendue à ~44px (recommandation Apple/WCAG), même technique
+     déjà éprouvée sur .hist-action-btn — sûr ici : ces boutons sont aux
+     extrémités de la rangée curseur, pas collés à un autre bouton. */
+  .criterion-step-btn::after { content: ''; position: absolute; inset: -7px; }
   .criterion-step-btn:hover { border-color: var(--orange); color: var(--orange); }
   .affect-block .criterion-step-btn:hover { border-color: var(--blue); color: var(--blue); }
 
@@ -1117,11 +1530,26 @@
   .quick-rating-label span { color: var(--star-color); text-shadow: var(--star-shadow); font-weight: 700; }
 
   /* ── SCORE RESULT ── */
-  .score-result { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+  /* Ludex 2.0 : déplacé en tête d'écran (voir index.html) plutôt qu'en bas
+     de formulaire — même calcul, mêmes deux modes, seule la position
+     change. La bordure de séparation passe donc du haut vers le bas. */
+  .score-result { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
   .score-main {
     display: flex; align-items: center; justify-content: center;
     gap: 0; margin-bottom: 4px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 14px 20px;
+  }
+  /* Ludex 2.0 : reprend l'esprit du keyframe stampImpact (déjà utilisé par
+     .mds-score-stamp) au moment de la sauvegarde — même timing/bounce, mais
+     SANS la rotation à -11deg propre au tampon circulaire : appliquée telle
+     quelle à .score-main (rectangulaire), cette rotation resterait figée en
+     permanence après l'animation (fill-mode "both"), ce qui n'a de sens
+     que pour un sceau, pas pour la boîte de score. Voir 05-rating-form.js. */
+  .score-main.stamp-pulse { animation: scoreStampPulse .45s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes scoreStampPulse {
+    0% { transform: scale(1.15); }
+    60% { transform: scale(0.96); }
+    100% { transform: scale(1); }
   }
   .score-big {
     font-family: var(--font-heading); font-size: 4rem; font-weight: 700;
@@ -1140,6 +1568,7 @@
   }
 
   /* ── REVIEW TEXTAREA ── */
+  .review-and-save { margin-top: 4px; }
   .review-wrap { margin-bottom: 16px; }
   .review-wrap label { display: block; font-size: 0.72rem; color: var(--text); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--font-heading); }
   .review-textarea {
@@ -1190,31 +1619,22 @@
   .btn-save { background: var(--blue); color: var(--blue-fill-text, #0d1117); font-weight: 800; }
 
   /* ── STATS COLUMN ── */
-  .stat-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; border: 1px solid var(--border); margin-bottom: 10px; transition: border-color var(--dur-fast); }
-  .stat-row:hover { border-color: var(--border-hi); }
-  .stat-row span:first-child { font-size: 0.82rem; }
-  .stat-num { font-family: var(--font-mono); font-size: 1.2rem; font-weight: 600; color: var(--text-hi); }
-  .stat-group-title { font-family: var(--font-heading); font-size: 0.65rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin: 20px 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  
   
   .histo { display: flex; flex-direction: column; gap: 7px; }
   .histo-row { display: flex; align-items: center; gap: 8px; font-size: 0.76rem; cursor: pointer; border-radius: var(--radius-sm); padding: 2px 4px; transition: background var(--dur-fast); }
   .histo-row:hover { background: var(--surface2); }
   .histo-row.active { background: rgba(255,128,0,0.12); outline: 1px solid rgba(255,128,0,0.35); }
   .histo-label { width: 70px; color: var(--text); text-align: right; flex-shrink: 0; }
-  .histo-track { flex: 1; height: 10px; background: var(--bg); border-radius: 999px; overflow: hidden; }
-  .histo-bar { height: 100%; width: 0%; background: var(--orange); border-radius: 999px; transition: width var(--dur-slow) var(--ease-out); }
+  .histo-track { flex: 1; height: 10px; background: var(--bg); border-radius: var(--radius-pill); overflow: hidden; }
+  .histo-bar { height: 100%; width: 0%; background: var(--orange); border-radius: var(--radius-pill); transition: width var(--dur-slow) var(--ease-out); }
   .histo-count { width: 18px; text-align: right; font-family: var(--font-mono); color: var(--text-hi); font-size: 0.74rem; }
   
-  .top-genre-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 8px 12px; border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid var(--border); cursor: pointer; transition: background var(--dur-fast), border-color var(--dur-fast); }
-  .top-genre-row:hover { border-color: var(--border-hi) !important; background: var(--surface2) !important; }
-  .top-genre-row.active { background: rgba(255,128,0,0.1) !important; border-color: var(--orange) !important; }
-  .top-genre-name { font-family: var(--font-heading); font-weight: 600; color: var(--text-hi); font-size: 0.85rem; }
-  .top-genre-meta { font-size: 0.75rem; color: var(--text); display: flex; gap: 8px; align-items: center; }
-  .top-genre-avg { font-family: var(--font-mono); color: var(--star-color); text-shadow: var(--star-shadow); font-weight: 600; }
+  
   
   /* Filter row */
-  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-  .filter-btn { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; font-size: 0.74rem; color: var(--text); cursor: pointer; transition: all var(--dur-fast); font-family: var(--font-heading); font-weight: 600; letter-spacing: 0.04em; }
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { background: var(--bg); padding: 9px 12px; font-size: 0.74rem; color: var(--text); letter-spacing: 0.04em; }
   .filter-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .filter-btn.active { background: color-mix(in srgb, var(--orange) 18%, var(--surface)); border-color: var(--orange); color: var(--text-hi); }
 
@@ -1294,6 +1714,12 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .hist-item-entering, .wl-card-entering { animation: itemEnterIn .35s cubic-bezier(.2,.8,.2,1) both; }
+  /* Ludex 2.0 : cascade d'entrée au tout premier affichage de l'Historique
+     groupé par mois — même keyframe qu'un ajout de film unique
+     (hist-item-entering), animation-delay posé en JS par ligne (voir
+     06a-history-list.js) plutôt qu'ici, puisqu'il dépend de la position
+     de chaque élément dans la liste rendue. */
+  .hist-cascade-in { animation: itemEnterIn .3s cubic-bezier(.2,.8,.2,1) both; }
   .hist-item.deleting { opacity: 0; transform: translateX(-30px); } 
   .hist-item:hover { border-color: var(--border-hi); transform: translateX(2px); box-shadow: -3px 0 0 var(--orange); }
   .hist-poster { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
@@ -1326,7 +1752,6 @@
   .hist-action-btn.del:hover { color: var(--red); }
 
   /* ── GENRE FILTER ── */
-  .genre-filter-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
   .genre-fold { margin-bottom: 10px; }
   .genre-fold-summary {
     list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px;
@@ -1338,12 +1763,16 @@
   .genre-fold[open] .genre-chips { margin-top: 8px; }
   .genre-filter-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); padding-top: 5px; flex-shrink: 0; }
   .genre-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-  .genre-chip { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; font-size: 0.73rem; font-family: var(--font-heading); font-weight: 600; color: var(--text); cursor: pointer; transition: all var(--dur-fast); white-space: nowrap; }
+  .genre-chip { background: var(--bg); padding: 3px 10px; font-size: 0.73rem; color: var(--text); white-space: nowrap; }
   .genre-chip:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .genre-chip.active { background: rgba(255,128,0,0.15); border-color: var(--orange); color: var(--orange); }
   .genre-chip.all-chip.active { background: var(--surface2); border-color: var(--border-hi); color: var(--text-hi); }
 
   .empty-state { text-align: center; padding: 30px 20px; color: var(--text); font-size: 0.85rem; font-family: var(--font-body); }
+  /* Variante compacte : pas d'icône ni de CTA, utilisée dans une section
+     déjà titrée (ex: "Top Réalisateurs", "Distribution des notes" dans le
+     Profil) plutôt qu'en écran autonome — moins d'espace réservé. */
+  .empty-state-compact { padding: 4px 0; font-size: 0.8rem; color: var(--text-mid); }
   .empty-state-icon { font-size: 2rem; margin-bottom: 8px; }
   .empty-state-cta {
     display: block; margin: 16px auto 0; padding: 10px 20px; border: none; border-radius: var(--radius-sm);
@@ -1365,7 +1794,7 @@
   /* Sélecteur de listes "À voir" multiples (pastilles, scroll horizontal) */
   .wl-lists-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; min-width: 0; }
   .wl-list-pill {
-    flex-shrink: 0; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
     font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;
     display: flex; align-items: center; gap: 4px; transition: all var(--dur-fast);
@@ -1384,6 +1813,7 @@
   .wl-card-content {
     display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%;
   }
+  .wl-card-open { display: flex; gap: 10px; flex: 1; min-width: 0; cursor: pointer; text-align: left; }
   .wl-card:not(.wl-dragging) .wl-card-content { transition: transform var(--dur-base) var(--ease-out); }
   .wl-card.wl-swipe-out-left .wl-card-content,
   .wl-card.wl-swipe-out-right .wl-card-content { transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); opacity: 0; }
@@ -1433,7 +1863,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -1493,7 +1923,6 @@
   .duel-empty { text-align: center; color: var(--text-mid); font-size: 0.85rem; padding: 14px 0; }
   .duel-counter { font-size: 0.7rem; color: var(--text-mid); font-weight: 400; text-transform: none; letter-spacing: 0; }
   .duel-ranking { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
-  .duel-ranking-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px; }
   .duel-rank-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 0.84rem; }
   .duel-rank-pos { width: 26px; flex-shrink: 0; text-align: center; }
   .duel-medal { display: inline-flex; }
@@ -1558,7 +1987,7 @@
   .curated-list-row-sub { font-size: 0.7rem; color: var(--text-mid); margin-top: 2px; }
   .curated-list-row-pct {
     flex-shrink: 0; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700;
-    color: var(--orange); min-width: 42px; text-align: right;
+    color: var(--text-hi); min-width: 42px; text-align: right;
   }
   /* Décennies repliées par défaut (<details>/<summary> natifs — gratuit en
      accessibilité clavier, pas besoin de JS pour le toggle) : les montrer
@@ -1592,7 +2021,7 @@
   /* ── Découvrir : Explorer par thème (mots-clés TMDb) ── */
   .theme-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .theme-chip {
-    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: 999px;
+    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-pill);
     padding: 8px 14px; font-size: 0.8rem; font-weight: 700; color: var(--text-hi);
     cursor: pointer; font-family: var(--font-body); transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   }
@@ -1601,8 +2030,8 @@
 
   .decade-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
   .decade-label { width: 52px; flex-shrink: 0; font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-hi); }
-  .decade-bar-track { flex: 1; height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
-  .decade-bar { height: 100%; background: var(--orange); border-radius: 999px; transition: width .6s var(--ease-out); }
+  .decade-bar-track { flex: 1; height: 10px; background: var(--surface2); border-radius: var(--radius-pill); overflow: hidden; }
+  .decade-bar { height: 100%; background: var(--orange); border-radius: var(--radius-pill); transition: width .6s var(--ease-out); }
   .decade-count { width: 56px; flex-shrink: 0; text-align: right; font-size: 0.72rem; color: var(--text-mid); }
 
   .wrapped-entry-card {
@@ -1654,7 +2083,8 @@
     opacity: 0; transform: translateX(24px); pointer-events: none;
     transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
   }
-  .onboarding-slide.active { opacity: 1; transform: translateX(0); pointer-events: auto; }
+  .onboarding-slide.active { opacity: 1; transform: translateX(0); }
+  #onboarding-modal.open .onboarding-slide.active { pointer-events: auto; }
   .onboarding-slide.leaving-left { transform: translateX(-24px); }
   .onboarding-icon {
     width: 64px; height: 64px; border-radius: 50%; background: var(--surface2);
@@ -1711,7 +2141,12 @@
   .toast-undo-btn:hover { background: var(--surface2); color: var(--text-hi); }
 
   /* ── MODALS ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity var(--dur-base); }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 10000;
+    display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
   /* La modale de confirmation générique (#modal) peut être déclenchée DEPUIS
      une autre modale déjà ouverte (ex: réinitialiser les duels depuis
      Réglages) — sans ce z-index dédié, elle partageait la même valeur que
@@ -1841,7 +2276,7 @@
   .mds-external-ratings { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
   .mds-external-rating {
     font-size: 0.72rem; color: var(--text-mid); background: var(--surface2);
-    border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px;
+    border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 2px 8px;
   }
   .mds-external-rating b { color: var(--text-hi); font-weight: 800; margin-right: 3px; }
   .mds-director-label { font-family: var(--font-heading); font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-mid); }
@@ -1880,7 +2315,7 @@
   }
 
   .mds-section-title {
-    font-family: var(--font-heading); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em;
+    font-family: var(--font-heading); font-size: var(--text-xs); font-weight: 800; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid); margin-bottom: 6px;
   }
 
@@ -2000,7 +2435,7 @@
   .mds-cast-character { font-size: 0.63rem; color: var(--text-mid); line-height: 1.2; }
 
   /* Nom de réalisateur/acteur cliquable, ouvre sa fiche personne */
-  .mds-person-link { color: var(--orange); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--dur-fast); }
+  .mds-person-link { color: var(--text-hi); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; transition: text-decoration-color var(--dur-fast); font-weight: 700; }
 
   /* Saga (belongs_to_collection TMDb) : bande compacte des autres films de
      la saga en bas de fiche, avec un lien vers la fiche saga complète
@@ -2037,7 +2472,7 @@
   .on-this-day-poster { width: 92px; height: 138px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); border: 1px solid var(--border); }
   .on-this-day-badge {
     position: absolute; top: 6px; left: 6px; background: var(--orange); color: var(--solid-fill-text, #0d1117);
-    font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: 999px; font-family: var(--font-heading);
+    font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: var(--radius-pill); font-family: var(--font-heading);
   }
   .on-this-day-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 5px; line-height: 1.25; }
 
@@ -2058,8 +2493,8 @@
   .mds-person-link:hover { text-decoration-color: var(--orange); }
 
   /* ── FICHE PERSONNE : barre de complétion + grille de filmographie ── */
-  .pds-completion-bar { height: 8px; border-radius: 999px; background: var(--surface2); overflow: hidden; margin-bottom: 6px; }
-  .pds-completion-fill { height: 100%; background: var(--orange); border-radius: 999px; transition: width var(--dur-slow) var(--ease-out); }
+  .pds-completion-bar { height: 8px; border-radius: var(--radius-pill); background: var(--surface2); overflow: hidden; margin-bottom: 6px; }
+  .pds-completion-fill { height: 100%; background: var(--orange); border-radius: var(--radius-pill); transition: width var(--dur-slow) var(--ease-out); }
   .pds-completion-label { font-size: 0.8rem; color: var(--text-mid); }
 
   .pds-filmography { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
@@ -2105,9 +2540,9 @@
      pour un seul film précis. */
   .mds-crit-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 0.8rem; animation: mdsSectionIn .3s ease-out both; }
   .mds-crit-label { width: 82px; flex-shrink: 0; color: var(--text-mid); }
-  .mds-crit-track { flex: 1; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .mds-crit-track { flex: 1; height: 6px; background: var(--border); border-radius: var(--radius-pill); overflow: hidden; }
   .mds-crit-fill {
-    height: 100%; background: var(--orange); border-radius: 999px;
+    height: 100%; background: var(--orange); border-radius: var(--radius-pill);
     width: 0; animation: mdsCritGrow .5s ease-out .15s both;
   }
   .mds-crit-value { width: 30px; text-align: right; color: var(--text-hi); font-weight: 700; font-family: var(--font-mono); flex-shrink: 0; }
@@ -2132,7 +2567,7 @@
   .settings-toggle-switch { position: relative; flex-shrink: 0; width: 44px; height: 26px; }
   .settings-toggle-switch input { opacity: 0; width: 0; height: 0; }
   .settings-toggle-slider {
-    position: absolute; inset: 0; background: var(--border); border-radius: 999px;
+    position: absolute; inset: 0; background: var(--border); border-radius: var(--radius-pill);
     cursor: pointer; transition: background-color var(--dur-base) var(--ease-out);
   }
   .settings-toggle-slider::before {
@@ -2144,7 +2579,7 @@
 
   .platform-chips-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .platform-chip {
-    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--border);
+    padding: 7px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
     font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all var(--dur-fast);
   }
@@ -2153,7 +2588,7 @@
   .settings-input, .settings-select { width: 100%; padding: 10px; margin-bottom: 16px; background: var(--bg); border: 1px solid var(--border-hi); color: var(--text-hi); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9rem; outline: none; }
   .settings-input:focus, .settings-select:focus { border-color: var(--blue); }
 
-  .weight-badge { font-size: 0.65rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; margin-left: 5px; font-family: var(--font-mono); }
+  .weight-badge { font-size: 0.65rem; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 1px 7px; margin-left: 5px; font-family: var(--font-mono); }
   .strip-ratings { display: flex; align-items: center; gap: 10px; margin-top: 5px; flex-wrap: wrap; }
   .strip-tmdb-badge { display: inline-flex; align-items: center; gap: 4px; background: #01b4e4; border-radius: 3px; padding: 2px 7px; font-size: 0.75rem; font-weight: 700; color: #fff; letter-spacing: 0.02em; font-family: sans-serif; }
   .strip-rating-icon { font-size: 0.75rem; color: #fff; }
@@ -2186,7 +2621,7 @@
   .badge-icon { width: 28px; height: 28px; color: var(--text-mid); }
   .badge-icon .icon { width: 100%; height: 100%; }
   .badge-label { font-size: 0.7rem; color: var(--text-mid); line-height: 1.2; }
-  .dash-box-title { font-size: 0.75rem; font-family: var(--font-heading); font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .dash-box-title { font-size: var(--text-xs); font-family: var(--font-heading); font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
   .dash-box.full-width { grid-column: 1 / -1; }
   
   .svg-text { fill: var(--text-hi); font-family: var(--font-heading); font-size: 10px; }
@@ -2289,7 +2724,7 @@
   /* ── SCROLL BARS ── */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: var(--radius-pill); }
   ::-webkit-scrollbar-thumb:hover { background: var(--text); }
 
   /* ── DÉCOUVRIR : Film du jour ── */
@@ -2299,10 +2734,49 @@
   .discover-section { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
   .discover-section:first-of-type { padding-top: 0; margin-top: 0; border-top: none; }
   .discover-section-title {
-    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
     display: flex; align-items: center; justify-content: space-between;
   }
+
+  /* Ludex 2.0 : "Pour toi aujourd'hui" — Angles morts + Ce jour-là fusionnés
+     en rangée compacte plutôt que deux sections empilées avec chacune son
+     propre titre pleine largeur. */
+  .today-for-you-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .today-for-you-col { flex: 1; min-width: 220px; }
+  .today-for-you-col-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+  }
+
+  /* Ludex 2.0 : "Parcourir" — Par thème + Classiques en sous-onglets plutôt
+     que deux cartes empilées. Bascule via classList uniquement (jamais
+     .style.display) : 00e-feature-flags.js manipule déjà .style.display
+     sur ces mêmes éléments (activation/désactivation de fonctionnalité) —
+     s'appuyer sur une classe CSS évite tout conflit entre les deux
+     mécanismes (un style inline vide laisse la classe gouverner). */
+  .browse-tabs { margin-bottom: 14px; }
+  .browse-panel { display: none; }
+  .browse-panel.active { display: block; }
+
+  /* Ludex 2.0 : "Jouer" — Quiz + Duels repliés par défaut sous un seul
+     repère (<details> natif : accessible sans JS dédié, clavier et lecteur
+     d'écran gèrent déjà l'ouverture/fermeture). */
+  .discover-accordion { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+  /* #play-wrap (ID) plutôt que .discover-accordion (classe) : la règle
+     générale ".discover-section:first-of-type" (classe + pseudo-classe) est
+     plus spécifique qu'une simple classe et l'écraserait sinon — <details>
+     étant le seul élément de son TYPE parmi ses frères <div>, il matche
+     toujours ":first-of-type" indépendamment de sa position réelle. */
+  #play-wrap { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+  .discover-accordion-summary {
+    cursor: pointer; list-style: none; margin-bottom: 0;
+  }
+  .discover-accordion-summary::-webkit-details-marker { display: none; }
+  .discover-accordion[open] .discover-accordion-summary { margin-bottom: 10px; }
+  .discover-accordion-summary .badges-chevron { transition: transform var(--dur-fast); }
+  .discover-accordion[open] .discover-accordion-summary .badges-chevron { transform: rotate(180deg); }
+  .discover-accordion .discover-section:first-of-type { padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--border); }
   .quiz-streak {
     font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem; color: var(--orange);
     display: flex; align-items: center; gap: 3px; text-transform: none; letter-spacing: 0;
@@ -2375,6 +2849,46 @@
      donc pas de curseur "pointeur" trompeur. */
   .fdj-card.fdj-guessing { text-align: center; cursor: default; padding: 14px; }
   .fdj-card.fdj-guessing:hover { border-color: var(--border); }
+  /* Ludex 2.0 : reprend le traitement plein cadre du swipe — fond flouté
+     (.guess-poster, repositionné plus haut) plutôt qu'une vignette en ligne,
+     contenu superposé en dégradé sombre. Scopé à .fdj-guessing uniquement :
+     la fiche révélée (.fdj-revealed) garde son agencement affiche+infos
+     actuel, pas concerné par ce changement. */
+  .fdj-card.fdj-guessing {
+    position: relative; overflow: hidden; min-height: 320px;
+    padding: 0; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .fdj-hero-overlay {
+    position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(to bottom, rgba(14,17,22,0.35) 0%, rgba(14,17,22,0.55) 45%, rgba(14,17,22,0.92) 100%);
+  }
+  .fdj-hero-top, .fdj-hero-body { position: relative; z-index: 1; }
+  .fdj-hero-top { display: flex; justify-content: space-between; align-items: center; padding: 14px; }
+  .fdj-hero-badge {
+    font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-hi); background: rgba(0,0,0,0.5);
+    padding: 5px 10px; border-radius: 999px;
+  }
+  .fdj-attempt-dots { display: flex; align-items: center; gap: 5px; }
+  .fdj-attempt-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+  .fdj-attempt-dot.used { background: var(--gold); }
+  /* .guess-attempts (texte "Essai X/Y") reprend sa fonction d'origine —
+     conservée en accessibilité/texte, discrète à côté des pastilles plutôt
+     que seule et centrée comme avant. */
+  .fdj-attempt-dots .guess-attempts {
+    font-size: 0.64rem; color: var(--text-hi); opacity: 0.75; margin: 0 0 0 4px;
+  }
+  .fdj-hero-body { padding: 14px; }
+  .fdj-title-mask {
+    font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700;
+    color: var(--text-hi); letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  .fdj-hero-pills { display: flex; gap: 8px; margin-bottom: 10px; }
+  .fdj-hero-pill {
+    font-size: 0.74rem; font-weight: 600; color: var(--text-hi);
+    background: rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 999px;
+  }
+  .fdj-hero-pill.accent { background: var(--gold); color: var(--bg); }
   .fdj-poster { width: 84px; height: 126px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); }
   .fdj-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid); }
   .fdj-info { flex: 1; min-width: 0; }
@@ -2434,18 +2948,19 @@
 
   /* ── DÉCOUVRIR : "Devine le Film du Jour" (mini-jeu) ── */
   .guess-poster {
-    width: 130px; height: 195px; object-fit: cover; border-radius: var(--radius-sm);
-    background: var(--surface2); margin: 0 auto 10px; display: block;
-    /* La transition du flou est la seule animation de cette carte — le reste
-       (texte, formulaire) change trop d'un état à l'autre pour qu'une
-       transition générique ait un sens. */
+    /* Ludex 2.0 : plein cadre en fond de carte plutôt qu'une vignette
+       centrée — même élément, même filter inline (voir renderGuessGame),
+       repositionné uniquement. Léger débordement (-12px) + scale pour que
+       le flou ne laisse jamais deviner un bord net. */
+    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
+    object-fit: cover; border-radius: 0; background: var(--surface2);
+    transform: scale(1.08);
     transition: filter var(--dur-slow) var(--ease-out);
   }
-  .guess-attempts { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); margin-bottom: 8px; }
   .guess-hints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
   .guess-hint {
     font-size: 0.72rem; color: var(--text-hi); background: var(--surface2);
-    border: 1px solid var(--border-hi); border-radius: 20px; padding: 3px 10px;
+    border: 1px solid var(--border-hi); border-radius: var(--radius-pill); padding: 3px 10px;
   }
   .guess-form { display: flex; gap: 8px; }
   .guess-input-wrap { position: relative; flex: 1; min-width: 0; }
@@ -2518,9 +3033,15 @@
        molette, trackpad) — une animation CSS pure bloque toute interaction
        manuelle pendant qu'elle tourne. */
   }
-  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; }
+  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; position: relative; }
   .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
-  .trending-item-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--text-mid); }
+  /* Tag Film/Série — les tendances mélangent désormais les deux (TMDb
+     "trending/all/week", voir api/search.js) */
+  .trending-item-type {
+    position: absolute; top: 6px; left: 6px; font-size: 0.56rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; color: #fff;
+    background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: var(--radius-sm);
+  }
   .trending-item-title {
     font-size: 0.68rem; color: var(--text-mid); margin-top: 4px; text-align: center;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -2539,7 +3060,7 @@
     display: flex; align-items: center; gap: 6px;
     background: var(--surface2); border: 1px solid var(--border-hi); color: var(--text-hi);
     font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; text-transform: none;
-    padding: 7px 12px; border-radius: 999px; cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
+    padding: 7px 12px; border-radius: var(--radius-pill); cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
   }
   .surprise-me-btn:hover { border-color: var(--orange); color: var(--orange); }
   .surprise-me-btn:active .icon { animation: diceSpin .4s ease; }
@@ -2554,9 +3075,54 @@
     max-width: 300px;
     margin: 10px auto 0;
   }
+  /* Ludex 2.0 : liste compacte (réglage optionnel) — le conteneur n'a plus
+     besoin d'une hauteur/largeur fixes pensées pour la pile de cartes
+     absolute-positionnées, la liste défile normalement. */
+  html.discover-swipe-compact .discover-stack {
+    height: auto; max-width: 100%; margin-top: 6px;
+  }
+  .discover-compact-list { display: flex; flex-direction: column; }
+  .discover-compact-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .discover-compact-row:last-child { border-bottom: none; }
+  .discover-compact-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+  .discover-compact-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .discover-compact-poster { width: 42px; height: 63px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--surface2); }
+  .discover-compact-poster-ph {
+    width: 42px; height: 63px; border-radius: 3px; flex-shrink: 0; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-mid);
+  }
+  .discover-compact-info { min-width: 0; }
+  .discover-compact-title {
+    font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--text-hi);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .discover-compact-meta { font-size: 0.74rem; color: var(--text-mid); margin-top: 2px; }
+  .discover-compact-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .discover-compact-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-hi);
+    background: var(--surface); color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all var(--dur-fast);
+  }
+  .discover-compact-btn .icon { width: 16px; height: 16px; }
+  .discover-compact-btn.pass:hover { border-color: var(--red); color: var(--red); }
+  .discover-compact-btn.like:hover { border-color: var(--green); color: var(--green); }
+
   .discover-loading, .discover-empty {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     text-align: center; padding: 20px; color: var(--text-mid); font-size: 0.9rem; line-height: 1.5;
+  }
+  html.discover-swipe-compact .discover-loading,
+  html.discover-swipe-compact .discover-empty {
+    position: static; padding: 40px 20px;
+  }
+  /* Le squelette de chargement hérite de .discover-card (position:absolute),
+     invisible dans un conteneur devenu height:auto en liste compacte — sorti
+     du flux absolu pour ce mode précis. */
+  html.discover-swipe-compact .discover-card-skeleton {
+    position: static; margin: 0 auto; max-width: 220px;
   }
   .discover-card {
     position: absolute; inset: 0;
@@ -2670,7 +3236,7 @@
     .search-row { 
       grid-template-columns: 1fr auto; 
     }
-    .search-input { grid-column: 1 / -1; }
+    .search-input-wrap { grid-column: 1 / -1; }
     .date-input { width: 100%; max-width: 190px; justify-self: start; }
     .heart-btn { min-width: 54px; margin-left: 8px; }
     
@@ -2694,13 +3260,18 @@
       max-width: none;
       /* Fond semi-transparent + flou : le contenu qui défile en dessous
          glisse élégamment derrière la barre, plutôt qu'un fond plein qui
-         cache tout net. */
-      background: color-mix(in srgb, var(--surface) 85%, transparent);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+         cache tout net. Opacité encore réduite sur demande (55%, était
+         75%) pour laisser plus transparaître à travers, flou inchangé
+         (16px) — les icônes/texte restent lisibles grâce au flou qui
+         "efface" les détails du contenu défilant derrière, même avec
+         moins de teinte opaque par-dessus. */
+      background: color-mix(in srgb, var(--surface) 55%, transparent);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
     }
-    .nav-btn:first-child { border-radius: 22px 0 0 22px; }
-    .nav-btn:last-child { border-radius: 0 22px 22px 0; }
+    /* Chaque .nav-btn porte déjà son propre radius 999px (bloc commun
+       ci-dessus) : plus besoin de caler les coins extérieurs de la barre
+       sur les boutons de bord, chaque capsule est indépendante. */
 
     /* Bouton Noter mis en avant : centré sur les deux axes de la barre et
        légèrement plus grand qu'elle, esprit "action centrale" — mobile
@@ -2734,7 +3305,7 @@
       width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
     .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
     .nav-btn-primary-label {
@@ -2760,16 +3331,6 @@
       transform: rotate(-45deg);
     }
     [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
-
-    /* Carnet : son --orange (#B8695E, "Rose Poudré") est un ton moyen —
-       le blanc habituel (--solid-fill-text) n'offre que 4.02:1 dessus, sous
-       le seuil de 4.5:1 à cette taille de police réduite (trouvé en testant
-       les 7 thèmes après l'agrandissement du cercle). Correctif ciblé ici
-       plutôt qu'un changement de --solid-fill-text (utilisée largement
-       ailleurs dans l'app, changement non vérifié à cette échelle) : noir
-       pur pour une marge confortable (5.22:1) sur ce badge précis. */
-    [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme="carnet"] .nav-btn-primary-label { color: #000; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */
@@ -2811,4 +3372,42 @@
       width: 100%;
       padding: 10px 14px;
     }
+  }
+
+  /* ═══════════════════════════════════════════
+     DESKTOP (≥1024px) — usage réel de l'espace disponible
+     ═══════════════════════════════════════════
+     Toujours un seul onglet actif à la fois (choix explicite déjà fait
+     pour ce produit — pas de retour aux deux colonnes permanentes
+     retirées précédemment). Ces règles élargissent le conteneur et
+     distribuent le contenu existant sur plusieurs colonnes À L'INTÉRIEUR
+     de l'onglet actif, sans jamais afficher deux vues simultanément. */
+  @media (min-width: 1024px) {
+    .layout, .mobile-nav { max-width: 1100px; }
+
+    /* Historique / À voir : disposition en colonnes façon "masonry"
+       plutôt qu'une grille classique — les cartes ont des hauteurs
+       variables (avec ou sans critique écrite), une vraie grille CSS
+       laisserait des trous inégaux entre colonnes. Le glissement
+       (physique en pixels, indépendant de la disposition visuelle)
+       continue de fonctionner normalement. */
+    .history-scroller, .watchlist-scroller {
+      column-count: 2; column-gap: 16px; max-height: 700px;
+    }
+    .hist-item, .wl-card { break-inside: avoid; margin-bottom: 12px; }
+
+    /* Découvrir : puces de thème sur 3 colonnes plutôt qu'empilées sur
+       une seule ; la carte de suggestion peut aussi un peu grandir. */
+    .theme-chips-row { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .discover-stack { max-width: 360px; }
+
+    /* Noter : la carte de formulaire garde une largeur raisonnable plutôt
+       que de s'étirer sur toute la largeur du conteneur élargi — un
+       curseur de 900px de large n'est pas plus lisible qu'un de 700px,
+       juste plus long à parcourir du regard. */
+    #col-rating { max-width: 720px; margin: 0 auto; }
+
+    /* Profil : .dashboard-grid a déjà grid-template-columns: 1fr 1fr en
+       règle de base — elle manquait juste de place pour s'exprimer tant
+       que .layout restait plafonné à 800px. Rien à ajouter ici. */
   }

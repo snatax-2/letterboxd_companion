@@ -6,14 +6,14 @@
 
 // La valeur de CACHE_NAME est réécrite automatiquement à chaque déploiement par
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
-// du contenu réel de l'app (index.html, styles.css, app.js, manifest.json, icônes).
+// du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-v1';
+const CACHE_NAME = 'ludex-shell-d2049c7a71';
 
 const APP_SHELL = [
   '/',
   '/index.html',
-  '/styles.css',
+  '/styles.min.css',
   '/app.js',
   '/favicon.png',
   '/manifest.json',

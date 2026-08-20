@@ -35,6 +35,38 @@ function escAttr(str) {
     .replace(/>/g, '&gt;');
 }
 
+// Construit une URL d'affiche/photo TMDb à partir d'un chemin brut — évite
+// de répéter "https://image.tmdb.org/t/p/..." à la main à chaque appelant
+// (un audit en a compté ~33 occurrences dispersées). Retourne une chaîne
+// vide si path est absent, pour que les appelants gardent leur `? :` habituel
+// sans avoir à vérifier deux fois.
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois +
+// grille d'affiches watchlist" est spécifique au thème par défaut (voir
+// "Vers Ludex 2.0" §01 — les 6 autres thèmes gardent leur composition
+// d'origine). Un seul point de vérité, partagé par l'historique, la
+// watchlist et l'écran Noter.
+function isDefaultComposition() {
+  const t = document.documentElement.dataset.theme;
+  return !t || t === 'default';
+}
+
+function tmdbImage(path, size = 'w185') {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+}
+
+// État vide unifié — soit compact (juste un texte, pour une section déjà
+// titrée comme "Top Réalisateurs" ou "Distribution des notes"), soit
+// complet (icône + message + CTA optionnel, pour un écran autonome comme
+// Historique/À voir vides). Les états déjà riches et fonctionnels ne sont
+// pas retouchés par cette fonction — elle sert à ne plus avoir à
+// réinventer le motif à la main à chaque nouvel endroit qui en a besoin.
+function renderEmptyState({ icon = null, message, ctaLabel = null, ctaId = null } = {}) {
+  const iconHtml = icon ? `<div class="empty-state-icon">${icon}</div>` : '';
+  const ctaHtml = ctaLabel ? `<button type="button" class="empty-state-cta"${ctaId ? ` id="${ctaId}"` : ''}>${escAttr(ctaLabel)}</button>` : '';
+  const cls = icon || ctaLabel ? 'empty-state' : 'empty-state empty-state-compact';
+  return `<div class="${cls}">${iconHtml}${escAttr(message)}${ctaHtml}</div>`;
+}
+
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════
@@ -42,6 +74,21 @@ let isLiked     = false;
 let currentMode = 'detail'; 
 let quickRating = 2.5;      
 let sortOrder   = 'date';
+// Bascule Film/Série (module Séries) : déclarée ici plutôt que dans
+// 18-tv-shows.js (son fichier "naturel", chargé en dernier) car
+// calculateScore() (05-rating-form.js) la lit, et calculateScore() est
+// appelée dès l'initialisation par 09-modal-init.js — AVANT que
+// 18-tv-shows.js n'ait eu la chance d'exécuter sa propre déclaration.
+// Contrairement aux fonctions (hissées entièrement), un "let" reste
+// inaccessible tant que sa ligne n'a pas été atteinte : la même variable
+// déclarée dans le fichier 18 provoquait "Cannot access before
+// initialization" au chargement — trouvé en testant le flux complet de
+// notation de saison, pas visible sur des tests plus étroits.
+let currentMediaType = 'movie';
+// Bascule Films/Séries dans l'Historique — déclarée ici pour la même
+// raison que currentMediaType juste au-dessus (voir ce commentaire).
+let historyMediaFilter = 'movie';
+let statsMediaFilter = 'movie';
 let activeGenre = null; 
 let weightsOpen = false;
 let pendingAction = null; 
@@ -187,6 +234,32 @@ function hapticPulse(el, intensity = 'light') {
     el.classList.add(cls);
     el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
   });
+}
+
+// Bascule l'affichage entre deux éléments mutuellement exclusifs (onglets
+// Films/Séries, dans Historique/Statistiques/Noter) avec un léger fondu
+// plutôt qu'un changement instantané — motif répété à 3 endroits, d'où
+// cette fonction partagée. Reste sobre (juste opacity, pas de mouvement)
+// pour rester cohérent avec le reste de l'app, jamais chargée en effets.
+function fadeSwitchDisplay(hideEl, showEl) {
+  if (!hideEl || !showEl || hideEl === showEl) return;
+  hideEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  hideEl.style.opacity = '0';
+  setTimeout(() => {
+    hideEl.style.display = 'none';
+    hideEl.style.removeProperty('opacity');
+    hideEl.style.removeProperty('transition');
+    showEl.style.display = '';
+    showEl.style.opacity = '0';
+    requestAnimationFrame(() => {
+      showEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+      showEl.style.opacity = '1';
+      setTimeout(() => {
+        showEl.style.removeProperty('opacity');
+        showEl.style.removeProperty('transition');
+      }, 150);
+    });
+  }, 140);
 }
 
 // Différé au tick suivant (setTimeout 0) plutôt qu'appelé immédiatement ici :
