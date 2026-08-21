@@ -6287,6 +6287,11 @@ function setDiscoverMediaType(type) {
   if (type === discoverMediaType) return;
   discoverMediaType = type;
   discoverSegBtns.forEach(b => b.classList.toggle('active', b.dataset.mediaType === type));
+  // "Cinéma international" n'a de sens qu'en mode Films — en Séries, le
+  // même carrousel (même source de données, juste discover/tv) devient
+  // "Séries internationales".
+  const intlTitleEl = document.getElementById('carousel-title-international');
+  if (intlTitleEl) intlTitleEl.textContent = type === 'tv' ? 'Séries internationales' : 'Cinéma international';
   loadChoixDuJour();
   loadCarousel('nouveautes');
   loadCarousel('classiques');
