@@ -31,6 +31,9 @@ test('affiche le bon prochain episode, deplie le synopsis, valide et passe au su
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400); // ecran de demarrage, duree minimale volontaire
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000); // resolution asynchrone de la carte
@@ -75,6 +78,9 @@ test('saison terminee : detecte automatiquement la saison suivante si elle exist
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -102,6 +108,9 @@ test('serie sans suite disparait simplement du widget', async ({ page }) => {
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -110,6 +119,8 @@ test('serie sans suite disparait simplement du widget', async ({ page }) => {
 
 test('widget absent sans serie en cours, et en mode Film', async ({ page }) => {
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(500);
@@ -138,6 +149,8 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       ],
     } }));
     await page.goto('/');
+
+    await page.click('#nav-rating');
     await page.waitForTimeout(1400);
     await page.click('#tab-media-tv');
     await page.waitForTimeout(1000);

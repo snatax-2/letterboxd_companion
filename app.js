@@ -650,6 +650,14 @@ const viewWl = document.getElementById('view-watchlist');
 const viewDiscover = document.getElementById('view-discover');
 const viewProfile = document.getElementById('view-profile');
 
+// Vit ici (pas dans 11-discover.js) car référencée dès le premier appel de
+// switchRightTab() au démarrage — 01-navigation.js s'exécute AVANT
+// 11-discover.js dans la concaténation (voir scripts/build-app-js.js), donc
+// une déclaration `let` là-bas serait encore dans sa zone morte temporelle
+// à ce moment précis : ReferenceError qui bloque tout le script, jamais
+// rencontré avant que Découvrir devienne l'onglet ouvert au démarrage.
+let discoverLoaded = false;
+
 function switchRightTab(tabName) {
   const tabs = {
     history:   { btn: tabHistBtn,     view: viewHist },
@@ -771,7 +779,17 @@ navProfile.addEventListener('click', () => switchMobileNav('profile'));
 // (voir styles.css : la grille à deux colonnes est remplacée par des onglets
 // uniques, positionnés en haut sur PC et en bas sur mobile) — plus besoin de
 // réagir différemment au redimensionnement selon la largeur.
-switchMobileNav('rating');
+// Découvrir est désormais l'onglet ouvert au démarrage (au lieu de Noter),
+// cohérent avec son nouvel ordre en tête de la barre de navigation.
+// Différé au tick suivant (setTimeout 0) : app.js est la concaténation de
+// ~28 fichiers exécutés dans l'ordre, et 01-navigation.js est tôt dans cet
+// ordre — un appel immédiat à switchMobileNav('discover') atteint le code
+// de 11-discover.js (discoverMediaType, CAROUSEL_SOURCES...), pas encore
+// exécuté à ce stade. Même classe de bug "Cannot access ... before
+// initialization" que celle déjà documentée dans 03-foundation.js, jamais
+// rencontrée avant que Découvrir devienne l'onglet ouvert au démarrage
+// (l'ancien 'rating' ne déclenchait aucun appel à ce code).
+setTimeout(() => switchMobileNav('discover'), 0);
 
 // ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
 // Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,
@@ -789,7 +807,10 @@ function isExcludedTarget(target) {
 }
 
 (function initMobileSwipeNav() {
-  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover', 'profile'];
+  // Ordre aligné sur la disposition visuelle de la barre (gauche à droite) :
+  // Découvrir, À voir, Noter, Historique, Profil — un swipe suit désormais
+  // le même sens que ce qu'on voit à l'écran.
+  const TAB_ORDER = ['discover', 'watchlist', 'rating', 'history', 'profile'];
   const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
   const SWIPE_ANGLE_RATIO = 1.5; // le geste doit être nettement plus horizontal que vertical
 
@@ -6267,7 +6288,9 @@ setInterval(() => {
 // (voir 13-duels.js, inchangé — seul son emplacement dans le DOM change).
 
 let discoverMediaType = 'movie'; // 'movie' | 'tv' — état du toggle, partagé par les 4 blocs
-let discoverLoaded = false; // pas de re-fetch à chaque retour sur l'onglet — voir switchRightTab
+// discoverLoaded vit désormais dans 01-navigation.js (voir le commentaire
+// là-bas — nécessaire dès le premier appel de switchRightTab au démarrage,
+// avant que ce fichier-ci ne soit lui-même exécuté).
 
 function normalizeItem(m) {
   // Uniformise film/série : title/name, release_date/first_air_date — pour

@@ -20,6 +20,7 @@ test('recherche une serie ouvre directement la fiche detaillee, pas de puces de 
   } }));
 
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');

@@ -9,7 +9,9 @@
 // (voir 13-duels.js, inchangé — seul son emplacement dans le DOM change).
 
 let discoverMediaType = 'movie'; // 'movie' | 'tv' — état du toggle, partagé par les 4 blocs
-let discoverLoaded = false; // pas de re-fetch à chaque retour sur l'onglet — voir switchRightTab
+// discoverLoaded vit désormais dans 01-navigation.js (voir le commentaire
+// là-bas — nécessaire dès le premier appel de switchRightTab au démarrage,
+// avant que ce fichier-ci ne soit lui-même exécuté).
 
 function normalizeItem(m) {
   // Uniformise film/série : title/name, release_date/first_air_date — pour

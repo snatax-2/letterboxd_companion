@@ -44,6 +44,7 @@ test.beforeEach(async ({ page }) => {
 
 async function selectShowAndSeason(page, seasonNumber = 1) {
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400); // ecran de demarrage, duree minimale volontaire
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');

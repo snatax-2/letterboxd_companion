@@ -28,6 +28,7 @@ test.beforeEach(async ({ page }) => {
 
 test('bascule Film/Serie : recherche ouvre directement la fiche detaillee, retour vers Film', async ({ page }) => {
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(400);
 
   await expect(page.locator('#tv-only-fields')).toBeHidden();
@@ -60,6 +61,7 @@ test('bascule Film/Serie : recherche ouvre directement la fiche detaillee, retou
 
 test('accessibilite : zero violation sur le flux complet de selection', async ({ page }) => {
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);

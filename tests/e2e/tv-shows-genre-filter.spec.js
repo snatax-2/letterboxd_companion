@@ -40,6 +40,7 @@ test('genre capture directement a la selection, retrofit en arriere-plan pour un
   } }));
 
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400); // ecran de demarrage, duree minimale volontaire
 
   // Selection d'une nouvelle serie : genre capture directement, la fiche

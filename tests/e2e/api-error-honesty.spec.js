@@ -10,6 +10,7 @@ test('recherche principale : une erreur API precise est affichee, pas traitee co
     json: { error: 'Trop de requêtes, réessaie dans un instant.' },
   }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.fill('#movie-search', 'Dune');
   await page.waitForTimeout(500);
 

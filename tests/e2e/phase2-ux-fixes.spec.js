@@ -86,6 +86,7 @@ test('Noter : bascule Film/Serie avec fondu, formulaire final correct', async ({
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await expect(page.locator('#movie-only-fields')).toBeVisible();
   await page.click('#tab-media-tv');

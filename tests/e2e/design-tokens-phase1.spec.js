@@ -7,6 +7,7 @@ test('les affiches film se chargent toujours correctement via la fonction centra
     { id: 1, title: 'Dune', poster_path: '/dune.jpg', release_date: '2021-01-01' },
   ] } }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.fill('#movie-search', 'Dune');
   await page.waitForTimeout(500);

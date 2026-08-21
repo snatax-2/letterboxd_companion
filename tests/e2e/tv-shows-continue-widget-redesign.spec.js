@@ -22,6 +22,8 @@ test.beforeEach(async ({ page }) => {
 
 test('nouveau rond a cocher a droite valide, plus de bouton pleine largeur', async ({ page }) => {
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -40,6 +42,8 @@ test('nouveau rond a cocher a droite valide, plus de bouton pleine largeur', asy
 
 test('retirer une carte du widget : disparait, revient au prochain rendu (aucune donnee touchee)', async ({ page }) => {
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -60,6 +64,8 @@ test('retirer une carte du widget : disparait, revient au prochain rendu (aucune
 
 test('mettre en pause : disparait du widget de facon persistante (flag en donnees)', async ({ page }) => {
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -80,6 +86,8 @@ test('mettre en pause : disparait du widget de facon persistante (flag en donnee
 
 test('repli/depliage du widget, preference memorisee', async ({ page }) => {
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -112,6 +120,8 @@ test('hauteur de carte stable malgre un titre d\'episode tres long', async ({ pa
     ],
   } }));
   await page.goto('/');
+
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
@@ -140,6 +150,8 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       ],
     } }));
     await page.goto('/');
+
+    await page.click('#nav-rating');
     await page.waitForTimeout(1400);
     await page.click('#tab-media-tv');
     await page.waitForTimeout(1000);

@@ -16,7 +16,14 @@ test('nouvelle saison : menu Commencer, ajoute au widget En cours', async ({ pag
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
+
+
   await page.waitForTimeout(1400);
+
+
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
@@ -74,7 +81,14 @@ test('saison deja en cours (retrouvee par recherche) : message pointant vers En 
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
+
+
   await page.waitForTimeout(1400);
+
+
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);
@@ -112,7 +126,14 @@ test('saison terminee : formulaire de notation direct, pas de menu ni de message
   } }));
 
   await page.goto('/');
+
+
+  await page.click('#nav-rating');
+
+
   await page.waitForTimeout(1400);
+
+
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);

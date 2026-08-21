@@ -49,6 +49,7 @@ test('epuration : sous-titre "Contexte de visionnage" present au-dessus des etiq
 
 test('ergonomie : chevron sur "Personnaliser les ponderations" pivote a l\'ouverture', async ({ page }) => {
   await page.goto('/');
+  await page.click('#nav-rating');
   const before = await page.locator('#weights-toggle-chevron').evaluate(el => getComputedStyle(el).transform);
   await page.click('#weights-toggle');
   await page.waitForTimeout(300);

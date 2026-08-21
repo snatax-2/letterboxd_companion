@@ -25,6 +25,7 @@ test.beforeEach(async ({ page }) => {
 
 async function goToEpisodeList(page) {
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.click('#tab-media-tv');
   await page.fill('#tv-search', 'True Detective');
   await page.waitForTimeout(500);

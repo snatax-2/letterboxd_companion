@@ -12,6 +12,7 @@ test.beforeEach(async ({ page }) => {
 
 test('bouton effacer sur le champ de recherche du formulaire de notation', async ({ page }) => {
   await page.goto('/');
+  await page.click('#nav-rating');
   await expect(page.locator('#search-clear-btn')).toBeHidden();
   await page.fill('#movie-search', 'test');
   await expect(page.locator('#search-clear-btn')).toBeVisible();
@@ -65,6 +66,7 @@ test('accessibilite : recherche avec bouton effacer + fenetre modale avec verre 
     overview: 'x', genres: [], credits: { crew: [], cast: [] }, videos: { results: [] },
   } }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.fill('#movie-search', 'test');
   let results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toHaveLength(0);

@@ -12,6 +12,7 @@ test('cibles tactiles : zone effective agrandie pour les 4 elements corriges', a
   });
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
 
   // ctx-tag : hauteur reelle augmentee
@@ -83,6 +84,7 @@ test('placeholder du champ film ne mentionne plus Twin Peaks', async ({ page }) 
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
+  await page.click('#nav-rating');
   await page.waitForTimeout(1400);
   const placeholder = await page.locator('#movie-search').getAttribute('placeholder');
   console.log('placeholder film:', placeholder);
@@ -104,6 +106,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     }, theme);
     await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
     await page.goto('/');
+    await page.click('#nav-rating');
     await page.waitForTimeout(1400);
     await page.click('#weights-toggle');
     await page.waitForTimeout(300);
