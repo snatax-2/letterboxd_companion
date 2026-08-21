@@ -10,7 +10,13 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType } = req.query;
+  // Ludex 2.0 : le toggle Films/Séries de Découvrir doit pouvoir demander
+  // la variante série de ces trois endpoints (choix du jour, classiques par
+  // décennie, cinéma international) — mediaType='tv' bascule discover/movie
+  // vers discover/tv, sans dupliquer chaque branche. 'movie' par défaut,
+  // comportement inchangé si le paramètre est absent.
+  const tmdbMediaType = mediaType === 'tv' ? 'tv' : 'movie';
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
@@ -55,7 +61,7 @@ export default async function handler(req, res) {
       const PAGE_SIZE = 20;
       const { page, index } = seededPageAndIndex(seed, 200, PAGE_SIZE);
       const discoverRes = await fetch(
-        `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
+        `https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
       );
       const discoverData = await discoverRes.json();
       const results = (discoverData.results || []).filter(m => m.poster_path);
@@ -134,9 +140,11 @@ export default async function handler(req, res) {
       return res.status(200).send(Buffer.from(buffer));
 
     } else if (id && recommendations) {
-      // Cas 5 : Recommandations basées sur un film spécifique
+      // Cas 5 : Recommandations basées sur un film ou une série spécifique —
+      // mediaType='tv' bascule vers l'endpoint séries (utilisé par le
+      // carrousel "D'après ton historique" quand le toggle Séries est actif).
       const recRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${id}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/${tmdbMediaType}/${id}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const recData = await recRes.json();
       setCache(43200, 604800); // 12h, revalidation jusqu'à 7 jours
@@ -318,7 +326,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ results: [] });
       }
       const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=200&with_origin_country=${cc}&page=${page}`)
+        fetch(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=200&with_origin_country=${cc}&page=${page}`)
           .then(r => r.json()).catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
@@ -362,8 +370,11 @@ export default async function handler(req, res) {
         return res.status(200).json({ results: [] });
       }
       const endYear = startYear + 9;
+      // TMDb utilise un nom de champ de date différent pour les séries
+      // (first_air_date) que pour les films (primary_release_date).
+      const dateField = tmdbMediaType === 'tv' ? 'first_air_date' : 'primary_release_date';
       const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=500&primary_release_date.gte=${startYear}-01-01&primary_release_date.lte=${endYear}-12-31&page=${page}`)
+        fetch(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=500&${dateField}.gte=${startYear}-01-01&${dateField}.lte=${endYear}-12-31&page=${page}`)
           .then(r => r.json()).catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);

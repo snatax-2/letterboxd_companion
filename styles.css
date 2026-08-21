@@ -290,7 +290,6 @@
   [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
   [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .discover-card { border-color: var(--poster-accent, var(--border-hi)); border-width: 2px; }
   [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
   [data-theme="technicolor"] {
@@ -531,8 +530,7 @@
      au survol là où il existe (desktop) ; sur mobile, tout reste argentique. */
   [data-theme="filmnoir"] .hist-item img,
   [data-theme="filmnoir"] .wl-card img,
-  [data-theme="filmnoir"] .discover-card img,
-  [data-theme="filmnoir"] .fdj-card img,
+  [data-theme="filmnoir"] .poster-min img,
   [data-theme="filmnoir"] .duel-poster,
   [data-theme="filmnoir"] .mds-poster {
     filter: grayscale(1) contrast(1.08);
@@ -540,7 +538,7 @@
   }
   [data-theme="filmnoir"] .hist-item:hover img,
   [data-theme="filmnoir"] .wl-card:hover img,
-  [data-theme="filmnoir"] .discover-card:hover img {
+  [data-theme="filmnoir"] .poster-min:hover img {
     filter: grayscale(0) contrast(1);
   }
   /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
@@ -594,15 +592,15 @@
   }
   .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
   .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-  .quiz-answer:active, .hist-action-btn:active,
-  .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
+  .hist-action-btn:active,
+  .backup-reminder-btn:active, summary:active {
     transform: scale(0.96);
   }
   @media (prefers-reduced-motion: reduce) {
     .btn:active, .nav-btn:active, .icon-btn:active, .genre-chip:active,
     .filter-btn:active, .theme-card:active, .duel-side:active, .duel-skip:active,
-    .quiz-answer:active, .hist-action-btn:active,
-    .backup-reminder-btn:active, summary:active, .discover-action-btn:active {
+    .hist-action-btn:active,
+    .backup-reminder-btn:active, summary:active {
       transform: none;
     }
   }
@@ -614,7 +612,7 @@
      (appui long, double tap) casse l'illusion native. Le contenu
      (critiques, synopsis, titres) reste sélectionnable, lui. */
   .btn, .nav-btn, .icon-btn, .genre-chip, .filter-btn, .theme-card,
-  .duel-side, .duel-skip, .quiz-answer, .hist-action-btn,
+  .duel-side, .duel-skip, .hist-action-btn,
   summary, .hist-swipe-hint, .stars {
     -webkit-user-select: none;
     user-select: none;
@@ -626,7 +624,7 @@
   }
   /* Chiffres tabulaires : les compteurs ne "dansent" plus quand ils
      changent (chaque chiffre a la même largeur) */
-  .kpi-val, .duel-counter, .badges-count, .quiz-streak, .duel-year {
+  .kpi-val, .duel-counter, .badges-count, .duel-year {
     font-variant-numeric: tabular-nums;
   }
 
@@ -974,7 +972,6 @@
     background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
     background-size: 200px 100%; animation: shimmer 1.5s infinite;
   }
-  .discover-card-skeleton { padding: 12px; }
 
   /* ── Sélecteur d'affiche ── */
   .poster-picker-box {
@@ -1881,6 +1878,15 @@
   }
 
   /* ── Duels ELO ── */
+  /* Ludex 2.0 : arène de jeu déplacée ici depuis Découvrir — .duels-arena-
+     title reprend le rôle de l'ancien .discover-section-title, sans porter
+     ce nom devenu trompeur hors de Découvrir. */
+  .duels-arena-title {
+    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .duels-card-sep { border-top: 1px solid var(--border); margin: 18px 0 14px; }
   .duel-arena { display: flex; align-items: stretch; gap: 10px; margin-top: 4px; }
   .duel-side {
     flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 6px;
@@ -1990,21 +1996,6 @@
   .curated-decades-accordion[open] summary::before { transform: rotate(90deg); }
   .curated-decades-list { margin-top: 4px; }
 
-  /* ── Découvrir : raccourci vers les Classiques (Profil) ── */
-  .curated-lists-shortcut-btn {
-    display: flex; align-items: center; gap: 10px; width: 100%;
-    background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
-    padding: 12px 14px; cursor: pointer; font-family: var(--font-body); color: var(--text-hi);
-    text-align: left; transition: border-color var(--dur-fast);
-  }
-  .curated-lists-shortcut-btn:hover { border-color: var(--orange); }
-  .curated-lists-shortcut-btn .icon:first-child { flex-shrink: 0; color: var(--orange); }
-  .curated-lists-shortcut-btn span:not([class]) { font-size: 0.85rem; font-weight: 700; flex: 1; }
-  .curated-lists-shortcut-sub { display: block; font-size: 0.7rem; font-weight: 400; color: var(--text-mid); margin-top: 2px; }
-  .curated-lists-shortcut-arrow { flex-shrink: 0; color: var(--text-mid); }
-
-  /* ── Découvrir : Explorer par thème (mots-clés TMDb) ── */
-  .theme-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
   .theme-chip {
     background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-pill);
     padding: 8px 14px; font-size: 0.8rem; font-weight: 700; color: var(--text-hi);
@@ -2721,509 +2712,67 @@
   .top-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; cursor: pointer; transition: border-color var(--dur-fast);}
   .top-item:hover { border-color: var(--border-hi); }
   .top-item-name { font-weight: 600; color: var(--text-hi); }
-  .top-item-meta { display: flex; gap: 8px; font-size: 0.75rem; font-family: var(--font-mono); }
-  .top-item-score { color: var(--star-color); text-shadow: var(--star-shadow); }
 
-  /* ── SCROLL BARS ── */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: var(--radius-pill); }
-  ::-webkit-scrollbar-thumb:hover { background: var(--text); }
+  /* ═══════════════════════════════════════════
+     DÉCOUVRIR — feuille blanche (Ludex_Specifications_Decouverte.pdf)
+     ═══════════════════════════════════════════
+     Trois blocs : toggle Films/Séries sticky, Choix du jour (hero plein
+     cadre), 4 carrousels d'affiches pures. */
 
-  /* ── DÉCOUVRIR : Film du jour ── */
-  /* Chaque section (Film du jour / Tendances / Suggestions) est clairement
-     séparée visuellement des autres — un filet + un padding dédié, plutôt
-     que de simples titres qui s'enchaînent sans repère. */
-  .discover-section { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
-  .discover-section:first-of-type { padding-top: 0; margin-top: 0; border-top: none; }
-  .discover-section-title {
-    font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em;
-    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
-    display: flex; align-items: center; justify-content: space-between;
+  .discover-segmented-wrap {
+    position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding-bottom: 12px; margin-bottom: 4px;
   }
+  .discover-segmented {
+    display: flex; background: var(--surface2); border-radius: var(--radius-pill); padding: 4px;
+  }
+  .discover-seg-btn {
+    flex: 1; text-align: center; padding: 9px; border-radius: var(--radius-pill);
+    font-size: 0.82rem; font-weight: 700; color: var(--text); font-family: var(--font-heading);
+    background: transparent; border: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
+  }
+  .discover-seg-btn.active { background: var(--gold); color: var(--bg); }
 
-  /* Ludex 2.0 : "Pour toi aujourd'hui" — Angles morts + Ce jour-là fusionnés
-     en rangée compacte plutôt que deux sections empilées avec chacune son
-     propre titre pleine largeur. */
-  .today-for-you-row { display: flex; gap: 20px; flex-wrap: wrap; }
-  .today-for-you-col { flex: 1; min-width: 220px; }
-  .today-for-you-col-title {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+  .choix-du-jour-wrap { margin-bottom: 24px; }
+  .choix-du-jour-eyebrow {
+    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
   }
-
-  /* Ludex 2.0 : "Parcourir" — Par thème + Classiques en sous-onglets plutôt
-     que deux cartes empilées. Bascule via classList uniquement (jamais
-     .style.display) : 00e-feature-flags.js manipule déjà .style.display
-     sur ces mêmes éléments (activation/désactivation de fonctionnalité) —
-     s'appuyer sur une classe CSS évite tout conflit entre les deux
-     mécanismes (un style inline vide laisse la classe gouverner). */
-  .browse-tabs { margin-bottom: 14px; }
-  .browse-panel { display: none; }
-  .browse-panel.active { display: block; }
-
-  /* Ludex 2.0 : "Jouer" — Quiz + Duels repliés par défaut sous un seul
-     repère (<details> natif : accessible sans JS dédié, clavier et lecteur
-     d'écran gèrent déjà l'ouverture/fermeture). */
-  .discover-accordion { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
-  /* #play-wrap (ID) plutôt que .discover-accordion (classe) : la règle
-     générale ".discover-section:first-of-type" (classe + pseudo-classe) est
-     plus spécifique qu'une simple classe et l'écraserait sinon — <details>
-     étant le seul élément de son TYPE parmi ses frères <div>, il matche
-     toujours ":first-of-type" indépendamment de sa position réelle. */
-  #play-wrap { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
-  .discover-accordion-summary {
-    cursor: pointer; list-style: none; margin-bottom: 0;
+  .choix-du-jour-card {
+    position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
+    aspect-ratio: 4/3; background: var(--surface2);
   }
-  .discover-accordion-summary::-webkit-details-marker { display: none; }
-  .discover-accordion[open] .discover-accordion-summary { margin-bottom: 10px; }
-  .discover-accordion-summary .badges-chevron { transition: transform var(--dur-fast); }
-  .discover-accordion[open] .discover-accordion-summary .badges-chevron { transform: rotate(180deg); }
-  .discover-accordion .discover-section:first-of-type { padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--border); }
-  .quiz-streak {
-    font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem; color: var(--orange);
-    display: flex; align-items: center; gap: 3px; text-transform: none; letter-spacing: 0;
+  .choix-du-jour-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .choix-du-jour-bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
   }
-  .quiz-streak .icon {
-    width: 13px; height: 13px;
-    transform-origin: 50% 90%;
-    animation: quizFlameFlicker 1.6s ease-in-out infinite;
+  .choix-du-jour-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, transparent 30%, rgba(14,17,22,0.95) 100%);
   }
-  @keyframes quizFlameFlicker {
-    0%, 100% { transform: scale(1) rotate(0deg); }
-    25% { transform: scale(1.1, 0.92) rotate(-4deg); }
-    50% { transform: scale(0.94, 1.08) rotate(3deg); }
-    75% { transform: scale(1.06, 0.96) rotate(-2deg); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .quiz-streak .icon { animation: none; }
-  }
-  .quiz-card {
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
-  }
-  .quiz-question { font-family: var(--font-heading); font-weight: 700; font-size: 0.95rem; color: var(--text-hi); line-height: 1.4; margin-bottom: 14px; }
-  .quiz-answers { display: flex; flex-direction: column; gap: 8px; }
-  .quiz-answer-btn {
-    display: flex; align-items: center; gap: 10px;
-    text-align: left; background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
-    padding: 10px 14px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer; font-family: var(--font-body);
-    transition: border-color var(--dur-fast), background-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
-  }
-  /* Pastille A/B/C/D, esprit "quiz télé" plutôt que de simples boutons pleine largeur. */
-  .quiz-answer-letter {
-    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
-    background: var(--surface); border: 1px solid var(--border-hi);
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 0.72rem; font-weight: 700; font-family: var(--font-heading); color: var(--text-mid);
-    transition: background-color var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast);
-  }
-  .quiz-answer-text { flex: 1; }
-  .quiz-answer-icon { flex-shrink: 0; display: inline-flex; }
-  .quiz-answer-icon .icon { width: 16px; height: 16px; }
-  .quiz-answer-btn:hover:not(:disabled) { border-color: var(--orange); }
-  .quiz-answer-btn:disabled { cursor: default; }
-  /* color-mix (pas de rgba() fixe) : la version précédente était codée en
-     dur (rgba(90,160,90...)/(180,70,70...)) et ne s'adaptait à AUCUN des 7
-     thèmes de l'app — un vrai défaut, pas juste un choix esthétique, trouvé
-     en révisant l'affichage du quiz. Une icône (✓/✗) accompagne désormais
-     la couleur, pas seulement une teinte de fond — reste clair même pour
-     qui distingue mal le vert du rouge. */
-  .quiz-answer-btn.correct { background: color-mix(in srgb, var(--green) 18%, var(--surface2)); border-color: var(--green); color: var(--text-hi); }
-  .quiz-answer-btn.correct .quiz-answer-letter { background: var(--green); border-color: var(--green); color: var(--green-fill-text, #fff); }
-  .quiz-answer-btn.correct .quiz-answer-icon { color: var(--green); }
-  .quiz-answer-btn.wrong { background: color-mix(in srgb, var(--red) 18%, var(--surface2)); border-color: var(--red); color: var(--text-hi); }
-  .quiz-answer-btn.wrong .quiz-answer-letter { background: var(--red); border-color: var(--red); color: var(--red-fill-text, #fff); }
-  .quiz-answer-btn.wrong .quiz-answer-icon { color: var(--red); }
-  .quiz-result { margin-top: 12px; font-size: 0.82rem; color: var(--text-mid); text-align: center; }
-  .quiz-already-played { text-align: center; padding: 8px 0; color: var(--text-mid); font-size: 0.86rem; }
-
-  .fdj-card {
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 12px; cursor: pointer; box-shadow: var(--box-shadow-style, none);
-    transition: border-color var(--dur-fast);
-  }
-  .fdj-card:hover { border-color: var(--border-hi); }
-  /* Ludex 2.0 : la fiche révélée reprend le MÊME traitement plein cadre que
-     la phase "à deviner" (voir .fdj-card.fdj-guessing plus bas) plutôt
-     qu'un agencement affiche+infos côte à côte différent — l'affiche
-     bascule simplement de floutée à nette, tout le reste (dégradé, badge,
-     bloc titre en bas) reste visuellement identique entre les deux états. */
-  .fdj-card.fdj-revealed { display: block; padding: 0; }
-  .fdj-hero-frame {
-    position: relative; overflow: hidden; min-height: 320px;
-    display: flex; flex-direction: column; justify-content: space-between;
-    cursor: pointer;
-  }
-  /* Affiche nette en fond plein cadre — même technique que .guess-poster
-     (légitime débordement + scale pour ne jamais laisser un bord net,
-     même si ici l'image n'est pas floutée, par cohérence avec l'état
-     "à deviner" juste avant). */
-  .fdj-hero-frame .fdj-poster {
-    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
-    object-fit: cover; border-radius: 0; transform: scale(1.08);
-  }
-  .fdj-hero-frame .fdj-poster-ph {
-    position: absolute; inset: 0; background: var(--surface2);
-    display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: var(--text-mid);
-  }
-  .fdj-hero-frame .fdj-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-  .fdj-hero-frame .guess-result {
-    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-    color: var(--text-hi); background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 999px;
-  }
-  .fdj-hero-frame .fdj-info { position: relative; z-index: 1; }
-  .fdj-hero-frame .fdj-film-title {
-    font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem;
-    text-transform: uppercase; letter-spacing: 0.02em; color: var(--text-hi);
+  .choix-du-jour-content { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+  .choix-du-jour-title {
+    font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem;
+    color: var(--text-hi); margin: 0; line-height: 1.15;
     text-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
-  .fdj-hero-frame .fdj-year { color: var(--text-hi); opacity: 0.75; }
-  .fdj-hero-frame .fdj-meta-line { color: var(--text-hi); text-shadow: 0 1px 8px rgba(0,0,0,0.5); margin-top: 8px; }
-  .fdj-hero-frame .fdj-meta-icon { color: var(--gold); }
-  /* Synopsis + plateformes restent SOUS l'image plein cadre, dans le flux
-     normal de la carte — inchangés visuellement (encart bande colorée),
-     juste repositionnés hors du bloc image. */
-  .fdj-below { padding: 14px; }
-  .fdj-below .fdj-synopsis-card { margin: 0 0 10px; }
-  .fdj-below .fdj-providers { margin-top: 0; }
-  /* Phase "à deviner" : centrée, empilée — pas de mise en page côte à côte
-     tant qu'il n'y a que l'affiche floutée et le formulaire. La carte n'a
-     pas encore de gestionnaire de clic (rien à ouvrir avant la révélation),
-     donc pas de curseur "pointeur" trompeur. */
-  .fdj-card.fdj-guessing { text-align: center; cursor: default; padding: 14px; }
-  .fdj-card.fdj-guessing:hover { border-color: var(--border); }
-  /* Ludex 2.0 : reprend le traitement plein cadre du swipe — fond flouté
-     (.guess-poster, repositionné plus haut) plutôt qu'une vignette en ligne,
-     contenu superposé en dégradé sombre. Scopé à .fdj-guessing uniquement :
-     la fiche révélée (.fdj-revealed) garde son agencement affiche+infos
-     actuel, pas concerné par ce changement. */
-  .fdj-card.fdj-guessing {
-    position: relative; overflow: hidden; min-height: 320px;
-    padding: 0; display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .fdj-hero-overlay {
-    position: absolute; inset: 0; z-index: 0;
-    background: linear-gradient(to bottom, rgba(14,17,22,0.35) 0%, rgba(14,17,22,0.55) 45%, rgba(14,17,22,0.92) 100%);
-  }
-  .fdj-hero-top, .fdj-hero-body { position: relative; z-index: 1; }
-  .fdj-hero-top { display: flex; justify-content: space-between; align-items: center; padding: 14px; }
-  .fdj-hero-badge {
-    font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.04em; color: var(--text-hi); background: rgba(0,0,0,0.5);
-    padding: 5px 10px; border-radius: 999px;
-  }
-  .fdj-attempt-dots { display: flex; align-items: center; gap: 5px; }
-  .fdj-attempt-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.3); }
-  .fdj-attempt-dot.used { background: var(--gold); }
-  /* .guess-attempts (texte "Essai X/Y") reprend sa fonction d'origine —
-     conservée en accessibilité/texte, discrète à côté des pastilles plutôt
-     que seule et centrée comme avant. */
-  .fdj-attempt-dots .guess-attempts {
-    font-size: 0.64rem; color: var(--text-hi); opacity: 0.75; margin: 0 0 0 4px;
-  }
-  .fdj-hero-body { padding: 14px; }
-  .fdj-title-mask {
-    font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700;
-    color: var(--text-hi); letter-spacing: 0.08em; margin-bottom: 10px;
-  }
-  .fdj-hero-pills { display: flex; gap: 8px; margin-bottom: 10px; }
-  .fdj-hero-pill {
-    font-size: 0.74rem; font-weight: 600; color: var(--text-hi);
-    background: rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 999px;
-  }
-  .fdj-hero-pill.accent { background: var(--gold); color: var(--bg); }
-  .fdj-poster { width: 84px; height: 126px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); }
-  .fdj-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid); }
-  .fdj-info { flex: 1; min-width: 0; }
-  .fdj-film-title { font-family: var(--font-heading); font-weight: 800; font-size: 0.95rem; color: var(--text-hi); }
-  .fdj-year { font-weight: 400; color: var(--text-mid); }
-  /* Présentation simple du film — synopsis, réalisateur, note (voir
-     renderRevealedFilm). Remplace l'ancienne carte anecdote Wikipédia +
-     accordéon "Chiffres clés", retirée : n'apportait pas de réelle
-     plus-value au retour de l'utilisateur, et dépendait de la disponibilité
-     d'une page Wikipédia adaptée — ces informations viennent directement et
-     fiablement de TMDb à chaque fois. Icônes cohérentes avec le reste de
-     l'app (clap déjà utilisé comme repli d'affiche, étoile déjà utilisée
-     pour les notes) plutôt qu'un simple texte séparé par des points, pour
-     un vrai contraste visuel entre les infos structurées et le synopsis. */
-  .fdj-meta-line {
-    display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 6px;
-    font-size: 0.82rem; font-weight: 700; color: var(--text-hi);
-  }
-  .fdj-meta-item { display: inline-flex; align-items: center; gap: 5px; }
-  .fdj-meta-icon { display: inline-flex; color: var(--orange); flex-shrink: 0; }
-  .fdj-meta-icon .icon { width: 14px; height: 14px; }
-  /* Synopsis en encart distinct — même traitement visuel que l'ancienne
-     carte anecdote Wikipédia (bande colorée à gauche, plutôt qu'une bordure
-     fine tout autour : reste visible même sur un thème à faible contraste
-     volontaire comme Méridien, où un fond de carte et une bordure fine
-     étaient quasiment invisibles — 1.11:1 mesuré à l'époque). Icône clap
-     (pas l'ampoule de l'ancienne anecdote, qui signalait un "fait
-     surprenant" — un synopsis est une présentation neutre, pas une
-     révélation). */
-  .fdj-synopsis-card {
-    display: flex; gap: 10px; margin: 10px 0; padding: 12px;
-    background: var(--surface2); border-radius: var(--radius-sm);
-    border-left: 4px solid var(--orange);
-    box-shadow: var(--box-shadow-style, none);
-  }
-  .fdj-synopsis-icon { flex-shrink: 0; color: var(--text-hi); font-size: 1.2rem; padding-top: 2px; }
-  .fdj-synopsis-icon .icon { width: 18px; height: 18px; }
-  .fdj-synopsis-body { flex: 1; min-width: 0; }
-  .fdj-synopsis-text { margin: 0; font-size: 0.82rem; color: var(--text); line-height: 1.5; }
-  /* Troncage visuel à 4 lignes par défaut — le texte complet reste dans le
-     DOM (pas de second appel réseau au dépli), juste masqué visuellement.
-     Hauteur de carte stable d'un film à l'autre plutôt que de varier
-     fortement selon la longueur du synopsis. */
-  .fdj-synopsis-text.fdj-synopsis-clamped {
-    display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .fdj-synopsis-toggle {
-    display: block; margin-top: 4px; padding: 0; background: none; border: none;
-    font-size: 0.72rem; font-weight: 700; color: var(--orange); cursor: pointer;
-    font-family: var(--font-heading);
-  }
-  .fdj-synopsis-toggle:hover { text-decoration: underline; }
-  .fdj-providers { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 24px; margin-top: 8px; }
-  .fdj-provider-logo { width: 24px; height: 24px; border-radius: 6px; object-fit: cover; }
-  .fdj-no-streaming { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
 
-  /* ── DÉCOUVRIR : "Devine le Film du Jour" (mini-jeu) ── */
-  .guess-poster {
-    /* Ludex 2.0 : plein cadre en fond de carte plutôt qu'une vignette
-       centrée — même élément, même filter inline (voir renderGuessGame),
-       repositionné uniquement. Léger débordement (-12px) + scale pour que
-       le flou ne laisse jamais deviner un bord net. */
-    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
-    object-fit: cover; border-radius: 0; background: var(--surface2);
-    transform: scale(1.08);
-    transition: filter var(--dur-slow) var(--ease-out);
+  .carousel-block { margin-bottom: 22px; }
+  .carousel-title {
+    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-mid); margin-bottom: 10px;
   }
-  .guess-hints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
-  .guess-hint {
-    font-size: 0.72rem; color: var(--text-hi); background: var(--surface2);
-    border: 1px solid var(--border-hi); border-radius: var(--radius-pill); padding: 3px 10px;
+  .carousel-row {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
+    scrollbar-width: none;
   }
-  .guess-form { display: flex; gap: 8px; }
-  .guess-input-wrap { position: relative; flex: 1; min-width: 0; }
-  .guess-input {
-    width: 100%; background: var(--surface2); border: 1px solid var(--border-hi);
-    border-radius: var(--radius-sm); padding: 9px 12px; font-size: 0.85rem; color: var(--text-hi);
-    font-family: var(--font-body);
+  .carousel-row::-webkit-scrollbar { display: none; }
+  .poster-min {
+    flex-shrink: 0; width: 108px; aspect-ratio: 2/3; border-radius: 8px;
+    background: var(--surface2); cursor: pointer; overflow: hidden;
   }
-  .guess-input:focus { outline: none; border-color: var(--orange); }
-  /* Suggestions texte seul (pas d'affiche) : montrer l'affiche du bon film
-     dans la liste spoilerait instantanément le jeu — voir
-     fetchGuessSuggestions dans 11-discover.js. */
-  .guess-suggestions {
-    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
-    background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
-    max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-2, 0 4px 16px rgba(0,0,0,0.3));
-    text-align: left;
-  }
-  .guess-suggestion-item {
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    padding: 9px 12px; cursor: pointer; font-size: 0.82rem; color: var(--text-hi);
-    border-bottom: 1px solid var(--border);
-  }
-  .guess-suggestion-item:last-child { border-bottom: none; }
-  .guess-suggestion-item:hover { background: var(--surface2); }
-  .guess-suggestion-year { color: var(--text-mid); font-size: 0.74rem; flex-shrink: 0; }
-  .guess-submit-btn {
-    background: var(--orange); border: none; border-radius: var(--radius-sm); padding: 9px 16px;
-    font-size: 0.82rem; font-weight: 700; color: var(--solid-fill-text, #0d1117); cursor: pointer;
-    font-family: var(--font-heading); transition: transform var(--dur-fast) var(--ease-out);
-  }
-  .guess-submit-btn:active { transform: scale(0.96); }
-  .guess-result { font-size: 0.88rem; font-weight: 700; font-family: var(--font-heading); }
-  .guess-won { color: var(--green); }
-  .guess-lost { color: var(--red); }
-
-  /* ── DÉCOUVRIR : carrousel "Tendances du moment" ── */
-  .trending-carousel-row { display: flex; align-items: center; gap: 4px; }
-  .trending-nav-btn {
-    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
-    background: var(--surface2); border: 1px solid var(--border-hi); color: var(--text-hi);
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
-  }
-  .trending-nav-btn:hover { background: var(--border-hi); }
-  .trending-nav-btn:active { transform: scale(.9); }
-  .trending-nav-btn .icon { width: 14px; height: 14px; }
-  .trending-carousel {
-    overflow-x: auto; overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* cache la barre de défilement (desktop) */
-    -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
-    mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
-    /* min-width:0 + flex:1 : sans ça, un enfant flex avec overflow-x:auto
-       refuse par défaut de se réduire sous la largeur de SON contenu
-       (min-width:auto implicite) — la piste de 10 films à la suite forçait
-       toute la colonne (et donc toute la mise en page à deux colonnes) à
-       s'élargir bien au-delà de l'écran. Bug classique de flexbox, invisible
-       sur mobile (une seule colonne, jamais remarqué) mais qui cassait
-       entièrement l'affichage PC. */
-    min-width: 0;
-    flex: 1;
-  }
-  .trending-carousel::-webkit-scrollbar { display: none; }
-  .trending-carousel-track {
-    display: flex; gap: 10px; width: max-content;
-    /* Pas d'animation CSS ici : le défilement automatique est piloté en JS
-       (voir loadTrendingCarousel dans 11-discover.js), spécifiquement pour
-       pouvoir cohabiter avec un défilement manuel natif (glisser du doigt,
-       molette, trackpad) — une animation CSS pure bloque toute interaction
-       manuelle pendant qu'elle tourne. */
-  }
-  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; position: relative; }
-  .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
-  /* Tag Film/Série — les tendances mélangent désormais les deux (TMDb
-     "trending/all/week", voir api/search.js) */
-  .trending-item-type {
-    position: absolute; top: 6px; left: 6px; font-size: 0.56rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.04em; color: #fff;
-    background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: var(--radius-sm);
-  }
-  .trending-item-title {
-    font-size: 0.68rem; color: var(--text-mid); margin-top: 4px; text-align: center;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-
-  /* ── DÉCOUVRIR : pile de cartes façon "swipe" ── */
-  .discover-reload-btn {
-    background: none; border: none; color: var(--text-mid); font-size: 1.1rem;
-    cursor: pointer; margin-left: auto; padding: 4px 8px; border-radius: var(--radius-sm);
-    transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
-  }
-  .discover-reload-btn:hover { color: var(--text-hi); }
-  .discover-reload-btn:active { transform: scale(.9) rotate(-30deg); }
-
-  .surprise-me-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: var(--surface2); border: 1px solid var(--border-hi); color: var(--text-hi);
-    font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; text-transform: none;
-    padding: 7px 12px; border-radius: var(--radius-pill); cursor: pointer; transition: all var(--dur-fast) var(--ease-out);
-  }
-  .surprise-me-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .surprise-me-btn:active .icon { animation: diceSpin .4s ease; }
-  .surprise-me-btn .icon { width: 15px; height: 15px; }
-  @keyframes diceSpin { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
-  @keyframes discoverSpin { to { transform: rotate(360deg); } }
-  .discover-reload-btn.spinning { animation: discoverSpin 0.8s linear infinite; color: var(--orange); }
-
-  .discover-stack {
-    position: relative;
-    height: 500px;
-    max-width: 300px;
-    margin: 10px auto 0;
-  }
-  /* Ludex 2.0 : liste compacte (réglage optionnel) — le conteneur n'a plus
-     besoin d'une hauteur/largeur fixes pensées pour la pile de cartes
-     absolute-positionnées, la liste défile normalement. */
-  html.discover-swipe-compact .discover-stack {
-    height: auto; max-width: 100%; margin-top: 6px;
-  }
-  .discover-compact-list { display: flex; flex-direction: column; }
-  .discover-compact-row {
-    display: flex; align-items: center; gap: 10px; padding: 8px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .discover-compact-row:last-child { border-bottom: none; }
-  .discover-compact-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
-  .discover-compact-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .discover-compact-poster { width: 42px; height: 63px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--surface2); }
-  .discover-compact-poster-ph {
-    width: 42px; height: 63px; border-radius: 3px; flex-shrink: 0; background: var(--surface2);
-    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-mid);
-  }
-  .discover-compact-info { min-width: 0; }
-  .discover-compact-title {
-    font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--text-hi);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .discover-compact-meta { font-size: 0.74rem; color: var(--text-mid); margin-top: 2px; }
-  .discover-compact-actions { display: flex; gap: 4px; flex-shrink: 0; }
-  .discover-compact-btn {
-    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-hi);
-    background: var(--surface); color: var(--text); cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all var(--dur-fast);
-  }
-  .discover-compact-btn .icon { width: 16px; height: 16px; }
-  .discover-compact-btn.pass:hover { border-color: var(--red); color: var(--red); }
-  .discover-compact-btn.like:hover { border-color: var(--green); color: var(--green); }
-
-  .discover-loading, .discover-empty {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    text-align: center; padding: 20px; color: var(--text-mid); font-size: 0.9rem; line-height: 1.5;
-  }
-  html.discover-swipe-compact .discover-loading,
-  html.discover-swipe-compact .discover-empty {
-    position: static; padding: 40px 20px;
-  }
-  /* Le squelette de chargement hérite de .discover-card (position:absolute),
-     invisible dans un conteneur devenu height:auto en liste compacte — sorti
-     du flux absolu pour ce mode précis. */
-  html.discover-swipe-compact .discover-card-skeleton {
-    position: static; margin: 0 auto; max-width: 220px;
-  }
-  .discover-card {
-    position: absolute; inset: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border-hi);
-    border-radius: var(--radius);
-    overflow: hidden;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.45);
-    display: flex; flex-direction: column;
-    touch-action: none; /* rien à faire défiler ici : on gère tout nous-mêmes, sans laisser le navigateur "voler" le geste (c'était la cause du décalage d'affichage pendant le swipe) */
-    cursor: grab;
-    user-select: none;
-    -webkit-user-select: none;
-  }
-  .discover-card:active { cursor: grabbing; }
-  .discover-card.behind { z-index: 1; transform: scale(.94) translateY(10px); opacity: .55; pointer-events: none; }
-  .discover-card.top { z-index: 2; }
-  .discover-card.dragging { transition: none; }
-  .discover-card.snap-back { transition: transform var(--dur-base) var(--ease-out); }
-  .discover-card.flying { transition: transform var(--dur-slow) ease-out, opacity var(--dur-slow) ease-out; }
-
-  .discover-card-poster-wrap { position: relative; width: 100%; height: 74%; flex-shrink: 0; background: var(--surface2); }
-  .discover-card-poster {
-    width: 100%; height: 100%; object-fit: contain; display: block;
-    touch-action: none; -webkit-user-drag: none; pointer-events: none;
-  }
-  .discover-card-poster-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; pointer-events: none; }
-
-  .discover-card-info { padding: 10px 14px; flex: 1; overflow-y: auto; }
-  .discover-card-title { font-family: var(--font-heading); font-weight: 800; font-size: 1rem; color: var(--text-hi); line-height: 1.25; }
-  .discover-card-meta { font-size: 0.75rem; color: var(--text-mid); margin: 3px 0 6px; }
-  .discover-card-overview { font-size: 0.78rem; color: var(--text); line-height: 1.4; }
-
-  .discover-stamp {
-    position: absolute; top: 20px; padding: 5px 12px; border: 3px solid; border-radius: 8px;
-    font-family: var(--font-heading); font-weight: 900; font-size: 1.05rem; text-transform: uppercase;
-    opacity: 0; pointer-events: none;
-    /* Légère ombre + fond semi-opaque : le texte reste lisible quelle que soit
-       la couleur de l'affiche derrière (contrairement à un fond plein, une
-       image varie énormément d'un film à l'autre). */
-    background: rgba(0,0,0,0.35);
-    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  }
-  .discover-stamp.like { left: 16px; color: var(--green); border-color: var(--green); transform: rotate(-12deg); }
-  .discover-stamp.pass { right: 16px; color: var(--red); border-color: var(--red); transform: rotate(12deg); }
-
-  .discover-actions { display: flex; justify-content: center; gap: 22px; margin-top: 14px; }
-  .discover-action-btn {
-    width: 54px; height: 54px; border-radius: 50%; background: var(--surface2);
-    border: 2px solid var(--border-hi); font-size: 1.3rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: transform var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
-  }
-  .discover-action-btn.pass { color: var(--red); }
-  .discover-action-btn.pass:hover, .discover-action-btn.pass:active { border-color: var(--red); }
-  .discover-action-btn.like { color: var(--green); }
-  .discover-action-btn.like:hover, .discover-action-btn.like:active { border-color: var(--green); }
-  .discover-action-btn:active { transform: scale(.9); }
+  .poster-min:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .poster-min img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   /* ── OPTIMISATION RESPONSIVE COMPLETE (ZÉRO DÉCALAGE) ── */
   @media (max-width: 860px) {
@@ -3243,10 +2792,9 @@
     }
     .modal-overlay.open .modal-box { transform: translateY(0); }
 
-    /* Carte "Découvrir" plus grande sur mobile : la version desktop (300px de
-       large) laisserait beaucoup d'espace vide sur un écran de téléphone. */
-    .discover-stack { max-width: 100%; height: min(70vh, 580px); }
-    .discover-action-btn { width: 62px; height: 62px; font-size: 1.5rem; }
+    /* Le hero "Choix du jour" (voir plus bas) prend toute la largeur
+       disponible sur mobile, comme sur desktop — pas de redéfinition
+       spécifique nécessaire ici. */
 
     /* .layout, .right-tabs-container, .col-right et .col-left utilisent
        déjà ces valeurs par défaut (voir plus haut) — un seul système de
@@ -3438,11 +2986,6 @@
       column-count: 2; column-gap: 16px; max-height: 700px;
     }
     .hist-item, .wl-card { break-inside: avoid; margin-bottom: 12px; }
-
-    /* Découvrir : puces de thème sur 3 colonnes plutôt qu'empilées sur
-       une seule ; la carte de suggestion peut aussi un peu grandir. */
-    .theme-chips-row { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .discover-stack { max-width: 360px; }
 
     /* Noter : la carte de formulaire garde une largeur raisonnable plutôt
        que de s'étirer sur toute la largeur du conteneur élargi — un

@@ -54,7 +54,7 @@ test('carte Classiques a explorer : rendu et pourcentages', async ({ page }) => 
   expect(years).toEqual(['1941', '1945']);
 });
 
-test('raccourci Decouvrir -> Profil, et ajout des manquants a la watchlist', async ({ page }) => {
+test('ajout des manquants d\'une liste prédéfinie à la watchlist', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search?decadeTop=*', route => route.fulfill({ json: { results: [
     { id: 15, title: 'Citizen Kane', poster_path: '/p1.jpg', release_date: '1941-05-01', vote_average: 8.3 },
@@ -64,18 +64,12 @@ test('raccourci Decouvrir -> Profil, et ajout des manquants a la watchlist', asy
   await page.route('**/api/search?id=15', route => route.fulfill({ json: { id: 15, title: 'Citizen Kane', genres: [] } }));
   await page.route('**/api/search?id=999', route => route.fulfill({ json: { id: 999, title: 'Autre Film', genres: [] } }));
 
-  // 1. Le raccourci depuis Decouvrir bascule bien vers Profil
+  // 1. Ludex 2.0 : le raccourci depuis Découvrir vers Profil a été retiré
+  // avec la refonte de l'onglet (voir Ludex_Specifications_Decouverte.pdf)
+  // — navigation directe désormais, ce test garde surtout la partie
+  // "ajout des manquants à la watchlist" ci-dessous, toujours valide.
   await page.goto('/');
-  await page.click('#nav-discover');
-  // Ludex 2.0 : "Explorer les classiques" vit maintenant dans le sous-onglet
-  // "Classiques" de la section "Parcourir" (voir #browse-wrap dans
-  // index.html) — plus visible par défaut (c'est "Par thème" qui l'est).
-  await page.click('#browse-tab-classics');
-  await page.waitForSelector('#curated-lists-shortcut-btn');
-  await page.click('#curated-lists-shortcut-btn');
-  await page.waitForTimeout(300);
-  await expect(page.locator('#col-right-views')).toBeVisible();
-  await expect(page.locator('.nav-btn.active')).toHaveAttribute('id', 'nav-profile');
+  await page.click('#nav-profile');
   await expect(page.locator('#curated-lists-card')).toBeInViewport();
 
   // 2. Ajout des manquants a la watchlist (aucun film vu -> 2 manquants)

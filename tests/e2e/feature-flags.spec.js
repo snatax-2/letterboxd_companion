@@ -1,3 +1,10 @@
+// Ludex 2.0 : la refonte de Découvrir (voir
+// Ludex_Specifications_Decouverte.pdf) retire les bascules Quiz, Tendances
+// et Recommandations Découvrir — ces fonctionnalités n'existent plus, donc
+// plus rien à activer/désactiver pour elles. Duels est la seule bascule
+// restante (voir 00e-feature-flags.js), et vit désormais entièrement dans
+// Profil (arène + classement dans la même carte #duels-card) : plus besoin
+// de vérifier séparément l'arène côté Découvrir, la masquer masque tout.
 const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
@@ -15,7 +22,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('desactiver les Duels masque l\'arene (Decouvrir) ET le classement (Profil), sans toucher au classement stocke', async ({ page }) => {
+test('desactiver les Duels masque l\'arene et le classement (meme carte, Profil), sans toucher aux donnees stockees', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-profile');
   await expect(page.locator('#duels-card')).toBeVisible();
@@ -27,76 +34,24 @@ test('desactiver les Duels masque l\'arene (Decouvrir) ET le classement (Profil)
 
   await expect(page.locator('#duels-card')).toBeHidden();
 
-  await page.click('#nav-discover');
-
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(300);
-  // #duel-arena-wrap (pas l'ancien #daily-duel-wrap, qui n'existe plus depuis
-  // que l'arène a été déplacée vers Découvrir — un test qui vérifiait encore
-  // l'ancien élément "passait" à tort : toBeHidden() réussit aussi pour un
-  // élément absent du DOM, ça ne prouvait rien sur le vrai comportement).
-  await expect(page.locator('#duel-arena-wrap')).toBeHidden();
-
   // Les donnees de classement restent intactes en arriere-plan
   const duels = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_duels')));
   expect(duels.totalDuels).toBe(3);
 });
 
-test('la preference persiste apres rechargement de la page', async ({ page }) => {
-  await page.goto('/');
-  await page.click('#settings-btn');
-  await page.locator('label:has(#setting-feature-trending) .settings-toggle-slider').click();
-  await page.click('#settings-cancel');
-  await page.waitForTimeout(200);
-
-  await page.reload();
-  await page.click('#nav-discover');
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(400);
-  await expect(page.locator('#trending-carousel-wrap')).toBeHidden();
-
-  const flags = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_features')));
-  expect(flags.trending).toBe(false);
-});
-
-test('reactiver une fonctionnalite la fait immediatement reapparaitre, sans recharger', async ({ page }) => {
+test('reactiver Duels le fait immediatement reapparaitre, sans recharger', async ({ page }) => {
   await page.addInitScript(() => {
-    localStorage.setItem('lbx_features', JSON.stringify({ duels: true, quiz: false, trending: true, discoverRecs: true }));
-    // Batch de quiz valide en cache : evite l'appel reseau reel (needsRefresh=false),
-    // pour que loadDailyQuiz() puisse reussir et reafficher #quiz-wrap.
-    localStorage.setItem('lbx_quiz_batch', JSON.stringify([
-      { question: 'Question test', correct_answer: 'Bonne reponse', incorrect_answers: ['Mauvaise 1', 'Mauvaise 2', 'Mauvaise 3'] },
-    ]));
-    localStorage.setItem('lbx_quiz_batch_fetched_day', String(Math.floor(Date.now() / 86400000)));
+    localStorage.setItem('lbx_features', JSON.stringify({ duels: false }));
   });
   await page.goto('/');
-  await page.click('#nav-discover');
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(300);
-  await expect(page.locator('#quiz-wrap')).toBeHidden();
+  await page.click('#nav-profile');
+  await expect(page.locator('#duels-card')).toBeHidden();
 
   await page.click('#settings-btn');
-  await page.locator('label:has(#setting-feature-quiz) .settings-toggle-slider').click();
+  await page.locator('label:has(#setting-feature-duels) .settings-toggle-slider').click();
   await page.click('#settings-cancel');
   await page.waitForTimeout(300);
 
-  await expect(page.locator('#quiz-wrap')).toBeVisible();
-});
-
-test('desactiver les recommandations Decouvrir masque la pile de suggestions', async ({ page }) => {
-  await page.goto('/');
-  await page.click('#settings-btn');
-  await page.locator('label:has(#setting-feature-discover-recs) .settings-toggle-slider').click();
-  await page.click('#settings-cancel');
-  await page.waitForTimeout(200);
-
-  await page.click('#nav-discover');
-
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(300);
-  await expect(page.locator('.discover-section-tinder')).toBeHidden();
+  await expect(page.locator('#duels-card')).toBeVisible();
+  await expect(page.locator('.duel-side').first()).toBeVisible();
 });

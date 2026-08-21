@@ -3,12 +3,18 @@
 // ═══════════════════════════════════════════
 // Purement de l'affichage : désactiver une fonctionnalité masque sa section,
 // mais ne touche JAMAIS aux données sous-jacentes (le classement de duels
-// existant reste intact si on coupe les Duels, par exemple — la case à
-// cocher "Réinitialiser les duels" dans Réglages est une action séparée et
+// existant reste intact si on coupe les Duels — la case à cocher
+// "Réinitialiser les duels" dans Réglages est une action séparée et
 // explicite pour ça).
+//
+// Ludex 2.0 : Découvrir repensé entièrement retire Quiz, Suggestions
+// (swipe), Devine le Film du Jour, Ce jour-là, Explorer par thème et le
+// raccourci Classiques — ces bascules n'ont donc plus de section à
+// masquer/afficher et ont été retirées d'ici. Duels est la seule
+// fonctionnalité qui survit, déplacée vers Profil.
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true, onThisDay: true, themeExplorer: true, blindSpots: true, curatedShortcut: true };
+const FEATURE_DEFAULTS = { duels: true };
 
 function loadFeatureFlags() {
   try {
@@ -26,87 +32,23 @@ function saveFeatureFlags(flags) {
 // Applique l'état actuel des bascules à l'interface : masque/affiche chaque
 // section concernée. Appelé au chargement ET à chaque changement dans
 // Réglages — jamais besoin de recharger la page pour qu'un changement prenne effet.
-//
-// IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
-// en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
-// (renderDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
-// déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
-// appeler ici, sans condition d'onglet, créait des éléments .duel-side
-// cachés (le Duel du jour se rendait même en restant sur Profil) qui
-// entraient en collision avec le même sélecteur utilisé ailleurs.
 function applyFeatureFlags() {
   const flags = loadFeatureFlags();
-
   const duelsCard = document.getElementById('duels-card');
   if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
-  // L'arène vit désormais dans Découvrir (déplacée depuis Profil, qui ne
-  // garde que le classement) — c'est elle qu'il faut masquer, pas l'ancien
-  // "daily-duel-wrap" qui n'existe plus depuis cette réorganisation (résidu
-  // de migration jamais mis à jour ici : la bascule "Duels" ne masquait donc
-  // plus vraiment l'arène, seulement le classement dans Profil).
-  const duelArenaWrap = document.getElementById('duel-arena-wrap');
-  if (duelArenaWrap) duelArenaWrap.style.display = flags.duels ? '' : 'none';
-
-  const quizWrap = document.getElementById('quiz-wrap');
-  if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
-
-  const trendingWrap = document.getElementById('trending-carousel-wrap');
-  if (trendingWrap && !flags.trending) trendingWrap.style.display = 'none';
-
-  const discoverTinder = document.querySelector('.discover-section-tinder');
-  if (discoverTinder) discoverTinder.style.display = flags.discoverRecs ? '' : 'none';
-
-  // "Ce jour-là" et "D'après tes goûts" masquent déjà leur section par
-  // défaut tant qu'aucun contenu n'est trouvé (voir loadOnThisDay/
-  // renderBlindSpotsSection) — la bascule ne force donc que le MASQUAGE,
-  // jamais l'affichage (sinon on risquerait de montrer un encart vide sur
-  // un jour sans anniversaire, ou avant que l'agrégation des goûts soit
-  // faite), même schéma asymétrique que Quiz/Tendances.
-  const onThisDayWrap = document.getElementById('on-this-day-wrap');
-  if (onThisDayWrap && !flags.onThisDay) onThisDayWrap.style.display = 'none';
-  const blindSpotsWrap = document.getElementById('blind-spots-wrap');
-  if (blindSpotsWrap && !flags.blindSpots) blindSpotsWrap.style.display = 'none';
-
-  // "Explorer par thème" et le raccourci "Classiques à explorer" sont
-  // toujours visibles dès leur premier rendu (pas de dépendance à des
-  // données qui arrivent après coup) — bascule symétrique, comme Duels.
-  const themeExplorerWrap = document.getElementById('theme-explorer-wrap');
-  if (themeExplorerWrap) themeExplorerWrap.style.display = flags.themeExplorer ? '' : 'none';
-  const curatedShortcutWrap = document.getElementById('curated-lists-shortcut-wrap');
-  if (curatedShortcutWrap) curatedShortcutWrap.style.display = flags.curatedShortcut ? '' : 'none';
 }
 
 // Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
 // Réglages — action explicite déclenchée par le changement de bascule
-// uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
+// uniquement, jamais au chargement de page.
 function reloadReenabledFeature(key) {
-  // renderDuel (pas "renderDailyDuel", qui n'existe plus depuis que l'arène
-  // a été déplacée vers Découvrir — résidu de migration jamais mis à jour :
-  // réactiver "Duels" depuis Réglages ne rechargeait donc jamais l'arène).
-  if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
-  if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
-  if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
-  if (key === 'onThisDay' && typeof loadOnThisDay === 'function') loadOnThisDay();
-  if (key === 'blindSpots' && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
-  // themeExplorer/curatedShortcut : contenu statique déjà rendu au premier
-  // chargement de Découvrir (pas de données à recharger), applyFeatureFlags
-  // suffit à les réafficher.
-  // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
-  // (son contenu n'a jamais été détruit, juste masqué) — rien à recharger.
+  if (key === 'duels' && typeof renderDuelsSection === 'function') renderDuelsSection();
 }
 
 // Réglages : lit l'état actuel à l'ouverture, sauvegarde à chaque bascule.
 function initFeatureToggleUI() {
   const map = {
     'setting-feature-duels': 'duels',
-    'setting-feature-quiz': 'quiz',
-    'setting-feature-trending': 'trending',
-    'setting-feature-discover-recs': 'discoverRecs',
-    'setting-feature-guess-game': 'guessGame',
-    'setting-feature-on-this-day': 'onThisDay',
-    'setting-feature-theme-explorer': 'themeExplorer',
-    'setting-feature-blind-spots': 'blindSpots',
-    'setting-feature-curated-shortcut': 'curatedShortcut',
   };
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
@@ -120,18 +62,10 @@ function initFeatureToggleUI() {
       saveFeatureFlags(current);
       applyFeatureFlags();
       // Rechargement du contenu UNIQUEMENT si on vient de réactiver une
-      // fonctionnalité ET que Découvrir est l'onglet réellement affiché —
-      // sinon on créerait le même problème qu'au chargement de page (contenu
-      // rendu alors qu'un autre onglet est actif).
-      const discoverView = document.getElementById('view-discover');
-      const discoverActive = discoverView && discoverView.classList.contains('active');
-      if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
-      // "Devine le Film du Jour" fait exception : désactiver DOIT révéler
-      // immédiatement le film en cours si la devinette était affichée (pas
-      // de sens à laisser un mystère non désiré à l'écran) — dans les deux
-      // sens, contrairement aux autres bascules qui ne rechargent qu'à la
-      // réactivation.
-      if (key === 'guessGame' && discoverActive && typeof loadFilmDuJour === 'function') loadFilmDuJour();
+      // fonctionnalité ET que Profil est l'onglet réellement affiché.
+      const profileView = document.getElementById('view-profile');
+      const profileActive = profileView && profileView.classList.contains('active');
+      if (wasOff && input.checked && profileActive) reloadReenabledFeature(key);
     });
   }
 }

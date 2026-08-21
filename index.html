@@ -223,100 +223,10 @@
       <div class="settings-toggle-row">
         <div>
           <div class="settings-toggle-title" id="label-feature-duels">Duels</div>
-          <div class="settings-toggle-desc">L'arène de duels dans Découvrir, et le classement dans Profil.</div>
+          <div class="settings-toggle-desc">L'arène de duels et le classement, dans Profil.</div>
         </div>
         <label class="settings-toggle-switch">
           <input type="checkbox" id="setting-feature-duels" checked aria-labelledby="label-feature-duels">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-quiz">Quiz du jour</div>
-          <div class="settings-toggle-desc">La question quotidienne dans Découvrir.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-quiz" checked aria-labelledby="label-feature-quiz">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-trending">Carrousel tendances</div>
-          <div class="settings-toggle-desc">Les films et séries populaires du moment dans Découvrir.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-trending" checked aria-labelledby="label-feature-trending">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-discover-recs">Recommandations Découvrir</div>
-          <div class="settings-toggle-desc">La pile de suggestions personnalisées à faire défiler.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-discover-recs" checked aria-labelledby="label-feature-discover-recs">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-discover-swipe-compact">Suggestions en liste compacte</div>
-          <div class="settings-toggle-desc">Remplace la pile de cartes à glisser par une liste compacte avec boutons — pratique sur les écrans étroits ou si le geste de swipe ne te convient pas.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-discover-swipe-compact" aria-labelledby="label-discover-swipe-compact">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-guess-game">Devine le Film du Jour</div>
-          <div class="settings-toggle-desc">L'affiche floutée à deviner. Désactivé, le Film du jour s'affiche directement révélé.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-guess-game" checked aria-labelledby="label-feature-guess-game">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-on-this-day">Ce jour-là</div>
-          <div class="settings-toggle-desc">Les anniversaires de sortie ronds (10/20/30 ans...).</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-on-this-day" checked aria-labelledby="label-feature-on-this-day">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-theme-explorer">Explorer par thème</div>
-          <div class="settings-toggle-desc">Les puces de mots-clés (braquage, boucle temporelle...).</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-theme-explorer" checked aria-labelledby="label-feature-theme-explorer">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-blind-spots">D'après tes goûts</div>
-          <div class="settings-toggle-desc">Suggestions basées sur tes réalisateurs préférés.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-blind-spots" checked aria-labelledby="label-feature-blind-spots">
-          <span class="settings-toggle-slider"></span>
-        </label>
-      </div>
-      <div class="settings-toggle-row">
-        <div>
-          <div class="settings-toggle-title" id="label-feature-curated-shortcut">Raccourci Classiques à explorer</div>
-          <div class="settings-toggle-desc">Le lien vers les listes prédéfinies de Profil.</div>
-        </div>
-        <label class="settings-toggle-switch">
-          <input type="checkbox" id="setting-feature-curated-shortcut" checked aria-labelledby="label-feature-curated-shortcut">
           <span class="settings-toggle-slider"></span>
         </label>
       </div>
@@ -866,111 +776,42 @@
 
     <div class="right-view" id="view-discover">
       <div class="card" id="discover-card-wrap">
-        <div class="card-title">
-          <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg> Découvrir
-          <button type="button" class="surprise-me-btn" id="surprise-me-btn" title="Surprends-moi avec un film au hasard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg> Surprends-moi</button>
-        </div>
-
-        <!-- Ludex 2.0 : Découvrir réorganisé en 6 zones hiérarchisées plutôt
-             que 9 sections à plat et à poids égal (Vers Ludex 2.0 §06). Les
-             ID d'origine sont conservés à l'identique sur chaque élément —
-             seul leur EMPLACEMENT dans le DOM et leur emballage changent,
-             donc tous les getElementById() de 11-discover.js/13-duels.js/
-             16-blind-spots.js/17-film-analysis.js continuent de fonctionner
-             sans modification. -->
-
-        <!-- 1. Film du jour — hero, en tête -->
-        <div class="discover-section" id="fdj-wrap" style="display:none">
-          <div class="discover-section-title" id="fdj-title">
-            <span id="fdj-title-text">Devine le Film du Jour</span>
-            <span class="quiz-streak" id="guess-streak-badge"></span>
-          </div>
-          <div class="fdj-card" id="fdj-card"></div>
-        </div>
-
-        <!-- 2. Tendances — films & séries mélangés (voir trending/all/week) -->
-        <div class="discover-section" id="trending-carousel-wrap" style="display:none">
-          <div class="discover-section-title">Tendances du moment</div>
-          <div class="trending-carousel-row">
-            <button type="button" class="trending-nav-btn prev" id="trending-prev-btn" aria-label="Précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M15 18l-6-6 6-6"/></svg></button>
-            <div class="trending-carousel" id="trending-carousel"></div>
-            <button type="button" class="trending-nav-btn next" id="trending-next-btn" aria-label="Suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M9 18l6-6-6-6"/></svg></button>
+        <!-- Ludex 2.0 : refonte complète de Découvrir depuis zéro (voir
+             Ludex_Specifications_Decouverte.pdf) — plus de swipe, de jeu de
+             devinette, de quiz, d'angles morts ni de "Parcourir". Trois
+             blocs seulement : toggle Films/Séries sticky, Choix du jour
+             (hero plein cadre, affiche + titre seulement), et 4 carrousels
+             d'affiches pures. Duels a été déplacé vers Profil (voir
+             #duels-card, view-profile) — seul son emplacement dans le DOM
+             change, 13-duels.js n'a pas été modifié. -->
+        <div class="discover-segmented-wrap">
+          <div class="discover-segmented">
+            <button type="button" class="discover-seg-btn active" data-media-type="movie">Films</button>
+            <button type="button" class="discover-seg-btn" data-media-type="tv">Séries</button>
           </div>
         </div>
 
-        <!-- 3. Suggestions pour toi — le swipe, relocalisé -->
-        <div class="discover-section discover-section-tinder">
-          <div class="discover-section-title">
-            Suggestions pour toi
-            <button class="discover-reload-btn" id="discover-reload-btn" title="Recharger de nouvelles suggestions" aria-label="Recharger de nouvelles suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg></button>
-          </div>
-          <div class="discover-stack" id="discover-stack" aria-live="polite">
-            <div class="discover-loading" id="discover-loading">⏳ Recherche de suggestions basées sur tes goûts...</div>
-          </div>
-          <div class="discover-actions" id="discover-actions" style="display:none">
-            <button class="discover-action-btn pass" id="discover-pass-btn" aria-label="Passer ce film" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-            <button class="discover-action-btn like" id="discover-like-btn" aria-label="Ajouter à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-          </div>
+        <div class="choix-du-jour-wrap">
+          <div class="choix-du-jour-eyebrow">Choix du jour</div>
+          <div class="choix-du-jour-card" id="choix-du-jour-card" role="button" tabindex="0" aria-label="Voir la fiche du choix du jour"></div>
         </div>
 
-        <!-- 4. Pour toi aujourd'hui — Angles morts + Ce jour-là, fusionnés -->
-        <div class="discover-section" id="today-for-you-wrap">
-          <div class="discover-section-title">Pour toi aujourd'hui</div>
-          <div class="today-for-you-row">
-            <div class="today-for-you-col" id="blind-spots-wrap" style="display:none">
-              <div class="today-for-you-col-title">D'après tes goûts</div>
-              <div id="blind-spots-container"></div>
-            </div>
-            <div class="today-for-you-col" id="on-this-day-wrap" style="display:none">
-              <div class="today-for-you-col-title">Ce jour-là</div>
-              <div class="on-this-day-strip" id="on-this-day-strip"></div>
-            </div>
-          </div>
+        <div class="carousel-block" id="carousel-block-nouveautes" style="display:none">
+          <div class="carousel-title">Nouveautés</div>
+          <div class="carousel-row" id="carousel-nouveautes"></div>
         </div>
-
-        <!-- 5. Parcourir — Par thème + Classiques, en sous-onglets -->
-        <div class="discover-section" id="browse-wrap">
-          <div class="discover-section-title">Parcourir</div>
-          <div class="mode-tabs browse-tabs">
-            <button type="button" class="mode-tab active" id="browse-tab-theme">Par thème</button>
-            <button type="button" class="mode-tab" id="browse-tab-classics">Classiques</button>
-          </div>
-          <div class="browse-panel active" id="theme-explorer-wrap">
-            <div class="theme-chips-row" id="theme-chips-row"></div>
-          </div>
-          <div class="browse-panel" id="curated-lists-shortcut-wrap">
-            <button type="button" class="curated-lists-shortcut-btn" id="curated-lists-shortcut-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              <span>Explorer les classiques du cinéma <span class="curated-lists-shortcut-sub">— % déjà vu, dans ton Profil</span></span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon curated-lists-shortcut-arrow"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-          </div>
+        <div class="carousel-block" id="carousel-block-classiques" style="display:none">
+          <div class="carousel-title">Classiques intemporels</div>
+          <div class="carousel-row" id="carousel-classiques"></div>
         </div>
-
-        <!-- 6. Jouer — Quiz + Duels, repliés par défaut -->
-        <details class="discover-section discover-accordion" id="play-wrap">
-          <summary class="discover-section-title discover-accordion-summary">
-            Jouer
-            <span class="badges-chevron" aria-hidden="true">▾</span>
-          </summary>
-          <div class="discover-section" id="quiz-wrap" style="display:none">
-            <div class="discover-section-title">
-              Quiz du jour
-              <span class="quiz-streak" id="quiz-streak-badge"></span>
-            </div>
-            <div class="quiz-card" id="quiz-card"></div>
-          </div>
-
-          <div class="discover-section" id="duel-arena-wrap">
-            <div class="discover-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-              <span>Duels — lequel préfères-tu ?</span>
-              <span class="duel-counter" id="duel-counter"></span>
-            </div>
-            <div class="duel-arena" id="duel-arena"></div>
-            <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
-            <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
-          </div>
-        </details>
+        <div class="carousel-block" id="carousel-block-international" style="display:none">
+          <div class="carousel-title">Cinéma international</div>
+          <div class="carousel-row" id="carousel-international"></div>
+        </div>
+        <div class="carousel-block" id="carousel-block-historique" style="display:none">
+          <div class="carousel-title">D'après ton historique</div>
+          <div class="carousel-row" id="carousel-historique"></div>
+        </div>
       </div>
     </div>
 
@@ -991,6 +832,19 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon wrapped-entry-arrow"><path d="M9 18l6-6-6-6"/></svg>
       </div>
       <div class="card" id="duels-card">
+        <div class="card-title">Duels</div>
+        <!-- Ludex 2.0 : l'arène de jeu elle-même déplacée depuis Découvrir
+             (qui ne gardait jusque-là que le classement) — 13-duels.js
+             n'a pas été modifié, renderDuel()/renderDuelRanking() ciblent
+             les mêmes ID qu'avant, juste posés ici désormais. -->
+        <div class="duels-arena-title">
+          <span>Lequel préfères-tu ?</span>
+          <span class="duel-counter" id="duel-counter"></span>
+        </div>
+        <div class="duel-arena" id="duel-arena"></div>
+        <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
+        <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
+        <div class="duels-card-sep"></div>
         <div class="card-title">Ton classement</div>
         <div id="duel-ranking-list"></div>
       </div>

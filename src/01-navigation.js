@@ -23,36 +23,20 @@ function switchRightTab(tabName) {
     btn.setAttribute('aria-selected', String(isActive));
     view.classList.toggle('active', isActive);
   }
-  // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
-  // re-fetch à chaque fois qu'on revient sur l'onglet) — chaque chargeur est
-  // gardé par sa bascule Réglages : un chargeur async (comme loadDailyQuiz)
-  // pourrait sinon réafficher sa section APRÈS le masquage d'applyFeatureFlags
-  // plus bas (chargeurs asynchrones = la dernière écriture DOM gagne).
+  // Ludex 2.0 : Découvrir entièrement repensé (voir 11-discover.js) — un
+  // seul point d'entrée, chargé une fois au premier affichage (pas de
+  // re-fetch à chaque fois qu'on revient sur l'onglet).
   if (tabName === 'discover' && !discoverLoaded) {
-    const flags = typeof loadFeatureFlags === 'function' ? loadFeatureFlags() : {};
-    if (flags.discoverRecs !== false) loadDiscoverQueue();
-    if (flags.trending !== false) loadTrendingCarousel();
-    loadFilmDuJour(); // pas dans la liste des bascules demandées
-    if (flags.onThisDay !== false) loadOnThisDay();
-    if (flags.blindSpots !== false && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
-    if (flags.quiz !== false) loadDailyQuiz();
+    discoverLoaded = true;
+    if (typeof loadDiscoverTab === 'function') loadDiscoverTab();
   }
-  // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
-  // qui ne garde que le classement) — re-rendue à chaque affichage pour que
-  // la paire proposée reste à jour avec les derniers films notés.
-  if (tabName === 'discover' && typeof renderDuel === 'function') {
-    renderDuel();
+  // Duels vit désormais dans Profil (arène + classement) — rendu à chaque
+  // affichage pour que la paire proposée reste à jour avec les derniers
+  // films notés, comme avant son déplacement depuis Découvrir.
+  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
+    renderDuelsSection();
   }
-  // Réapplique les bascules Réglages (masque les sections désactivées) après
-  // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
-  // connaître l'état des fonctionnalités désactivées.
-  if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
-    applyFeatureFlags();
-  }
-  // Duels : seul le classement s'affiche dans le Profil désormais (l'arène a
-  // été déplacée vers Découvrir) — rendu léger, à jour à chaque affichage.
-  if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
-    renderDuelRanking();
+  if (tabName === 'profile') {
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
     if (typeof renderCuratedListsCard === 'function') renderCuratedListsCard();
   }

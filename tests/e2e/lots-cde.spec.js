@@ -12,31 +12,12 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
 });
 
-test('le duel du jour se joue une seule fois par jour', async ({ page }) => {
-  await page.addInitScript((h) => localStorage.setItem('lbx_v2', h),
-    seed([{ title: 'A' }, { title: 'B' }, { title: 'C' }, { title: 'D' }]));
-  await page.goto('/');
-  await page.click('#nav-discover');
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForSelector('#daily-duel-wrap[style*="display: block"]', { timeout: 8000 });
-
-  await page.locator('#daily-duel-card .duel-side').first().click();
-  await page.waitForTimeout(700);
-  await expect(page.locator('#daily-duel-card .quiz-already-played')).toContainText('reviens demain');
-
-  // Un duel a bien ete comptabilise dans le meme systeme que l'arene
-  const duels = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_duels')));
-  expect(duels.totalDuels).toBe(1);
-
-  // Quitter et revenir : toujours "deja joue"
-  await page.click('#nav-rating');
-  await page.click('#nav-discover');
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(300);
-  await expect(page.locator('#daily-duel-card .quiz-already-played')).toBeVisible();
-});
+// Note : les deux tests "duel du jour" (#daily-duel-wrap/#daily-duel-card)
+// qui vivaient ici ont été retirés — cet élément n'existe nulle part dans
+// le code actuel (vérifié), un résidu antérieur à la refonte de Découvrir
+// de cette session, jamais mis à jour depuis que cette fonctionnalité a
+// elle-même été retirée. L'arène de duels générale (#duel-arena, testée
+// ci-dessous) est la seule mécanique de duel qui existe réellement.
 
 test('le departage privilegie deux films de meme note jamais affrontes', async ({ page }) => {
   // 2 films a 8.0, 2 films a des notes uniques : la paire proposee doit etre les deux 8.0
@@ -80,24 +61,4 @@ test('le badge hors-ligne apparait quand le reseau tombe', async ({ page, contex
   await context.setOffline(false);
   await page.waitForTimeout(200);
   expect(await badge.evaluate(el => el.classList.contains('visible'))).toBe(false);
-});
-
-test('duel du jour : message explicite quand toutes les paires ont ete jouees', async ({ page }) => {
-  await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seed([{ title: 'A' }, { title: 'B' }]));
-  await page.addInitScript(() => {
-    // La seule paire possible (A vs B) est deja jouee
-    localStorage.setItem('lbx_duels', JSON.stringify({
-      ratings: { 'a|2020': { elo: 1216, duels: 1 }, 'b|2020': { elo: 1184, duels: 1 } },
-      totalDuels: 1,
-      pairs: { 'a|2020||b|2020': true },
-    }));
-  });
-  await page.goto('/');
-  await page.click('#nav-discover');
-
-  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
-  await page.waitForTimeout(500);
-
-  await expect(page.locator('#daily-duel-wrap')).toBeVisible();
-  await expect(page.locator('#daily-duel-card')).toContainText('Tous les duels possibles');
 });

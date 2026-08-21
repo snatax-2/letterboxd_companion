@@ -1,6 +1,6 @@
 // ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
 // Modifie les fichiers dans src/, puis lance `npm run build`.
-// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06a-history-list.js, 06b-history-actions.js, 06c-profile-stats.js, 06d-profile-share-cards.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 16-blind-spots.js, 17-film-analysis.js, 18-tv-shows.js, 19-tv-detail.js
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06a-history-list.js, 06b-history-actions.js, 06c-profile-stats.js, 06d-profile-share-cards.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 17-film-analysis.js, 18-tv-shows.js, 19-tv-detail.js
 
 // ═══════════════════════════════════════════
 //  PWA : enregistrement du service worker
@@ -397,12 +397,18 @@ document.addEventListener('DOMContentLoaded', initErrorLogUI);
 // ═══════════════════════════════════════════
 // Purement de l'affichage : désactiver une fonctionnalité masque sa section,
 // mais ne touche JAMAIS aux données sous-jacentes (le classement de duels
-// existant reste intact si on coupe les Duels, par exemple — la case à
-// cocher "Réinitialiser les duels" dans Réglages est une action séparée et
+// existant reste intact si on coupe les Duels — la case à cocher
+// "Réinitialiser les duels" dans Réglages est une action séparée et
 // explicite pour ça).
+//
+// Ludex 2.0 : Découvrir repensé entièrement retire Quiz, Suggestions
+// (swipe), Devine le Film du Jour, Ce jour-là, Explorer par thème et le
+// raccourci Classiques — ces bascules n'ont donc plus de section à
+// masquer/afficher et ont été retirées d'ici. Duels est la seule
+// fonctionnalité qui survit, déplacée vers Profil.
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true, onThisDay: true, themeExplorer: true, blindSpots: true, curatedShortcut: true };
+const FEATURE_DEFAULTS = { duels: true };
 
 function loadFeatureFlags() {
   try {
@@ -420,87 +426,23 @@ function saveFeatureFlags(flags) {
 // Applique l'état actuel des bascules à l'interface : masque/affiche chaque
 // section concernée. Appelé au chargement ET à chaque changement dans
 // Réglages — jamais besoin de recharger la page pour qu'un changement prenne effet.
-//
-// IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
-// en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
-// (renderDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
-// déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
-// appeler ici, sans condition d'onglet, créait des éléments .duel-side
-// cachés (le Duel du jour se rendait même en restant sur Profil) qui
-// entraient en collision avec le même sélecteur utilisé ailleurs.
 function applyFeatureFlags() {
   const flags = loadFeatureFlags();
-
   const duelsCard = document.getElementById('duels-card');
   if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
-  // L'arène vit désormais dans Découvrir (déplacée depuis Profil, qui ne
-  // garde que le classement) — c'est elle qu'il faut masquer, pas l'ancien
-  // "daily-duel-wrap" qui n'existe plus depuis cette réorganisation (résidu
-  // de migration jamais mis à jour ici : la bascule "Duels" ne masquait donc
-  // plus vraiment l'arène, seulement le classement dans Profil).
-  const duelArenaWrap = document.getElementById('duel-arena-wrap');
-  if (duelArenaWrap) duelArenaWrap.style.display = flags.duels ? '' : 'none';
-
-  const quizWrap = document.getElementById('quiz-wrap');
-  if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
-
-  const trendingWrap = document.getElementById('trending-carousel-wrap');
-  if (trendingWrap && !flags.trending) trendingWrap.style.display = 'none';
-
-  const discoverTinder = document.querySelector('.discover-section-tinder');
-  if (discoverTinder) discoverTinder.style.display = flags.discoverRecs ? '' : 'none';
-
-  // "Ce jour-là" et "D'après tes goûts" masquent déjà leur section par
-  // défaut tant qu'aucun contenu n'est trouvé (voir loadOnThisDay/
-  // renderBlindSpotsSection) — la bascule ne force donc que le MASQUAGE,
-  // jamais l'affichage (sinon on risquerait de montrer un encart vide sur
-  // un jour sans anniversaire, ou avant que l'agrégation des goûts soit
-  // faite), même schéma asymétrique que Quiz/Tendances.
-  const onThisDayWrap = document.getElementById('on-this-day-wrap');
-  if (onThisDayWrap && !flags.onThisDay) onThisDayWrap.style.display = 'none';
-  const blindSpotsWrap = document.getElementById('blind-spots-wrap');
-  if (blindSpotsWrap && !flags.blindSpots) blindSpotsWrap.style.display = 'none';
-
-  // "Explorer par thème" et le raccourci "Classiques à explorer" sont
-  // toujours visibles dès leur premier rendu (pas de dépendance à des
-  // données qui arrivent après coup) — bascule symétrique, comme Duels.
-  const themeExplorerWrap = document.getElementById('theme-explorer-wrap');
-  if (themeExplorerWrap) themeExplorerWrap.style.display = flags.themeExplorer ? '' : 'none';
-  const curatedShortcutWrap = document.getElementById('curated-lists-shortcut-wrap');
-  if (curatedShortcutWrap) curatedShortcutWrap.style.display = flags.curatedShortcut ? '' : 'none';
 }
 
 // Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
 // Réglages — action explicite déclenchée par le changement de bascule
-// uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
+// uniquement, jamais au chargement de page.
 function reloadReenabledFeature(key) {
-  // renderDuel (pas "renderDailyDuel", qui n'existe plus depuis que l'arène
-  // a été déplacée vers Découvrir — résidu de migration jamais mis à jour :
-  // réactiver "Duels" depuis Réglages ne rechargeait donc jamais l'arène).
-  if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
-  if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
-  if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
-  if (key === 'onThisDay' && typeof loadOnThisDay === 'function') loadOnThisDay();
-  if (key === 'blindSpots' && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
-  // themeExplorer/curatedShortcut : contenu statique déjà rendu au premier
-  // chargement de Découvrir (pas de données à recharger), applyFeatureFlags
-  // suffit à les réafficher.
-  // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
-  // (son contenu n'a jamais été détruit, juste masqué) — rien à recharger.
+  if (key === 'duels' && typeof renderDuelsSection === 'function') renderDuelsSection();
 }
 
 // Réglages : lit l'état actuel à l'ouverture, sauvegarde à chaque bascule.
 function initFeatureToggleUI() {
   const map = {
     'setting-feature-duels': 'duels',
-    'setting-feature-quiz': 'quiz',
-    'setting-feature-trending': 'trending',
-    'setting-feature-discover-recs': 'discoverRecs',
-    'setting-feature-guess-game': 'guessGame',
-    'setting-feature-on-this-day': 'onThisDay',
-    'setting-feature-theme-explorer': 'themeExplorer',
-    'setting-feature-blind-spots': 'blindSpots',
-    'setting-feature-curated-shortcut': 'curatedShortcut',
   };
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
@@ -514,18 +456,10 @@ function initFeatureToggleUI() {
       saveFeatureFlags(current);
       applyFeatureFlags();
       // Rechargement du contenu UNIQUEMENT si on vient de réactiver une
-      // fonctionnalité ET que Découvrir est l'onglet réellement affiché —
-      // sinon on créerait le même problème qu'au chargement de page (contenu
-      // rendu alors qu'un autre onglet est actif).
-      const discoverView = document.getElementById('view-discover');
-      const discoverActive = discoverView && discoverView.classList.contains('active');
-      if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
-      // "Devine le Film du Jour" fait exception : désactiver DOIT révéler
-      // immédiatement le film en cours si la devinette était affichée (pas
-      // de sens à laisser un mystère non désiré à l'écran) — dans les deux
-      // sens, contrairement aux autres bascules qui ne rechargent qu'à la
-      // réactivation.
-      if (key === 'guessGame' && discoverActive && typeof loadFilmDuJour === 'function') loadFilmDuJour();
+      // fonctionnalité ET que Profil est l'onglet réellement affiché.
+      const profileView = document.getElementById('view-profile');
+      const profileActive = profileView && profileView.classList.contains('active');
+      if (wasOff && input.checked && profileActive) reloadReenabledFeature(key);
     });
   }
 }
@@ -729,36 +663,20 @@ function switchRightTab(tabName) {
     btn.setAttribute('aria-selected', String(isActive));
     view.classList.toggle('active', isActive);
   }
-  // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
-  // re-fetch à chaque fois qu'on revient sur l'onglet) — chaque chargeur est
-  // gardé par sa bascule Réglages : un chargeur async (comme loadDailyQuiz)
-  // pourrait sinon réafficher sa section APRÈS le masquage d'applyFeatureFlags
-  // plus bas (chargeurs asynchrones = la dernière écriture DOM gagne).
+  // Ludex 2.0 : Découvrir entièrement repensé (voir 11-discover.js) — un
+  // seul point d'entrée, chargé une fois au premier affichage (pas de
+  // re-fetch à chaque fois qu'on revient sur l'onglet).
   if (tabName === 'discover' && !discoverLoaded) {
-    const flags = typeof loadFeatureFlags === 'function' ? loadFeatureFlags() : {};
-    if (flags.discoverRecs !== false) loadDiscoverQueue();
-    if (flags.trending !== false) loadTrendingCarousel();
-    loadFilmDuJour(); // pas dans la liste des bascules demandées
-    if (flags.onThisDay !== false) loadOnThisDay();
-    if (flags.blindSpots !== false && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
-    if (flags.quiz !== false) loadDailyQuiz();
+    discoverLoaded = true;
+    if (typeof loadDiscoverTab === 'function') loadDiscoverTab();
   }
-  // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
-  // qui ne garde que le classement) — re-rendue à chaque affichage pour que
-  // la paire proposée reste à jour avec les derniers films notés.
-  if (tabName === 'discover' && typeof renderDuel === 'function') {
-    renderDuel();
+  // Duels vit désormais dans Profil (arène + classement) — rendu à chaque
+  // affichage pour que la paire proposée reste à jour avec les derniers
+  // films notés, comme avant son déplacement depuis Découvrir.
+  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
+    renderDuelsSection();
   }
-  // Réapplique les bascules Réglages (masque les sections désactivées) après
-  // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
-  // connaître l'état des fonctionnalités désactivées.
-  if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
-    applyFeatureFlags();
-  }
-  // Duels : seul le classement s'affiche dans le Profil désormais (l'arène a
-  // été déplacée vers Découvrir) — rendu léger, à jour à chaque affichage.
-  if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
-    renderDuelRanking();
+  if (tabName === 'profile') {
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
     if (typeof renderCuratedListsCard === 'function') renderCuratedListsCard();
   }
@@ -6350,38 +6268,245 @@ setInterval(() => {
 }, 45000);
 
 // ═══════════════════════════════════════════
-//  DÉCOUVRIR : suggestions façon "swipe" (glisser à droite = watchlist, à gauche = passer)
+//  DÉCOUVRIR — feuille blanche (voir Ludex_Specifications_Decouverte.pdf)
 // ═══════════════════════════════════════════
-//
-// Remplace l'ancien carrousel horizontal : au lieu de montrer 10 petites
-// affiches à la fois, on présente une suggestion à la fois, en grand, avec
-// un geste de swipe (comme Tinder) pour l'ajouter à la watchlist ou la passer.
-//
-// Les films "passés" sont mémorisés localement (lbx_discover_passed) pour ne
-// plus les reproposer. Cette liste n'est pour l'instant PAS synchronisée dans
-// le cloud (contrairement à l'historique/watchlist) : un film passé sur un
-// appareil peut donc réapparaître sur un autre. C'est un choix délibéré pour
-// garder cette fonctionnalité simple ; à revoir si besoin plus tard.
+// Plus de swipe, de jeu de devinette, de quiz, d'angles morts ni de
+// "Parcourir" : trois blocs seulement — toggle Films/Séries sticky, Choix
+// du jour (hero plein cadre, affiche + titre seulement), et 4 carrousels
+// horizontaux d'affiches pures (Nouveautés, Classiques intemporels, Cinéma
+// international, D'après ton historique). Duels a été déplacé vers Profil
+// (voir 13-duels.js, inchangé — seul son emplacement dans le DOM change).
 
-const DISCOVER_PASSED_KEY = 'lbx_discover_passed';
-const DISCOVER_PASSED_MAX = 500; // évite que la liste grossisse indéfiniment
-const DISCOVER_SWIPE_THRESHOLD = 100; // px
+let discoverMediaType = 'movie'; // 'movie' | 'tv' — état du toggle, partagé par les 4 blocs
+let discoverLoaded = false; // pas de re-fetch à chaque retour sur l'onglet — voir switchRightTab
 
-function loadDiscoverPassed() {
-  try { return JSON.parse(localStorage.getItem(DISCOVER_PASSED_KEY)) || []; } catch { return []; }
-}
-function markDiscoverPassed(tmdbId) {
-  const list = loadDiscoverPassed();
-  const idStr = String(tmdbId);
-  if (!list.includes(idStr)) list.push(idStr);
-  localStorage.setItem(DISCOVER_PASSED_KEY, JSON.stringify(list.slice(-DISCOVER_PASSED_MAX)));
+function normalizeItem(m) {
+  // Uniformise film/série : title/name, release_date/first_air_date — pour
+  // que le reste du code n'ait jamais à savoir lequel des deux il manipule.
+  return {
+    id: m.id,
+    title: m.title || m.name || '',
+    year: (m.release_date || m.first_air_date || '').slice(0, 4),
+    poster_path: m.poster_path,
+    backdrop_path: m.backdrop_path,
+  };
 }
 
-// Films déjà utilisés récemment comme BASE de recommandation (pas les
-// suggestions elles-mêmes, les films de l'historique dont on est parti) —
-// permet de tourner à travers l'historique plutôt que retomber sur les mêmes
-// 2-3 films à chaque rechargement, pour des suggestions qui se diversifient
-// au fur et à mesure que l'historique s'enrichit.
+// ── Toggle Films/Séries ──
+const discoverSegBtns = document.querySelectorAll('.discover-seg-btn');
+function setDiscoverMediaType(type) {
+  if (type === discoverMediaType) return;
+  discoverMediaType = type;
+  discoverSegBtns.forEach(b => b.classList.toggle('active', b.dataset.mediaType === type));
+  loadChoixDuJour();
+  loadCarousel('nouveautes');
+  loadCarousel('classiques');
+  loadCarousel('international');
+  loadCarousel('historique');
+}
+discoverSegBtns.forEach(btn => {
+  btn.addEventListener('click', () => setDiscoverMediaType(btn.dataset.mediaType));
+});
+
+// ═══════════════════════════════════════════
+//  CHOIX DU JOUR (hero)
+// ═══════════════════════════════════════════
+// Réutilise le tirage stable du jour (même graine que l'ancien "Film du
+// jour" — un seul choix par jour, cohérent sur tous les appareils) mais
+// sans le jeu de devinette : affiche + titre seulement, toute la carte
+// cliquable vers la fiche.
+const CHOIX_DU_JOUR_KEY = 'lbx_choix_du_jour';
+
+async function loadChoixDuJour() {
+  const heroEl = document.getElementById('choix-du-jour-card');
+  if (!heroEl) return;
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(CHOIX_DU_JOUR_KEY) || 'null'); } catch { /* ignore */ }
+
+  if (cached && cached.date === todayKey && cached.mediaType === discoverMediaType && cached.movie) {
+    renderChoixDuJour(cached.movie);
+    return;
+  }
+
+  heroEl.innerHTML = `<div class="skeleton-bg" style="width:100%;height:100%;border-radius:16px;"></div>`;
+  try {
+    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+    const res = await fetch(`/api/search?dailyPick=${daysSinceEpoch}&mediaType=${discoverMediaType}`);
+    const data = await res.json();
+    const pick = data.result;
+    if (!pick) return;
+    const item = normalizeItem(pick);
+    localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+    renderChoixDuJour(item);
+  } catch (e) {
+    console.warn('Impossible de charger le choix du jour', e);
+  }
+}
+
+function renderChoixDuJour(item) {
+  const heroEl = document.getElementById('choix-du-jour-card');
+  if (!heroEl) return;
+  const posterUrl = item.poster_path ? tmdbImage(item.poster_path, 'w780') : '';
+  heroEl.innerHTML = `
+    <div class="choix-du-jour-bg" style="background-image:url('${posterUrl}')"></div>
+    <div class="choix-du-jour-overlay"></div>
+    <div class="choix-du-jour-content">
+      <div class="choix-du-jour-title">${escAttr(item.title)}</div>
+    </div>
+  `;
+  heroEl.dataset.itemId = String(item.id);
+  heroEl.dataset.mediaType = discoverMediaType;
+}
+
+document.getElementById('choix-du-jour-card')?.addEventListener('click', function() {
+  const id = this.dataset.itemId;
+  if (!id) return;
+  if (this.dataset.mediaType === 'tv') openTvDetailSheet(id);
+  else openMovieDetailSheet(id);
+});
+document.getElementById('choix-du-jour-card')?.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  this.click();
+});
+
+// ═══════════════════════════════════════════
+//  LES 4 CARROUSELS
+// ═══════════════════════════════════════════
+// Une seule fonction générique : chaque carrousel ne diffère que par sa
+// source de données (voir CAROUSEL_SOURCES). Rendu SANS le doublement de
+// liste utilisé par l'ancien carrousel Tendances (qui donnait l'impression
+// d'un film en double en cours de défilement) — juste un défilement
+// horizontal normal, pas de boucle infinie.
+
+async function fetchNouveautes() {
+  // "Nouveautés" = tendances de la semaine (trending/all/week filtré par le
+  // media_type actif), dédupliquées par id — TMDb peut renvoyer un même
+  // titre sur deux pages différentes de sa fenêtre de calcul.
+  const res = await fetch('/api/search?trending=true');
+  const data = await res.json();
+  const seen = new Set();
+  return (data.results || [])
+    .filter(m => m.poster_path && m.media_type === discoverMediaType)
+    .filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; })
+    .slice(0, 15)
+    .map(normalizeItem);
+}
+
+async function fetchClassiques() {
+  // "Classiques intemporels" = meilleurs films/séries d'une décennie au
+  // hasard parmi les 5 dernières — varie un peu d'un chargement à l'autre
+  // plutôt que de toujours montrer la même décennie fixe.
+  const decades = [1970, 1980, 1990, 2000, 2010];
+  const startYear = decades[Math.floor(Math.random() * decades.length)];
+  const res = await fetch(`/api/search?decadeTop=${startYear}&mediaType=${discoverMediaType}`);
+  const data = await res.json();
+  return (data.results || []).slice(0, 15).map(normalizeItem);
+}
+
+async function fetchInternational() {
+  // "Cinéma international" = un pays au hasard parmi une sélection connue
+  // pour son cinéma, à chaque chargement — évite de montrer toujours le
+  // même pays comme le ferait un choix fixe.
+  const countries = ['KR', 'JP', 'FR', 'IT', 'IN', 'ES', 'DE', 'MX'];
+  const cc = countries[Math.floor(Math.random() * countries.length)];
+  const res = await fetch(`/api/search?countryCode=${cc}&mediaType=${discoverMediaType}`);
+  const data = await res.json();
+  return (data.results || []).slice(0, 15).map(normalizeItem);
+}
+
+async function fetchHistorique() {
+  // "D'après ton historique" = recommandations TMDb agrégées à partir de
+  // quelques films/séries de l'historique, choisis pour leur diversité de
+  // genre plutôt qu'au hasard pur (voir pickDiverseBasisItems) — même
+  // logique que l'ancienne pile de suggestions "swipe", réutilisée ici.
+  // Films et séries vivent dans deux stockages différents (loadHistory() vs
+  // loadTvShows(), avec tmdbId vs tmdbTvId) — normalisés ici en un seul
+  // tableau { tmdbId, genre } pour que pickDiverseBasisItems n'ait pas à
+  // connaître la différence.
+  const basisPool = discoverMediaType === 'tv'
+    ? loadTvShows().map(s => ({ tmdbId: s.tmdbTvId, genre: s.genre || '' }))
+    : loadHistory().filter(h => h.tmdbId).map(h => ({ tmdbId: h.tmdbId, genre: h.genre || '' }));
+  if (basisPool.length === 0) return [];
+  const basis = pickDiverseBasisItems(basisPool, 3);
+  markBasisUsed(basis.map(f => f.tmdbId));
+  const seenIds = new Set(basisPool.map(f => String(f.tmdbId)));
+
+  const results = await Promise.allSettled(
+    basis.map(item => fetch(`/api/search?id=${item.tmdbId}&recommendations=true&mediaType=${discoverMediaType}`).then(r => r.json()))
+  );
+  const allRecs = [];
+  results.forEach(r => {
+    if (r.status !== 'fulfilled') return;
+    const arr = r.value.results || (Array.isArray(r.value) ? r.value : []);
+    allRecs.push(...arr);
+  });
+
+  const addedIds = new Set();
+  const unique = [];
+  allRecs.forEach(m => {
+    if (!m || !m.id || !m.poster_path) return;
+    const idStr = String(m.id);
+    if (addedIds.has(idStr) || seenIds.has(idStr)) return;
+    addedIds.add(idStr);
+    unique.push(m);
+  });
+  // Fisher-Yates — pas .sort(Math.random()) (biaisé), pour ne pas grouper
+  // les résultats par film de base (donc souvent par genre).
+  for (let i = unique.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [unique[i], unique[j]] = [unique[j], unique[i]];
+  }
+  return unique.slice(0, 15).map(normalizeItem);
+}
+
+const CAROUSEL_SOURCES = {
+  nouveautes: fetchNouveautes,
+  classiques: fetchClassiques,
+  international: fetchInternational,
+  historique: fetchHistorique,
+};
+
+async function loadCarousel(key) {
+  const rowEl = document.getElementById(`carousel-${key}`);
+  const blockEl = document.getElementById(`carousel-block-${key}`);
+  if (!rowEl || !blockEl) return;
+  rowEl.innerHTML = Array.from({ length: 5 }, () => `<div class="poster-min skeleton-bg"></div>`).join('');
+  blockEl.style.display = 'block';
+  try {
+    const items = await CAROUSEL_SOURCES[key]();
+    if (items.length === 0) { blockEl.style.display = 'none'; return; }
+    rowEl.innerHTML = items.map(item => `
+      <div class="poster-min" data-item-id="${item.id}" data-media-type="${discoverMediaType}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        ${item.poster_path
+          ? `<img src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
+          : ''}
+      </div>`).join('');
+  } catch (e) {
+    console.warn(`Impossible de charger le carrousel ${key}`, e);
+    blockEl.style.display = 'none';
+  }
+}
+
+// Clic délégué : un seul écouteur pour les 4 carrousels plutôt qu'un par
+// vignette (des dizaines d'affiches au total entre les 4 blocs).
+document.getElementById('view-discover')?.addEventListener('click', (e) => {
+  const poster = e.target.closest('.poster-min[data-item-id]');
+  if (!poster) return;
+  if (poster.dataset.mediaType === 'tv') openTvDetailSheet(poster.dataset.itemId);
+  else openMovieDetailSheet(poster.dataset.itemId);
+});
+document.getElementById('view-discover')?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const poster = e.target.closest('.poster-min[data-item-id]');
+  if (!poster) return;
+  e.preventDefault();
+  poster.click();
+});
+
+// ── Base diversifiée pour "D'après ton historique" (repris de l'ancienne
+// pile de suggestions, généralisé film/série) ──
 const DISCOVER_BASIS_USED_KEY = 'lbx_discover_basis_used';
 function loadBasisUsed() {
   try { return JSON.parse(localStorage.getItem(DISCOVER_BASIS_USED_KEY)) || []; } catch { return []; }
@@ -6391,17 +6516,10 @@ function markBasisUsed(tmdbIds) {
   used.push(...tmdbIds.map(String));
   localStorage.setItem(DISCOVER_BASIS_USED_KEY, JSON.stringify(used.slice(-30)));
 }
-
-// Choisit `count` films de l'historique pour servir de base aux
-// recommandations : privilégie les films PAS récemment utilisés (rotation),
-// et répartit sur des genres différents quand c'est possible plutôt que de
-// piocher au hasard dans tout le pool (qui sur-représenterait le genre le
-// plus souvent noté). Basé sur TOUS les films vus, pas seulement les mieux
-// notés — même un film moyen renseigne sur les goûts (genre, casting...).
-function pickDiverseBasisFilms(pool, count) {
+function pickDiverseBasisItems(pool, count) {
   const used = new Set(loadBasisUsed());
   const fresh = pool.filter(f => !used.has(String(f.tmdbId)));
-  const candidates = fresh.length >= count ? fresh : pool; // pas assez de films "frais" : retombe sur tout le pool
+  const candidates = fresh.length >= count ? fresh : pool;
 
   const byGenre = {};
   candidates.forEach(f => {
@@ -6416,7 +6534,6 @@ function pickDiverseBasisFilms(pool, count) {
     const arr = byGenre[g];
     picked.push(arr[Math.floor(Math.random() * arr.length)]);
   }
-  // Moins de genres distincts que `count` : complète au hasard dans le reste.
   const remaining = candidates.filter(f => !picked.includes(f));
   while (picked.length < count && remaining.length > 0) {
     const idx = Math.floor(Math.random() * remaining.length);
@@ -6425,1229 +6542,12 @@ function pickDiverseBasisFilms(pool, count) {
   return picked;
 }
 
-let discoverQueue = [];
-let discoverLoaded = false;
-let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
-
-// ═══════════════════════════════════════════
-//  FILM DU JOUR
-// ═══════════════════════════════════════════
-// Un film choisi aléatoirement mais STABLE toute la journée (même choix du
-// matin au soir, change le lendemain) — présenté simplement avec le
-// synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
-const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
-
-async function loadFilmDuJour() {
-  const todayKey = new Date().toISOString().slice(0, 10);
-  let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
-
-  if (cached && cached.date === todayKey && cached.movie) {
-    renderGuessGame(cached.movie, cached.isWeekly);
-    return;
-  }
-
-  try {
-    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
-    // Le mercredi (jour de sortie ciné en France), le Film du Jour devient
-    // "Sortie de la semaine" : de vraies sorties en salle de la semaine,
-    // pas des tendances mondiales. Les autres jours, tirage élargi sur toute
-    // la base TMDb suffisamment connue (voir api/search.js) — plus les
-    // ~20 films "tendances" d'avant, qui revenaient sans cesse et
-    // penchaient trop vers les sorties très récentes.
-    const isWednesday = new Date().getDay() === 3;
-    const endpoint = isWednesday
-      ? `/api/search?weeklyRelease=${daysSinceEpoch}`
-      : `/api/search?dailyPick=${daysSinceEpoch}`;
-
-    const res = await fetch(endpoint);
-    const data = await res.json();
-    const pick = data.result;
-    if (!pick) return;
-
-    const detailRes = await fetch(`/api/search?id=${pick.id}`);
-    const details = await detailRes.json();
-    if (!details || !details.title) return;
-
-    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, isWeekly: isWednesday }));
-    renderGuessGame(details, isWednesday);
-  } catch (e) {
-    console.warn('Impossible de charger le film du jour', e);
-  }
+// Point d'entrée unique, appelé depuis 01-navigation.js au premier
+// affichage de l'onglet Découvrir.
+function loadDiscoverTab() {
+  loadChoixDuJour();
+  Object.keys(CAROUSEL_SOURCES).forEach(loadCarousel);
 }
-
-// ═══════════════════════════════════════════
-//  CE JOUR-LÀ (anniversaires de sortie)
-// ═══════════════════════════════════════════
-// Anniversaires RONDS (10/20/30/40/50 ans) plutôt que toutes les années —
-// TMDb ne permet pas de filtrer "sorti un 7 août, toutes années confondues"
-// en un seul appel (voir api/search.js). Certains jours n'auront aucun
-// anniversaire rond avec une sortie notable : la section se masque
-// entièrement plutôt que d'afficher un encart vide (même esprit que le
-// Quiz/Duel quand rien n'est disponible).
-const ON_THIS_DAY_KEY = 'lbx_on_this_day';
-
-async function loadOnThisDay() {
-  const wrap = document.getElementById('on-this-day-wrap');
-  const strip = document.getElementById('on-this-day-strip');
-  if (!wrap || !strip) return;
-
-  const todayKey = new Date().toISOString().slice(0, 10);
-  let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(ON_THIS_DAY_KEY) || 'null'); } catch {}
-
-  let anniversaries;
-  if (cached && cached.date === todayKey) {
-    anniversaries = cached.anniversaries;
-  } else {
-    try {
-      const res = await fetch('/api/search?onThisDay=1');
-      const data = await res.json();
-      anniversaries = data.anniversaries || [];
-      localStorage.setItem(ON_THIS_DAY_KEY, JSON.stringify({ date: todayKey, anniversaries }));
-    } catch (e) {
-      console.warn('Impossible de charger "Ce jour-là"', e);
-      return;
-    }
-  }
-
-  if (anniversaries.length === 0) return; // section reste masquée (display:none par défaut)
-
-  strip.innerHTML = anniversaries.flatMap(a =>
-    a.films.map(f => `
-      <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
-        <img class="on-this-day-poster" src="${tmdbImage(f.poster_path, 'w200')}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
-        <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
-        <div class="on-this-day-title">${escAttr(f.title)}</div>
-      </div>
-    `)
-  ).join('');
-
-  strip.querySelectorAll('.on-this-day-item').forEach(item => {
-    item.addEventListener('click', () => openMovieDetailSheet(item.dataset.movieId));
-    item.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      e.preventDefault();
-      openMovieDetailSheet(item.dataset.movieId);
-    });
-  });
-
-  wrap.style.display = 'block';
-}
-
-// Bascule le titre de la section entre "Film du jour" et "Sortie de la
-// semaine" — manquait entièrement (la fonction était appelée mais jamais
-// définie, ce qui plantait silencieusement tout chargement depuis le cache,
-// c'est-à-dire presque tous les chargements sauf le tout premier de la
-// journée/semaine).
-function setFilmDuJourTitle(isWeekly) {
-  // Cible le span de TEXTE dedie (#fdj-title-text), pas #fdj-title lui-meme
-  // — celui-ci contient AUSSI le badge de serie (#guess-streak-badge) comme
-  // enfant ; y ecrire du textContent directement l'effacait entierement a
-  // chaque appel (vrai bug trouve en testant : le badge disparaissait des
-  // qu'une victoire/defaite mettait a jour le titre).
-  const titleEl = document.getElementById('fdj-title-text');
-  if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
-}
-
-// Réglages : force un rechargement du Film du jour — utile si la section
-// n'a pas pu se charger correctement (panne réseau ponctuelle...). Le
-// tirage du film, lui, reste le même de la journée par conception : voir
-// le commentaire sur isWednesday plus haut.
-document.getElementById('clear-fdj-cache-btn')?.addEventListener('click', () => {
-  localStorage.removeItem(FILM_DU_JOUR_KEY);
-  loadFilmDuJour();
-  showToast('Film du jour actualisé.');
-});
-
-async function fetchFilmDuJourProviders(tmdbId) {
-  const el = document.getElementById('fdj-providers');
-  if (!el) return;
-  try {
-    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE`);
-    const data = await res.json();
-    const providerRoot = data['watch/providers']?.results?.BE
-                      || data.providers?.results?.BE
-                      || data.watchProviders?.BE
-                      || null;
-
-    const owned = loadOwnedProviders().map(normalizeProviderName);
-    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
-      const n = normalizeProviderName(p.provider_name);
-      return owned.some(o => n.includes(o) || o.includes(n));
-    });
-
-    const allFlat = providerRoot?.flatrate || [];
-    const allRent = providerRoot?.rent || [];
-    const flat = filterOwned(allFlat);
-    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
-
-    let html = '';
-    [...flat, ...rentOnly].slice(0, 6).forEach(p => {
-      html += `<img class="fdj-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
-    });
-
-    if (!html) {
-      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
-      el.innerHTML = `<span class="fdj-no-streaming">${availableElsewhere ? 'Disponible, mais pas sur tes plateformes' : 'Non disponible en streaming 🇧🇪'}</span>`;
-    } else {
-      el.innerHTML = html;
-    }
-  } catch {
-    el.innerHTML = '<span class="fdj-no-streaming">Plateformes indisponibles</span>';
-  }
-}
-
-// ═══════════════════════════════════════════
-//  DEVINE LE FILM DU JOUR (mini-jeu, affiche floutée)
-// ═══════════════════════════════════════════
-// Réutilise le film et l'affiche déjà récupérés pour le Film du Jour — aucun
-// nouvel appel réseau. Le flou se réduit à chaque essai raté (esprit
-// "Framed") ; deux indices textuels tombent à des paliers fixes pour rester
-// jouable même sans rien reconnaître visuellement. Convention identique au
-// Quiz/Duel du jour : un essai par jour, série (streak) suivie séparément.
-const GUESS_GAME_KEY = 'lbx_guess_game';
-const GUESS_STREAK_KEY = 'lbx_guess_streak';
-const GUESS_LAST_PLAYED_KEY = 'lbx_guess_last_played'; // date de la derniere partie JOUEE (gagnee ou perdue), pour la continuite de la serie
-const GUESS_MAX_ATTEMPTS = 5;
-// Ferme les suggestions de titre au clic en dehors — un seul écouteur pour
-// toute la durée de vie de la page (pas un par rendu du formulaire, qui se
-// reconstruit à chaque tentative ratée : ça aurait empilé un écouteur par
-// essai sans jamais les retirer). Recherche l'élément en direct au moment
-// du clic plutôt que de capturer une référence, qui deviendrait obsolète
-// dès le prochain rendu.
-document.addEventListener('click', (e) => {
-  if (e.target.closest('.guess-input-wrap')) return;
-  const guessSuggestEl = document.getElementById('guess-suggestions');
-  if (guessSuggestEl) guessSuggestEl.style.display = 'none';
-});
-// Un cran de flou par essai (index 0 = avant le premier essai) ; le dernier
-// palier (après le 5e essai raté) est à 0 : l'affiche se révèle entièrement
-// que la partie soit gagnée ou perdue, jamais de flou résiduel frustrant.
-const GUESS_BLUR_LEVELS = [22, 16, 12, 8, 4, 0];
-
-function normalizeGuessText(s) {
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
-    .replace(/[^a-z0-9\s]/g, '') // ponctuation
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function loadGuessGameState(movieId, todayKey) {
-  let state = null;
-  try { state = JSON.parse(localStorage.getItem(GUESS_GAME_KEY) || 'null'); } catch {}
-  if (state && state.date === todayKey && state.movieId === movieId) return state;
-  return { date: todayKey, movieId, attempts: 0, done: false, won: null };
-}
-
-function saveGuessGameState(state) {
-  localStorage.setItem(GUESS_GAME_KEY, JSON.stringify(state));
-}
-
-function renderGuessStreakBadge() {
-  const badge = document.getElementById('guess-streak-badge');
-  if (!badge) return;
-  const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
-  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
-}
-
-// Suggestions de titres pendant la devinette — même recherche TMDb que le
-// formulaire de notation et la watchlist (fetchSuggestions dans
-// 04-search.js), mais SANS affiche ni bouton "saisie manuelle" : juste
-// titre + année en texte. Montrer l'affiche du bon film dans la liste
-// spoilerait instantanément le jeu, d'où cette version simplifiée dédiée.
-async function fetchGuessSuggestions(q, inputEl, suggestEl) {
-  try {
-    const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
-    const data = await readApiJson(res);
-    const results = (data.results || []).slice(0, 6);
-    if (!results.length) { suggestEl.style.display = 'none'; return; }
-    suggestEl.innerHTML = '';
-    suggestEl.style.display = 'block';
-    results.forEach(r => {
-      const year = r.release_date?.slice(0, 4) || '????';
-      const item = document.createElement('div');
-      item.className = 'guess-suggestion-item';
-      item.setAttribute('role', 'option');
-      item.innerHTML = `<span class="guess-suggestion-title">${escAttr(r.title)}</span><span class="guess-suggestion-year">${year}</span>`;
-      item.addEventListener('click', () => {
-        inputEl.value = r.title;
-        suggestEl.style.display = 'none';
-        inputEl.focus();
-      });
-      suggestEl.appendChild(item);
-    });
-  } catch {
-    suggestEl.style.display = 'none'; // pas grave : la saisie libre + Valider marche toujours sans suggestion
-  }
-}
-
-function renderGuessGame(m, isWeekly) {
-  const wrap = document.getElementById('fdj-wrap');
-  const card = document.getElementById('fdj-card');
-  if (!wrap || !card) return;
-  wrap.style.display = 'block';
-
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const posterUrl = tmdbImage(m.poster_path, 'w300');
-  const year = m.release_date ? m.release_date.slice(0, 4) : '';
-
-  // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
-  // révélée (comme l'ancien "Film du jour" seul, avant la fusion des deux
-  // sections qui montraient jusqu'ici le MÊME film en double). Même chemin
-  // si la devinette est désactivée dans Réglages (voir 00e-feature-flags.js)
-  // — l'état de la partie en cours (essais, série) n'est jamais touché,
-  // juste jamais montré tant que la bascule reste désactivée.
-  const guessEnabled = typeof loadFeatureFlags === 'function' ? loadFeatureFlags().guessGame : true;
-  if (!m.poster_path || !guessEnabled) {
-    setFilmDuJourTitle(isWeekly);
-    renderRevealedFilm(m, posterUrl, year, null);
-    return;
-  }
-
-  const state = loadGuessGameState(m.id, todayKey);
-
-  if (state.done) {
-    setFilmDuJourTitle(isWeekly);
-    renderRevealedFilm(m, posterUrl, year, state);
-    return;
-  }
-
-  // ── Phase "à deviner" : titre dédié, tant que ce n'est pas résolu ──
-  const titleEl = document.getElementById('fdj-title-text');
-  if (titleEl) titleEl.textContent = 'Devine le Film du Jour';
-  renderGuessStreakBadge();
-
-  const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
-  // Un nouvel indice par essai raté.
-  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
-  const cast = m.credits?.cast || [];
-  const hints = [];
-  if (state.attempts >= 1 && year) hints.push(`Sorti en ${year}`);
-  if (state.attempts >= 2 && director) hints.push(`Réalisé par ${director}`);
-  if (state.attempts >= 3 && cast[0]) hints.push(`Avec ${cast[0].name}`);
-  if (state.attempts >= 4 && cast[1]) hints.push(`Et aussi ${cast[1].name}`);
-
-  card.classList.add('fdj-guessing');
-  card.classList.remove('fdj-revealed');
-  // Ludex 2.0 : reprend le traitement plein cadre du swipe — .guess-poster
-  // (toujours une <img>, testée par plusieurs specs e2e sur son tag et son
-  // filter inline) devient le FOND plein cadre plutôt qu'une vignette en
-  // ligne, via repositionnement CSS uniquement (voir .guess-poster dans
-  // styles.css) — le DOM/JS ne change pas de forme, juste son habillage.
-  // .guess-attempts est conservée telle quelle (texte "Essai X/Y", utilisée
-  // aussi comme cible de clic neutre par guess-suggestions.spec.js) ; les
-  // pastilles d'essai sont un ajout purement visuel à côté.
-  const attemptDots = Array.from({ length: GUESS_MAX_ATTEMPTS }, (_, i) =>
-    `<span class="fdj-attempt-dot${i < state.attempts ? ' used' : ''}"></span>`
-  ).join('');
-  card.innerHTML = `
-    <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
-    <div class="fdj-hero-overlay"></div>
-    <div class="fdj-hero-top">
-      <span class="fdj-hero-badge">Film du jour</span>
-      <div class="fdj-attempt-dots">
-        ${attemptDots}
-        <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
-      </div>
-    </div>
-    <div class="fdj-hero-body">
-      <div class="fdj-title-mask" aria-hidden="true">? ? ? ? ? ? ?</div>
-      <div class="fdj-hero-pills">
-        ${year ? `<span class="fdj-hero-pill accent">${escAttr(year)}</span>` : ''}
-        ${m.genres?.[0]?.name ? `<span class="fdj-hero-pill">${escAttr(m.genres[0].name)}</span>` : '<span class="fdj-hero-pill">Genre</span>'}
-      </div>
-      ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
-      <form class="guess-form" id="guess-form" autocomplete="off">
-        <div class="guess-input-wrap">
-          <input type="text" class="guess-input" id="guess-input" placeholder="Devine le titre…" aria-label="Ta proposition" autocomplete="off">
-          <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
-        </div>
-        <button type="submit" class="guess-submit-btn">Valider</button>
-      </form>
-    </div>
-  `;
-
-  // Suggestions de titres en tapant — même recherche TMDb que le formulaire
-  // de notation et la watchlist, mais SANS affiche dans la liste (juste
-  // titre + année) : montrer l'affiche du bon film dans les suggestions
-  // spoilerait instantanément le jeu.
-  const guessInput = document.getElementById('guess-input');
-  const guessSuggestEl = document.getElementById('guess-suggestions');
-  let guessSearchTimer;
-  guessInput.addEventListener('input', () => {
-    clearTimeout(guessSearchTimer);
-    const q = guessInput.value.trim();
-    if (q.length < 2) { guessSuggestEl.style.display = 'none'; return; }
-    guessSearchTimer = setTimeout(() => fetchGuessSuggestions(q, guessInput, guessSuggestEl), 280);
-  });
-
-  document.getElementById('guess-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    guessSuggestEl.style.display = 'none';
-    const input = document.getElementById('guess-input');
-    const guess = normalizeGuessText(input.value);
-    if (!guess) return;
-
-    const targets = [normalizeGuessText(m.title)];
-    if (m.original_title && m.original_title !== m.title) targets.push(normalizeGuessText(m.original_title));
-    const correct = targets.includes(guess);
-
-    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-    const lastPlayed = localStorage.getItem(GUESS_LAST_PLAYED_KEY);
-    state.attempts += 1; // compte CETTE tentative, gagnante ou non — sinon "trouvé au 1er essai" affichait "0 essai"
-    if (correct) {
-      state.done = true;
-      state.won = true;
-      const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
-      const newStreak = lastPlayed === yesterday ? streak + 1 : 1;
-      localStorage.setItem(GUESS_STREAK_KEY, String(newStreak));
-      if (navigator.vibrate) navigator.vibrate(20);
-    } else {
-      if (state.attempts >= GUESS_MAX_ATTEMPTS) {
-        state.done = true;
-        state.won = false;
-        localStorage.setItem(GUESS_STREAK_KEY, '0');
-      }
-      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
-    }
-    localStorage.setItem(GUESS_LAST_PLAYED_KEY, todayKey);
-    saveGuessGameState(state);
-    // Rejoue le rendu complet (pas juste la mise à jour du jeu) : si la
-    // partie vient de se terminer, ce même appel bascule automatiquement sur
-    // la fiche révélée — c'est tout l'intérêt de la fusion des deux sections.
-    renderGuessGame(m, isWeekly);
-  });
-}
-
-// Affiche la fiche complète du jour — affiche nette, synopsis, réalisateur
-// et note, plateformes — précédée du résultat du jeu si on vient d'y jouer
-// (state non nul), ou affichée directement s'il n'y avait pas d'affiche
-// pour deviner.
-function renderRevealedFilm(m, posterUrl, year, state) {
-  const card = document.getElementById('fdj-card');
-  card.classList.add('fdj-revealed');
-  card.classList.remove('fdj-guessing');
-  renderGuessStreakBadge();
-
-  const resultHTML = state
-    ? `<div class="guess-result ${state.won ? 'guess-won' : 'guess-lost'}">
-         ${state.won ? `Trouvé en ${state.attempts} essai${state.attempts > 1 ? 's' : ''} !` : `Perdu — c'était « ${escAttr(m.title)} »`}
-       </div>`
-    : '';
-
-  // Présentation simple du film : synopsis, réalisateur, note — les
-  // anecdotes Wikipédia ont été retirées (n'apportaient pas de réelle
-  // plus-value au retour de l'utilisateur), remplacées par ces informations
-  // toujours disponibles directement depuis TMDb, sans dépendre de
-  // l'existence d'une page Wikipédia adaptée.
-  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
-  const metaParts = [];
-  // Icônes cohérentes avec le reste de l'app (clap déjà utilisé comme
-  // placeholder d'affiche, étoile déjà utilisée pour les notes ailleurs)
-  // plutôt que d'introduire de nouveaux symboles isolés.
-  if (director) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.clapper}</span>Réalisé par ${escAttr(director)}</span>`);
-  if (m.vote_average) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.star}</span>${m.vote_average.toFixed(1)}/10</span>`);
-  const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join('')}</div>` : '';
-  // Synopsis en encart distinct (même traitement visuel que l'ancienne
-  // carte anecdote, réutilisé ici) — tronqué à 4 lignes avec "Lire la
-  // suite" si long, pour garder une hauteur de carte stable plutôt que de
-  // varier fortement selon la longueur du synopsis d'un film à l'autre.
-  const synopsisNeedsToggle = m.overview && m.overview.length > 180;
-  const synopsisHTML = m.overview
-    ? `<div class="fdj-synopsis-card">
-         <div class="fdj-synopsis-icon" aria-hidden="true">${ICONS.clapper}</div>
-         <div class="fdj-synopsis-body">
-           <p class="fdj-synopsis-text${synopsisNeedsToggle ? ' fdj-synopsis-clamped' : ''}">${escAttr(m.overview)}</p>
-           ${synopsisNeedsToggle ? `<button type="button" class="fdj-synopsis-toggle">Lire la suite</button>` : ''}
-         </div>
-       </div>`
-    : '';
-
-  // Ludex 2.0 : même traitement plein cadre que la phase "à deviner" — le
-  // fond flouté devient l'affiche nette une fois révélée, plutôt qu'un
-  // agencement affiche+infos côte à côte différent. .fdj-poster/.fdj-info/
-  // .fdj-film-title/.fdj-meta-line/.fdj-synopsis-card/.fdj-providers restent
-  // les MÊMES éléments qu'avant (testés par 5 specs e2e sur leur présence et
-  // leur contenu) — seul l'habillage CSS change, voir styles.css.
-  card.innerHTML = `
-    <div class="fdj-hero-frame" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
-      ${posterUrl
-        ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="fdj-poster fdj-poster-ph">${ICONS.clapper}</div>`}
-      <div class="fdj-hero-overlay"></div>
-      <div class="fdj-hero-top">
-        <span class="fdj-hero-badge">Film du jour</span>
-        ${resultHTML}
-      </div>
-      <div class="fdj-hero-body">
-        <div class="fdj-info">
-          <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
-          ${metaLineHTML}
-        </div>
-      </div>
-    </div>
-    <div class="fdj-below">
-      ${synopsisHTML}
-      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
-    </div>
-  `;
-  card.dataset.movieId = String(m.id);
-  // La carte entière reste cliquable au clic/tap (zone large, meilleure
-  // ergonomie tactile) — seul le bouton de re-tentative des plateformes en
-  // est exclu, pour ne jamais voler son propre clic.
-  card.addEventListener('click', (e) => {
-    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-synopsis-toggle')) return;
-    openMovieDetailSheet(m.id);
-  });
-  // Activation clavier : le rôle "bouton" est porté par .fdj-hero-frame
-  // (le cadre plein cadre affiche+dégradé — voir plus haut) plutôt que par
-  // .fdj-poster seule depuis le passage au traitement plein cadre —
-  // role="button"+tabindex="0" rendent l'élément focusable et l'annoncent
-  // comme un bouton, mais ne déclenchent PAS d'activation clavier tout
-  // seuls (contrairement à un vrai <button>) — même oubli que celui
-  // corrigé sur les cartes de l'historique.
-  const heroFrame = card.querySelector('.fdj-hero-frame');
-  if (heroFrame) {
-    heroFrame.addEventListener('keydown', (e) => {
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      e.preventDefault();
-      openMovieDetailSheet(m.id);
-    });
-  }
-
-  // "Lire la suite" : déplie le synopsis complet (déjà dans le DOM, aucun
-  // appel réseau) en retirant le troncage visuel à 4 lignes.
-  const synopsisToggle = card.querySelector('.fdj-synopsis-toggle');
-  if (synopsisToggle) {
-    synopsisToggle.addEventListener('click', () => {
-      const text = card.querySelector('.fdj-synopsis-text');
-      const expanded = text.classList.toggle('fdj-synopsis-expanded');
-      text.classList.toggle('fdj-synopsis-clamped', !expanded);
-      synopsisToggle.textContent = expanded ? 'Réduire' : 'Lire la suite';
-    });
-  }
-
-  fetchFilmDuJourProviders(m.id);
-}
-
-// ═══════════════════════════════════════════
-//  CARROUSEL "TENDANCES DU MOMENT"
-// ═══════════════════════════════════════════
-// Séparé du jeu de cartes à swiper : pas basé sur l'historique de
-// l'utilisateur, juste ce qui buzz sur TMDb cette semaine. Défilement
-// automatique en boucle (CSS, pas de JS dans la boucle d'animation), mis en
-// pause au survol/toucher pour laisser le temps de taper sur une affiche.
-let trendingLoaded = false;
-
-async function loadTrendingCarousel() {
-  if (trendingLoaded) return;
-  trendingLoaded = true;
-  try {
-    const res = await fetch('/api/search?trending=true');
-    const data = await res.json();
-    // "trending/all/week" mélange films et séries (et parfois des personnes,
-    // sans poster_path — écartées par le filtre) ; media_type distingue les
-    // deux pour le tag par vignette et le bon gestionnaire de clic.
-    const items = (data.results || [])
-      .filter(m => m.poster_path && (m.media_type === 'movie' || m.media_type === 'tv'))
-      .slice(0, 15);
-    if (items.length === 0) return;
-    renderTrendingCarousel(items);
-    document.getElementById('trending-carousel-wrap').style.display = 'block';
-  } catch (e) {
-    console.warn('Impossible de charger les tendances du moment', e);
-  }
-}
-
-function renderTrendingCarousel(items) {
-  const outer = document.getElementById('trending-carousel');
-  const itemsHtml = items.map(m => {
-    const posterUrl = tmdbImage(m.poster_path, 'w200');
-    const title = m.title || m.name || '';
-    const isTv = m.media_type === 'tv';
-    return `
-      <div class="trending-item" data-media-id="${m.id}" data-media-type="${m.media_type}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(title)}">
-        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(title)}" loading="lazy">
-        <span class="trending-item-type">${isTv ? 'Série' : 'Film'}</span>
-        <div class="trending-item-title">${escAttr(title)}</div>
-      </div>`;
-  }).join('');
-
-  // La piste contient la liste EN DOUBLE pour permettre une boucle infinie
-  // sans à-coup (voir plus bas : on revient à 0 dès qu'on a défilé au-delà
-  // d'une copie complète, ce qui retombe pile sur un contenu identique).
-  outer.innerHTML = `<div class="trending-carousel-track">${itemsHtml}${itemsHtml}</div>`;
-  const track = outer.querySelector('.trending-carousel-track');
-
-  outer.addEventListener('click', (e) => {
-    const item = e.target.closest('.trending-item');
-    if (!item) return;
-    if (item.dataset.mediaType === 'tv') openTvDetailSheet(item.dataset.mediaId);
-    else openMovieDetailSheet(item.dataset.mediaId);
-  });
-
-  // Défilement automatique piloté en JS (pas une animation CSS) : ça permet
-  // de le mettre en pause pendant une interaction manuelle (glisser du doigt,
-  // molette, flèches) tout en laissant le défilement NATIF du navigateur
-  // gérer cette interaction lui-même — plutôt que de devoir réimplémenter un
-  // suivi de glissement à la main.
-  const AUTO_SCROLL_SPEED = 0.5; // px par frame
-  const RESUME_DELAY_MS = 3000; // reprise du défilement auto 3s après la dernière interaction
-  let autoScrollPaused = false;
-  let resumeTimer = null;
-
-  function pauseThenScheduleResume() {
-    autoScrollPaused = true;
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
-  }
-
-  function tick() {
-    // Ne fait le travail (qui force un recalcul de mise en page via
-    // scrollLeft) QUE si l'onglet Découvrir est bien affiché — sinon cette
-    // boucle tournait indéfiniment en arrière-plan, même après être passé sur
-    // un autre onglet, au lieu de s'arrêter. Coût quasi nul quand invisible
-    // (juste une vérification de classe), pour pouvoir reprendre sans à-coup
-    // dès qu'on revient sur Découvrir.
-    const isVisible = document.getElementById('view-discover')?.classList.contains('active');
-    if (isVisible && !autoScrollPaused) {
-      outer.scrollLeft += AUTO_SCROLL_SPEED;
-      const halfWidth = track.scrollWidth / 2;
-      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
-    }
-    requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
-
-  // Flèches de navigation (utiles surtout au clavier/souris sur desktop, où
-  // glisser à la souris est moins naturel qu'au doigt sur mobile).
-  document.getElementById('trending-prev-btn').addEventListener('click', () => {
-    pauseThenScheduleResume();
-    outer.scrollBy({ left: -200, behavior: 'smooth' });
-  });
-  document.getElementById('trending-next-btn').addEventListener('click', () => {
-    pauseThenScheduleResume();
-    outer.scrollBy({ left: 200, behavior: 'smooth' });
-  });
-}
-
-const discoverStack = document.getElementById('discover-stack');
-const discoverActionsEl = document.getElementById('discover-actions');
-const discoverReloadBtn = document.getElementById('discover-reload-btn');
-const discoverPassBtn = document.getElementById('discover-pass-btn');
-const discoverLikeBtn = document.getElementById('discover-like-btn');
-
-// ═══════════════════════════════════════════
-//  "SURPRENDS-MOI" : film totalement au hasard dans TOUTE la base TMDb —
-//  pas une recommandation personnalisée (contrairement aux suggestions),
-//  ni limité à la watchlist. Ouvre directement sa fiche complète.
-// ═══════════════════════════════════════════
-const surpriseMeBtn = document.getElementById('surprise-me-btn');
-surpriseMeBtn?.addEventListener('click', async () => {
-  if (surpriseMeBtn.disabled) return;
-  surpriseMeBtn.disabled = true;
-  const originalHtml = surpriseMeBtn.innerHTML;
-  surpriseMeBtn.textContent = '⏳ Recherche...';
-  try {
-    const res = await fetch('/api/search?random=true');
-    const data = await res.json();
-    if (!data.result || !data.result.id) {
-      showToast("Impossible de trouver un film pour l'instant, réessaie.");
-      return;
-    }
-    openMovieDetailSheet(data.result.id);
-  } catch {
-    showToast("Impossible de charger un film au hasard pour l'instant.");
-  } finally {
-    surpriseMeBtn.disabled = false;
-    surpriseMeBtn.innerHTML = originalHtml;
-  }
-});
-
-// Enveloppe fine autour de la vraie logique de chargement : démarre la
-// rotation de l'icône ↻ avant, l'arrête après — via try/finally, pour être sûr
-// qu'elle s'arrête quel que soit le chemin de sortie de la fonction (plusieurs
-// "return" précoces existent selon les cas : aucun film 8+/10, aucun avec
-// fiche TMDb, etc.).
-async function loadDiscoverQueue() {
-  discoverReloadBtn.classList.add('spinning');
-  try {
-    await loadDiscoverQueueInner();
-  } finally {
-    discoverReloadBtn.classList.remove('spinning');
-  }
-}
-
-async function loadDiscoverQueueInner() {
-  discoverActionsEl.style.display = 'none';
-  discoverStack.style.height = '';
-  // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
-  // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
-  // et la perception d'attente est bien meilleure.
-  discoverStack.innerHTML = `
-    <div class="discover-card discover-card-skeleton">
-      <div class="skeleton-bg" style="width:100%;aspect-ratio:2/3;border-radius:var(--radius-sm);"></div>
-      <div class="skeleton-text long skeleton-bg" style="margin-top:10px;height:16px;"></div>
-      <div class="skeleton-text short skeleton-bg"></div>
-    </div>`;
-
-  const history = loadHistory();
-  const watchlist = loadWatchlist();
-  const watchedWithId = history.filter(h => h.tmdbId);
-
-  if (watchedWithId.length === 0) {
-    // Hauteur fixe modeste plutôt que 'auto' : .discover-empty est en
-    // position absolute (inset:0), donc ne contribue pas à la hauteur
-    // automatique de son parent — 'auto' donnerait 0px de haut et
-    // rendrait le message invisible malgré son contenu.
-    discoverStack.style.height = '120px';
-    discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
-    return;
-  }
-
-  const shuffledTop = pickDiverseBasisFilms(watchedWithId, 3);
-  markBasisUsed(shuffledTop.map(f => f.tmdbId));
-  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
-  const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
-  const passedIds = new Set(loadDiscoverPassed());
-
-  let allRecs = [];
-  // Les 3 requêtes sont indépendantes : en parallèle (Promise.all) plutôt que
-  // l'une après l'autre, le temps d'attente total tombe à celui de la plus
-  // lente des trois au lieu de la somme des trois — l'onglet Découvrir
-  // s'affiche nettement plus vite.
-  const results = await Promise.allSettled(
-    shuffledTop.map(film => fetch(`/api/search?id=${film.tmdbId}&recommendations=true`).then(res => res.json()))
-  );
-  results.forEach((result, i) => {
-    if (result.status === 'fulfilled') {
-      const data = result.value;
-      const moviesArray = data.results || (Array.isArray(data) ? data : null);
-      if (moviesArray) allRecs.push(...moviesArray);
-    } else {
-      console.warn("Impossible de charger les suggestions pour l'ID " + shuffledTop[i].tmdbId, result.reason);
-    }
-  });
-
-  // Distingue "vraiment plus rien a suggerer" (toutes les requetes ont abouti
-  // mais tout a deja ete vu) d'une panne reseau totale (aucune n'a abouti) :
-  // les deux meritent des messages tres differents.
-  discoverLoadFailed = shuffledTop.length > 0 && !results.some(r => r.status === 'fulfilled');
-
-  const uniqueRecs = [];
-  const addedIds = new Set();
-  allRecs.forEach(m => {
-    if (!m || !m.id) return;
-    const idStr = String(m.id);
-    if (!addedIds.has(idStr) && !seenIds.has(idStr) && !watchlistIds.has(idStr) && !passedIds.has(idStr)) {
-      addedIds.add(idStr);
-      uniqueRecs.push(m);
-    }
-  });
-
-  // Mélange véritable (Fisher-Yates), pas le raccourci .sort(Math.random())
-  // habituel (biaisé et peu fiable) : sans lui, les suggestions restaient
-  // groupées par film source (donc souvent par genre), puisque allRecs les
-  // accumule film de base par film de base, dans l'ordre.
-  for (let i = uniqueRecs.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [uniqueRecs[i], uniqueRecs[j]] = [uniqueRecs[j], uniqueRecs[i]];
-  }
-
-  discoverQueue = uniqueRecs.slice(0, 15);
-  discoverLoaded = true;
-  renderDiscoverCards();
-}
-
-// Ludex 2.0 : bascule entre la pile à glisser (comportement historique) et
-// la liste compacte (réglage optionnel, voir Réglages > "Suggestions en
-// liste compacte") — un seul point d'entrée, pour que loadDiscoverQueueInner
-// et le bouton de rechargement n'aient jamais à connaître ce choix.
-function renderDiscoverCards() {
-  if (document.documentElement.classList.contains('discover-swipe-compact')) {
-    renderDiscoverCompactList();
-  } else {
-    renderDiscoverStack();
-  }
-}
-
-function renderDiscoverStack() {
-  if (discoverQueue.length === 0) {
-    discoverActionsEl.style.display = 'none';
-    discoverStack.style.height = '120px';
-    if (discoverLoadFailed) {
-      discoverStack.innerHTML = `
-        <div class="error-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
-          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
-        </div>`;
-    } else {
-      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
-    }
-    return;
-  }
-  discoverStack.style.height = '';
-  discoverActionsEl.style.display = 'flex';
-
-  // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
-  // swipe) — son animation de sortie est déjà terminée à ce stade
-  // (resolveDiscoverSwipe n'est appelé qu'après le délai de l'animation).
-  const oldTop = discoverStack.querySelector('.discover-card.top');
-  if (oldTop) oldTop.remove();
-
-  const existingBehind = discoverStack.querySelector('.discover-card.behind');
-  const behindMatchesNewTop = existingBehind && existingBehind.dataset.movieId === String(discoverQueue[0].id);
-
-  if (behindMatchesNewTop) {
-    // Réutilise la carte déjà chargée et posée derrière (affiche déjà
-    // récupérée, couleur d'accent déjà extraite) plutôt que de tout
-    // reconstruire — c'était la principale source du délai ressenti entre
-    // deux cartes : chaque swipe relançait un chargement d'image et une
-    // extraction de couleur pour une carte qui était déjà prête juste avant.
-    existingBehind.classList.remove('behind');
-    existingBehind.classList.add('top');
-    existingBehind.setAttribute('tabindex', '0');
-    existingBehind.setAttribute('role', 'group');
-    existingBehind.setAttribute('aria-label', `Suggestion : ${discoverQueue[0].title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
-    attachSwipeHandlers(existingBehind, discoverQueue[0]);
-  } else {
-    // Pas de correspondance (première ouverture de l'onglet, ou file
-    // rechargée manuellement) : construit la carte du haut de zéro.
-    if (existingBehind) existingBehind.remove();
-    const topCard = buildDiscoverCardEl(discoverQueue[0], true);
-    discoverStack.appendChild(topCard);
-    attachSwipeHandlers(topCard, discoverQueue[0]);
-  }
-
-  // Construit la nouvelle carte "derrière" (aperçu du film suivant).
-  if (discoverQueue[1]) {
-    const newBehind = buildDiscoverCardEl(discoverQueue[1], false);
-    discoverStack.insertBefore(newBehind, discoverStack.firstChild);
-  }
-}
-
-function buildDiscoverCardEl(m, isTop) {
-  const year = m.release_date?.slice(0, 4) || '????';
-  const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-  const posterUrl = tmdbImage(m.poster_path, 'w500');
-  let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
-  if (overview.length > 160) overview = overview.slice(0, 160) + '…';
-
-  const el = document.createElement('div');
-  el.className = 'discover-card ' + (isTop ? 'top' : 'behind');
-  el.dataset.movieId = String(m.id);
-  el.innerHTML = `
-    <div class="discover-card-poster-wrap">
-      ${posterUrl
-        ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-        : `<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}
-      <div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>
-    </div>
-    <div class="discover-card-info">
-      <div class="discover-card-title">${escAttr(m.title)}</div>
-      <div class="discover-card-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
-      <div class="discover-card-overview">${escAttr(overview)}</div>
-    </div>
-  `;
-  if (isTop) {
-    el.setAttribute('tabindex', '0');
-    el.setAttribute('role', 'group');
-    el.setAttribute('aria-label', `Suggestion : ${escAttr(m.title)}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
-  }
-  applyPosterAccent(posterUrl, el);
-  return el;
-}
-
-// Résout un swipe/clic/touche : retire le film de la file, exécute l'action,
-// puis réaffiche la pile avec la carte suivante.
-function resolveDiscoverSwipe(direction) {
-  const movie = discoverQueue.shift();
-  if (!movie) return;
-
-  if (direction === 'like') {
-    const year = movie.release_date?.slice(0, 4) || '????';
-    addToWatchlistFromTMDb(movie, year);
-    if (navigator.vibrate) navigator.vibrate(20);
-  } else {
-    markDiscoverPassed(movie.id);
-    if (navigator.vibrate) navigator.vibrate(15);
-  }
-  hapticPulse(discoverStack, 'medium');
-  renderDiscoverStack();
-}
-
-// ── Ludex 2.0 : liste compacte (réglage optionnel) ──
-// Même file (discoverQueue), même logique d'action (watchlist/passer), mais
-// chaque ligne a ses propres boutons plutôt qu'un geste de glissement sur
-// une seule carte à la fois — toute la file reste visible et actionnable
-// d'un coup, pas juste le film du dessus de la pile.
-function renderDiscoverCompactList() {
-  if (discoverQueue.length === 0) {
-    discoverActionsEl.style.display = 'none';
-    discoverStack.style.height = '';
-    if (discoverLoadFailed) {
-      discoverStack.innerHTML = `
-        <div class="error-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
-          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
-        </div>`;
-    } else {
-      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
-    }
-    return;
-  }
-  discoverActionsEl.style.display = 'none'; // boutons pass/like par ligne, plus besoin de la paire globale sous la pile
-  discoverStack.style.height = '';
-
-  discoverStack.innerHTML = `<div class="discover-compact-list">${discoverQueue.map(m => {
-    const year = m.release_date?.slice(0, 4) || '????';
-    const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
-    const posterUrl = tmdbImage(m.poster_path, 'w200');
-    return `
-      <div class="discover-compact-row" data-movie-id="${m.id}">
-        <div class="discover-compact-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
-          ${posterUrl
-            ? `<img class="discover-compact-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
-            : `<div class="discover-compact-poster-ph">${ICONS.clapper}</div>`}
-          <div class="discover-compact-info">
-            <div class="discover-compact-title">${escAttr(m.title)}</div>
-            <div class="discover-compact-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
-          </div>
-        </div>
-        <div class="discover-compact-actions">
-          <button type="button" class="discover-compact-btn pass" data-action="pass" aria-label="Passer ${escAttr(m.title)}" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          <button type="button" class="discover-compact-btn like" data-action="like" aria-label="Ajouter ${escAttr(m.title)} à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-        </div>
-      </div>`;
-  }).join('')}</div>`;
-}
-
-// Résout l'action d'UNE ligne de la liste compacte (pas forcément la
-// première de la file, contrairement à resolveDiscoverSwipe) : retrouve le
-// film par son id, applique la même action que le swipe, réaffiche la liste.
-function resolveDiscoverCompact(movieId, direction) {
-  const idx = discoverQueue.findIndex(m => String(m.id) === String(movieId));
-  if (idx === -1) return;
-  const [movie] = discoverQueue.splice(idx, 1);
-
-  if (direction === 'like') {
-    const year = movie.release_date?.slice(0, 4) || '????';
-    addToWatchlistFromTMDb(movie, year);
-    if (navigator.vibrate) navigator.vibrate(20);
-  } else {
-    markDiscoverPassed(movie.id);
-    if (navigator.vibrate) navigator.vibrate(15);
-  }
-  renderDiscoverCompactList();
-}
-
-discoverStack?.addEventListener('click', (e) => {
-  const row = e.target.closest('.discover-compact-row');
-  if (!row) return;
-  const actionBtn = e.target.closest('.discover-compact-btn');
-  if (actionBtn) {
-    resolveDiscoverCompact(row.dataset.movieId, actionBtn.dataset.action);
-    return;
-  }
-  if (e.target.closest('.discover-compact-open')) openMovieDetailSheet(row.dataset.movieId);
-});
-
-function attachSwipeHandlers(cardEl, movie) {
-  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
-  const TAP_MAX_MOVE = 6; // en dessous de ce seuil de mouvement, on considère que c'est un tap, pas un swipe
-  const stampLike = cardEl.querySelector('.discover-stamp.like');
-  const stampPass = cardEl.querySelector('.discover-stamp.pass');
-
-  function onStart(clientX, clientY) {
-    startX = clientX; startY = clientY; dx = 0; dy = 0; dragging = true;
-    cardEl.classList.add('dragging');
-    cardEl.classList.remove('snap-back', 'flying');
-  }
-  function onMove(clientX, clientY) {
-    if (!dragging) return;
-    dx = clientX - startX;
-    dy = clientY - startY;
-    cardEl.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx / 18}deg)`;
-    const progress = Math.min(1, Math.abs(dx) / DISCOVER_SWIPE_THRESHOLD);
-    if (dx > 0) { stampLike.style.opacity = progress; stampPass.style.opacity = 0; }
-    else if (dx < 0) { stampPass.style.opacity = progress; stampLike.style.opacity = 0; }
-  }
-  function onEnd() {
-    if (!dragging) return;
-    dragging = false;
-    cardEl.classList.remove('dragging');
-
-    if (Math.abs(dx) > DISCOVER_SWIPE_THRESHOLD) {
-      const direction = dx > 0 ? 'like' : 'pass';
-      cardEl.classList.add('flying');
-      cardEl.style.transform = `translate(${dx > 0 ? 900 : -900}px, ${dy * 0.4}px) rotate(${dx / 10}deg)`;
-      cardEl.style.opacity = '0';
-      setTimeout(() => resolveDiscoverSwipe(direction), 200);
-    } else if (Math.abs(dx) < TAP_MAX_MOVE && Math.abs(dy) < TAP_MAX_MOVE) {
-      // Tap (quasi aucun mouvement) : ouvre la fiche détaillée du film plutôt
-      // que de traiter ça comme un swipe avorté.
-      cardEl.style.transform = '';
-      stampLike.style.opacity = 0;
-      stampPass.style.opacity = 0;
-      if (movie) openMovieDetailSheet(movie.id);
-    } else {
-      cardEl.classList.add('snap-back');
-      cardEl.style.transform = '';
-      stampLike.style.opacity = 0;
-      stampPass.style.opacity = 0;
-    }
-  }
-
-  cardEl.addEventListener('touchstart', e => {
-    e.stopPropagation(); // évite que le geste remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
-    e.preventDefault(); // renfort : touch-action:none (CSS) suffit en théorie, mais certaines versions de
-                         // Safari/PWA en mode "installé" l'appliquent de façon incohérente — d'où le décalage
-                         // d'affichage rapporté pendant le swipe. preventDefault() est la garantie la plus sûre.
-    onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-  cardEl.addEventListener('touchmove', e => {
-    e.stopPropagation();
-    e.preventDefault();
-    onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: false });
-  cardEl.addEventListener('touchend', e => {
-    e.stopPropagation();
-    onEnd();
-  });
-
-  // Souris (pratique pour tester sur desktop / vercel dev)
-  cardEl.addEventListener('mousedown', e => {
-    e.preventDefault();
-    onStart(e.clientX, e.clientY);
-    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
-    const upHandler = () => {
-      onEnd();
-      document.removeEventListener('mousemove', moveHandler);
-      document.removeEventListener('mouseup', upHandler);
-    };
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('mouseup', upHandler);
-  });
-
-  // Clavier : accessibilité pour qui n'utilise pas le tactile/la souris
-  cardEl.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); resolveDiscoverSwipe('like'); }
-    else if (e.key === 'ArrowLeft') { e.preventDefault(); resolveDiscoverSwipe('pass'); }
-  });
-}
-
-discoverPassBtn.addEventListener('click', () => resolveDiscoverSwipe('pass'));
-discoverLikeBtn.addEventListener('click', () => resolveDiscoverSwipe('like'));
-discoverReloadBtn.addEventListener('click', () => loadDiscoverQueue());
-
-// ═══════════════════════════════════════════
-//  QUIZ DU JOUR
-// ═══════════════════════════════════════════
-// Une question par jour (stable toute la journée, comme Film du jour), tirée
-// d'Open Trivia DB (catégorie 11 = Entertainment: Film) — gratuit, sans clé,
-// jamais à court de contenu contrairement à une banque de questions écrites
-// à la main qu'il faudrait sans cesse renouveler. Un lot de 30 questions est
-// récupéré une fois puis mis en cache ; chaque jour, une question du lot est
-// choisie de façon déterministe (index = jour depuis l'epoch, modulo la
-// taille du lot), et le lot est renouvelé une fois entièrement parcouru.
-const QUIZ_BATCH_KEY = 'lbx_quiz_batch';
-const QUIZ_BATCH_FETCHED_DAY_KEY = 'lbx_quiz_batch_fetched_day';
-const QUIZ_STREAK_KEY = 'lbx_quiz_streak';
-const QUIZ_LAST_PLAYED_KEY = 'lbx_quiz_last_played_date';
-const QUIZ_LAST_RESULT_KEY = 'lbx_quiz_last_result';
-
-function quizDaysSinceEpoch() {
-  return Math.floor(Date.now() / 86400000);
-}
-function quizTodayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-function quizDecodeEntities(str) {
-  const el = document.createElement('textarea');
-  el.innerHTML = str;
-  return el.value;
-}
-// Mélange déterministe (seed = index du jour) : l'ordre des réponses reste
-// stable toute la journée, pas un nouveau tirage à chaque rafraîchissement.
-function quizSeededShuffle(arr, seed) {
-  const a = arr.slice();
-  let s = seed || 1;
-  for (let i = a.length - 1; i > 0; i--) {
-    s = (s * 9301 + 49297) % 233280;
-    const j = Math.floor((s / 233280) * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-async function ensureQuizBatch() {
-  let batch = [];
-  try { batch = JSON.parse(localStorage.getItem(QUIZ_BATCH_KEY)) || []; } catch {}
-  const fetchedDay = parseInt(localStorage.getItem(QUIZ_BATCH_FETCHED_DAY_KEY), 10) || 0;
-  const daysSinceFetch = quizDaysSinceEpoch() - fetchedDay;
-  const needsRefresh = batch.length === 0 || daysSinceFetch >= batch.length || daysSinceFetch >= 30;
-  if (!needsRefresh) return batch;
-
-  try {
-    const res = await fetch('https://opentdb.com/api.php?amount=30&category=11&type=multiple&encode=url3986');
-    const data = await res.json();
-    if (data.response_code === 0 && data.results?.length > 0) {
-      batch = data.results;
-      localStorage.setItem(QUIZ_BATCH_KEY, JSON.stringify(batch));
-      localStorage.setItem(QUIZ_BATCH_FETCHED_DAY_KEY, String(quizDaysSinceEpoch()));
-    }
-  } catch {
-    // Silencieux : la section reste cachée si indisponible (voir loadDailyQuiz), pas d'erreur gênante pour l'utilisateur.
-  }
-  return batch;
-}
-
-function getTodaysQuizQuestion(batch) {
-  if (!batch || batch.length === 0) return null;
-  const idx = quizDaysSinceEpoch() % batch.length;
-  const raw = batch[idx];
-  const question = quizDecodeEntities(decodeURIComponent(raw.question));
-  const correctAnswer = quizDecodeEntities(decodeURIComponent(raw.correct_answer));
-  const incorrectAnswers = raw.incorrect_answers.map(a => quizDecodeEntities(decodeURIComponent(a)));
-  const allAnswers = quizSeededShuffle([correctAnswer, ...incorrectAnswers], idx);
-  return { idx, question, correctAnswer, allAnswers };
-}
-
-function renderQuizStreakBadge() {
-  const badge = document.getElementById('quiz-streak-badge');
-  if (!badge) return;
-  const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
-  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
-}
-
-function renderQuizAnsweredState(card, q, lastResult) {
-  card.innerHTML = `
-    <div class="quiz-question">${escAttr(q.question)}</div>
-    <div class="quiz-answers">
-      ${q.allAnswers.map((a, i) => {
-        const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
-        const icon = a === q.correctAnswer ? ICONS.check : (a === lastResult.picked ? ICONS.close : '');
-        return `<button class="quiz-answer-btn ${cls}" disabled>
-          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
-          <span class="quiz-answer-text">${a}</span>
-          <span class="quiz-answer-icon" aria-hidden="true">${icon}</span>
-        </button>`;
-      }).join('')}
-    </div>
-    <div class="quiz-already-played">${lastResult.wasCorrect ? "✓ Bonne réponse aujourd'hui — reviens demain pour la suite." : `La bonne réponse était « ${q.correctAnswer} » — reviens demain.`}</div>
-  `;
-}
-
-async function loadDailyQuiz() {
-  const wrap = document.getElementById('quiz-wrap');
-  const card = document.getElementById('quiz-card');
-  if (!wrap || !card) return;
-
-  const batch = await ensureQuizBatch();
-  const q = getTodaysQuizQuestion(batch);
-  if (!q) return; // API indisponible pour l'instant : section reste cachée plutôt que d'afficher une erreur
-
-  wrap.style.display = 'block';
-  renderQuizStreakBadge();
-
-  const today = quizTodayStr();
-  const lastPlayed = localStorage.getItem(QUIZ_LAST_PLAYED_KEY);
-  let lastResult = null;
-  try { lastResult = JSON.parse(localStorage.getItem(QUIZ_LAST_RESULT_KEY)); } catch {}
-
-  if (lastPlayed === today && lastResult && lastResult.questionIdx === q.idx) {
-    renderQuizAnsweredState(card, q, lastResult);
-    return;
-  }
-
-  card.innerHTML = `
-    <div class="quiz-question">${escAttr(q.question)}</div>
-    <div class="quiz-answers">
-      ${q.allAnswers.map((a, i) => `
-        <button class="quiz-answer-btn" data-answer="${escAttr(a)}">
-          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
-          <span class="quiz-answer-text">${a}</span>
-          <span class="quiz-answer-icon" aria-hidden="true"></span>
-        </button>`).join('')}
-    </div>
-  `;
-
-  card.querySelectorAll('.quiz-answer-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const picked = btn.dataset.answer;
-      const wasCorrect = picked === q.correctAnswer;
-      card.querySelectorAll('.quiz-answer-btn').forEach(b => {
-        b.disabled = true;
-        // Icône en plus de la couleur (pas seulement une teinte de fond) :
-        // reste clair même pour qui distingue mal le vert du rouge.
-        if (b.dataset.answer === q.correctAnswer) {
-          b.classList.add('correct');
-          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.check;
-        } else if (b === btn) {
-          b.classList.add('wrong');
-          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.close;
-        }
-      });
-
-      // Série : hier → continue ; sinon (jamais joué, ou pause d'un jour ou
-      // plus) → repart de 1. Une mauvaise réponse casse la série (compte
-      // vraiment y répondre juste, contrairement à la série de notation qui
-      // ne demande que d'être actif).
-      const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      const newStreak = wasCorrect ? (lastPlayed === yesterday ? streak + 1 : 1) : 0;
-
-      localStorage.setItem(QUIZ_STREAK_KEY, String(newStreak));
-      localStorage.setItem(QUIZ_LAST_PLAYED_KEY, today);
-      localStorage.setItem(QUIZ_LAST_RESULT_KEY, JSON.stringify({ questionIdx: q.idx, wasCorrect, picked }));
-      renderQuizStreakBadge();
-      if (navigator.vibrate) navigator.vibrate(wasCorrect ? 20 : [20, 40, 20]);
-
-      const resultEl = document.createElement('div');
-      resultEl.className = 'quiz-result';
-      resultEl.textContent = wasCorrect ? 'Bonne réponse ! 🎉' : `La bonne réponse était « ${q.correctAnswer} ».`;
-      card.appendChild(resultEl);
-    });
-  });
-}
-
-// Reprise après panne réseau des suggestions : délégué au niveau racine.
-discoverStack?.addEventListener('click', (e) => {
-  if (!e.target.closest('.error-retry-btn[data-retry-discover]')) return;
-  discoverLoadFailed = false;
-  loadDiscoverQueue();
-});
-
-// ═══════════════════════════════════════════
-//  "PARCOURIR" — sous-onglets Par thème / Classiques (Ludex 2.0 §06)
-// ═══════════════════════════════════════════
-// Bascule sur classList uniquement (jamais .style.display) : ces deux
-// panneaux sont aussi manipulés en .style.display par 00e-feature-flags.js
-// (activation/désactivation de fonctionnalité) — voir le commentaire dans
-// styles.css (.browse-panel) pour pourquoi ça évite tout conflit.
-const browseTabTheme = document.getElementById('browse-tab-theme');
-const browseTabClassics = document.getElementById('browse-tab-classics');
-const browsePanelTheme = document.getElementById('theme-explorer-wrap');
-const browsePanelClassics = document.getElementById('curated-lists-shortcut-wrap');
-function setBrowseTab(which) {
-  const themeActive = which === 'theme';
-  browseTabTheme?.classList.toggle('active', themeActive);
-  browseTabClassics?.classList.toggle('active', !themeActive);
-  browsePanelTheme?.classList.toggle('active', themeActive);
-  browsePanelClassics?.classList.toggle('active', !themeActive);
-}
-browseTabTheme?.addEventListener('click', () => setBrowseTab('theme'));
-browseTabClassics?.addEventListener('click', () => setBrowseTab('classics'));
 
 // ═══════════════════════════════════════════
 //  FICHE FILM DÉTAILLÉE
@@ -9273,177 +8173,6 @@ async function openThemeSheet(themeId, themeName) {
 }
 
 renderThemeChips();
-
-// ═══════════════════════════════════════════
-//  ANGLE MORT CIBLÉ (Découvrir)
-// ═══════════════════════════════════════════
-// "Tu adores [réalisateur], il te reste N films à découvrir" — transforme
-// le % de filmographie déjà affiché sur la fiche personne (une simple
-// donnée passive) en incitation concrète, dans Découvrir. Le vrai défi
-// technique : l'historique stocke le réalisateur en texte simple, pas en
-// identifiant TMDb — il faut faire le lien film par film (une fois, mis en
-// cache définitivement, jamais recalculé) avant de pouvoir agréger quoi
-// que ce soit par créateur.
-
-const CREATOR_MATCH_CACHE_KEY = 'lbx_creator_match_cache';
-const BLIND_SPOTS_CACHE_KEY = 'lbx_blind_spots';
-const BLIND_SPOTS_CACHE_DAYS = 7; // les gouts recents peuvent changer le classement, contrairement aux listes figées
-
-function loadCreatorMatchCache() {
-  try { return JSON.parse(localStorage.getItem(CREATOR_MATCH_CACHE_KEY) || '{}'); } catch { return {}; }
-}
-function saveCreatorMatchCache(map) {
-  localStorage.setItem(CREATOR_MATCH_CACHE_KEY, JSON.stringify(map));
-}
-
-// Une entrée par film déjà noté : { directorId, directorName } ou
-// { directorId: null } si le film n'a pas de réalisateur crédité (rare,
-// mais évite de re-essayer indéfiniment le même film sans résultat).
-async function resolveOneFilmDirector(tmdbId) {
-  try {
-    const res = await fetch(`/api/search?id=${tmdbId}`);
-    const data = await readApiJson(res);
-    const director = data.credits?.crew?.find(c => c.job === 'Director');
-    return director ? { directorId: director.id, directorName: director.name } : { directorId: null };
-  } catch {
-    return null; // erreur reseau : on ne met PAS en cache, pour retenter au prochain passage
-  }
-}
-
-let creatorMatchInProgress = false;
-// Traite par lots (respecte la limite de débit du proxy, comme la
-// résolution de la liste "Tous les temps") — priorise les films les MIEUX
-// notés d'abord : plus susceptibles de faire remonter un créateur pertinent
-// rapidement, plutôt que de traiter l'historique dans un ordre arbitraire.
-async function ensureCreatorMatchesResolved(onProgress) {
-  if (creatorMatchInProgress) return;
-  const history = loadHistory().filter(h => h.tmdbId);
-  const cache = loadCreatorMatchCache();
-  const missing = history
-    .filter(h => !(h.tmdbId in cache))
-    .sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
-  if (missing.length === 0) return;
-  creatorMatchInProgress = true;
-
-  const BATCH_SIZE = 8;
-  for (let i = 0; i < missing.length; i += BATCH_SIZE) {
-    const batch = missing.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(batch.map(h => resolveOneFilmDirector(h.tmdbId)));
-    batch.forEach((h, idx) => {
-      if (results[idx]) cache[h.tmdbId] = results[idx];
-    });
-    saveCreatorMatchCache(cache);
-    if (onProgress) onProgress();
-    if (i + BATCH_SIZE < missing.length) await new Promise(r => setTimeout(r, 1500));
-  }
-  creatorMatchInProgress = false;
-}
-
-// Agrège les notes par réalisateur à partir du cache de correspondance déjà
-// résolu — ne déclenche AUCUN appel réseau (utilise ce qui est déjà là,
-// même partiel). Minimum 2 films notés pour compter (une seule note ne dit
-// pas grand-chose sur un "créateur préféré"), triés par note moyenne
-// décroissante.
-function computeTopCreators(minFilms = 2, topN = 3) {
-  const history = loadHistory().filter(h => h.tmdbId);
-  const cache = loadCreatorMatchCache();
-  const seenIds = new Set(history.map(h => String(h.tmdbId)));
-  const byDirector = {};
-
-  history.forEach(h => {
-    const match = cache[h.tmdbId];
-    if (!match || !match.directorId) return;
-    const score = parseFloat(h.score);
-    if (!score) return;
-    if (!byDirector[match.directorId]) {
-      byDirector[match.directorId] = { id: match.directorId, name: match.directorName, scores: [], seenFilmIds: new Set() };
-    }
-    byDirector[match.directorId].scores.push(score);
-    byDirector[match.directorId].seenFilmIds.add(String(h.tmdbId));
-  });
-
-  return Object.values(byDirector)
-    .filter(d => d.scores.length >= minFilms)
-    .map(d => ({ ...d, avg: d.scores.reduce((a, b) => a + b, 0) / d.scores.length }))
-    .sort((a, b) => b.avg - a.avg)
-    .slice(0, topN);
-}
-
-async function fetchCreatorBlindSpot(directorId) {
-  try {
-    const res = await fetch(`/api/search?personId=${directorId}`);
-    const data = await readApiJson(res);
-    if (!data || !data.name) return null;
-    const films = buildPersonFilmography(data);
-    const { seenCount, total } = computeSeenPercentage(films);
-    return { unseenCount: total - seenCount, total };
-  } catch {
-    return null;
-  }
-}
-
-function loadBlindSpotsCache() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(BLIND_SPOTS_CACHE_KEY) || 'null');
-    if (!raw) return null;
-    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
-    if (ageDays > BLIND_SPOTS_CACHE_DAYS) return null;
-    return raw.creators;
-  } catch { return null; }
-}
-
-async function renderBlindSpotsSection() {
-  const wrap = document.getElementById('blind-spots-wrap');
-  const container = document.getElementById('blind-spots-container');
-  if (!wrap || !container) return;
-
-  const cached = loadBlindSpotsCache();
-  if (cached) {
-    renderBlindSpotsCards(cached);
-    // Continue quand même la résolution en tâche de fond pour affiner au
-    // fil du temps (nouveaux films notés depuis) — sans bloquer l'affichage
-    // déjà en cache.
-    ensureCreatorMatchesResolved();
-    return;
-  }
-
-  // Première fois (ou cache expiré) : résout ce qui manque avant de calculer
-  // le classement — sinon les tout premiers résultats seraient basés sur un
-  // historique quasi vide.
-  await ensureCreatorMatchesResolved();
-  const topCreators = computeTopCreators();
-  if (topCreators.length === 0) return; // pas assez de donnees encore (historique trop court, ou pas assez de recoupements) : section reste masquee
-
-  const withBlindSpots = await Promise.all(topCreators.map(async (c) => {
-    const spot = await fetchCreatorBlindSpot(c.id);
-    return spot && spot.unseenCount > 0 ? { ...c, ...spot } : null;
-  }));
-  const creators = withBlindSpots.filter(Boolean);
-  localStorage.setItem(BLIND_SPOTS_CACHE_KEY, JSON.stringify({ creators, fetchedAt: Date.now() }));
-  renderBlindSpotsCards(creators);
-}
-
-function renderBlindSpotsCards(creators) {
-  const wrap = document.getElementById('blind-spots-wrap');
-  const container = document.getElementById('blind-spots-container');
-  if (creators.length === 0) return; // reste masque (display:none par defaut)
-
-  container.innerHTML = creators.map(c => `
-    <button type="button" class="blind-spot-card" data-person-id="${c.id}" data-person-name="${escAttr(c.name)}">
-      <div class="blind-spot-text">
-        <span class="blind-spot-highlight">Tu adores ${escAttr(c.name)}</span>
-        <span class="blind-spot-detail">${c.avg.toFixed(1)}/10 en moyenne sur ${c.scores.length} film${c.scores.length > 1 ? 's' : ''} — il te reste ${c.unseenCount} film${c.unseenCount > 1 ? 's' : ''} à découvrir</span>
-      </div>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon blind-spot-arrow"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
-  `).join('');
-
-  container.querySelectorAll('.blind-spot-card').forEach(card => {
-    card.addEventListener('click', () => openPersonDetailSheet(card.dataset.personId, card.dataset.personName));
-  });
-
-  wrap.style.display = 'block';
-}
 
 // ═══════════════════════════════════════════
 //  MODULE ANALYSE DE FILM
