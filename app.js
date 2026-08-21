@@ -6417,14 +6417,34 @@ async function fetchClassiques() {
 }
 
 async function fetchInternational() {
-  // "Cinéma international" = un pays au hasard parmi une sélection connue
-  // pour son cinéma, à chaque chargement — évite de montrer toujours le
-  // même pays comme le ferait un choix fixe.
-  const countries = ['KR', 'JP', 'FR', 'IT', 'IN', 'ES', 'DE', 'MX'];
-  const cc = countries[Math.floor(Math.random() * countries.length)];
-  const res = await fetch(`/api/search?countryCode=${cc}&mediaType=${discoverMediaType}`);
-  const data = await res.json();
-  return (data.results || []).slice(0, 15).map(normalizeItem);
+  // "Cinéma international" = plusieurs pays mélangés dans le MÊME
+  // chargement (pas un seul pays par session) — un vrai brassage de
+  // cultures/continents plutôt qu'une monoculture qui varie juste d'une
+  // fois sur l'autre. Liste volontairement étalée sur plusieurs
+  // continents (Asie, Europe, Amérique latine, Afrique, Moyen-Orient).
+  const allCountries = ['KR', 'JP', 'FR', 'IT', 'IN', 'ES', 'DE', 'MX', 'BR', 'SE', 'NG', 'IR', 'TH', 'PL', 'EG'];
+  // 5 pays tirés au hasard parmi la liste, un ordre différent à chaque
+  // chargement (Fisher-Yates sur une copie, pas de biais vers le début du
+  // tableau contrairement à un simple .sort(Math.random())).
+  const shuffledCountries = [...allCountries];
+  for (let i = shuffledCountries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffledCountries[i], shuffledCountries[j]] = [shuffledCountries[j], shuffledCountries[i]];
+  }
+  const picked = shuffledCountries.slice(0, 5);
+
+  const results = await Promise.allSettled(
+    picked.map(cc => fetch(`/api/search?countryCode=${cc}&mediaType=${discoverMediaType}`).then(r => r.json()))
+  );
+  // 3 films par pays plutôt que de vider un pays avant de passer au
+  // suivant : garantit un vrai mélange dans les 15 premiers plutôt qu'un
+  // classement qui recolle les pays par blocs.
+  const perCountry = results.map(r => (r.status === 'fulfilled' ? (r.value.results || []).slice(0, 3) : []));
+  const merged = [];
+  for (let i = 0; i < 3; i++) {
+    perCountry.forEach(list => { if (list[i]) merged.push(list[i]); });
+  }
+  return merged.slice(0, 15).map(normalizeItem);
 }
 
 async function fetchHistorique() {
