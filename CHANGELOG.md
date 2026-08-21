@@ -13,6 +13,764 @@ fonctionnalité et son test associé pour qui veut l'historique complet.
 ## [Non publié]
 
 ### Corrigé
+- **Phase 6 du plan d'exécution de l'audit expert — vérifications
+  finales.** La phase la plus courte sur le papier, mais qui a débusqué
+  le bug le plus subtil de tout ce travail.
+  - **Un vrai bug d'interaction préexistant trouvé par le balayage
+    final, invisible jusqu'ici** : une diapositive de la modale
+    d'accueil (`.onboarding-slide.active`) recevait `pointer-events:
+    auto` dès l'initialisation de la page — pas seulement à l'ouverture
+    réelle de la modale, puisque la première diapositive est marquée
+    "active" par défaut indépendamment de la classe `.open` du
+    conteneur. Résultat : un élément totalement invisible (le
+    conteneur parent a `opacity: 0` tant que la modale n'est pas
+    ouverte) mais capable d'intercepter des clics ailleurs sur la
+    page, à l'endroit précis où cette diapositive se trouve
+    positionnée. Jamais détecté avant car cet endroit précis ne
+    chevauchait aucun bouton testé jusqu'ici — la Phase 4 (largeur
+    desktop) est ce qui a fait apparaître le chevauchement avec le
+    bouton "Noter" de la barre de navigation, sur le thème Cinéphile en
+    particulier. Corrigé en limitant `pointer-events: auto` à la
+    diapositive active UNIQUEMENT quand la modale est réellement
+    ouverte. Vérifié dans les deux sens : la modale reste inerte quand
+    fermée, et le vrai parcours d'accueil pour un nouvel utilisateur
+    fonctionne toujours normalement.
+  - **2 vrais oublis de `loading="lazy"` trouvés et corrigés** (carte
+    de série dans l'Historique, carte du widget "En cours") — des
+    éléments de liste comparables à leurs équivalents films, qui eux
+    l'avaient déjà. Une 3ᵉ image sans `loading="lazy"` (l'affiche à
+    deviner du mini-jeu Découvrir) vérifiée et volontairement laissée
+    telle quelle : c'est le contenu principal et immédiat de son
+    écran, un cas d'exception légitime plutôt qu'un oubli.
+  - **Taille du bundle vérifiée après les 5 phases précédentes** : 272
+    Ko → 276 Ko de JS (+1,5 %), 128,5 Ko → 132 Ko de CSS (+3 %) — une
+    croissance proportionnée à ce qui a été ajouté (8 icônes, une
+    media query desktop, plusieurs fonctions partagées), pas un signe
+    de duplication accidentelle.
+  - **Balayage final** : les 5 écrans principaux × 6 thèmes × mobile et
+    desktop (12 combinaisons), zéro violation d'accessibilité sérieuse
+    partout, confirmé après correction du bug ci-dessus.
+
+### Modifié
+- **Phase 5 du plan d'exécution de l'audit expert — extraction de
+  code.** Le point le plus mécanique du plan, mais avec le risque le
+  plus élevé de casse silencieuse si mal fait.
+  - **Tâche 5.1 (composant carte média partagé) volontairement
+    abandonnée après vérification, pas ignorée** : le plan proposait une
+    fonction `renderMediaCard()` partagée entre 4 endroits (carte film,
+    carte série, carte Découvrir, résultat de recherche). En comparant
+    réellement leur structure HTML avant de coder quoi que ce soit, ces
+    4 cartes se sont révélées trop différentes pour une vraie
+    abstraction commune (ligne riche avec critique dépliable vs agrégat
+    de saisons vs carte pleine largeur façon Tinder vs simple ligne de
+    résultat) — les forcer ensemble aurait créé plus de branches
+    conditionnelles que ça n'en aurait simplifié, exactement ce que
+    l'audit demandait d'éviter.
+  - **`06-history.js` (1698 lignes, 6 responsabilités mêlées) scindé en
+    4 fichiers** : `06a-history-list.js` (liste, recherche, tri,
+    filtre), `06b-history-actions.js` (toast, feuille d'action),
+    `06c-profile-stats.js` (statistiques, dashboard, `renderAll()`),
+    `06d-profile-share-cards.js` (cartes à partager, dessin canvas,
+    Wrapped). Découpage fait par tranches de lignes vérifiées une par
+    une (pas par comptage d'accolades, peu fiable avec des littéraux de
+    gabarit imbriqués), équilibre des accolades confirmé pour chaque
+    morceau avant assemblage.
+  - **Un vrai échec de test trouvé en régressant, pas ignoré** : 3 tests
+    échouaient sur un défaut de contraste de l'écran de démarrage —
+    tracé jusqu'à un délai d'attente de test à 500ms, inférieur à la
+    durée minimale connue de 1200ms de cet écran. Un piège déjà
+    rencontré et corrigé ailleurs dans ce projet ; celui-ci était resté
+    non détecté jusqu'ici, probablement "chanceux" sur le timing exact
+    jusqu'à ce que le découpage déplace légèrement l'ordre de
+    concaténation. Corrigé dans le test, pas dans l'application.
+  - **Tâche 5.3 (documenter la correspondance icône → usage)** :
+    déjà faite pendant la Phase 3 sans que ce soit noté comme telle à
+    l'époque — rien à ajouter.
+  - Validé par régression complète sur plus de 100 tests E2E existants
+    plutôt que par de nouveaux tests dédiés : un découpage de fichier ne
+    change aucun comportement observable, c'est justement le but.
+
+### Ajouté
+- **Phase 4 du plan d'exécution de l'audit expert — responsive
+  desktop.** Le point le plus lourd et le plus risqué du plan.
+  - **Un vrai conflit trouvé avant de commencer, pas ignoré** : un
+    commentaire dans le code a révélé qu'une mise en page desktop à deux
+    colonnes existait avant, et avait été explicitement retirée à la
+    demande de l'utilisateur ("un système d'onglets comme sur
+    téléphone" plutôt que deux colonnes). Le plan original proposait
+    justement de réintroduire ce type de scission — confirmé auprès de
+    l'utilisateur avant de continuer plutôt que de défaire silencieusement
+    un choix produit conscient. Décision retenue : garder le principe
+    "un seul onglet à la fois", mais faire un usage réel de l'espace
+    disponible *à l'intérieur* de chaque onglet plutôt que de scinder
+    l'écran.
+  - **Conteneur élargi à 1100px** à partir de 1024px (contre 800px
+    avant, plafonné à toutes les tailles).
+  - **Historique / À voir en disposition "masonry"** (colonnes CSS)
+    plutôt qu'une grille classique — les cartes ont des hauteurs
+    variables (avec ou sans critique écrite), une vraie grille aurait
+    laissé des trous inégaux entre colonnes. Le glissement, qui
+    fonctionne en coordonnées de pixels bruts, reste inchangé et
+    fonctionnel dans cette disposition — vérifié explicitement.
+  - **Découvrir** : puces de thème sur 3 colonnes.
+  - **Profil** : le tableau de bord passe enfin réellement à 2 colonnes
+    — la règle CSS existait déjà, elle manquait juste de place pour
+    s'exprimer tant que le conteneur restait plafonné à 800px.
+  - **Noter : largeur plafonnée à part**, trouvé en vérifiant
+    visuellement plutôt que supposé correct — le formulaire complet
+    s'étirait sur toute la largeur du conteneur élargi, rendant les
+    curseurs inutilement longs à parcourir du regard sans gain de
+    lisibilité. Recentré à une largeur raisonnable, indépendamment de
+    l'élargissement des autres écrans.
+  - **Mobile entièrement revérifié inchangé** après tous ces
+    changements — 1 colonne, conteneur à 800px, comportement identique
+    à avant, confirmé par test plutôt que supposé.
+
+- **Phase 3 du plan d'exécution de l'audit expert — UI.**
+  - **Icônes emoji remplacées par du SVG cohérent** (Découvrir, "Explorer
+    par thème") — 8 nouvelles icônes ajoutées à la bibliothèque partagée,
+    dans le même style trait fin que le reste de l'app. Trois variantes
+    dessinées pour "Vengeance" avant de choisir la plus lisible (la
+    première ressemblait trop à une épingle) — comparées visuellement
+    dans une page de test isolée avant d'être câblées dans l'app.
+  - **Composant pilule unifié** (`.ctx-tag`, `.filter-btn`, `.genre-chip`)
+    — base commune factorisée pour les 3 pilules réellement similaires ;
+    `.weight-badge` (une 4ᵉ pilule de l'app) volontairement laissée à
+    part, car structurellement différente (non cliquable, police
+    différente, pas de transition) — pas de fausse unification.
+  - **Titres de section alignés sur le même token** — en vérifiant les 4
+    classes de titre avant de les migrer, elles se sont révélées être de
+    petites étiquettes en majuscules (0.70-0.75rem), pas de grands
+    titres. **Écart assumé par rapport au plan écrit**, qui suggérait
+    `--text-lg` (1.25rem) : appliqué tel quel, cela aurait cassé le style
+    de petites majuscules déjà établi. Alignées sur `--text-xs`
+    (0.72rem, déjà posé en Phase 1) à la place, qui correspondait déjà
+    exactement à l'une des 4.
+  - **Fonction `renderEmptyState()` partagée** — les 3 endroits qui
+    utilisaient un texte stylé à la main (`Top Réalisateurs`,
+    `Distribution des notes`) migrés vers cette fonction. Les états vides
+    déjà riches et fonctionnels (Historique, À voir) non retouchés.
+
+- **Phase 2 du plan d'exécution de l'audit expert — UX.**
+  - **Espace vide de "Suggestions pour toi" (Découvrir)** — le
+    conteneur réservait jusqu'à 580px pour afficher une seule phrase
+    d'aide, poussant "Duels" hors d'écran sans raison. **Un vrai piège
+    CSS trouvé en corrigeant** : `height: auto` semblait la solution
+    évidente (même logique que le radar du Profil, déjà corrigé), mais
+    ne fonctionne pas ici — `.discover-empty` est en `position:
+    absolute; inset: 0`, et un enfant en position absolue ne contribue
+    pas à la hauteur automatique de son parent. Vérifié concrètement :
+    le conteneur tombait à 0px avec `auto`, le message devenait
+    invisible malgré un `isVisible()` qui répondait pourtant vrai.
+    Corrigé avec une hauteur fixe modeste (120px) à la place, avec un
+    commentaire dans le code pour éviter qu'un futur passage ne
+    retente `auto` et retombe dans le même piège.
+  - **Transition en fondu au changement d'onglet** (Films/Séries dans
+    Historique et Profil, Film/Série dans Noter) — un léger fondu
+    plutôt qu'un changement instantané. Une fonction partagée
+    (`fadeSwitchDisplay`) couvre les deux cas qui basculent entre deux
+    éléments mutuellement exclusifs ; le cas du Profil, structurellement
+    différent (un seul conteneur redessiné sur place, pas deux listes
+    séparées), reçoit un traitement dédié plutôt que d'être forcé dans
+    la même fonction.
+
+- **Phase 1 du plan d'exécution de l'audit expert — fondations du
+  système de design.** Rien de visible pour l'utilisateur dans cette
+  phase (c'était volontaire, voir le plan) — le travail prépare les
+  phases suivantes.
+  - **Tokens d'espacement et typographiques** (`--space-1` à
+    `--space-6`, `--text-xs` à `--text-2xl`) posés dans le bloc `:root`
+    partagé — pas encore consommés par les composants existants, qui
+    gardent leurs valeurs actuelles. **Écart assumé par rapport au plan
+    écrit** : celui-ci suggérait de dupliquer ces tokens dans les 6
+    blocs de thème (comme `--radius`/`--radius-sm`) ; en creusant, un
+    bloc `:root` partagé existait déjà pour les tokens qui n'ont pas
+    besoin de varier par thème (durées, ombres) — ces nouveaux tokens y
+    ont été rattachés à la place, plus cohérent avec la convention déjà
+    en place dans le code que ce que le plan décrivait au mot près.
+  - **`--radius-pill`** introduit avec le même raisonnement, et les 23
+    valeurs `20px`/`999px` codées en dur dans `styles.css` remplacées
+    par ce token. Vérifié visuellement sur les 6 thèmes, Film Noir en
+    particulier (angles francs partout ailleurs) : la pilule reste bien
+    ronde, rien d'autre n'a changé.
+  - **Fonction `tmdbImage(path, size)` centralisée** (`03-foundation.js`)
+    remplaçant les constructions manuelles d'URL d'affiche TMDb. Un
+    audit en avait compté ~33 ; la migration fichier par fichier en a
+    trouvé 36 au passage (logos de plateformes de streaming non
+    comptés initialement). Les 7 fichiers concernés migrés un par un,
+    avec validation après chacun plutôt qu'en bloc.
+
+### Corrigé
+- **Profil : les points laissés de côté lors de l'audit UX/design
+  précédent, traités sur demande explicite.**
+  - **Radar "L'ADN de tes notes"** réservait 160px de hauteur même
+    sans aucune note en mode Détaillé, avec juste une phrase au milieu
+    d'un grand vide. Se replie maintenant à moins de 20px quand il n'y
+    a rien à afficher, et retrouve sa taille normale dès que de vraies
+    notes détaillées existent — vérifié dans les deux sens.
+  - **"Distribution des notes"** affichait 10 lignes à zéro sans aucun
+    message, alors que "Top Réalisateurs" juste à côté gérait très bien
+    ce même cas avec une phrase d'aide — la même incohérence existait
+    aussi côté séries. Un vrai message remplace maintenant les lignes
+    vides, dans les deux zones.
+  - **Bouton "Télécharger l'image"** restait actif alors que la carte
+    affichait "Note quelques films pour la débloquer" — rien à
+    télécharger, mais rien ne le signalait. Désactivé tant que la carte
+    est verrouillée, avec une explication au survol.
+  - **Précision apportée en creusant** : l'espace apparemment vide de
+    la heatmap "Ton année de cinéma" n'était pas un défaut à corriger —
+    une grille calendaire affiche normalement toutes ses cases même
+    sans activité (comme sur GitHub ou Letterboxd) ; forcer un
+    changement là aurait été artificiel plutôt qu'utile.
+  - Résultat mesuré : l'écran Profil totalement vide passe de 8355px à
+    7376px de hauteur (-979px), sans rien retirer d'utile.
+
+- **Audit UX/design complet, sur demande explicite (hors Profil, exclu à
+  la demande de l'utilisateur) :**
+  - **Cibles tactiles trop petites** — un manque signalé il y a longtemps
+    mais jamais traité jusqu'ici, confirmé avec de vraies mesures.
+    Étiquettes de contexte (23px → 33px de hauteur), filtres de tri
+    (24px → 34px), boutons pas-à-pas et bouton réglages (zone tactile
+    invisible étendue, la même technique déjà éprouvée ailleurs dans
+    l'app). Chaque correction vérifiée par un clic délibérément décalé
+    de plusieurs pixels du bouton visuel, pas juste une mesure statique.
+    - **Une bonne surprise en creusant** : le bouton Modifier/Supprimer
+      de l'Historique, initialement signalé comme trop petit, avait en
+      réalité déjà cette même zone tactile étendue en place — vérifié
+      en cliquant à 8px du bouton visuel, la suppression s'est bien
+      déclenchée. Rien touché sur cet élément pour ne pas casser ce qui
+      fonctionnait déjà.
+  - **Filtres de tri visibles même sans rien à trier** — Historique
+    cache maintenant ses boutons "Récents/Mieux notés..." à vide, côté
+    film et série, comme À voir le fait déjà pour ses propres contrôles.
+  - **Coquille de contenu** : le champ de recherche film suggérait
+    "Twin Peaks" comme exemple de film — une série, déjà utilisée comme
+    exemple côté séries. Remplacé par un vrai exemple de film.
+  - **Champ de date décalé visuellement** du reste de l'interface,
+    pourtant très soignée par ailleurs — `color-scheme` ajouté à chaque
+    thème pour que le sélecteur natif du navigateur s'accorde à
+    l'ambiance claire ou sombre plutôt que de rester figé.
+  - **Points volontairement laissés de côté**, propres au Profil (hors
+    du périmètre demandé) : la longueur de l'écran vide (~8000px),
+    l'espace vide du radar et de la heatmap sans données, l'incohérence
+    entre sections sur la gestion des cas vides, et le bouton
+    "Télécharger l'image" actif sans rien à télécharger.
+
+- **Audit complet de l'application (données/accessibilité), sur demande
+  explicite — 4 vrais problèmes trouvés et corrigés :**
+  - 🔴 **Les séries étaient absentes de l'export manuel ET de la
+    synchronisation cloud** — un vrai risque de perte de données (vider
+    le navigateur ou changer d'appareil effaçait tout le suivi de
+    séries, sans filet, alors que les films étaient protégés).
+    L'export inclut maintenant les séries, avec un ancien format de
+    sauvegarde qui reste lisible (rétrocompatibilité). La
+    synchronisation cloud fusionne désormais aussi les séries entre
+    appareils — à deux niveaux (série entière, puis saison individuelle
+    de chacune), avec ses propres traces de suppression respectées
+    séparément à chaque niveau, pour qu'une suppression sur un appareil
+    ne réapparaisse pas au prochain passage d'un autre. Une fonction de
+    fusion pure dédiée, testée avec 7 scénarios distincts.
+  - 🟠 **Bouton imbriqué dans un `role="button"` sur les cartes de la
+    watchlist** (onglet À voir) — le même défaut déjà corrigé deux fois
+    ailleurs dans ce projet, mais jamais détecté ici. Restructuré sans
+    toucher au geste de glissement existant ni au routage de clic déjà
+    en place.
+  - 🟡 **Code mort nettoyé** — une fonction JS jamais appelée, et une
+    vingtaine de classes CSS jamais utilisées (dont plusieurs restes
+    directs de l'ancienne grille d'épisodes retirée de Noter il y a
+    deux livraisons).
+  - **Une vraie régression trouvée en nettoyant, pas juste du
+    ménage** : un correctif de contraste pour le thème Carnet pointait
+    vers un nom de classe qui n'existait plus (`tv-continue-validate-btn`,
+    renommé en `tv-continue-check-btn` lors de la refonte du widget) —
+    il s'était donc arrêté silencieusement de s'appliquer. Confirmé
+    mathématiquement (4.02:1, sous le seuil) avant de le rattacher au
+    bon nom.
+  - **Une fausse alerte écartée avant d'être signalée comme un bug** :
+    en testant le bouton "Retirer" de la watchlist, une vérification
+    semblait montrer que la suppression ne fonctionnait pas — creusé
+    jusqu'à trouver que c'était le test lui-même qui vérifiait l'ancienne
+    clé de stockage (`lbx_watchlist`), migrée depuis longtemps vers
+    `lbx_watchlist_default` et jamais relue par l'app ensuite. La
+    fonctionnalité elle-même fonctionne correctement — corrigé le test,
+    pas l'application.
+
+- **Ombre du bouton "Noter" — vraie correction cette fois.** Le
+  correctif de la session précédente (flou réduit de 14px à 8px) n'a
+  pas suffi — l'utilisateur a confirmé que le problème persistait.
+  En zoomant sur les 6 thèmes, l'effet s'est révélé nettement plus
+  sévère sur les thèmes à fond clair (Carnet en premier lieu) qu'estimé
+  la première fois : une vraie tache sombre rectangulaire, pas juste un
+  léger débordement. Le flou est réduit une seconde fois, plus
+  significativement (8px → 4px), avec l'opacité aussi abaissée (0.35 →
+  0.25) — confirmé par capture d'écran zoomée sur les 6 thèmes cette
+  fois, pas un seul. Un test permanent verrouille maintenant le flou et
+  l'opacité dans une plage raisonnable, pour qu'un futur ajustement ne
+  puisse pas re-dériver silencieusement vers une valeur trop large sans
+  qu'un test échoue.
+  - **Un vrai bug de test préexistant trouvé au passage, sans rapport
+    avec cette ombre** : un délai de 400ms avant une vérification
+    d'accessibilité s'est révélé trop court face à la durée minimale
+    volontaire de l'écran de démarrage (1200ms) — corrigé.
+
+- **Glissement sur la carte de série entière (Historique)** — jusqu'ici
+  le glissement n'existait que sur les lignes de saison, une fois la
+  liste dépliée ; il fallait donc déplier avant de pouvoir supprimer.
+  Glisser directement sur l'en-tête d'une carte de série (affiche +
+  titre, sans rien déplier) révèle "Supprimer" et confirme la
+  suppression de toute la série — réutilise la même fenêtre de
+  confirmation que le bouton corbeille déjà visible, pas un second
+  chemin de suppression séparé. Uniquement vers la gauche : contrairement
+  à une saison, une série entière n'a pas d'action "Modifier" unique
+  vers laquelle glisser à droite.
+  - Contrôleur de glissement séparé de celui des saisons (comme pour le
+    choix déjà fait entre films et séries) : n'agit que sur l'en-tête de
+    la carte, jamais sur la liste de saisons dépliée juste en dessous,
+    pour qu'aucun conflit ne soit possible entre les deux niveaux de
+    glissement — vérifié explicitement.
+
+### Modifié
+- **Widget "En cours" : cartes redessinées, repli possible.** Rond à
+  cocher sur la partie droite du cadre (remplace le bouton "Valider
+  l'épisode" pleine largeur), petites icônes pause/retirer en coin,
+  cadres légèrement plus espacés, hauteur stable quelle que soit la
+  série (le titre d'épisode est plafonné à 2 lignes). **Retirer une
+  carte** ne touche à aucune donnée — elle peut revenir au prochain
+  rendu. **Mettre en pause** pose un indicateur persistant qui exclut
+  la saison du widget jusqu'à reprise depuis sa fiche (repris là plutôt
+  que depuis une carte qui ne serait plus affichée). Toute la section
+  peut aussi se replier/déplier, préférence mémorisée d'une visite à
+  l'autre.
+
+- **Chercher une série dans Noter ouvre directement sa fiche détaillée**
+  — les puces de choix de saison ont disparu de Noter, remplacées par la
+  fiche complète (en-tête, casting, synopsis, progression par saison).
+  Une pastille "Commencer la série" y apparaît pour toute série jamais
+  suivie : elle démarre directement la Saison 1 (sans repasser par
+  Noter), l'ajoute au widget "En cours", et recharge la fiche sur place
+  pour montrer la progression qui vient de démarrer.
+
+- **Ombre du bouton "Noter" de la barre de navigation resserrée** — le
+  flou et l'opacité de l'ombre portée créaient un effet d'encadrement
+  visible sur les deux onglets voisins ("À voir", "Découvrir").
+  Confirmé par capture d'écran avant/après.
+
+- **Refonte du suivi épisode par épisode : la grille complète déménage
+  entièrement dans la fiche série, l'onglet Noter devient plus léger.**
+  Choisir une saison dans Noter (recherche manuelle) ne montre plus la
+  grille à cocher — trois cas selon l'état de la saison :
+  - **Jamais touchée** → un menu "Commencer [Série] — [Saison] ?" ; la
+    confirmation crée le suivi et ajoute le premier épisode au widget
+    "En cours", sans rien afficher d'autre.
+  - **Déjà en cours** (retrouvée par recherche, pas finie) → un message
+    renvoie vers le widget "En cours" plutôt que d'ouvrir un second
+    suivi redondant.
+  - **Terminée** (par épisodes, ou déjà notée même si tous les épisodes
+    n'ont pas été cochés un par un) → le formulaire de notation s'ouvre
+    directement, préempli si une note existe déjà.
+  Toute la validation épisode par épisode se fait désormais **uniquement**
+  via le widget "En cours" (conservé tel quel) — ou via la nouvelle
+  **grille complète dans la fiche série détaillée**, dépliable saison par
+  saison, chargée à la demande au premier dépliage. Un bouton "Noter
+  cette saison" y apparaît une fois tous les épisodes cochés.
+  - **Un vrai bug trouvé et corrigé pendant le développement** : le
+    widget "En cours" excluait les saisons à 0 épisode vu (il exigeait
+    au moins 1 épisode déjà coché pour les considérer "en cours") — ce
+    qui aurait rendu invisible toute saison qu'on vient tout juste de
+    "Commencer", le scénario central de cette refonte.
+  - **Un second vrai bug trouvé en régression** : rouvrir une saison
+    déjà notée mais dont tous les épisodes n'étaient pas cochés (par
+    exemple regardée en partie hors de l'app) ouvrait le mauvais état —
+    la présence d'une note prime désormais sur le décompte d'épisodes.
+  - **Une vraie erreur commise et corrigée avant qu'elle ne cause de
+    dégâts** : en retirant l'ancienne grille de Noter, une suppression
+    par plage de lignes trop large a emporté au passage 4 fonctions à
+    conserver (dont la sauvegarde de note elle-même) — repéré par le
+    lint qui aurait échoué, restauré immédiatement.
+  - Le fichier de test `tv-shows-phase2.spec.js` (qui testait l'ancienne
+    grille dans Noter) est retiré — son scénario n'existe plus à cet
+    endroit ; sa couverture vit maintenant dans
+    `tv-shows-search-opens-detail.spec.js` (la fiche ouverte directement)
+    et `tv-shows-detail-parity.spec.js` (la grille dans la fiche).
+  - Un second fichier de test devenu obsolète par ce même changement,
+    `tv-shows-noter-flow.spec.js` (qui testait l'ancien menu "Commencer"
+    câblé dans Noter lui-même, désormais inatteignable par toute action
+    utilisateur réelle depuis que la recherche ouvre la fiche
+    directement), a également été retiré — repéré et corrigé au fil
+    d'une reprise de session, avec au passage un doublon de tests trouvé
+    et nettoyé (`tv-shows-continue-widget-redesign.spec.js` couvrait déjà
+    ce qui avait été réécrit par erreur dans un autre fichier).
+
+### Corrigé
+- **Parité fiche film / fiche série** — suite à un audit demandé
+  explicitement, comparant les deux fiches fonction par fonction :
+  - **Casting affiché à la verticale au lieu d'un carrousel** — un vrai
+    bug, pas un choix : la fiche série utilisait `.mds-cast-card`, une
+    classe qui n'existe nulle part dans le CSS. Remplacé par
+    `.mds-cast-item` (le bon nom), avec le défilement automatique et le
+    clic vers la fiche personne, comme pour les films.
+  - **En-tête qui rétrécit au défilement** — jamais branchée pour la
+    fiche série. En généralisant la fonction, un vrai risque de
+    collision a aussi été corrigé au passage :
+    `document.querySelector('.mds-header')` cherchait dans tout le
+    document plutôt que dans la bonne fiche, un souci latent depuis que
+    les deux fiches partagent cette même classe.
+  - **Glissement vers le bas pour fermer** — branché (la fonction était
+    déjà générique, aucune modification nécessaire).
+  - **Créateurs cliquables** — ajoutés, ouvrent la fiche personne comme
+    le réalisateur pour un film. Point de transparence noté : la fiche
+    personne ne récupère que la filmographie films côté serveur, pas
+    séries — un créateur connu surtout pour la télévision pourrait donc
+    y sembler avoir peu de films, laissé tel quel pour l'instant.
+  - **"Changer l'affiche"** — absent à la fois côté client et serveur.
+    Nouveau point d'accès serveur (`tvImages`, miroir du système film),
+    bouton conditionnel (visible si la série est déjà suivie, comme pour
+    les films), sauvegarde directement sur `poster_path` (déjà le format
+    utilisé côté séries, pas besoin d'une seconde représentation).
+  - **Couleur d'accent de l'affiche** (thème Moderne) — absente de la
+    fiche et des cartes d'historique série ; la règle CSS correspondante
+    manquait aussi pour ces cartes, ajoutée en plus de l'appel JS.
+  - **Un vrai défaut de contraste trouvé en testant, préexistant côté
+    film aussi** (classe partagée `.mds-person-link`, jamais testée sur
+    Moderne jusqu'ici) : `--orange` utilisé en couleur de texte directe —
+    corrigé en préservant exactement le comportement d'origine (le
+    soulignement ne devait apparaître qu'au survol, pas en permanence).
+
+### Ajouté
+- **Fiche série détaillée** — même structure et mécanique que la fiche
+  film (squelette de chargement, sections qui apparaissent en cascade,
+  notes externes IMDb/RT/Metacritic chargées en asynchrone), ouverte au
+  tap sur une carte de série dans l'Historique. Nouveau fichier dédié
+  (`src/19-tv-detail.js`), une nouvelle fiche `#tv-detail-sheet` plutôt
+  que de réutiliser celle des films — même motif déjà établi pour la
+  fiche personne. La quasi-totalité du style se réutilise sans rien
+  dupliquer, les mêmes classes CSS étant génériques (pas spécifiques au
+  film malgré leur nom historique).
+  - **La vraie différence, comme demandé** : pas de "Ta note" unique —
+    une section Progression avec la note globale calculée, puis le
+    détail de **toutes les saisons connues via TMDb** (pas seulement
+    celles déjà suivies localement), chacune avec son statut réel
+    (notée / en cours / non suivie). Cliquer une saison non suivie
+    l'ouvre directement dans Noter avec la bonne sélection — vérifié
+    avec un vrai scénario à 3 saisons TMDb dont une seule notée et une
+    jamais touchée.
+  - Point serveur étendu (`append_to_response=credits,videos,
+    external_ids` sur l'appel `tvId` déjà utilisé ailleurs) plutôt que
+    d'ajouter un nouvel appel dédié.
+
+- **Glissement sur les lignes de saison (Historique)** — glisser à
+  gauche révèle "Supprimer", à droite "Modifier", un tap sur l'indice
+  confirme, exactement comme pour les films. **Choix d'architecture
+  assumé** : plutôt que de généraliser le système de glissement des
+  films (500+ lignes, très affiné au fil de nombreuses sessions, de
+  vrais bugs corrigés un par un — le risque de régression sur un
+  système déjà fiable et testé était réel), un second contrôleur
+  autonome a été écrit pour les séries, réutilisant les mêmes
+  paramètres physiques déjà éprouvés (seuils, ratio de détection
+  glissement/défilement) mais sans toucher au code film existant. Le
+  bouton supprimer déjà visible reste disponible en plus du geste,
+  pour ceux qui ne découvrent pas le glissement.
+  - **Un vrai souci trouvé en testant la régression, pas une régression
+    du glissement lui-même** : deux tests du système film ont échoué
+    après ce changement — creusé, la cause était une fragilité
+    préexistante dans un des tests (données injectées après le
+    chargement de la page plutôt qu'avant, laissant la fenêtre
+    d'accueil s'afficher par une course de temporisation qui passait
+    par chance avant) — révélée par la légère augmentation de la
+    taille de l'app, pas causée par le nouveau contrôleur. Corrigé à la
+    source du test plutôt que dans le code de l'app.
+
+### Retiré
+- **Thème Méridien**, sur demande (non utilisé). Retiré entièrement :
+  bloc de couleurs (jour + variante nuit), le mécanisme JS de bascule
+  automatique jour/nuit basé sur l'heure réelle (deux fonctions
+  dédiées), la carte de sélection dans le panneau de réglages, et
+  l'aperçu de démarrage. Un repli propre a été ajouté pour quiconque
+  avait ce thème déjà enregistré — retombe sur le thème par défaut
+  plutôt que de laisser l'app sans styles cohérents. 10 fichiers de
+  test mis à jour pour ne plus itérer dessus.
+  - **Ça résout au passage le point laissé en suspens à la livraison
+    précédente** : le défaut de contraste "mystère" trouvé sur Méridien
+    était en réalité son mode nuit automatique qui s'activait pendant
+    les tests selon l'heure réelle du système — pas un bug de rendu.
+    Comprendre enfin la vraie cause, même si la question ne se pose
+    plus avec le retrait du thème.
+  - **Un vrai bug de test trouvé et corrigé au passage, sans rapport
+    avec Méridien** : un délai de 100ms s'est révélé trop court pour
+    que le filtre en niveaux de gris du thème Film Noir s'applique de
+    façon fiable dans l'environnement de test — porté à 300ms.
+
+### Ajouté
+- **Historique — parité films/séries, 2e vague : filtre par genre.** TMDb
+  renvoie déjà les genres dans la fiche d'une série (le même appel déjà
+  utilisé pour la liste des saisons) — capturé directement au moment de
+  la sélection, sans appel supplémentaire. Pour les séries déjà suivies
+  avant ce correctif (donc sans genre stocké), une **récupération
+  silencieuse en arrière-plan** les complète dès la première visite sur
+  l'onglet Séries de l'Historique, sans bloquer l'affichage déjà rendu
+  avec les données connues. Le composant de puces de genre (déjà utilisé
+  pour les films) a été généralisé pour accepter n'importe quelle liste
+  d'éléments plutôt que dupliqué.
+  - **Un vrai bug confirmé visuellement, distinct du point non résolu de
+    la livraison précédente** : en creusant plus loin cette fois (avec
+    plus de temps), le défaut de contraste sur Méridien s'est révélé être
+    un vrai problème visible — la barre de navigation s'affiche presque
+    noire à certains endroits, alors que ce thème est conçu pour rester
+    clair partout. Confirmé par capture d'écran réelle, pas juste un
+    signalement d'outil. Cause exacte non identifiée dans le temps de
+    cette livraison (le fond semi-transparent de la barre ne se comporte
+    pas comme attendu sur ce thème précis) — à reprendre en priorité la
+    prochaine fois, plutôt que le point plus vague noté précédemment.
+
+- **Historique — parité films/séries, 1ère vague : filtre par note et
+  suppression par saison.** Le clic sur une barre de l'histogramme
+  (déjà partagé entre films et séries depuis la Phase 5) filtre
+  maintenant vraiment la liste des séries affichées, avec un badge qui
+  reflète le filtrage actif ("1 / 2 séries"). Suppression d'une seule
+  saison (pas forcément toute la série) depuis la liste dépliée, avec un
+  message de confirmation adapté si c'est la dernière saison suivie
+  (retire alors toute la série).
+  - **Un vrai bug trouvé et corrigé avant livraison** : `renderAll()` ne
+    respectait pas la vue Historique active (toujours films), ce qui
+    aurait cassé silencieusement le filtre par note côté séries. Une
+    fonction de badge devenue redondante entre-temps (et activement
+    risquée — elle écrasait le bon résultat calculé ailleurs) a été
+    retirée proprement plutôt que rafistolée.
+  - **Deux vrais défauts d'accessibilité trouvés en testant les 7
+    thèmes** : un bouton supprimer imbriqué dans une ligne
+    `role="button"` (invalide, présent sur les 7 thèmes) — corrigé en
+    restructurant la ligne en deux vrais boutons indépendants plutôt
+    qu'un élément imbriqué dans un autre. Et le bouton de confirmation
+    utilisait par erreur le style "primaire" au lieu de "danger" pour
+    une action destructive — une fois corrigé, ça a révélé que le style
+    "danger" lui-même manquait de marge de contraste sur 3 thèmes
+    (Carnet, Moderne, et Méridien plus particulièrement, où ni le texte
+    blanc ni le noir n'offrait de vraie marge — la couleur rouge de ce
+    thème a été légèrement assombrie pour donner une marge confortable
+    au texte blanc).
+  - **Un point trouvé mais non résolu, documenté honnêtement plutôt que
+    caché** : un défaut de contraste distinct est apparu sur Méridien
+    dans le widget "En cours", avec des valeurs de couleur qui ne
+    correspondent à aucune teinte Méridien touchée aujourd'hui — pas
+    élucidé dans le temps imparti pour cette livraison, à reprendre.
+
+- **Widget "En cours" dans l'onglet Noter (mode Série uniquement)** — une
+  carte verticale par série ayant un épisode à regarder, tout en haut,
+  au-dessus de la recherche. Affiche à dimensions fixes, nom/durée/date
+  du prochain épisode non vu, synopsis dépliable, bouton pour valider qui
+  fait immédiatement apparaître l'épisode suivant à sa place. Une fois la
+  dernière saison connue terminée, la saison suivante est **détectée
+  automatiquement via TMDb** (pas stockée d'avance, seules les saisons
+  déjà sélectionnées étant connues localement) — si elle existe, son
+  premier épisode s'affiche ; sinon, la série disparaît simplement du
+  widget. Vérifié de bout en bout avec un vrai scénario à deux saisons.
+  - **Deux vrais défauts de contraste trouvés en testant les 7 thèmes,
+    avant livraison** : le bouton "Valider l'épisode" (fond orange direct
+    en texte sur Carnet — 13e occurrence du même piège déjà rencontré
+    plusieurs fois, ajoutée au bloc de correctif consolidé plutôt que
+    patchée isolément) et le lien "Synopsis" (`--blue`, juste sous le
+    seuil sur Carnet) — corrigé à la racine en repassant sur une couleur
+    de texte déjà éprouvée partout, plutôt qu'un correctif par thème.
+
+- **Module Séries — Phase 5 : statistiques.** Bascule Films/Séries sur le
+  tableau de bord analytique (Profil) : comptage et moyenne **par série**
+  (pas par saison, cohérent avec le reste du module), radar de l'ADN des
+  notes avec les libellés adaptés (Final, Cohérence — pas Photo/Rythme),
+  distribution des notes propre aux séries. "Top Réalisateurs" replié en
+  mode Séries — aucune donnée de showrunner récupérée pour l'instant, pas
+  d'affichage vide ou trompeur à la place. La heatmap et le graphique
+  "Activité (6 derniers mois)" restent **uniques** dans les deux modes
+  (décidé ensemble pour la heatmap ; étendu au graphique d'activité par
+  cohérence avec ce même principe — à confirmer si besoin).
+  - **Un vrai défaut de contraste préexistant trouvé en testant les 7
+    thèmes, sans rapport avec le travail du jour** : le pourcentage
+    "déjà vu" des classiques à explorer (`.curated-list-row-pct`)
+    échouait sur 3 thèmes (Carnet, Moderne, Méridien) — exactement le
+    même piège déjà rencontré deux fois dans ce projet (couleur d'accent
+    utilisée directement comme texte). Corrigé avec une couleur de texte
+    déjà éprouvée.
+
+- **Module Séries — Phase 4 : Historique scindé Films/Séries.** Bascule
+  façon Détaillé/Rapide (pas un filtre dans une liste mélangée — une carte
+  de saison et une carte de film n'ont pas le même contenu à afficher).
+  Comptage **par série**, pas par saison, comme convenu ("12 films ·
+  7 séries") — le badge existant préserve au passage son comportement de
+  compte filtré quand une recherche est active côté films, plutôt que
+  d'être écrasé. Chaque carte de série affiche sa note globale calculée
+  (moyenne des saisons notées), un décompte "X/Y saisons notées", et une
+  liste dépliable des saisons individuelles. Cliquer une saison dans cette
+  liste rouvre le formulaire de notation avec la note existante déjà
+  préremplie, pour la modifier. Suppression d'une série avec confirmation
+  (retire toutes ses saisons suivies/notées).
+  - **Une vraie lacune trouvée et corrigée dans mon propre test avant
+    livraison** : ma première vérification du préremplissage utilisait des
+    données de test avec des critères vides, laissant passer un test qui
+    ne vérifiait rien de réel (le curseur retombait silencieusement à sa
+    valeur par défaut sans que l'assertion s'en aperçoive) — corrigé avec
+    de vraies valeurs et une assertion qui vérifie la bonne valeur.
+
+- **Module Séries — Phase 3 : notation de saison.** Réutilise les 7
+  curseurs déjà existants pour les films (mêmes ID, même système de
+  pondération et de mode Détaillé/Rapide) — seuls deux critères sont
+  reformulés pour coller au format saison : "Photographie & Esthétique" →
+  **Qualité du final**, "Rythme & Montage" → **Rythme & Cohérence de la
+  saison**. De vraies descriptions par palier ont été écrites pour ces
+  deux critères (pas un simple renommage du libellé en gardant le texte
+  film, qui n'aurait eu aucun sens pour un final de saison). Le bouton
+  "Noter cette saison" (Phase 2) fait maintenant défiler jusqu'au
+  formulaire au lieu d'afficher un message d'attente. Revenir sur une
+  saison déjà notée repeuple le formulaire avec la note existante ; une
+  saison vierge repart à des valeurs neutres.
+  - **Note globale de série calculée automatiquement** — jamais stockée,
+    toujours recalculée comme la moyenne des saisons notées (une saison
+    suivie mais pas encore notée n'entre pas dans le calcul), affichée
+    directement dans l'onglet Noter dès qu'au moins une saison a une
+    note. Nouvelle fonction pure `computeShowAverageScore`, avec ses
+    propres tests unitaires.
+  - **Deux vrais bugs trouvés et corrigés avant livraison, en testant
+    moi-même de bout en bout** : une variable (`currentMediaType`)
+    déclarée dans le mauvais fichier empêchait littéralement l'app de
+    démarrer dans certains cas (erreur "Cannot access before
+    initialization"), trouvée en inspectant la console du navigateur —
+    déplacée dans un fichier qui charge plus tôt. Et un défaut de
+    contraste sur 3 thèmes (Carnet, Moderne, Méridien) sur le nouvel
+    affichage de note globale, causé par la couleur d'accent utilisée
+    directement comme texte — un piège déjà rencontré plusieurs fois
+    dans ce projet, corrigé avec une couleur de texte déjà éprouvée.
+
+- **Module Séries — Phase 2 : suivi épisode par épisode.** Grille
+  d'épisodes (TMDb `/tv/{id}/season/{n}`, nouveau point d'accès serveur)
+  avec case à cocher animée (coche qui se dessine + léger rebond, en CSS
+  pur, respecte `prefers-reduced-motion`), barre de progression en direct,
+  et proposition de rattrapage si on coche un épisode en avance ("Marquer
+  aussi les épisodes X à Y comme vus ?"). Un bandeau apparaît une fois
+  tous les épisodes cochés ("Saison terminée — la noter ?") — son bouton
+  affiche pour l'instant un message honnête plutôt qu'un formulaire, la
+  notation de saison étant la Phase 3, pas encore construite. Stockage :
+  `lbx_tv_shows`, une entrée par série avec ses saisons imbriquées.
+  - **Deux vrais défauts trouvés et corrigés en testant moi-même, avant
+    livraison** : le nom de saison stocké (`seasonName`) reprenait par
+    erreur le titre combiné "Série — Saison X" affiché dans le bandeau,
+    redondant avec le titre de la série déjà stocké séparément — corrigé
+    pour ne garder que le nom propre de la saison. Et une confusion dans
+    mes propres tests (pas dans le code) sur l'accord au singulier/pluriel
+    de "épisode" à 0 — le code était juste, c'est le test qui avait la
+    mauvaise attente.
+- **Module Séries — Phase 1 : recherche et sélection de saison.** Bascule
+  Film/Série dans l'onglet Noter (même mécanique que Détaillé/Rapide),
+  recherche d'une série (TMDb `/search/tv`), choix d'une saison (TMDb
+  `/tv/{id}` pour la liste des saisons), bandeau récapitulatif. S'arrête
+  volontairement là — le suivi épisode par épisode et la notation de
+  saison sont les Phases 2 et 3, pas encore construites, comme convenu
+  point par point plutôt que tout d'un coup.
+  - **Note de transparence** : le fichier source de cette phase et ses
+    éléments HTML correspondants existaient déjà en tout début de cette
+    session, sans origine claire retrouvée dans l'historique de la
+    conversation malgré une recherche dans les transcriptions
+    précédentes. Plutôt que de lui faire confiance ou de le jeter sans
+    vérifier, testé indépendamment de bout en bout (bascule, recherche,
+    sélection de saison, retour vers Film) avant de le considérer comme
+    acquis — un vrai bug a été trouvé dans ce processus, mais dans le
+    test que j'écrivais pour le vérifier (mauvais ordre d'enregistrement
+    des routes simulées), pas dans le code lui-même.
+
+### Corrigé
+- **Largeurs inégales dans la barre de navigation, signalées par
+  l'utilisateur** — confirmées visuellement (jusqu'à 88px pour
+  "Historique" contre 46px pour "À voir", qui passait sur deux lignes).
+  Cause : `flex: 1` sans `min-width: 0` — un enfant flex refuse par
+  défaut de rétrécir sous la largeur de son propre contenu, laissant les
+  libellés longs ("Historique", "Découvrir") imposer leur largeur. Même
+  classe de bug déjà rencontrée deux fois dans cette app (carrousel
+  Tendances, champ de recherche). Corrigé avec `min-width: 0` + taille de
+  texte uniforme et réduite pour que rien ne passe à la ligne de façon
+  incohérente — vérifié : les 4 onglets font maintenant exactement 69px
+  chacun, sur les 7 thèmes.
+
+- **Minification JS/CSS dans le pipeline de build** — jamais mesuré
+  jusqu'ici, un audit performance complet (LCP/CLS mesurés en conditions
+  réelles, CPU ×4 + réseau dégradé) a montré un LCP de 4.7s (seuil "bon" :
+  2.5s) et 596 Ko de JS+CSS non minifiés. `app.js` : 410 Ko → 216 Ko
+  (-47%), `styles.min.css` (nouveau) : 186 Ko → 122 Ko (-34%). `styles.css`
+  reste la source éditée directement — `styles.min.css` est généré à part
+  par `scripts/minify.js`, pour ne jamais risquer d'éditer du CSS minifié
+  par erreur dans une session future. `app.js`, déjà un fichier généré
+  (jamais édité à la main), est minifié en place. Pipeline de build
+  réordonné : concaténation → lint (sur JS lisible) → minification → hash
+  du service worker (sur les octets réellement servis).
+
+### Corrigé
+- **3 tests obsolètes trouvés en validant la minification, sans rapport
+  avec elle** — révélés par une vérification plus large que d'habitude :
+  `duels.spec.js` et une partie de `duels-reset.spec.js` naviguaient vers
+  Profil pour tester l'arène de duels (déplacée vers Découvrir il y a
+  longtemps) ou référençaient le concept "duel du jour" (retiré depuis un
+  moment) ; `desktop-layout.spec.js` échouait à cause d'un clic intercepté
+  par la fenêtre d'accueil, pas à cause de l'ancienne mise en page qu'il
+  vérifie (qui reste bien réelle et actuelle). Une erreur de correction
+  trouvée et rattrapée au passage : mon premier remplacement dans
+  `duels.spec.js` était trop large et cassait par erreur 2 tests qui
+  vérifient le classement (resté sur Profil, contrairement à l'arène).
+- **Audit UX/design complet — 4 vrais défauts trouvés et corrigés,
+  vérifiés dans le code réel plutôt que devinés** :
+  1. **`--gold` trop clair sur 3 thèmes** (Carnet, Cinéphile, Méridien) —
+     1.36 à 2.06:1 seulement contre leur fond, sous le minimum de 3:1
+     requis même pour du grand texte. Touchait le gros score en chiffres
+     et une quinzaine d'autres endroits (médailles de duel, badges,
+     bordures au survol...). Assombri sur les trois, marge confortable
+     partout désormais.
+  2. **Carnet : le correctif précédent (bouton Noter) ne couvrait pas
+     tout** — même défaut sur "Nouvelle critique" et l'onglet "Détaillé".
+     Cause racine trouvée : `--solid-fill-text` doit servir à la fois un
+     fond orange (a besoin de texte sombre) et un fond vert (a besoin de
+     texte clair) — aucune valeur unique ne peut satisfaire les deux. Un
+     bloc consolidé corrige maintenant les 12 éléments concernés d'un
+     coup, sans toucher `--solid-fill-text` globalement (aurait cassé le
+     cas vert).
+  3. **Méridien : 3 défauts, dont un effet de bord que j'avais moi-même
+     introduit** — en assombrissant `--blue` lors d'un correctif
+     précédent, je n'avais pas vérifié que `--blue-fill-text` (resté
+     noir) fonctionnait toujours contre ce nouveau fond plus sombre :
+     2.91:1 sur le bouton Sauvegarder. Corrigé avec `--text-mid`
+     (touchait toutes les étiquettes de contexte) et la couleur des
+     étoiles au passage.
+  4. **Cinéphile : un défaut marginal** (4.46:1 au lieu de 4.5:1) sur le
+     badge "Impact affectif" — `--blue` légèrement assombri.
+- **`item.stars` sans protection dans l'Historique** — contrairement à la
+  fiche film qui protège déjà ce même champ (`localMatch.stars || ''`),
+  l'historique ne le faisait pas : un vrai risque d'afficher littéralement
+  "undefined" à l'écran sur d'anciennes données (import/export,
+  migration). Corrigé avec la même protection.
+
+### Modifié
+- **Effet verre dépoli plus transparent** (barre de navigation, fenêtres
+  modales, toast) — flou inchangé, opacité du fond réduite pour laisser
+  davantage transparaître le contenu en dessous, sur demande.
+
+### Corrigé
+- **Vrai bug introduit par la dernière livraison, signalé par
+  l'utilisateur** : le titre du film, la date et le cœur s'affichaient mal
+  proportionnés sur mobile dans l'onglet Noter. Cause : le bouton
+  d'effacement ajouté au champ de recherche l'a enveloppé dans
+  `.search-input-wrap`, mais la règle mobile qui plaçait ce champ sur toute
+  la largeur de la grille (`grid-column: 1 / -1`) ciblait encore
+  `.search-input` directement — comme ce n'était plus un enfant direct de
+  la grille, la règle ne s'appliquait plus, et le placement automatique de
+  la grille étirait le bouton cœur sur toute la largeur, seul sur sa
+  ligne. Corrigé en ciblant le bon élément.
+
+### Ajouté
+- **Deuxième vague de finitions UX** (suite de l'audit design) :
+  - Bouton d'effacement ("×") sur les deux champs de recherche (formulaire
+    de notation et Historique) — plus besoin de tout effacer au clavier
+    pour relancer une recherche.
+  - Verre dépoli étendu au fond des fenêtres modales (`backdrop-filter`,
+    opacité réduite en même temps pour laisser le flou se voir) et au
+    toast de confirmation — cohérence avec la barre de navigation.
+  - Intensité du flou de la barre de navigation relevée (16px, était
+    10px), sur demande, avec l'opacité du fond réajustée en conséquence.
+
+### Corrigé
 - **Vrai chevauchement latéral trouvé sur appareil réel, corrigé**
   (synchronisé depuis une modification faite directement en production) —
   la colonne "Noter" héritait de `flex:1` comme les 4 autres onglets, donc
