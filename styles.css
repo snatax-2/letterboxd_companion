@@ -399,13 +399,14 @@
      bas). Disparaît en mode compact (repli au scroll) : une bande fine n'a
      pas besoin d'image derrière. --mds-backdrop est posée en style inline
      par buildMdsContent()/buildTdsContent(), 'none' si pas de backdrop. */
-  .mds-header {
-    background-image:
-      linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
-      var(--mds-backdrop, none);
-    background-size: cover;
-    background-position: center;
-  }
+  /* Fond tiré du backdrop TMDb derrière le bloc poster+infos existant —
+     structure et mécanisme sticky/compact INCHANGÉS. --mds-backdrop est
+     posée en style inline par buildMdsContent()/buildTdsContent()/
+     buildPdsContent(), 'none' si pas de backdrop. La règle structurelle
+     complète (avec le fond) vit avec le reste de .mds-header — voir plus
+     bas dans ce fichier — pour éviter d'avoir DEUX déclarations distinctes
+     du même sélecteur où la seconde écrase silencieusement la première
+     (piège rencontré une première fois avec cette exacte règle). */
   .mds-header.compact {
     background-image: linear-gradient(to bottom, color-mix(in srgb, var(--poster-accent, var(--bg)) 22%, var(--bg)), var(--bg));
   }
@@ -539,10 +540,13 @@
   /* ── Moderne : verre dépoli + grille d'architecte ── */
   /* Le verre dépoli est LE trait distinctif du thème (avec la grille et le
      losange des curseurs) — poussé ici comme sa vraie signature plutôt qu'un
-     détail isolé sur l'en-tête. */
+     détail isolé sur l'en-tête. N'écrase plus le fond (background:) comme
+     avant : ça annulait silencieusement le backdrop TMDb commun aux 6
+     thèmes (décision confirmée : compositions identiques partout, y
+     compris la fiche film/série). backdrop-filter seul se pose PAR-DESSUS
+     l'image existante, sans la remplacer. */
   @supports (backdrop-filter: blur(8px)) {
     [data-theme="moderne"] .mds-header {
-      background: color-mix(in srgb, var(--bg) 72%, transparent);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
@@ -2188,11 +2192,19 @@
        déclaration du dégradé ci-dessous est ignorée et ce fond plein reste —
        jamais d'en-tête transparent (la classe de bug qu'on vient d'éradiquer). */
     background: var(--bg);
-    /* Dégradé teinté de la couleur dominante DE CETTE affiche (--poster-accent,
-       déjà extraite par ailleurs), fondu vers le fond du thème : chaque fiche
-       a sa propre ambiance dès l'ouverture, comme le tampon de score. Le
-       color-mix garde le texte lisible en ne prenant que 22% de la teinte. */
-    background: linear-gradient(to bottom, color-mix(in srgb, var(--poster-accent, var(--bg)) 22%, var(--bg)), var(--bg));
+    /* Ludex 2.0 : fond tiré du backdrop TMDb (--mds-backdrop, posé en style
+       inline par buildMdsContent/buildTdsContent/buildPdsContent — 'none' si
+       aucun backdrop disponible, ex: listes prédéfinies/thèmes). Quand il n'y
+       a pas de backdrop, background-color prend le relais avec le même esprit
+       que l'ancien dégradé teinté par --poster-accent (déjà extraite par
+       ailleurs) — chaque fiche garde une ambiance qui lui est propre même
+       sans grande image, juste via la couleur plutôt qu'une photo. */
+    background-color: color-mix(in srgb, var(--poster-accent, var(--bg)) 15%, var(--bg));
+    background-image:
+      linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
+      var(--mds-backdrop, none);
+    background-size: cover;
+    background-position: center;
     margin: 0 -24px 0; padding: 14px 24px 12px; transition: padding var(--dur-base) var(--ease-out), gap var(--dur-base) var(--ease-out);
     border-bottom: 1px solid var(--border);
     border-radius: var(--radius) var(--radius) 0 0; /* couvre le coin arrondi de la fiche, sans avoir besoin d'une marge négative qui s'est révélée être la source du bug de contenu qui perce au-dessus */
