@@ -67,6 +67,10 @@ test('raccourci Decouvrir -> Profil, et ajout des manquants a la watchlist', asy
   // 1. Le raccourci depuis Decouvrir bascule bien vers Profil
   await page.goto('/');
   await page.click('#nav-discover');
+  // Ludex 2.0 : "Explorer les classiques" vit maintenant dans le sous-onglet
+  // "Classiques" de la section "Parcourir" (voir #browse-wrap dans
+  // index.html) — plus visible par défaut (c'est "Par thème" qui l'est).
+  await page.click('#browse-tab-classics');
   await page.waitForSelector('#curated-lists-shortcut-btn');
   await page.click('#curated-lists-shortcut-btn');
   await page.waitForTimeout(300);

@@ -6,7 +6,15 @@ test.beforeEach(async ({ page }) => {
   // L'écran d'accueil (nouvel utilisateur) et le splash initial interceptaient
   // les clics sur un état vraiment vierge — ce test devenait intermittent
   // selon le hasard du timing. Même correctif que les autres suites E2E.
-  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  // Ludex 2.0 : le swipe horizontal est désactivé sur le thème par défaut
+  // (watchlist en grille d'affiches, actions via boutons plutôt que
+  // glissement — voir isDefaultComposition() dans 03-foundation.js). Ce
+  // test cible donc explicitement Carnet, qui garde la liste en cartes et
+  // le swipe d'origine.
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_settings', JSON.stringify({ theme: 'carnet' }));
+  });
   await page.goto('/');
   await page.evaluate(() => {
     window.saveWatchlist([

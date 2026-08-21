@@ -442,6 +442,18 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
   const score    = calculateScore();
 
+  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
+  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
+  // la validation — retire puis réapplique la classe (avec un reflow forcé
+  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
+  // suivante dans la même session, pas juste la toute première.
+  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
+  if (scoreMainEl) {
+    scoreMainEl.classList.remove('stamp-pulse');
+    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
+    scoreMainEl.classList.add('stamp-pulse');
+  }
+
   const movie = {
     title,
     year:       document.getElementById('movie-year').value,

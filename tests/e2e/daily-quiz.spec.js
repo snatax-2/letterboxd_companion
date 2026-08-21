@@ -40,6 +40,8 @@ test.beforeEach(async ({ page }) => {
 test('une bonne réponse affiche la confirmation et démarre la série à 1', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   await expect(page.locator('.quiz-question')).toContainText('Pulp Fiction');
@@ -54,6 +56,8 @@ test('une mauvaise réponse montre la bonne réponse et remet la série à zéro
   await page.goto('/');
   await page.evaluate(() => localStorage.setItem('lbx_quiz_streak', '5'));
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForSelector('#quiz-wrap[style*="display: block"]', { timeout: 8000 });
 
   await page.locator('.quiz-answer-btn', { hasText: 'Martin Scorsese' }).click();

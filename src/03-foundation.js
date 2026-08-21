@@ -40,6 +40,16 @@ function escAttr(str) {
 // (un audit en a compté ~33 occurrences dispersées). Retourne une chaîne
 // vide si path est absent, pour que les appelants gardent leur `? :` habituel
 // sans avoir à vérifier deux fois.
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois +
+// grille d'affiches watchlist" est spécifique au thème par défaut (voir
+// "Vers Ludex 2.0" §01 — les 6 autres thèmes gardent leur composition
+// d'origine). Un seul point de vérité, partagé par l'historique, la
+// watchlist et l'écran Noter.
+function isDefaultComposition() {
+  const t = document.documentElement.dataset.theme;
+  return !t || t === 'default';
+}
+
 function tmdbImage(path, size = 'w185') {
   return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
 }

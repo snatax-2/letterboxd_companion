@@ -101,7 +101,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   }
 
   return `
-    <div class="mds-header" style="animation-delay:0s">
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl

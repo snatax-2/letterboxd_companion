@@ -94,7 +94,7 @@ function buildTdsContent(data, localShow) {
   const seasonCount = (data.seasons || []).filter(s => s.season_number > 0).length;
 
   return `
-    <div class="mds-header" style="animation-delay:0s">
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl

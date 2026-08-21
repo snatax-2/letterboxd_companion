@@ -45,7 +45,7 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Fragment+Mono:ital@0;1&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Martian+Mono:wght@400;600;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Fragment+Mono:ital@0;1&family=Fraunces:ital,wght@0,600;1,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Martian+Mono:wght@400;600;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
 <link rel="stylesheet" href="styles.min.css">
 </head>
 <body>
@@ -257,6 +257,16 @@
         </div>
         <label class="settings-toggle-switch">
           <input type="checkbox" id="setting-feature-discover-recs" checked aria-labelledby="label-feature-discover-recs">
+          <span class="settings-toggle-slider"></span>
+        </label>
+      </div>
+      <div class="settings-toggle-row">
+        <div>
+          <div class="settings-toggle-title" id="label-discover-swipe-compact">Suggestions en liste compacte</div>
+          <div class="settings-toggle-desc">Remplace la pile de cartes à glisser par une liste compacte avec boutons — pratique sur les écrans étroits ou si le geste de swipe ne te convient pas.</div>
+        </div>
+        <label class="settings-toggle-switch">
+          <input type="checkbox" id="setting-discover-swipe-compact" aria-labelledby="label-discover-swipe-compact">
           <span class="settings-toggle-slider"></span>
         </label>
       </div>
@@ -588,6 +598,14 @@
         Notation
       </div>
 
+      <div class="score-result">
+        <div class="score-main">
+          <div class="score-big" id="score-big">5.0</div>
+          <div class="score-denom">/10</div>
+        </div>
+        <div class="stars-display" id="stars-display">★★½</div>
+      </div>
+
       <div class="mode-tabs">
         <button class="mode-tab active" id="tab-detail" onclick="setMode('detail')">Détaillé (7 critères)</button>
         <button class="mode-tab" id="tab-quick" onclick="setMode('quick')">Rapide (étoiles)</button>
@@ -763,13 +781,7 @@
         <div class="quick-rating-label" id="quick-rating-label"><span>★★½</span> — 5.0/10</div>
       </div>
 
-      <div class="score-result">
-        <div class="score-main">
-          <div class="score-big" id="score-big">5.0</div>
-          <div class="score-denom">/10</div>
-        </div>
-        <div class="stars-display" id="stars-display">★★½</div>
-
+      <div class="review-and-save">
         <div class="review-wrap">
           <label for="review-text">Ma critique (optionnel)</label>
           <textarea class="review-textarea" id="review-text" placeholder="Quelques mots sur ce film..."></textarea>
@@ -828,6 +840,7 @@
           <div class="genre-chips" id="genre-chips"></div>
         </details>
 
+        <div id="history-hero"></div>
         <div class="history-scroller" id="history-list"></div>
         <div class="history-scroller" id="tv-history-list" style="display:none;"></div>
       </div>
@@ -858,6 +871,24 @@
           <button type="button" class="surprise-me-btn" id="surprise-me-btn" title="Surprends-moi avec un film au hasard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.3" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg> Surprends-moi</button>
         </div>
 
+        <!-- Ludex 2.0 : Découvrir réorganisé en 6 zones hiérarchisées plutôt
+             que 9 sections à plat et à poids égal (Vers Ludex 2.0 §06). Les
+             ID d'origine sont conservés à l'identique sur chaque élément —
+             seul leur EMPLACEMENT dans le DOM et leur emballage changent,
+             donc tous les getElementById() de 11-discover.js/13-duels.js/
+             16-blind-spots.js/17-film-analysis.js continuent de fonctionner
+             sans modification. -->
+
+        <!-- 1. Film du jour — hero, en tête -->
+        <div class="discover-section" id="fdj-wrap" style="display:none">
+          <div class="discover-section-title" id="fdj-title">
+            <span id="fdj-title-text">Devine le Film du Jour</span>
+            <span class="quiz-streak" id="guess-streak-badge"></span>
+          </div>
+          <div class="fdj-card" id="fdj-card"></div>
+        </div>
+
+        <!-- 2. Tendances — films & séries mélangés (voir trending/all/week) -->
         <div class="discover-section" id="trending-carousel-wrap" style="display:none">
           <div class="discover-section-title">Tendances du moment</div>
           <div class="trending-carousel-row">
@@ -867,37 +898,7 @@
           </div>
         </div>
 
-        <div class="discover-section" id="curated-lists-shortcut-wrap">
-          <button type="button" class="curated-lists-shortcut-btn" id="curated-lists-shortcut-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>Explorer les classiques du cinéma <span class="curated-lists-shortcut-sub">— % déjà vu, dans ton Profil</span></span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon curated-lists-shortcut-arrow"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        </div>
-
-        <div class="discover-section" id="theme-explorer-wrap">
-          <div class="discover-section-title">Explorer par thème</div>
-          <div class="theme-chips-row" id="theme-chips-row"></div>
-        </div>
-
-        <div class="discover-section" id="blind-spots-wrap" style="display:none">
-          <div class="discover-section-title">D'après tes goûts</div>
-          <div id="blind-spots-container"></div>
-        </div>
-
-        <div class="discover-section" id="on-this-day-wrap" style="display:none">
-          <div class="discover-section-title">Ce jour-là</div>
-          <div class="on-this-day-strip" id="on-this-day-strip"></div>
-        </div>
-
-        <div class="discover-section" id="fdj-wrap" style="display:none">
-          <div class="discover-section-title" id="fdj-title">
-            <span id="fdj-title-text">Devine le Film du Jour</span>
-            <span class="quiz-streak" id="guess-streak-badge"></span>
-          </div>
-          <div class="fdj-card" id="fdj-card"></div>
-        </div>
-
+        <!-- 3. Suggestions pour toi — le swipe, relocalisé -->
         <div class="discover-section discover-section-tinder">
           <div class="discover-section-title">
             Suggestions pour toi
@@ -912,23 +913,64 @@
           </div>
         </div>
 
-        <div class="discover-section" id="quiz-wrap" style="display:none">
-          <div class="discover-section-title">
-            Quiz du jour
-            <span class="quiz-streak" id="quiz-streak-badge"></span>
+        <!-- 4. Pour toi aujourd'hui — Angles morts + Ce jour-là, fusionnés -->
+        <div class="discover-section" id="today-for-you-wrap">
+          <div class="discover-section-title">Pour toi aujourd'hui</div>
+          <div class="today-for-you-row">
+            <div class="today-for-you-col" id="blind-spots-wrap" style="display:none">
+              <div class="today-for-you-col-title">D'après tes goûts</div>
+              <div id="blind-spots-container"></div>
+            </div>
+            <div class="today-for-you-col" id="on-this-day-wrap" style="display:none">
+              <div class="today-for-you-col-title">Ce jour-là</div>
+              <div class="on-this-day-strip" id="on-this-day-strip"></div>
+            </div>
           </div>
-          <div class="quiz-card" id="quiz-card"></div>
         </div>
 
-        <div class="discover-section" id="duel-arena-wrap">
-          <div class="discover-section-title" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>Duels — lequel préfères-tu ?</span>
-            <span class="duel-counter" id="duel-counter"></span>
+        <!-- 5. Parcourir — Par thème + Classiques, en sous-onglets -->
+        <div class="discover-section" id="browse-wrap">
+          <div class="discover-section-title">Parcourir</div>
+          <div class="mode-tabs browse-tabs">
+            <button type="button" class="mode-tab active" id="browse-tab-theme">Par thème</button>
+            <button type="button" class="mode-tab" id="browse-tab-classics">Classiques</button>
           </div>
-          <div class="duel-arena" id="duel-arena"></div>
-          <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
-          <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
+          <div class="browse-panel active" id="theme-explorer-wrap">
+            <div class="theme-chips-row" id="theme-chips-row"></div>
+          </div>
+          <div class="browse-panel" id="curated-lists-shortcut-wrap">
+            <button type="button" class="curated-lists-shortcut-btn" id="curated-lists-shortcut-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <span>Explorer les classiques du cinéma <span class="curated-lists-shortcut-sub">— % déjà vu, dans ton Profil</span></span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon curated-lists-shortcut-arrow"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
         </div>
+
+        <!-- 6. Jouer — Quiz + Duels, repliés par défaut -->
+        <details class="discover-section discover-accordion" id="play-wrap">
+          <summary class="discover-section-title discover-accordion-summary">
+            Jouer
+            <span class="badges-chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="discover-section" id="quiz-wrap" style="display:none">
+            <div class="discover-section-title">
+              Quiz du jour
+              <span class="quiz-streak" id="quiz-streak-badge"></span>
+            </div>
+            <div class="quiz-card" id="quiz-card"></div>
+          </div>
+
+          <div class="discover-section" id="duel-arena-wrap">
+            <div class="discover-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+              <span>Duels — lequel préfères-tu ?</span>
+              <span class="duel-counter" id="duel-counter"></span>
+            </div>
+            <div class="duel-arena" id="duel-arena"></div>
+            <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
+            <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -1072,7 +1114,7 @@
   </button>
   <button class="nav-btn nav-btn-primary active" id="nav-rating" aria-current="page">
     <span class="nav-btn-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="nav-btn-primary-label">Noter</span>
     </span>
   </button>

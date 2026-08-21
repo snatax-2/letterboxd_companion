@@ -21,6 +21,52 @@ function renderTagLabel(tagText) {
   return icon ? `${icon} ${rest.join(' ')}` : tagText;
 }
 
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois" est
+// spécifique au thème par défaut (voir "Vers Ludex 2.0" §01 — les 6 autres
+// thèmes gardent leur liste de cartes intacte). isDefaultComposition() vit
+// désormais dans 03-foundation.js (partagée avec la watchlist).
+
+const MONTH_LABELS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+// item.date / item.savedAt sont des chaînes ISO (YYYY-MM-DD...) — on prend
+// les 7 premiers caractères comme clé de regroupement (année-mois), sans
+// dépendre d'un format plus permissif que ce que loadHistory() garantit déjà.
+function monthKeyOf(item) {
+  const raw = item.date || item.savedAt || '';
+  return raw.slice(0, 7); // "YYYY-MM"
+}
+function monthLabelOf(key) {
+  const [y, m] = key.split('-');
+  const idx = parseInt(m, 10) - 1;
+  if (!y || idx < 0 || idx > 11) return 'Date inconnue';
+  return `${MONTH_LABELS_FR[idx]} ${y}`;
+}
+
+// Entrée vedette : le film le plus récemment noté, en grand, au-dessus de la
+// liste — alimentée par la même donnée que la liste (aucun calcul dupliqué).
+// N'apparaît qu'en tri chronologique (sortOrder === 'date'), seul contexte où
+// "le plus récent" a un sens pour l'utilisateur.
+function renderHistoryHero(sorted) {
+  const hero = document.getElementById('history-hero');
+  if (!hero) return;
+  if (!isDefaultComposition() || sortOrder !== 'date' || sorted.length === 0) {
+    hero.innerHTML = '';
+    return;
+  }
+  const item = sorted[0];
+  const imgHtml = item.poster
+    ? `<img class="hero-entry-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+    : `<div class="hero-entry-poster"></div>`;
+  hero.innerHTML = `
+    <div class="hero-entry">
+      ${imgHtml}
+      <div class="hero-entry-body">
+        <div class="hero-entry-eyebrow">Dernier film noté</div>
+        <div class="hero-entry-title">${escAttr(item.title)}</div>
+        <div class="hero-entry-score">${item.score}<small>/10</small></div>
+      </div>
+    </div>`;
+}
+
 let histSearchTimer;
 // Dispatche vers le bon rendu selon la bascule Films/Séries — un seul
 // point d'entrée pour les 3 déclencheurs (recherche, filtres de tri,
@@ -170,20 +216,53 @@ function renderHistory() {
   document.getElementById('filter-row').style.display = history.length === 0 ? 'none' : '';
 
   if (history.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
+  renderHistoryHero(sorted);
+
+  const groupByMonth = isDefaultComposition() && sortOrder === 'date';
+  let lastMonthKey = null;
+  // Cascade d'entrée réservée au tout premier affichage de l'onglet Historique
+  // dans cette session (pas à chaque changement de filtre/tri, qui redessine
+  // aussi la liste — même principe déjà appliqué à hist-item-entering
+  // juste en dessous, pour ne jamais rejouer une animation sur toute une
+  // longue liste à cause d'une simple interaction de filtrage).
+  // Cascade d'entrée réservée au tout premier affichage RÉEL de l'onglet
+  // Historique (pas un rendu déclenché en arrière-plan par renderAll() au
+  // démarrage pendant qu'un autre onglet est affiché — l'animation serait
+  // consommée silencieusement sans jamais être vue). Même principe que
+  // renderStats()/statsDirty pour Profil, voir 06c-profile-stats.js.
+  const historyViewVisible = document.getElementById('view-history')?.classList.contains('active');
+  const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
+  if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
+
   container.innerHTML = '';
   sorted.forEach((item, i) => {
     const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
+
+    if (groupByMonth) {
+      const key = monthKeyOf(item);
+      if (key !== lastMonthKey) {
+        const sep = document.createElement('div');
+        sep.className = 'hist-month-sep';
+        sep.textContent = monthLabelOf(key);
+        if (cascadeEntrance) sep.classList.add('hist-cascade-in');
+        container.appendChild(sep);
+        lastMonthKey = key;
+      }
+    }
+
     const div = document.createElement('div');
     div.className = 'hist-item';
     div.dataset.idx = realIdx;
@@ -194,6 +273,13 @@ function renderHistory() {
     // l'animation à chaque re-rendu (changement de filtre, etc.).
     if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
       div.classList.add('hist-item-entering');
+    } else if (cascadeEntrance) {
+      // Délai croissant plafonné : au-delà d'une vingtaine de lignes, les
+      // faire toutes attendre leur tour rendrait l'affichage perceptiblement
+      // lent à se stabiliser — les suivantes entrent toutes au même instant,
+      // dernier de la cascade.
+      div.classList.add('hist-cascade-in');
+      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
     }
 
     const scoreNum = parseFloat(item.score);

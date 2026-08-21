@@ -28,6 +28,9 @@ test('desactiver les Duels masque l\'arene (Decouvrir) ET le classement (Profil)
   await expect(page.locator('#duels-card')).toBeHidden();
 
   await page.click('#nav-discover');
+
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(300);
   // #duel-arena-wrap (pas l'ancien #daily-duel-wrap, qui n'existe plus depuis
   // que l'arène a été déplacée vers Découvrir — un test qui vérifiait encore
@@ -49,6 +52,8 @@ test('la preference persiste apres rechargement de la page', async ({ page }) =>
 
   await page.reload();
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(400);
   await expect(page.locator('#trending-carousel-wrap')).toBeHidden();
 
@@ -68,6 +73,8 @@ test('reactiver une fonctionnalite la fait immediatement reapparaitre, sans rech
   });
   await page.goto('/');
   await page.click('#nav-discover');
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(300);
   await expect(page.locator('#quiz-wrap')).toBeHidden();
 
@@ -87,6 +94,9 @@ test('desactiver les recommandations Decouvrir masque la pile de suggestions', a
   await page.waitForTimeout(200);
 
   await page.click('#nav-discover');
+
+
+  await page.evaluate(() => { const d = document.getElementById('play-wrap'); if (d) d.open = true; }); // Ludex 2.0 : Quiz/Duels repliés par défaut sous 'Jouer' — ouvert ici pour que le contenu reste interactif dans les tests
   await page.waitForTimeout(300);
   await expect(page.locator('.discover-section-tinder')).toBeHidden();
 });

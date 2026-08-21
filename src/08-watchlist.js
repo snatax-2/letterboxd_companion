@@ -92,6 +92,12 @@ function saveWatchlist(list, listId) {
 // nouvelle logique). stopPropagation() évite que ce geste horizontal ne
 // déclenche AUSSI le swipe global de changement d'onglet.
 function attachWatchlistSwipeHandlers(cardEl, idx) {
+  // Ludex 2.0 : en grille d'affiches (thème par défaut), le swipe horizontal
+  // sur une cellule étroite n'a plus vraiment de sens visuellement — les
+  // actions (noter / retirer) restent disponibles via les boutons toujours
+  // visibles en overlay (voir styles.css, .wl-actions en mode grille).
+  if (isDefaultComposition()) return;
+
   const SWIPE_THRESHOLD = 80;
   const MAX_DRAG = 130;
   const contentEl = cardEl.querySelector('.wl-card-content');

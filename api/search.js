@@ -106,9 +106,12 @@ export default async function handler(req, res) {
 
     } else if (trending) {
       // Cas 6 : Tendances du moment (carrousel Découvrir), pas liées à
-      // l'historique de l'utilisateur — TMDb "trending/movie/week".
+      // l'historique de l'utilisateur — "trending/all/week" mélange films ET
+      // séries dans une même réponse (chaque item porte déjà media_type
+      // 'movie'/'tv' côté TMDb), au lieu de deux appels séparés à fusionner
+      // nous-mêmes (Vers Ludex 2.0 §06 : "Tendances mixte films/séries").
       const trendRes = await fetch(
-        `https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const trendData = await trendRes.json();
       setCache(10800, 43200); // 3h, revalidation jusqu'à 12h (les tendances évoluent dans la journée)

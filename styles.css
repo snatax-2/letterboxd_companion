@@ -64,32 +64,35 @@
     color-scheme: dark;
 
     --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
-    /* 1. L'Original (Letterboxd) */
-    --bg: #14181c; --surface: #1f2935; --surface2: #263240; --border: #283040;
-    --border-hi: #445566; --text: #94a4b5; --text-hi: #fff; --text-mid: #9ab;
-    --orange: #ff8000; --gold: #ff8000; --blue: #40bcf4; --red: #ff4040; --green: #00e054;
+    /* Ludex 2.0 — palette par défaut : inspirée de Technicolor (bleu nuit +
+       or) mais redessinée pour ce rôle précis, une seule couleur chaude
+       dominante plutôt que la palette Letterboxd (orange/bleu/vert)
+       héritée de l'ancien thème "Méridien", retiré. Le lie-de-vin reste
+       rare — fonds d'affiche et dégradés, jamais un accent interactif. */
+    --bg: #0E1116; --surface: #181C22; --surface2: #212B38; --border: #2A3340;
+    --border-hi: #3D4A5C; --text: #8A90A0; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
+    --orange: #C89B3C; --gold: #C89B3C; --blue: #C89B3C; --red: #8B2E2E; --green: #7C8B6F;
     /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
        de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
        bon choix (blanc ou noir) varie selon la couleur ET selon le thème,
        parfois même à l'intérieur d'un même thème (ex: rouge très saturé mais
        bleu clair). Voir l'audit complet dans la conversation. */
-    --red-fill-text: #0d1117; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
+    --red-fill-text: #EDE6D8; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 4px; --radius-sm: 3px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%;
     --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --font-heading: 'Titillium Web', sans-serif;
-    --font-body: 'Titillium Web', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-heading: 'Fraunces', serif;
+    --font-body: 'Work Sans', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
     
     /* Variables de personnalisation des étoiles */
-    --star-color: #ff8000;
-    --star-empty-color: #445566;
+    --star-color: #C89B3C;
+    --star-empty-color: #3D4A5C;
     --star-font: Arial, sans-serif;
     --star-shadow: none;
     --star-symbol: '★';
-    --icon-stroke: 2;
-    
-    --header-bar: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
+    --icon-stroke: 1.6;
+    --icon-linecap: round; --icon-linejoin: round;
   }
 
   [data-theme="carnet"] {
@@ -126,6 +129,7 @@
     --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
     --star-symbol: '❂';
     --icon-stroke: 1.5;
+    --icon-linecap: round; --icon-linejoin: round;
 
     --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
     --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
@@ -186,6 +190,9 @@
     --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
     --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
     --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
+    /* Angles francs plutôt qu'arrondis, cohérent avec le radius:0 de ce
+       thème — même logique que l'icône Noter en losange sur Moderne. */
+    --icon-linecap: square; --icon-linejoin: miter;
     
     --review-font: var(--font-mono); 
     --review-bg: #000000;
@@ -220,6 +227,7 @@
     --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
     --star-symbol: '◉';
     --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
+    --icon-linecap: round; --icon-linejoin: round;
     --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
 
     --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
@@ -262,6 +270,9 @@
     --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
     --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
     --icon-stroke: 2.25;
+    /* Angles francs, cohérent avec le losange du bouton Noter et le refus
+       général des formes rondes dans ce thème. */
+    --icon-linecap: square; --icon-linejoin: miter;
 
     --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
     /* Grille fine façon papier millimétré d'architecte, à peine visible —
@@ -304,6 +315,7 @@
     --star-shadow: 0 0 5px rgba(230, 175, 46, 0.45);
     --star-symbol: '★';
     --icon-stroke: 2;
+    --icon-linecap: round; --icon-linejoin: round;
 
     --title-style: normal;
     --title-spacing: 0.06em;
@@ -360,19 +372,171 @@
      détails fidèles à SON concept, peu coûteux (rien qui repeint au
      défilement — les textures vivent sur des pseudo-éléments fixes). */
 
-  /* ── L'Original (défaut, Letterboxd) : les trois pastilles ── */
+  /* ── L'Original (défaut) ── */
   html:not([data-theme]) .card:hover,
   [data-theme="default"] .card:hover {
     border-color: var(--border-hi);
   }
-  /* L'onglet actif de la nav porte le tricolore emblématique */
-  html:not([data-theme]) .nav-btn.active,
-  [data-theme="default"] .nav-btn.active {
-    background-image: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
-    background-repeat: no-repeat;
-    background-size: 40% 3px;
-    background-position: top center;
+  /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
+     "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
+     libellé d'interface — l'italique Fraunces reste le traitement par
+     défaut ailleurs (ex: .hero-entry-title de l'historique). */
+  html:not([data-theme]) .mds-title,
+  [data-theme="default"] .mds-title {
+    font-style: normal; text-transform: uppercase; font-weight: 700;
+    letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
+  html:not([data-theme]) .mds-header-director,
+  [data-theme="default"] .mds-header-director {
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+  html:not([data-theme]) .mds-meta,
+  [data-theme="default"] .mds-meta {
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Fond tiré du backdrop TMDb derrière le bloc poster+infos existant —
+     structure et mécanisme sticky/compact INCHANGÉS (voir .mds-header plus
+     bas). Disparaît en mode compact (repli au scroll) : une bande fine n'a
+     pas besoin d'image derrière. --mds-backdrop est posée en style inline
+     par buildMdsContent()/buildTdsContent(), 'none' si pas de backdrop. */
+  html:not([data-theme]) .mds-header,
+  [data-theme="default"] .mds-header {
+    background-image:
+      linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
+      var(--mds-backdrop, none);
+    background-size: cover;
+    background-position: center;
+  }
+  html:not([data-theme]) .mds-header.compact,
+  [data-theme="default"] .mds-header.compact {
+    background-image: linear-gradient(to bottom, color-mix(in srgb, var(--poster-accent, var(--bg)) 22%, var(--bg)), var(--bg));
+  }
+
+  /* ── Ludex 2.0 : composition de l'Historique — filets + séparateurs de
+     mois plutôt que des cartes empilées en boîte. Scopé au thème par
+     défaut UNIQUEMENT (voir "Vers Ludex 2.0" §01 : la composition change
+     pour ce thème précis, les 6 autres gardent leur look carte intact —
+     .hist-item-content garde son propre background: var(--bg), donc le
+     mécanisme de swipe/révélation n'est pas affecté par ce changement,
+     seul le contour extérieur de la carte disparaît). */
+  html:not([data-theme]) .hist-item,
+  [data-theme="default"] .hist-item {
+    background: transparent; border: none; border-radius: 0;
+    margin-bottom: 0; border-bottom: 1px solid var(--border);
+  }
+  html:not([data-theme]) .hist-item:last-child,
+  [data-theme="default"] .hist-item:last-child {
+    border-bottom: none;
+  }
+  html:not([data-theme]) .hist-item-content,
+  [data-theme="default"] .hist-item-content {
+    padding: 12px 4px;
+  }
+  /* Séparateur de mois, injecté par renderHistory() uniquement en tri
+     chronologique — voir 06a-history-list.js */
+  html:not([data-theme]) .hist-month-sep,
+  [data-theme="default"] .hist-month-sep {
+    font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-mid);
+    padding: 18px 4px 6px; border-bottom: none;
+  }
+  html:not([data-theme]) .hist-month-sep:first-child,
+  [data-theme="default"] .hist-month-sep:first-child {
+    padding-top: 2px;
+  }
+
+  /* Entrée vedette : le dernier film noté, en grand, au-dessus de la liste
+     groupée. Un seul bloc réutilisable (voir #history-hero) — même
+     principe visuel prévu pour le score héros de l'écran Noter. */
+  html:not([data-theme]) .hero-entry,
+  [data-theme="default"] .hero-entry {
+    display: flex; gap: 16px; padding: 4px 4px 20px; margin-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  html:not([data-theme]) .hero-entry-poster,
+  [data-theme="default"] .hero-entry-poster {
+    width: 96px; flex-shrink: 0; border-radius: 6px; aspect-ratio: 2/3;
+    object-fit: cover; background: var(--surface2);
+  }
+  html:not([data-theme]) .hero-entry-body,
+  [data-theme="default"] .hero-entry-body {
+    display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0;
+  }
+  html:not([data-theme]) .hero-entry-eyebrow,
+  [data-theme="default"] .hero-entry-eyebrow {
+    font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-mid);
+  }
+  html:not([data-theme]) .hero-entry-title,
+  [data-theme="default"] .hero-entry-title {
+    font-family: var(--font-heading); font-style: italic; font-weight: 600;
+    font-size: 1.3rem; color: var(--text-hi); line-height: 1.2; margin: 2px 0 6px;
+  }
+  html:not([data-theme]) .hero-entry-score,
+  [data-theme="default"] .hero-entry-score {
+    font-family: var(--font-heading); font-style: normal; font-weight: 700;
+    font-size: 2.1rem; color: var(--gold); line-height: 1;
+  }
+  html:not([data-theme]) .hero-entry-score small,
+  [data-theme="default"] .hero-entry-score small {
+    font-size: 1rem; color: var(--text-mid); font-weight: 400;
+  }
+
+  /* ── Ludex 2.0 : Watchlist en grille d'affiches 3 colonnes plutôt qu'une
+     liste de lignes — "une watchlist se parcourt des yeux, elle ne se lit
+     pas comme une liste" (Vers Ludex 2.0 §03). Le swipe horizontal est
+     désactivé pour ce mode (voir isDefaultComposition() dans
+     attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste le
+     chemin d'action, déjà toujours visible en overlay (position absolute)
+     indépendamment du swipe, donc rien à ajouter côté DOM. */
+  html:not([data-theme]) #watchlist-list,
+  [data-theme="default"] #watchlist-list {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  html:not([data-theme]) .wl-card,
+  [data-theme="default"] .wl-card {
+    background: transparent; border: none; margin-bottom: 0;
+  }
+  html:not([data-theme]) .wl-card-content,
+  [data-theme="default"] .wl-card-content {
+    flex-direction: column; padding: 0; gap: 6px;
+  }
+  html:not([data-theme]) .wl-card-open,
+  [data-theme="default"] .wl-card-open {
+    flex-direction: column; gap: 6px;
+  }
+  html:not([data-theme]) .wl-poster,
+  [data-theme="default"] .wl-poster {
+    width: 100%; height: auto; aspect-ratio: 2/3; border-radius: 8px; font-size: 2rem;
+  }
+  html:not([data-theme]) .wl-poster img,
+  [data-theme="default"] .wl-poster img {
+    width: 100%; height: 100%; border-radius: 8px;
+  }
+  html:not([data-theme]) .wl-title,
+  [data-theme="default"] .wl-title {
+    font-size: 0.72rem; font-style: italic; white-space: normal;
+    line-height: 1.25; padding-right: 0; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  /* Pas la place pour le genre/année ni le statut streaming dans une
+     cellule de grille — restent visibles dans la fiche film. */
+  html:not([data-theme]) .wl-meta,
+  [data-theme="default"] .wl-meta,
+  html:not([data-theme]) .wl-providers,
+  [data-theme="default"] .wl-providers {
+    display: none;
+  }
+  html:not([data-theme]) .wl-actions,
+  [data-theme="default"] .wl-actions {
+    top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
+    backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
+  }
+
+  /* L'ancien tricolore Letterboxd de l'onglet actif est retiré : l'indicateur
+     actif est désormais une capsule pleine, partagée par tous les thèmes
+     (voir .nav-btn.active dans le bloc nav commun). */
 
   /* ── Film Noir : clair-obscur ── */
   /* Vignettage permanent, comme un tirage argentique contrasté */
@@ -517,6 +681,13 @@
   .icon {
     width: 1em; height: 1em; vertical-align: -0.15em; flex-shrink: 0;
     display: inline-block;
+    /* Vers Ludex 2.0 §05 : deux tokens par thème pour que le style des
+       icônes (arrondi ou anguleux) suive l'identité de chacun sans
+       redessiner un seul tracé SVG — la CSS l'emporte sur les attributs de
+       présentation stroke-linecap/linejoin déjà posés en HTML. Valeurs de
+       repli au cas où un thème ne déclarerait pas ces tokens. */
+    stroke-linecap: var(--icon-linecap, round);
+    stroke-linejoin: var(--icon-linejoin, round);
   }
 
   body, .card, .btn, .hist-item, .wl-card, .right-tab, .search-input, .review-textarea, .modal-box, .dash-box {
@@ -654,20 +825,31 @@
      grille à deux colonnes, à la demande de l'utilisateur). */
   .mobile-nav {
     display: flex; margin: 0 auto 16px auto; max-width: 800px;
-    background: var(--surface); border: 1px solid var(--border-hi);
-    border-radius: 14px; box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+    background: color-mix(in srgb, var(--surface) 55%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--border-hi); border-radius: 999px;
+    box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+    padding: 4px;
   }
   .nav-btn {
-    flex: 1; min-width: 0; padding: 12px 2px; background: transparent; border: none;
+    flex: 1; min-width: 0; padding: 10px 2px; background: transparent; border: none;
     color: var(--text); font-family: var(--font-heading);
     font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; gap: 4px; transition: color var(--dur-base); letter-spacing: 0.02em;
+    align-items: center; gap: 3px; transition: color var(--dur-base), background var(--dur-base);
+    letter-spacing: 0.02em; border-radius: 999px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .nav-btn:first-child { border-radius: 14px 0 0 14px; }
-  .nav-btn:last-child { border-radius: 0 14px 14px 0; }
-  .nav-btn.active { color: var(--blue); }
+  /* Indicateur d'état actif partagé par les 6 thèmes : une capsule pleine
+     plutôt qu'un simple changement de couleur de texte — repéré comme un
+     vrai souci d'accessibilité perçue (l'onglet actif se distinguait à
+     peine). Remplace l'ancien soulignement tricolore spécifique au thème
+     par défaut. */
+  .nav-btn.active {
+    color: var(--bg);
+    background: var(--orange);
+  }
   .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
   .nav-btn:hover:not(.active) { color: var(--text-hi); }
 
@@ -1348,11 +1530,26 @@
   .quick-rating-label span { color: var(--star-color); text-shadow: var(--star-shadow); font-weight: 700; }
 
   /* ── SCORE RESULT ── */
-  .score-result { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border); }
+  /* Ludex 2.0 : déplacé en tête d'écran (voir index.html) plutôt qu'en bas
+     de formulaire — même calcul, mêmes deux modes, seule la position
+     change. La bordure de séparation passe donc du haut vers le bas. */
+  .score-result { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
   .score-main {
     display: flex; align-items: center; justify-content: center;
     gap: 0; margin-bottom: 4px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 14px 20px;
+  }
+  /* Ludex 2.0 : reprend l'esprit du keyframe stampImpact (déjà utilisé par
+     .mds-score-stamp) au moment de la sauvegarde — même timing/bounce, mais
+     SANS la rotation à -11deg propre au tampon circulaire : appliquée telle
+     quelle à .score-main (rectangulaire), cette rotation resterait figée en
+     permanence après l'animation (fill-mode "both"), ce qui n'a de sens
+     que pour un sceau, pas pour la boîte de score. Voir 05-rating-form.js. */
+  .score-main.stamp-pulse { animation: scoreStampPulse .45s cubic-bezier(.2,1.4,.4,1) both; }
+  @keyframes scoreStampPulse {
+    0% { transform: scale(1.15); }
+    60% { transform: scale(0.96); }
+    100% { transform: scale(1); }
   }
   .score-big {
     font-family: var(--font-heading); font-size: 4rem; font-weight: 700;
@@ -1371,6 +1568,7 @@
   }
 
   /* ── REVIEW TEXTAREA ── */
+  .review-and-save { margin-top: 4px; }
   .review-wrap { margin-bottom: 16px; }
   .review-wrap label { display: block; font-size: 0.72rem; color: var(--text); margin-bottom: 6px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; font-family: var(--font-heading); }
   .review-textarea {
@@ -1516,6 +1714,12 @@
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .hist-item-entering, .wl-card-entering { animation: itemEnterIn .35s cubic-bezier(.2,.8,.2,1) both; }
+  /* Ludex 2.0 : cascade d'entrée au tout premier affichage de l'Historique
+     groupé par mois — même keyframe qu'un ajout de film unique
+     (hist-item-entering), animation-delay posé en JS par ligne (voir
+     06a-history-list.js) plutôt qu'ici, puisqu'il dépend de la position
+     de chaque élément dans la liste rendue. */
+  .hist-cascade-in { animation: itemEnterIn .3s cubic-bezier(.2,.8,.2,1) both; }
   .hist-item.deleting { opacity: 0; transform: translateX(-30px); } 
   .hist-item:hover { border-color: var(--border-hi); transform: translateX(2px); box-shadow: -3px 0 0 var(--orange); }
   .hist-poster { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
@@ -2534,6 +2738,45 @@
     color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 10px;
     display: flex; align-items: center; justify-content: space-between;
   }
+
+  /* Ludex 2.0 : "Pour toi aujourd'hui" — Angles morts + Ce jour-là fusionnés
+     en rangée compacte plutôt que deux sections empilées avec chacune son
+     propre titre pleine largeur. */
+  .today-for-you-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .today-for-you-col { flex: 1; min-width: 220px; }
+  .today-for-you-col-title {
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700; margin-bottom: 8px;
+  }
+
+  /* Ludex 2.0 : "Parcourir" — Par thème + Classiques en sous-onglets plutôt
+     que deux cartes empilées. Bascule via classList uniquement (jamais
+     .style.display) : 00e-feature-flags.js manipule déjà .style.display
+     sur ces mêmes éléments (activation/désactivation de fonctionnalité) —
+     s'appuyer sur une classe CSS évite tout conflit entre les deux
+     mécanismes (un style inline vide laisse la classe gouverner). */
+  .browse-tabs { margin-bottom: 14px; }
+  .browse-panel { display: none; }
+  .browse-panel.active { display: block; }
+
+  /* Ludex 2.0 : "Jouer" — Quiz + Duels repliés par défaut sous un seul
+     repère (<details> natif : accessible sans JS dédié, clavier et lecteur
+     d'écran gèrent déjà l'ouverture/fermeture). */
+  .discover-accordion { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+  /* #play-wrap (ID) plutôt que .discover-accordion (classe) : la règle
+     générale ".discover-section:first-of-type" (classe + pseudo-classe) est
+     plus spécifique qu'une simple classe et l'écraserait sinon — <details>
+     étant le seul élément de son TYPE parmi ses frères <div>, il matche
+     toujours ":first-of-type" indépendamment de sa position réelle. */
+  #play-wrap { padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border); }
+  .discover-accordion-summary {
+    cursor: pointer; list-style: none; margin-bottom: 0;
+  }
+  .discover-accordion-summary::-webkit-details-marker { display: none; }
+  .discover-accordion[open] .discover-accordion-summary { margin-bottom: 10px; }
+  .discover-accordion-summary .badges-chevron { transition: transform var(--dur-fast); }
+  .discover-accordion[open] .discover-accordion-summary .badges-chevron { transform: rotate(180deg); }
+  .discover-accordion .discover-section:first-of-type { padding-top: 14px; margin-top: 4px; border-top: 1px solid var(--border); }
   .quiz-streak {
     font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem; color: var(--orange);
     display: flex; align-items: center; gap: 3px; text-transform: none; letter-spacing: 0;
@@ -2606,6 +2849,46 @@
      donc pas de curseur "pointeur" trompeur. */
   .fdj-card.fdj-guessing { text-align: center; cursor: default; padding: 14px; }
   .fdj-card.fdj-guessing:hover { border-color: var(--border); }
+  /* Ludex 2.0 : reprend le traitement plein cadre du swipe — fond flouté
+     (.guess-poster, repositionné plus haut) plutôt qu'une vignette en ligne,
+     contenu superposé en dégradé sombre. Scopé à .fdj-guessing uniquement :
+     la fiche révélée (.fdj-revealed) garde son agencement affiche+infos
+     actuel, pas concerné par ce changement. */
+  .fdj-card.fdj-guessing {
+    position: relative; overflow: hidden; min-height: 320px;
+    padding: 0; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .fdj-hero-overlay {
+    position: absolute; inset: 0; z-index: 0;
+    background: linear-gradient(to bottom, rgba(14,17,22,0.35) 0%, rgba(14,17,22,0.55) 45%, rgba(14,17,22,0.92) 100%);
+  }
+  .fdj-hero-top, .fdj-hero-body { position: relative; z-index: 1; }
+  .fdj-hero-top { display: flex; justify-content: space-between; align-items: center; padding: 14px; }
+  .fdj-hero-badge {
+    font-family: var(--font-heading); font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-hi); background: rgba(0,0,0,0.5);
+    padding: 5px 10px; border-radius: 999px;
+  }
+  .fdj-attempt-dots { display: flex; align-items: center; gap: 5px; }
+  .fdj-attempt-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.3); }
+  .fdj-attempt-dot.used { background: var(--gold); }
+  /* .guess-attempts (texte "Essai X/Y") reprend sa fonction d'origine —
+     conservée en accessibilité/texte, discrète à côté des pastilles plutôt
+     que seule et centrée comme avant. */
+  .fdj-attempt-dots .guess-attempts {
+    font-size: 0.64rem; color: var(--text-hi); opacity: 0.75; margin: 0 0 0 4px;
+  }
+  .fdj-hero-body { padding: 14px; }
+  .fdj-title-mask {
+    font-family: var(--font-heading); font-size: 1.6rem; font-weight: 700;
+    color: var(--text-hi); letter-spacing: 0.08em; margin-bottom: 10px;
+  }
+  .fdj-hero-pills { display: flex; gap: 8px; margin-bottom: 10px; }
+  .fdj-hero-pill {
+    font-size: 0.74rem; font-weight: 600; color: var(--text-hi);
+    background: rgba(255,255,255,0.12); padding: 4px 10px; border-radius: 999px;
+  }
+  .fdj-hero-pill.accent { background: var(--gold); color: var(--bg); }
   .fdj-poster { width: 84px; height: 126px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--surface2); }
   .fdj-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid); }
   .fdj-info { flex: 1; min-width: 0; }
@@ -2665,14 +2948,15 @@
 
   /* ── DÉCOUVRIR : "Devine le Film du Jour" (mini-jeu) ── */
   .guess-poster {
-    width: 130px; height: 195px; object-fit: cover; border-radius: var(--radius-sm);
-    background: var(--surface2); margin: 0 auto 10px; display: block;
-    /* La transition du flou est la seule animation de cette carte — le reste
-       (texte, formulaire) change trop d'un état à l'autre pour qu'une
-       transition générique ait un sens. */
+    /* Ludex 2.0 : plein cadre en fond de carte plutôt qu'une vignette
+       centrée — même élément, même filter inline (voir renderGuessGame),
+       repositionné uniquement. Léger débordement (-12px) + scale pour que
+       le flou ne laisse jamais deviner un bord net. */
+    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
+    object-fit: cover; border-radius: 0; background: var(--surface2);
+    transform: scale(1.08);
     transition: filter var(--dur-slow) var(--ease-out);
   }
-  .guess-attempts { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); margin-bottom: 8px; }
   .guess-hints { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
   .guess-hint {
     font-size: 0.72rem; color: var(--text-hi); background: var(--surface2);
@@ -2749,8 +3033,15 @@
        molette, trackpad) — une animation CSS pure bloque toute interaction
        manuelle pendant qu'elle tourne. */
   }
-  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; }
+  .trending-item { flex-shrink: 0; width: 88px; cursor: pointer; position: relative; }
   .trending-item-poster { width: 88px; height: 132px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); }
+  /* Tag Film/Série — les tendances mélangent désormais les deux (TMDb
+     "trending/all/week", voir api/search.js) */
+  .trending-item-type {
+    position: absolute; top: 6px; left: 6px; font-size: 0.56rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; color: #fff;
+    background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: var(--radius-sm);
+  }
   .trending-item-title {
     font-size: 0.68rem; color: var(--text-mid); margin-top: 4px; text-align: center;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -2784,9 +3075,54 @@
     max-width: 300px;
     margin: 10px auto 0;
   }
+  /* Ludex 2.0 : liste compacte (réglage optionnel) — le conteneur n'a plus
+     besoin d'une hauteur/largeur fixes pensées pour la pile de cartes
+     absolute-positionnées, la liste défile normalement. */
+  html.discover-swipe-compact .discover-stack {
+    height: auto; max-width: 100%; margin-top: 6px;
+  }
+  .discover-compact-list { display: flex; flex-direction: column; }
+  .discover-compact-row {
+    display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .discover-compact-row:last-child { border-bottom: none; }
+  .discover-compact-open { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; cursor: pointer; }
+  .discover-compact-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .discover-compact-poster { width: 42px; height: 63px; object-fit: cover; border-radius: 3px; flex-shrink: 0; background: var(--surface2); }
+  .discover-compact-poster-ph {
+    width: 42px; height: 63px; border-radius: 3px; flex-shrink: 0; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-mid);
+  }
+  .discover-compact-info { min-width: 0; }
+  .discover-compact-title {
+    font-family: var(--font-heading); font-weight: 700; font-size: 0.86rem; color: var(--text-hi);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .discover-compact-meta { font-size: 0.74rem; color: var(--text-mid); margin-top: 2px; }
+  .discover-compact-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .discover-compact-btn {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border-hi);
+    background: var(--surface); color: var(--text); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all var(--dur-fast);
+  }
+  .discover-compact-btn .icon { width: 16px; height: 16px; }
+  .discover-compact-btn.pass:hover { border-color: var(--red); color: var(--red); }
+  .discover-compact-btn.like:hover { border-color: var(--green); color: var(--green); }
+
   .discover-loading, .discover-empty {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     text-align: center; padding: 20px; color: var(--text-mid); font-size: 0.9rem; line-height: 1.5;
+  }
+  html.discover-swipe-compact .discover-loading,
+  html.discover-swipe-compact .discover-empty {
+    position: static; padding: 40px 20px;
+  }
+  /* Le squelette de chargement hérite de .discover-card (position:absolute),
+     invisible dans un conteneur devenu height:auto en liste compacte — sorti
+     du flux absolu pour ce mode précis. */
+  html.discover-swipe-compact .discover-card-skeleton {
+    position: static; margin: 0 auto; max-width: 220px;
   }
   .discover-card {
     position: absolute; inset: 0;
@@ -2930,11 +3266,12 @@
          "efface" les détails du contenu défilant derrière, même avec
          moins de teinte opaque par-dessus. */
       background: color-mix(in srgb, var(--surface) 55%, transparent);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
     }
-    .nav-btn:first-child { border-radius: 22px 0 0 22px; }
-    .nav-btn:last-child { border-radius: 0 22px 22px 0; }
+    /* Chaque .nav-btn porte déjà son propre radius 999px (bloc commun
+       ci-dessus) : plus besoin de caler les coins extérieurs de la barre
+       sur les boutons de bord, chaque capsule est indépendante. */
 
     /* Bouton Noter mis en avant : centré sur les deux axes de la barre et
        légèrement plus grand qu'elle, esprit "action centrale" — mobile
