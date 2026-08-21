@@ -2724,6 +2724,7 @@
      "sticky en tête d'écran" est spécifique à Découvrir. */
   .discover-segmented-wrap {
     position: sticky; top: 0; z-index: 5; background: var(--bg);
+    border-radius: var(--radius-sm);
   }
 
   .choix-du-jour-wrap { margin-bottom: 24px; }
