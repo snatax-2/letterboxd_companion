@@ -48,12 +48,6 @@ function applySettings(settings) {
   document.documentElement.setAttribute('data-theme', themeToApply);
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
   document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
-  // Suggestions Découvrir en liste compacte plutôt qu'en pile à glisser —
-  // false par défaut (comportement historique conservé). Le changement de
-  // mise en page proprement dit vit dans 11-discover.js (renderDiscoverCards
-  // lit ce même data-attribute au moment du rendu).
-  document.getElementById('setting-discover-swipe-compact').checked = settings.discoverSwipeCompact === true;
-  document.documentElement.classList.toggle('discover-swipe-compact', settings.discoverSwipeCompact === true);
   const owned = loadOwnedProviders();
   document.querySelectorAll('.platform-chip').forEach(chip => {
     chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
@@ -138,17 +132,12 @@ document.getElementById('settings-save').addEventListener('click', () => {
     appName: formattedName,
     theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
-    discoverSwipeCompact: document.getElementById('setting-discover-swipe-compact').checked,
   };
   
   localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
   const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
   saveOwnedProviders(selectedProviders);
   applySettings(newSettings);
-  // Le mode d'affichage a pu changer : redessine la pile de suggestions dans
-  // sa nouvelle forme si elle a déjà des films chargés (sinon rien à faire,
-  // le prochain chargement lira directement la classe posée par applySettings).
-  if (typeof renderDiscoverCards === 'function' && discoverQueue.length > 0) renderDiscoverCards();
   renderAll();
   document.getElementById('settings-modal').classList.remove('open');
   document.getElementById('settings-btn').focus();
