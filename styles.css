@@ -383,10 +383,6 @@
      défaut ailleurs (ex: .hero-entry-title de l'historique). Appliqué aux
      6 thèmes (décision confirmée : compositions identiques partout,
      seules les couleurs/polices changent déjà par thème via les tokens). */
-  .mds-title {
-    font-style: normal; text-transform: uppercase; font-weight: 700;
-    letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.5);
-  }
   .mds-header-director {
     text-shadow: 0 1px 8px rgba(0,0,0,0.5);
   }
@@ -412,18 +408,24 @@
   }
 
   /* ── Ludex 2.0 : composition de l'Historique — filets + séparateurs de
-     mois plutôt que des cartes empilées en boîte. Appliqué aux 6 thèmes —
-     .hist-item-content garde son propre background: var(--bg), donc le
-     mécanisme de swipe/révélation n'est pas affecté par ce changement,
-     seul le contour extérieur de la carte disparaît. */
-  .hist-item {
+     mois plutôt que des cartes empilées en boîte. Appliqué aux 6 thèmes.
+     Scopé via #view-history (spécificité ID, englobe #history-list ET
+     #tv-history-list) plutôt que de simples classes .hist-item/.hist-item-
+     content : leurs styles d'origine sont déclarés PLUS BAS dans ce fichier
+     et gagnaient sinon la cascade silencieusement, à spécificité égale et
+     ordre de source plus tardif — même piège que .mds-header et les cartes
+     de la watchlist. .hist-item-content garde son propre background:
+     var(--bg) posé par la règle d'origine, donc le mécanisme de swipe/
+     révélation n'est pas affecté par ce changement, seul le contour
+     extérieur de la carte disparaît. */
+  #view-history .hist-item {
     background: transparent; border: none; border-radius: 0;
     margin-bottom: 0; border-bottom: 1px solid var(--border);
   }
-  .hist-item:last-child {
+  #view-history .hist-item:last-child {
     border-bottom: none;
   }
-  .hist-item-content {
+  #view-history .hist-item-content {
     padding: 12px 4px;
   }
   /* Séparateur de mois, injecté par renderHistory() uniquement en tri
@@ -474,43 +476,42 @@
      dans attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste
      le chemin d'action, déjà toujours visible en overlay (position absolute)
      indépendamment du swipe, donc rien à ajouter côté DOM. */
+  /* Watchlist en grille : chaque règle est scopée via #watchlist-list
+     (spécificité ID) plutôt qu'une simple classe — les styles d'origine de
+     la liste en lignes (.wl-card, .wl-poster, .wl-actions...) sont déclarés
+     PLUS BAS dans ce fichier et gagnaient sinon la cascade silencieusement,
+     à spécificité égale et ordre de source plus tardif. Même piège que
+     celui rencontré sur .mds-header — tout le bloc en a été touché, pas
+     seulement les infos qu'on voulait masquer. */
   #watchlist-list {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   }
-  .wl-card {
+  #watchlist-list .wl-card {
     background: transparent; border: none; margin-bottom: 0;
   }
-  .wl-card-content {
+  #watchlist-list .wl-card-content {
     flex-direction: column; padding: 0; gap: 6px;
   }
-  .wl-card-open {
+  #watchlist-list .wl-card-open {
     flex-direction: column; gap: 6px;
   }
-  .wl-poster {
+  #watchlist-list .wl-poster {
     width: 100%; height: auto; aspect-ratio: 2/3; border-radius: 8px; font-size: 2rem;
   }
-  .wl-poster img {
+  #watchlist-list .wl-poster img {
     width: 100%; height: 100%; border-radius: 8px;
   }
-  .wl-title {
-    font-size: 0.72rem; font-style: italic; white-space: normal;
-    line-height: 1.25; padding-right: 0; display: -webkit-box;
-    -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  /* Juste l'affiche dans la grille — plus de titre en dessous. Le nom du
-     film reste consultable dans sa fiche (déjà accessible en un tap sur
-     la vignette) ; l'affiche seule est plus proche d'une étagère de
-     films que d'une liste, cohérent avec l'esprit "ça se parcourt des
-     yeux" du reste de la composition. */
-  #watchlist-list .wl-title {
+  /* Juste l'affiche dans la grille — plus de titre ni d'infos en dessous.
+     Le nom du film et sa disponibilité en streaming restent consultables
+     dans sa fiche (déjà accessible en un tap sur la vignette) ; l'affiche
+     seule est plus proche d'une étagère de films que d'une liste, cohérent
+     avec l'esprit "ça se parcourt des yeux" du reste de la composition. */
+  #watchlist-list .wl-title,
+  #watchlist-list .wl-meta,
+  #watchlist-list .wl-providers {
     display: none;
   }
-  /* Pas la place pour le genre/année ni le statut streaming dans une
-     cellule de grille — restent visibles dans la fiche film. */
-  .wl-meta, .wl-providers {
-    display: none;
-  }
-  .wl-actions {
+  #watchlist-list .wl-actions {
     top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
     backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
   }
@@ -2246,7 +2247,17 @@
   }
   .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; padding-right: 30px; }
   .mds-header.compact .mds-header-info { padding-right: 26px; }
-  .mds-title { font-family: var(--font-heading); font-size: 1.15rem; font-weight: 800; color: var(--text-hi); line-height: 1.25; transition: font-size var(--dur-base) var(--ease-out); }
+  .mds-title {
+    font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700;
+    color: var(--text-hi); line-height: 1.25; transition: font-size var(--dur-base) var(--ease-out);
+    /* Ludex 2.0 : traitement "façon affiche" (capitales, non-italique),
+       fusionné ici avec la déclaration structurelle d'origine — une
+       seconde déclaration séparée plus haut dans ce fichier se faisait
+       silencieusement écraser sur font-weight (800 vs 700 voulu), même
+       piège que .mds-header/.hist-item/.wl-card. */
+    text-transform: uppercase; letter-spacing: 0.02em;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
   /* Ligne meta (année/durée/genres) : de simples points au milieu lisaient
      comme une liste brute d'infos. Un trait fin entre chaque terme, à la
      manière d'un carton de générique, structure la même info sans plus de mots. */
