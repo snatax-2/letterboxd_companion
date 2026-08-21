@@ -564,7 +564,7 @@ function buildPdsContent(data) {
     : '';
 
   return `
-    <div class="mds-header" style="animation-delay:0s">
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${photoUrl ? `url('${tmdbImage(data.profile_path, 'w780')}')` : 'none'}">
       ${photoUrl
         ? `<img class="mds-poster" src="${photoUrl}" alt="Photo de ${escAttr(data.name)}" loading="lazy">`
         : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
