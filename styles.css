@@ -2719,19 +2719,14 @@
      Trois blocs : toggle Films/Séries sticky, Choix du jour (hero plein
      cadre), 4 carrousels d'affiches pures. */
 
+  /* Le toggle Films/Séries réutilise .mode-tabs/.mode-tab (déjà éprouvé
+     dans Historique) plutôt qu'un composant maison — seul l'habillage
+     "sticky en tête d'écran" est spécifique à Découvrir. */
   .discover-segmented-wrap {
     position: sticky; top: 0; z-index: 5; background: var(--bg);
-    padding-bottom: 12px; margin-bottom: 4px;
+    padding-bottom: 12px; margin-bottom: 12px;
   }
-  .discover-segmented {
-    display: flex; background: var(--surface2); border-radius: var(--radius-pill); padding: 4px;
-  }
-  .discover-seg-btn {
-    flex: 1; text-align: center; padding: 9px; border-radius: var(--radius-pill);
-    font-size: 0.82rem; font-weight: 700; color: var(--text); font-family: var(--font-heading);
-    background: transparent; border: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
-  }
-  .discover-seg-btn.active { background: var(--gold); color: var(--bg); }
+  .discover-seg-tabs { margin-bottom: 0; }
 
   .choix-du-jour-wrap { margin-bottom: 24px; }
   .choix-du-jour-eyebrow {
@@ -2755,6 +2750,10 @@
     font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem;
     color: var(--text-hi); margin: 0; line-height: 1.15;
     text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+  .choix-du-jour-director {
+    font-size: 0.8rem; color: var(--text-hi); opacity: 0.8; margin-top: 6px;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
   }
 
   .carousel-block { margin-bottom: 22px; }

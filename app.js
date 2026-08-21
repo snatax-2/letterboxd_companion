@@ -784,7 +784,7 @@ switchMobileNav('rating');
 // sert à plusieurs mécanismes de geste distincts dans ce fichier.
 function isExcludedTarget(target) {
   return !!target.closest(
-    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, .on-this-day-strip, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+    '#carousel-container, .carousel-row, .choix-du-jour-card, .wl-card, .hist-item, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
   );
 }
 
@@ -6326,8 +6326,24 @@ async function loadChoixDuJour() {
     const pick = data.result;
     if (!pick) return;
     const item = normalizeItem(pick);
-    localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+    // Second appel pour le réalisateur (le tirage du jour ne renvoie que les
+    // champs de base, sans crédits — voir dailyPick dans api/search.js). Ne
+    // bloque pas l'affichage de l'affiche+titre si cet appel échoue ou tarde :
+    // rendu immédiat sans réalisateur, puis complété dès qu'il arrive.
     renderChoixDuJour(item);
+    localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+
+    const detailEndpoint = discoverMediaType === 'tv' ? `tvId=${item.id}` : `id=${item.id}`;
+    const detailRes = await fetch(`/api/search?${detailEndpoint}`);
+    const details = await detailRes.json();
+    const director = discoverMediaType === 'tv'
+      ? details.created_by?.[0]?.name
+      : details.credits?.crew?.find(c => c.job === 'Director')?.name;
+    if (director) {
+      item.director = director;
+      renderChoixDuJour(item);
+      localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+    }
   } catch (e) {
     console.warn('Impossible de charger le choix du jour', e);
   }
@@ -6342,6 +6358,7 @@ function renderChoixDuJour(item) {
     <div class="choix-du-jour-overlay"></div>
     <div class="choix-du-jour-content">
       <div class="choix-du-jour-title">${escAttr(item.title)}</div>
+      ${item.director ? `<div class="choix-du-jour-director">Réalisé par ${escAttr(item.director)}</div>` : ''}
     </div>
   `;
   heroEl.dataset.itemId = String(item.id);
