@@ -497,6 +497,14 @@
     line-height: 1.25; padding-right: 0; display: -webkit-box;
     -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
+  /* Juste l'affiche dans la grille — plus de titre en dessous. Le nom du
+     film reste consultable dans sa fiche (déjà accessible en un tap sur
+     la vignette) ; l'affiche seule est plus proche d'une étagère de
+     films que d'une liste, cohérent avec l'esprit "ça se parcourt des
+     yeux" du reste de la composition. */
+  #watchlist-list .wl-title {
+    display: none;
+  }
   /* Pas la place pour le genre/année ni le statut streaming dans une
      cellule de grille — restent visibles dans la fiche film. */
   .wl-meta, .wl-providers {
