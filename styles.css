@@ -380,18 +380,17 @@
   /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
      "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
      libellé d'interface — l'italique Fraunces reste le traitement par
-     défaut ailleurs (ex: .hero-entry-title de l'historique). */
-  html:not([data-theme]) .mds-title,
-  [data-theme="default"] .mds-title {
+     défaut ailleurs (ex: .hero-entry-title de l'historique). Appliqué aux
+     6 thèmes (décision confirmée : compositions identiques partout,
+     seules les couleurs/polices changent déjà par thème via les tokens). */
+  .mds-title {
     font-style: normal; text-transform: uppercase; font-weight: 700;
     letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.5);
   }
-  html:not([data-theme]) .mds-header-director,
-  [data-theme="default"] .mds-header-director {
+  .mds-header-director {
     text-shadow: 0 1px 8px rgba(0,0,0,0.5);
   }
-  html:not([data-theme]) .mds-meta,
-  [data-theme="default"] .mds-meta {
+  .mds-meta {
     text-shadow: 0 1px 8px rgba(0,0,0,0.5);
   }
 
@@ -400,136 +399,109 @@
      bas). Disparaît en mode compact (repli au scroll) : une bande fine n'a
      pas besoin d'image derrière. --mds-backdrop est posée en style inline
      par buildMdsContent()/buildTdsContent(), 'none' si pas de backdrop. */
-  html:not([data-theme]) .mds-header,
-  [data-theme="default"] .mds-header {
+  .mds-header {
     background-image:
       linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
       var(--mds-backdrop, none);
     background-size: cover;
     background-position: center;
   }
-  html:not([data-theme]) .mds-header.compact,
-  [data-theme="default"] .mds-header.compact {
+  .mds-header.compact {
     background-image: linear-gradient(to bottom, color-mix(in srgb, var(--poster-accent, var(--bg)) 22%, var(--bg)), var(--bg));
   }
 
   /* ── Ludex 2.0 : composition de l'Historique — filets + séparateurs de
-     mois plutôt que des cartes empilées en boîte. Scopé au thème par
-     défaut UNIQUEMENT (voir "Vers Ludex 2.0" §01 : la composition change
-     pour ce thème précis, les 6 autres gardent leur look carte intact —
+     mois plutôt que des cartes empilées en boîte. Appliqué aux 6 thèmes —
      .hist-item-content garde son propre background: var(--bg), donc le
      mécanisme de swipe/révélation n'est pas affecté par ce changement,
-     seul le contour extérieur de la carte disparaît). */
-  html:not([data-theme]) .hist-item,
-  [data-theme="default"] .hist-item {
+     seul le contour extérieur de la carte disparaît. */
+  .hist-item {
     background: transparent; border: none; border-radius: 0;
     margin-bottom: 0; border-bottom: 1px solid var(--border);
   }
-  html:not([data-theme]) .hist-item:last-child,
-  [data-theme="default"] .hist-item:last-child {
+  .hist-item:last-child {
     border-bottom: none;
   }
-  html:not([data-theme]) .hist-item-content,
-  [data-theme="default"] .hist-item-content {
+  .hist-item-content {
     padding: 12px 4px;
   }
   /* Séparateur de mois, injecté par renderHistory() uniquement en tri
      chronologique — voir 06a-history-list.js */
-  html:not([data-theme]) .hist-month-sep,
-  [data-theme="default"] .hist-month-sep {
+  .hist-month-sep {
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
     text-transform: uppercase; color: var(--text-mid);
     padding: 18px 4px 6px; border-bottom: none;
   }
-  html:not([data-theme]) .hist-month-sep:first-child,
-  [data-theme="default"] .hist-month-sep:first-child {
+  .hist-month-sep:first-child {
     padding-top: 2px;
   }
 
   /* Entrée vedette : le dernier film noté, en grand, au-dessus de la liste
      groupée. Un seul bloc réutilisable (voir #history-hero) — même
      principe visuel prévu pour le score héros de l'écran Noter. */
-  html:not([data-theme]) .hero-entry,
-  [data-theme="default"] .hero-entry {
+  .hero-entry {
     display: flex; gap: 16px; padding: 4px 4px 20px; margin-bottom: 4px;
     border-bottom: 1px solid var(--border);
   }
-  html:not([data-theme]) .hero-entry-poster,
-  [data-theme="default"] .hero-entry-poster {
+  .hero-entry-poster {
     width: 96px; flex-shrink: 0; border-radius: 6px; aspect-ratio: 2/3;
     object-fit: cover; background: var(--surface2);
   }
-  html:not([data-theme]) .hero-entry-body,
-  [data-theme="default"] .hero-entry-body {
+  .hero-entry-body {
     display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0;
   }
-  html:not([data-theme]) .hero-entry-eyebrow,
-  [data-theme="default"] .hero-entry-eyebrow {
+  .hero-entry-eyebrow {
     font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--text-mid);
   }
-  html:not([data-theme]) .hero-entry-title,
-  [data-theme="default"] .hero-entry-title {
+  .hero-entry-title {
     font-family: var(--font-heading); font-style: italic; font-weight: 600;
     font-size: 1.3rem; color: var(--text-hi); line-height: 1.2; margin: 2px 0 6px;
   }
-  html:not([data-theme]) .hero-entry-score,
-  [data-theme="default"] .hero-entry-score {
+  .hero-entry-score {
     font-family: var(--font-heading); font-style: normal; font-weight: 700;
     font-size: 2.1rem; color: var(--gold); line-height: 1;
   }
-  html:not([data-theme]) .hero-entry-score small,
-  [data-theme="default"] .hero-entry-score small {
+  .hero-entry-score small {
     font-size: 1rem; color: var(--text-mid); font-weight: 400;
   }
 
   /* ── Ludex 2.0 : Watchlist en grille d'affiches 3 colonnes plutôt qu'une
      liste de lignes — "une watchlist se parcourt des yeux, elle ne se lit
-     pas comme une liste" (Vers Ludex 2.0 §03). Le swipe horizontal est
-     désactivé pour ce mode (voir isDefaultComposition() dans
-     attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste le
-     chemin d'action, déjà toujours visible en overlay (position absolute)
+     pas comme une liste" (Vers Ludex 2.0 §03). Appliqué aux 6 thèmes. Le
+     swipe horizontal est désactivé pour ce mode (voir isDefaultComposition()
+     dans attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste
+     le chemin d'action, déjà toujours visible en overlay (position absolute)
      indépendamment du swipe, donc rien à ajouter côté DOM. */
-  html:not([data-theme]) #watchlist-list,
-  [data-theme="default"] #watchlist-list {
+  #watchlist-list {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   }
-  html:not([data-theme]) .wl-card,
-  [data-theme="default"] .wl-card {
+  .wl-card {
     background: transparent; border: none; margin-bottom: 0;
   }
-  html:not([data-theme]) .wl-card-content,
-  [data-theme="default"] .wl-card-content {
+  .wl-card-content {
     flex-direction: column; padding: 0; gap: 6px;
   }
-  html:not([data-theme]) .wl-card-open,
-  [data-theme="default"] .wl-card-open {
+  .wl-card-open {
     flex-direction: column; gap: 6px;
   }
-  html:not([data-theme]) .wl-poster,
-  [data-theme="default"] .wl-poster {
+  .wl-poster {
     width: 100%; height: auto; aspect-ratio: 2/3; border-radius: 8px; font-size: 2rem;
   }
-  html:not([data-theme]) .wl-poster img,
-  [data-theme="default"] .wl-poster img {
+  .wl-poster img {
     width: 100%; height: 100%; border-radius: 8px;
   }
-  html:not([data-theme]) .wl-title,
-  [data-theme="default"] .wl-title {
+  .wl-title {
     font-size: 0.72rem; font-style: italic; white-space: normal;
     line-height: 1.25; padding-right: 0; display: -webkit-box;
     -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
   /* Pas la place pour le genre/année ni le statut streaming dans une
      cellule de grille — restent visibles dans la fiche film. */
-  html:not([data-theme]) .wl-meta,
-  [data-theme="default"] .wl-meta,
-  html:not([data-theme]) .wl-providers,
-  [data-theme="default"] .wl-providers {
+  .wl-meta, .wl-providers {
     display: none;
   }
-  html:not([data-theme]) .wl-actions,
-  [data-theme="default"] .wl-actions {
+  .wl-actions {
     top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
     backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
   }
@@ -2840,9 +2812,49 @@
     transition: border-color var(--dur-fast);
   }
   .fdj-card:hover { border-color: var(--border-hi); }
-  /* Fiche révélée (après avoir deviné, ou immédiatement si le film n'a pas
-     d'affiche) : affiche + infos côte à côte, toute la carte cliquable. */
-  .fdj-card.fdj-revealed { display: flex; gap: 12px; }
+  /* Ludex 2.0 : la fiche révélée reprend le MÊME traitement plein cadre que
+     la phase "à deviner" (voir .fdj-card.fdj-guessing plus bas) plutôt
+     qu'un agencement affiche+infos côte à côte différent — l'affiche
+     bascule simplement de floutée à nette, tout le reste (dégradé, badge,
+     bloc titre en bas) reste visuellement identique entre les deux états. */
+  .fdj-card.fdj-revealed { display: block; padding: 0; }
+  .fdj-hero-frame {
+    position: relative; overflow: hidden; min-height: 320px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    cursor: pointer;
+  }
+  /* Affiche nette en fond plein cadre — même technique que .guess-poster
+     (légitime débordement + scale pour ne jamais laisser un bord net,
+     même si ici l'image n'est pas floutée, par cohérence avec l'état
+     "à deviner" juste avant). */
+  .fdj-hero-frame .fdj-poster {
+    position: absolute; inset: -12px; width: calc(100% + 24px); height: calc(100% + 24px);
+    object-fit: cover; border-radius: 0; transform: scale(1.08);
+  }
+  .fdj-hero-frame .fdj-poster-ph {
+    position: absolute; inset: 0; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: var(--text-mid);
+  }
+  .fdj-hero-frame .fdj-hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .fdj-hero-frame .guess-result {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--text-hi); background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 999px;
+  }
+  .fdj-hero-frame .fdj-info { position: relative; z-index: 1; }
+  .fdj-hero-frame .fdj-film-title {
+    font-family: var(--font-heading); font-weight: 700; font-size: 1.3rem;
+    text-transform: uppercase; letter-spacing: 0.02em; color: var(--text-hi);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+  .fdj-hero-frame .fdj-year { color: var(--text-hi); opacity: 0.75; }
+  .fdj-hero-frame .fdj-meta-line { color: var(--text-hi); text-shadow: 0 1px 8px rgba(0,0,0,0.5); margin-top: 8px; }
+  .fdj-hero-frame .fdj-meta-icon { color: var(--gold); }
+  /* Synopsis + plateformes restent SOUS l'image plein cadre, dans le flux
+     normal de la carte — inchangés visuellement (encart bande colorée),
+     juste repositionnés hors du bloc image. */
+  .fdj-below { padding: 14px; }
+  .fdj-below .fdj-synopsis-card { margin: 0 0 10px; }
+  .fdj-below .fdj-providers { margin-top: 0; }
   /* Phase "à deviner" : centrée, empilée — pas de mise en page côte à côte
      tant qu'il n'y a que l'affiche floutée et le formulaire. La carte n'a
      pas encore de gestionnaire de clic (rien à ouvrir avant la révélation),

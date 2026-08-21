@@ -1,1 +1,11283 @@
-"serviceWorker"in navigator&&window.addEventListener("load",()=>{navigator.serviceWorker.register("/sw.js").then(e=>{e.addEventListener("updatefound",()=>{const t=e.installing;t&&t.addEventListener("statechange",()=>{if("installed"===t.state&&navigator.serviceWorker.controller){const e=document.getElementById("update-banner");e&&e.classList.add("show")}})})}).catch(()=>{})}),document.getElementById("update-banner-reload-btn")?.addEventListener("click",()=>{window.location.reload()}),function(){const e=document.createElement("div");function t(){e.classList.toggle("visible",!navigator.onLine)}e.id="offline-badge",e.className="offline-badge",e.setAttribute("role","status"),e.textContent="Hors-ligne — tes données restent disponibles",document.body.appendChild(e),window.addEventListener("online",t),window.addEventListener("offline",t),t()}(),function(){const e="lbx_schema_version",t="lbx_v2",s=[{to:2,up:()=>{const e=localStorage.getItem(t);if(!e)return;const s=JSON.parse(e);if(!Array.isArray(s))return;const n=s.map(normalizeHistoryItemV2);localStorage.setItem(t,JSON.stringify(n))}}],n=s.length>0?s[s.length-1].to:1;let a;try{a=parseInt(localStorage.getItem(e),10)}catch{a=NaN}if(isNaN(a)&&(a=1),!(a>=n)){try{const e=localStorage.getItem(t);e&&localStorage.setItem("lbx_pre_migration_backup",JSON.stringify({fromVersion:a,at:(new Date).toISOString(),history:e}))}catch{}for(const t of s)if(!(t.to<=a))try{t.up(),a=t.to,localStorage.setItem(e,String(a))}catch(e){console.error(`Migration vers v${t.to} échouée (données intactes) :`,e);break}}}();const ICON_ATTRS='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"',ICONS={settings:`<svg ${ICON_ATTRS}><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg>`,exportIcon:`<svg ${ICON_ATTRS}><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,importIcon:`<svg ${ICON_ATTRS}><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,plus:`<svg ${ICON_ATTRS}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,heart:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',search:`<svg ${ICON_ATTRS}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,barChart:`<svg ${ICON_ATTRS}><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg>`,target:`<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>`,flame:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg>',medal:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M7 2h4l1.5 4L14 2h4l-3.6 7.2a6 6 0 1 1-4.8 0L7 2z" opacity="0.55"/><circle cx="12" cy="15" r="5.4"/><circle cx="12" cy="15" r="3" fill="#fff" opacity="0.28"/></svg>',clapper:`<svg ${ICON_ATTRS}><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg>`,lightbulb:`<svg ${ICON_ATTRS}><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.05V17h6v-2.25c0-.85.4-1.55 1-2.05A7 7 0 0 0 12 2z"/></svg>`,copy:`<svg ${ICON_ATTRS}><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>`,refresh:`<svg ${ICON_ATTRS}><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,trash:`<svg ${ICON_ATTRS}><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/><line x1="10" y1="11" x2="10" y2="16"/><line x1="14" y1="11" x2="14" y2="16"/></svg>`,palette:`<svg ${ICON_ATTRS}><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.3c1.8 0 3.2-1.4 3.2-3.2C21 6.6 17 2 12 2z"/><circle cx="7" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>`,cloud:`<svg ${ICON_ATTRS}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,moon:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>',edit:`<svg ${ICON_ATTRS}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,check:`<svg ${ICON_ATTRS}><polyline points="20 6 9 17 4 12"/></svg>`,close:`<svg ${ICON_ATTRS}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,pause:`<svg ${ICON_ATTRS}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,play:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg>',star:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>',popcorn:`<svg ${ICON_ATTRS}><path d="M6 8h12l-1.4 12.1a1 1 0 0 1-1 .9H8.4a1 1 0 0 1-1-.9L6 8z"/><path d="M9 8v13M12 8v13M15 8v13"/><path d="M5 8a2 2 0 0 1 2-3h10a2 2 0 0 1 2 3"/></svg>`,sofa:`<svg ${ICON_ATTRS}><path d="M5 12a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3H5v-3z"/><path d="M4 15v4M20 15v4"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>`,moneyBag:`<svg ${ICON_ATTRS}><path d="M9 6a3 3 0 0 1 6 0"/><path d="M6.5 6h11l1.3 11a2 2 0 0 1-2 2.2H7.2a2 2 0 0 1-2-2.2L6.5 6z"/><line x1="12" y1="10" x2="12" y2="15"/></svg>`,timeLoop:`<svg ${ICON_ATTRS}><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2"/><path d="M9 2l3 3 3-3"/></svg>`,sword:`<svg ${ICON_ATTRS}><line x1="5" y1="19" x2="19" y2="5"/><line x1="14" y1="8" x2="17" y2="11"/><line x1="4" y1="20" x2="6" y2="18"/></svg>`,sprout:`<svg ${ICON_ATTRS}><path d="M12 22v-9"/><path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6z"/><path d="M12 9c0-3 2-5 6-5 0 3-2 5-6 5z"/></svg>`,compass:`<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>`,road:`<svg ${ICON_ATTRS}><path d="M9 3L5 21"/><path d="M15 3l4 18"/><line x1="12" y1="5" x2="12" y2="8"/><line x1="12" y1="11" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="20"/></svg>`,hauntedHouse:`<svg ${ICON_ATTRS}><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5a2 2 0 0 1 4 0v5"/><circle cx="9" cy="14" r="0.7" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="0.7" fill="currentColor" stroke="none"/></svg>`,skyline:`<svg ${ICON_ATTRS}><rect x="3" y="10" width="4" height="11"/><rect x="9" y="5" width="4" height="16"/><rect x="15" y="13" width="4" height="8"/></svg>`};"undefined"!=typeof module&&module.exports&&(module.exports={ICONS:ICONS});const posterAccentCache=new Map;function extractPosterAccentColorFromUrl(e){return posterAccentCache.has(e)?Promise.resolve(posterAccentCache.get(e)):new Promise(t=>{try{const s=new Image;s.crossOrigin="anonymous",s.onload=()=>{try{const n=24,a=document.createElement("canvas");a.width=n,a.height=n;const i=a.getContext("2d");i.drawImage(s,0,0,n,n);const{data:o}=i.getImageData(0,0,n,n);let r=0,l=0,c=0,d=0;for(let e=0;e<o.length;e+=4){const t=(o[e]+o[e+1]+o[e+2])/3;t<15||t>245||(r+=o[e],l+=o[e+1],c+=o[e+2],d++)}const u=0===d?null:`rgb(${Math.round(r/d)}, ${Math.round(l/d)}, ${Math.round(c/d)})`;posterAccentCache.set(e,u),t(u)}catch(s){posterAccentCache.set(e,null),t(null)}},s.onerror=()=>{posterAccentCache.set(e,null),t(null)},s.src=e}catch(e){t(null)}})}function applyPosterAccent(e,t){e&&t&&"moderne"===document.documentElement.dataset.theme&&extractPosterAccentColorFromUrl(e).then(e=>{e&&t.style.setProperty("--poster-accent",e)})}const ERROR_LOG_KEY="lbx_error_log",ERROR_LOG_MAX=20;function loadErrorLog(){try{return JSON.parse(localStorage.getItem(ERROR_LOG_KEY))||[]}catch{return[]}}function logClientError(e){try{const t=loadErrorLog();for(t.push({...e,at:(new Date).toISOString()});t.length>20;)t.shift();localStorage.setItem(ERROR_LOG_KEY,JSON.stringify(t))}catch{}notifyOnce()}let notified=!1;function notifyOnce(){notified||(notified=!0,setTimeout(()=>{try{"function"==typeof showToast&&showToast("Un problème technique est survenu. Tes données sont saines — voir Réglages pour le signaler.");const e=document.getElementById("error-log-section");e&&(e.style.display="block")}catch{}},300))}function initErrorLogUI(){const e=document.getElementById("error-log-section"),t=document.getElementById("error-log-copy-btn");e&&t&&(loadErrorLog().length>0&&(e.style.display="block"),t.addEventListener("click",async()=>{const e=loadErrorLog().map(e=>`[${e.at}] ${e.type}: ${e.message}${e.source?" ("+e.source+")":""}`).join("\n")||"Aucune erreur journalisée.";try{await navigator.clipboard.writeText(e),showToast("Journal copié dans le presse-papiers.")}catch{showToast("Impossible de copier automatiquement — le journal reste visible dans les données du site.")}}))}window.addEventListener("error",e=>{logClientError({type:"error",message:e.message||String(e.error),stack:e.error&&e.error.stack?String(e.error.stack).slice(0,2e3):"",source:e.filename?`${e.filename}:${e.lineno}:${e.colno}`:""})}),window.addEventListener("unhandledrejection",e=>{const t=e.reason;logClientError({type:"unhandledrejection",message:t&&t.message?t.message:String(t),stack:t&&t.stack?String(t.stack).slice(0,2e3):"",source:""})}),document.addEventListener("DOMContentLoaded",initErrorLogUI);const FEATURES_KEY="lbx_features",FEATURE_DEFAULTS={duels:!0,quiz:!0,trending:!0,discoverRecs:!0,guessGame:!0,onThisDay:!0,themeExplorer:!0,blindSpots:!0,curatedShortcut:!0};function loadFeatureFlags(){try{const e=JSON.parse(localStorage.getItem(FEATURES_KEY))||{};return{...FEATURE_DEFAULTS,...e}}catch{return{...FEATURE_DEFAULTS}}}function saveFeatureFlags(e){localStorage.setItem(FEATURES_KEY,JSON.stringify(e))}function applyFeatureFlags(){const e=loadFeatureFlags(),t=document.getElementById("duels-card");t&&(t.style.display=e.duels?"":"none");const s=document.getElementById("duel-arena-wrap");s&&(s.style.display=e.duels?"":"none");const n=document.getElementById("quiz-wrap");n&&!e.quiz&&(n.style.display="none");const a=document.getElementById("trending-carousel-wrap");a&&!e.trending&&(a.style.display="none");const i=document.querySelector(".discover-section-tinder");i&&(i.style.display=e.discoverRecs?"":"none");const o=document.getElementById("on-this-day-wrap");o&&!e.onThisDay&&(o.style.display="none");const r=document.getElementById("blind-spots-wrap");r&&!e.blindSpots&&(r.style.display="none");const l=document.getElementById("theme-explorer-wrap");l&&(l.style.display=e.themeExplorer?"":"none");const c=document.getElementById("curated-lists-shortcut-wrap");c&&(c.style.display=e.curatedShortcut?"":"none")}function reloadReenabledFeature(e){"duels"===e&&"function"==typeof renderDuel&&renderDuel(),"quiz"===e&&"function"==typeof loadDailyQuiz&&loadDailyQuiz(),"trending"===e&&"function"==typeof loadTrendingCarousel&&loadTrendingCarousel(),"onThisDay"===e&&"function"==typeof loadOnThisDay&&loadOnThisDay(),"blindSpots"===e&&"function"==typeof renderBlindSpotsSection&&renderBlindSpotsSection()}function initFeatureToggleUI(){const e={"setting-feature-duels":"duels","setting-feature-quiz":"quiz","setting-feature-trending":"trending","setting-feature-discover-recs":"discoverRecs","setting-feature-guess-game":"guessGame","setting-feature-on-this-day":"onThisDay","setting-feature-theme-explorer":"themeExplorer","setting-feature-blind-spots":"blindSpots","setting-feature-curated-shortcut":"curatedShortcut"},t=loadFeatureFlags();for(const[s,n]of Object.entries(e)){const e=document.getElementById(s);e&&(e.checked=t[n],e.addEventListener("change",()=>{const t=loadFeatureFlags(),s=!t[n];t[n]=e.checked,saveFeatureFlags(t),applyFeatureFlags();const a=document.getElementById("view-discover"),i=a&&a.classList.contains("active");s&&e.checked&&i&&reloadReenabledFeature(n),"guessGame"===n&&i&&"function"==typeof loadFilmDuJour&&loadFilmDuJour()}))}}document.addEventListener("DOMContentLoaded",initFeatureToggleUI),setTimeout(applyFeatureFlags,0);const CURATED_ALL_TIME=[{title:"Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles",year:1975},{title:"Vertigo",year:1958},{title:"Citizen Kane",year:1941},{title:"Tokyo Story",year:1953},{title:"In the Mood for Love",year:2e3},{title:"2001: A Space Odyssey",year:1968},{title:"Beau travail",year:1998},{title:"Mulholland Drive",year:2001},{title:"Man with a Movie Camera",year:1929},{title:"Singin' in the Rain",year:1952},{title:"Sunrise: A Song of Two Humans",year:1927},{title:"The Godfather",year:1972},{title:"La Règle du jeu",year:1939},{title:"Cléo from 5 to 7",year:1962},{title:"The Searchers",year:1956},{title:"Meshes of the Afternoon",year:1943},{title:"Close-up",year:1990},{title:"Persona",year:1966},{title:"Apocalypse Now",year:1979},{title:"Seven Samurai",year:1954},{title:"The Passion of Joan of Arc",year:1927},{title:"Late Spring",year:1949},{title:"Playtime",year:1967},{title:"Do the Right Thing",year:1989},{title:"Au hasard Balthazar",year:1966},{title:"The Night of the Hunter",year:1955},{title:"Shoah",year:1985},{title:"Daisies",year:1966},{title:"Taxi Driver",year:1976},{title:"Portrait of a Lady on Fire",year:2019},{title:"Psycho",year:1960},{title:"Mirror",year:1975},{title:"8½",year:1963},{title:"L'Atalante",year:1934},{title:"Pather Panchali",year:1955},{title:"M",year:1931},{title:"City Lights",year:1931},{title:"Rear Window",year:1954},{title:"À bout de souffle",year:1960},{title:"Some Like It Hot",year:1959},{title:"Rashomon",year:1950},{title:"Bicycle Thieves",year:1948},{title:"Stalker",year:1979},{title:"Killer of Sheep",year:1977},{title:"Barry Lyndon",year:1975},{title:"North by Northwest",year:1959},{title:"The Battle of Algiers",year:1966},{title:"Ordet",year:1955},{title:"Wanda",year:1970},{title:"The Piano",year:1992},{title:"The 400 Blows",year:1959},{title:"News from Home",year:1976},{title:"Fear Eats the Soul",year:1974},{title:"The Apartment",year:1960},{title:"Sherlock Jr.",year:1924},{title:"Le Mépris",year:1963},{title:"Battleship Potemkin",year:1925},{title:"Blade Runner",year:1982},{title:"Sans soleil",year:1983},{title:"Daughters of the Dust",year:1991},{title:"La dolce vita",year:1960},{title:"Moonlight",year:2016},{title:"The Third Man",year:1949},{title:"GoodFellas",year:1990},{title:"Casablanca",year:1942},{title:"Touki Bouki",year:1973},{title:"The Red Shoes",year:1948},{title:"Metropolis",year:1927},{title:"Andrei Rublev",year:1966},{title:"La Jetée",year:1962},{title:"The Gleaners and I",year:2e3},{title:"L'avventura",year:1960},{title:"Journey to Italy",year:1954},{title:"My Neighbour Totoro",year:1988},{title:"Spirited Away",year:2001},{title:"Sansho the Bailiff",year:1954},{title:"Imitation of Life",year:1959},{title:"Histoire(s) du cinéma",year:1988},{title:"A Matter of Life and Death",year:1946},{title:"Modern Times",year:1936},{title:"Sunset Boulevard",year:1950},{title:"Céline and Julie Go Boating",year:1974},{title:"A Brighter Summer Day",year:1991},{title:"Sátántangó",year:1994},{title:"Blue Velvet",year:1986},{title:"The Spirit of the Beehive",year:1973},{title:"Pierrot le fou",year:1965},{title:"The Shining",year:1980},{title:"Chungking Express",year:1994},{title:"Yi Yi",year:2e3},{title:"Ugetsu",year:1953},{title:"The Leopard",year:1963},{title:"Madame de...",year:1953},{title:"Parasite",year:2019},{title:"Once Upon a Time in the West",year:1968},{title:"A Man Escaped",year:1956},{title:"The General",year:1926},{title:"Black Girl",year:1966},{title:"Tropical Malady",year:2004},{title:"Get Out",year:2017}],CURATED_STUDIOS=[{id:41077,name:"A24",sub:"Cinéma indépendant et arthouse"},{id:10342,name:"Studio Ghibli",sub:"Animation japonaise"},{id:3,name:"Pixar",sub:"Animation 3D"},{id:3172,name:"Blumhouse",sub:"Horreur à petit budget"},{id:420,name:"Marvel Studios",sub:"Univers cinématographique Marvel"}],CURATED_COUNTRIES=[{code:"JP",name:"Japon",flag:"🇯🇵"},{code:"KR",name:"Corée du Sud",flag:"🇰🇷"},{code:"DK",name:"Danemark",flag:"🇩🇰"},{code:"IT",name:"Italie",flag:"🇮🇹"},{code:"IR",name:"Iran",flag:"🇮🇷"},{code:"HK",name:"Hong Kong",flag:"🇭🇰"},{code:"IN",name:"Inde",flag:"🇮🇳"},{code:"MX",name:"Mexique",flag:"🇲🇽"}],CURATED_THEMES=[{id:10051,name:"Braquage",icon:"moneyBag"},{id:10854,name:"Boucle temporelle",icon:"timeLoop"},{id:9748,name:"Vengeance",icon:"sword"},{id:10683,name:"Passage à l'âge adulte",icon:"sprout"},{id:10349,name:"Survie",icon:"compass"},{id:7312,name:"Road trip",icon:"road"},{id:3358,name:"Maison hantée",icon:"hauntedHouse"},{id:4565,name:"Dystopie",icon:"skyline"}],tabHistBtn=document.getElementById("tab-right-history"),tabWlBtn=document.getElementById("tab-right-watchlist"),tabDiscoverBtn=document.getElementById("tab-right-discover"),tabProfileBtn=document.getElementById("tab-right-profile"),viewHist=document.getElementById("view-history"),viewWl=document.getElementById("view-watchlist"),viewDiscover=document.getElementById("view-discover"),viewProfile=document.getElementById("view-profile");function switchRightTab(e){const t={history:{btn:tabHistBtn,view:viewHist},watchlist:{btn:tabWlBtn,view:viewWl},discover:{btn:tabDiscoverBtn,view:viewDiscover},profile:{btn:tabProfileBtn,view:viewProfile}};for(const[s,{btn:n,view:a}]of Object.entries(t)){const t=s===e;n.classList.toggle("active",t),n.setAttribute("aria-selected",String(t)),a.classList.toggle("active",t)}if("discover"===e&&!discoverLoaded){const e="function"==typeof loadFeatureFlags?loadFeatureFlags():{};!1!==e.discoverRecs&&loadDiscoverQueue(),!1!==e.trending&&loadTrendingCarousel(),loadFilmDuJour(),!1!==e.onThisDay&&loadOnThisDay(),!1!==e.blindSpots&&"function"==typeof renderBlindSpotsSection&&renderBlindSpotsSection(),!1!==e.quiz&&loadDailyQuiz()}"discover"===e&&"function"==typeof renderDuel&&renderDuel(),"discover"===e&&"function"==typeof applyFeatureFlags&&applyFeatureFlags(),"profile"===e&&"function"==typeof renderDuelRanking&&(renderDuelRanking(),"function"==typeof renderProfileExtras&&renderProfileExtras(loadHistory()),"function"==typeof renderCuratedListsCard&&renderCuratedListsCard()),"profile"===e&&"function"==typeof renderProfileIfDirty&&renderProfileIfDirty(),"history"===e&&"function"==typeof maybePlaySwipeHint&&maybePlaySwipeHint()}tabHistBtn.addEventListener("click",()=>switchRightTab("history")),tabWlBtn.addEventListener("click",()=>switchRightTab("watchlist")),tabDiscoverBtn.addEventListener("click",()=>switchRightTab("discover")),tabProfileBtn.addEventListener("click",()=>switchRightTab("profile"));const navRating=document.getElementById("nav-rating"),navHistory=document.getElementById("nav-history"),navWatchlist=document.getElementById("nav-watchlist"),navDiscover=document.getElementById("nav-discover"),navProfile=document.getElementById("nav-profile"),colRating=document.getElementById("col-rating"),colRightViews=document.getElementById("col-right-views");function playMobileViewAnim(e){e.classList.remove("mobile-view-anim"),requestAnimationFrame(()=>e.classList.add("mobile-view-anim"))}function switchMobileNav(e){navRating.classList.remove("active"),navHistory.classList.remove("active"),navWatchlist.classList.remove("active"),navDiscover.classList.remove("active"),navProfile.classList.remove("active"),navRating.removeAttribute("aria-current"),navHistory.removeAttribute("aria-current"),navWatchlist.removeAttribute("aria-current"),navDiscover.removeAttribute("aria-current"),navProfile.removeAttribute("aria-current"),colRating.style.display="none",colRightViews.style.display="none","rating"===e?(navRating.classList.add("active"),navRating.setAttribute("aria-current","page"),colRating.style.display="block",playMobileViewAnim(colRating)):"history"===e?(navHistory.classList.add("active"),navHistory.setAttribute("aria-current","page"),colRightViews.style.display="flex",switchRightTab("history"),playMobileViewAnim(colRightViews)):"watchlist"===e?(navWatchlist.classList.add("active"),navWatchlist.setAttribute("aria-current","page"),colRightViews.style.display="flex",switchRightTab("watchlist"),playMobileViewAnim(colRightViews)):"discover"===e?(navDiscover.classList.add("active"),navDiscover.setAttribute("aria-current","page"),colRightViews.style.display="flex",switchRightTab("discover"),playMobileViewAnim(colRightViews)):"profile"===e&&(navProfile.classList.add("active"),navProfile.setAttribute("aria-current","page"),colRightViews.style.display="flex",switchRightTab("profile"),playMobileViewAnim(colRightViews))}function isExcludedTarget(e){return!!e.closest('#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, .on-this-day-strip, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open')}function withThemeTransition(e){const t=document.documentElement;t.classList.add("theme-transitioning"),e(),setTimeout(()=>t.classList.remove("theme-transitioning"),350)}function loadSettings(){const e={appName:"<em>Ludex</em> Rating Companion",theme:"default"};try{applySettings(JSON.parse(localStorage.getItem("lbx_settings"))||e)}catch(t){applySettings(e)}}function applySettings(e){document.getElementById("main-app-title").innerHTML=e.appName||"<em>Ludex</em> Rating Companion";let t=e.theme||"default";if("meridien"===t&&(t="default"),"system"===t){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"default":"filmnoir",window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>{"system"===JSON.parse(localStorage.getItem("lbx_settings")||"{}").theme&&(document.documentElement.setAttribute("data-theme",e.matches?"default":"filmnoir"),renderAll())})}document.documentElement.setAttribute("data-theme",t),document.getElementById("setting-app-name").value=(e.appName||"").replace(/<\/?em>/g,""),document.getElementById("setting-genre-weights-enabled").checked=!1!==e.genreWeightsEnabled,document.getElementById("setting-discover-swipe-compact").checked=!0===e.discoverSwipeCompact,document.documentElement.classList.toggle("discover-swipe-compact",!0===e.discoverSwipeCompact);const s=loadOwnedProviders();document.querySelectorAll(".platform-chip").forEach(e=>{e.classList.toggle("selected",s.includes(e.dataset.provider))});const n=e.theme||"default";document.querySelectorAll(".theme-card").forEach(e=>{const t=e.dataset.theme===n;e.classList.toggle("selected",t),e.setAttribute("aria-checked",String(t))})}function selectThemeCard(e){document.querySelectorAll(".theme-card").forEach(e=>{e.classList.remove("selected"),e.setAttribute("aria-checked","false")}),e.classList.add("selected"),e.setAttribute("aria-checked","true"),withThemeTransition(()=>{if("system"!==e.dataset.theme)document.documentElement.setAttribute("data-theme",e.dataset.theme);else{const e=window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.setAttribute("data-theme",e?"default":"filmnoir")}}),renderAll()}navRating.addEventListener("click",()=>switchMobileNav("rating")),navHistory.addEventListener("click",()=>switchMobileNav("history")),navWatchlist.addEventListener("click",()=>switchMobileNav("watchlist")),navDiscover.addEventListener("click",()=>switchMobileNav("discover")),navProfile.addEventListener("click",()=>switchMobileNav("profile")),switchMobileNav("rating"),function(){const e=["rating","history","watchlist","discover","profile"];let t=0,s=0,n=!1;document.addEventListener("touchstart",e=>{window.innerWidth>860||1!==e.touches.length||isExcludedTarget(e.target)?n=!1:(t=e.touches[0].clientX,s=e.touches[0].clientY,n=!0)},{passive:!0}),document.addEventListener("touchend",a=>{if(!n)return;n=!1;const i=a.changedTouches[0],o=i.clientX-t,r=i.clientY-s;if(Math.abs(o)<60)return;if(Math.abs(o)<1.5*Math.abs(r))return;const l=e.indexOf(navHistory.classList.contains("active")?"history":navWatchlist.classList.contains("active")?"watchlist":navDiscover.classList.contains("active")?"discover":navProfile.classList.contains("active")?"profile":"rating");o<0&&l<e.length-1?(switchMobileNav(e[l+1]),navigator.vibrate&&navigator.vibrate(15),hapticPulse(document.getElementById("mobile-nav"),"light")):o>0&&l>0&&(switchMobileNav(e[l-1]),navigator.vibrate&&navigator.vibrate(15),hapticPulse(document.getElementById("mobile-nav"),"light"))},{passive:!0})}(),function(){const e=document.getElementById("ptr-indicator");if(!e)return;let t=0,s=!1,n=!1;document.addEventListener("touchstart",e=>{n||window.scrollY>5||isExcludedTarget(e.target)||(t=e.touches[0].clientY,s=!0)},{passive:!0}),document.addEventListener("touchmove",a=>{if(!s||n)return;const i=a.touches[0].clientY-t;if(i<=0||window.scrollY>5)return s=!1,void(e.style.opacity="0");const o=Math.min(i,100);e.style.transform=`translateX(-50%) translateY(${o}px) rotate(${2.4*o}deg)`,e.style.opacity=String(Math.min(o/70,1)),e.classList.toggle("ptr-ready",o>=70)},{passive:!0}),document.addEventListener("touchend",async()=>{if(!s||n)return void(s=!1);s=!1;if(e.classList.contains("ptr-ready")){n=!0,e.classList.add("ptr-spinning"),e.style.transform="translateX(-50%) translateY(70px)";try{getSyncCode()?await pullFromCloud():(renderAll(),showToast("Actualisé."))}catch{showToast("Impossible d'actualiser pour l'instant.")}finally{n=!1,e.classList.remove("ptr-spinning","ptr-ready"),e.style.opacity="0",e.style.transform="translateX(-50%) translateY(0)"}}else e.style.opacity="0"})}(),document.addEventListener("keydown",e=>{if("Enter"!==e.key&&" "!==e.key)return;const t=e.target.closest('[role="button"][tabindex="0"]');t&&(e.preventDefault(),t.click())}),document.getElementById("settings-btn").addEventListener("click",()=>{lastFocusedBeforeModal=document.getElementById("settings-btn"),document.getElementById("settings-modal").classList.add("open"),document.getElementById("setting-app-name").focus()}),document.getElementById("settings-cancel").addEventListener("click",()=>{applySettings(JSON.parse(localStorage.getItem("lbx_settings")||"{}")),document.getElementById("settings-modal").classList.remove("open"),document.getElementById("settings-btn").focus()}),document.getElementById("theme-grid").addEventListener("click",e=>{const t=e.target.closest(".theme-card");t&&selectThemeCard(t)}),document.getElementById("theme-grid").addEventListener("keydown",e=>{const t=e.target.closest(".theme-card");t&&("Enter"!==e.key&&" "!==e.key||(e.preventDefault(),selectThemeCard(t)))});const OWNED_PROVIDERS_KEY="lbx_owned_providers";function loadOwnedProviders(){try{return JSON.parse(localStorage.getItem(OWNED_PROVIDERS_KEY))||[]}catch{return[]}}function saveOwnedProviders(e){localStorage.setItem(OWNED_PROVIDERS_KEY,JSON.stringify(e))}function setTodayDate(){const e=new Date,t=6e4*e.getTimezoneOffset(),s=new Date(e-t).toISOString().slice(0,-1);document.getElementById("view-date").value=s.split("T")[0]}document.getElementById("platform-chips-grid").addEventListener("click",e=>{const t=e.target.closest(".platform-chip");t&&t.classList.toggle("selected")}),document.getElementById("settings-save").addEventListener("click",()=>{let e=document.getElementById("setting-app-name").value.trim();e||(e="Ludex Rating Companion");const t=e.split(" ")[0],s={appName:e.replace(t,`<em>${t}</em>`),theme:(document.querySelector(".theme-card.selected")||{dataset:{theme:"default"}}).dataset.theme,genreWeightsEnabled:document.getElementById("setting-genre-weights-enabled").checked,discoverSwipeCompact:document.getElementById("setting-discover-swipe-compact").checked};localStorage.setItem("lbx_settings",JSON.stringify(s));saveOwnedProviders(Array.from(document.querySelectorAll(".platform-chip.selected")).map(e=>e.dataset.provider)),applySettings(s),"function"==typeof renderDiscoverCards&&discoverQueue.length>0&&renderDiscoverCards(),renderAll(),document.getElementById("settings-modal").classList.remove("open"),document.getElementById("settings-btn").focus()}),loadSettings(),function(){const e=document.querySelector('meta[name="theme-color"]');function t(){requestAnimationFrame(()=>{const t=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();t&&e.setAttribute("content",t)})}e&&(new MutationObserver(t).observe(document.documentElement,{attributes:!0,attributeFilter:["data-theme","class"]}),t())}();const STORE_KEY="lbx_v2",CRITERIA=["scenario","realisation","photo","acteurs","ambiance","rythme","affect"];function buildStripMeta({genre:e="",runtime:t="",year:s="",director:n="",actors:a=""}={}){let i=[e,t,s].filter(Boolean).join(" · ");return n&&(i+=`<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Réalisé par <b>${n}</b></span>`),a&&(i+=`<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Avec <b>${a}</b></span>`),i}function escAttr(e){return String(e??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function isDefaultComposition(){const e=document.documentElement.dataset.theme;return!e||"default"===e}function tmdbImage(e,t="w185"){return e?`https://image.tmdb.org/t/p/${t}${e}`:""}function renderEmptyState({icon:e=null,message:t,ctaLabel:s=null,ctaId:n=null}={}){const a=e?`<div class="empty-state-icon">${e}</div>`:"",i=s?`<button type="button" class="empty-state-cta"${n?` id="${n}"`:""}>${escAttr(s)}</button>`:"";return`<div class="${e||s?"empty-state":"empty-state empty-state-compact"}">${a}${escAttr(t)}${i}</div>`}let isLiked=!1,currentMode="detail",quickRating=2.5,sortOrder="date",currentMediaType="movie",historyMediaFilter="movie",statsMediaFilter="movie",activeGenre=null,weightsOpen=!1,pendingAction=null,activeContextTags=new Set,historySearchQuery="",isFetchingMovie=!1,activeScoreFilter=null;function loadHistory(){try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch{return[]}}function saveHistory(e){try{localStorage.setItem(STORE_KEY,JSON.stringify(e)),window.storage&&window.storage.set(STORE_KEY,JSON.stringify(e))}catch(e){console.warn("Storage full",e)}}function saveDraft(){if(isFetchingMovie)return;const e={title:document.getElementById("movie-title").value,year:document.getElementById("movie-year").value,poster:document.getElementById("movie-poster").value,genre:document.getElementById("movie-genre").value,runtime:document.getElementById("movie-runtime").value,director:document.getElementById("movie-director").value,actors:document.getElementById("movie-actors").value,tmdbScore:document.getElementById("movie-tmdb-score").value,tmdbId:document.getElementById("movie-tmdb-id").value,searchValue:document.getElementById("movie-search").value,date:document.getElementById("view-date").value,liked:isLiked,mode:currentMode,quickRating:quickRating,values:CRITERIA.reduce((e,t)=>(e[t]=document.getElementById(t).value,e),{}),review:document.getElementById("review-text").value,tags:Array.from(activeContextTags)};localStorage.setItem("lbx_draft",JSON.stringify(e))}function loadDraft(){try{const e=localStorage.getItem("lbx_draft");if(!e)return void setTodayDate();const t=JSON.parse(e);if(t.title){document.getElementById("movie-title").value=t.title,document.getElementById("movie-year").value=t.year||"",document.getElementById("movie-poster").value=t.poster||"",document.getElementById("movie-genre").value=t.genre||"",document.getElementById("movie-runtime").value=t.runtime||"",document.getElementById("movie-director").value=t.director||"",document.getElementById("movie-actors").value=t.actors||"",document.getElementById("movie-tmdb-score").value=t.tmdbScore||"",document.getElementById("movie-tmdb-id").value=t.tmdbId||"",document.getElementById("movie-search").value=t.searchValue||"";document.getElementById("film-strip").classList.add("visible"),document.getElementById("strip-title").textContent=t.title,document.getElementById("strip-genre").innerHTML=buildStripMeta({genre:t.genre,runtime:t.runtime,year:t.year,director:t.director,actors:t.actors}),t.poster&&(document.getElementById("strip-poster").src=t.poster,document.getElementById("strip-poster").alt=t.title?`Affiche de ${escAttr(t.title)}`:"",document.getElementById("strip-poster").style.display="block"),t.tmdbScore&&(document.getElementById("strip-tmdb-score").textContent=t.tmdbScore+"/10",document.getElementById("strip-ratings").style.display="flex")}if(t.date?document.getElementById("view-date").value=t.date:setTodayDate(),t.review&&(document.getElementById("review-text").value=t.review),isLiked=t.liked||!1,document.getElementById("heart-btn").classList.toggle("active",isLiked),document.getElementById("heart-btn").setAttribute("aria-pressed",String(isLiked)),activeContextTags=new Set(t.tags||[]),document.querySelectorAll(".ctx-tag").forEach(e=>{activeContextTags.has(e.dataset.tag)?e.classList.add("active"):e.classList.remove("active")}),t.mode&&setMode(t.mode),t.quickRating){quickRating=parseFloat(t.quickRating);const e="s"+2*quickRating,s=document.getElementById(e);s&&(s.checked=!0)}t.values&&CRITERIA.forEach(e=>{t.values[e]&&(document.getElementById(e).value=t.values[e])}),calculateScore(),updateAllSliders(),renderCriteriaAverageMarkers()}catch(e){console.error("Erreur de chargement du brouillon",e)}}function hapticPulse(e,t="light"){if(!e)return;const s=`haptic-pulse-${t}`;e.classList.remove("haptic-pulse-light","haptic-pulse-medium","haptic-pulse-strong"),requestAnimationFrame(()=>{e.classList.add(s),e.addEventListener("animationend",()=>e.classList.remove(s),{once:!0})})}function fadeSwitchDisplay(e,t){e&&t&&e!==t&&(e.style.transition="opacity var(--dur-fast) var(--ease-out)",e.style.opacity="0",setTimeout(()=>{e.style.display="none",e.style.removeProperty("opacity"),e.style.removeProperty("transition"),t.style.display="",t.style.opacity="0",requestAnimationFrame(()=>{t.style.transition="opacity var(--dur-fast) var(--ease-out)",t.style.opacity="1",setTimeout(()=>{t.style.removeProperty("opacity"),t.style.removeProperty("transition")},150)})},140))}async function readApiJson(e){const t=await e.json().catch(()=>({}));if(!e.ok)throw new Error(t.error||`Erreur de l'API (${e.status})`);return t}function describeApiFailure(e){if(!navigator.onLine)return"Tu es hors ligne.";const t=e&&e.message?e.message:"";return!t||/Failed to fetch|NetworkError/i.test(t)?"Service indisponible pour le moment, réessaie dans un instant.":t}setTimeout(()=>{renderAll(),loadDraft()},0);const TOMBSTONE_MAX_AGE_MS=7776e6;function computeQuickScore(e){return 2*e}function computeWeightedScore(e,t){let s=0,n=0;for(const a of Object.keys(e)){const i=e[a],o=t[a]??1;s+=i*o,n+=o}return n>0?s/n:5}function computeShowAverageScore(e){if(!e||!e.seasons)return null;const t=Object.values(e.seasons).filter(e=>e.rating&&null!=e.rating.score);if(0===t.length)return null;return t.reduce((e,t)=>e+parseFloat(t.rating.score),0)/t.length}function scoreToStars(e){return Math.round(e/2*2)/2}function getStarStr(e){let t="";const s=Math.floor(e),n=e%1!=0;for(let e=0;e<s;e++)t+="★";return n&&(t+="½"),t||"½"}function historyItemKey(e){return(e.title||"").toLowerCase()}function watchlistItemKey(e){return e.tmdbId?`id:${e.tmdbId}`:`title:${(e.title||"").toLowerCase()}`}function tvShowItemKey(e){return String(e.tmdbTvId)}function mergeTvShows(e,t,s,n){const a=new Map;for(const s of[...e,...t]){const e=tvShowItemKey(s);if(!e||"undefined"===e)continue;a.has(e)||a.set(e,{tmdbTvId:s.tmdbTvId,title:s.title,poster_path:s.poster_path,genre:s.genre,seasons:{}});const t=a.get(e);s.title&&(t.title=s.title),s.poster_path&&(t.poster_path=s.poster_path),s.genre&&(t.genre=s.genre);for(const[e,n]of Object.entries(s.seasons||{})){const s=t.seasons[e];if(!s){t.seasons[e]=n;continue}const a=!!s.rating,i=!!n.rating;i&&!a?t.seasons[e]=n:i&&a?new Date(n.rating.date||0)>new Date(s.rating.date||0)&&(t.seasons[e]=n):i||a||(n.watchedEpisodes||[]).length>(s.watchedEpisodes||[]).length&&(t.seasons[e]=n)}}for(const e of a.values())for(const t of Object.keys(e.seasons)){const s=n.find(s=>s.key===`${e.tmdbTvId}:${t}`);if(!s)continue;const a=new Date(e.seasons[t].rating?.date||0).getTime();new Date(s.deletedAt).getTime()>=a&&delete e.seasons[t]}const i=[];for(const e of a.values()){const t=s.find(t=>t.key===tvShowItemKey(e));if(t){const s=Math.max(0,...Object.values(e.seasons).map(e=>new Date(e.rating?.date||0).getTime()));if(new Date(t.deletedAt).getTime()>=s)continue}0!==Object.keys(e.seasons).length&&i.push(e)}return i}function mergeTombstoneLists(e,t){const s=new Map;for(const n of[...e,...t]){const e=s.get(n.key);(!e||new Date(n.deletedAt)>new Date(e.deletedAt))&&s.set(n.key,n)}const n=Date.now()-7776e6;return[...s.values()].filter(e=>new Date(e.deletedAt).getTime()>n)}function mergeHistory(e,t,s){const n=new Map;for(const s of[...e,...t]){const e=historyItemKey(s);if(!e)continue;const t=n.get(e),a=new Date(s.updatedAt||s.savedAt||0).getTime();if(t){a>=new Date(t.updatedAt||t.savedAt||0).getTime()&&n.set(e,s)}else n.set(e,s)}const a=[];for(const[e,t]of n){const n=s.find(t=>t.key===e);if(n){const e=new Date(t.updatedAt||t.savedAt||0).getTime();if(new Date(n.deletedAt).getTime()>=e)continue}a.push(t)}return a.sort((e,t)=>new Date(t.savedAt||0)-new Date(e.savedAt||0)),a}function mergeWatchlist(e,t,s){const n=new Map;for(const s of[...e,...t]){const e=watchlistItemKey(s);n.has(e)||n.set(e,s)}const a=[];for(const[e,t]of n){const n=s.find(t=>t.key===e);if(n){const e=new Date(t.addedAt||0).getTime();if(new Date(n.deletedAt).getTime()>=e)continue}a.push(t)}return a.sort((e,t)=>new Date(t.addedAt||0)-new Date(e.addedAt||0)),a}const DESCS={scenario:[[9.5,"Un chef-d'œuvre narratif absolu. Écriture brillante, dialogues ciselés, structure parfaite et thèmes d'une profondeur rare qui hantent longtemps après le visionnage."],[8.5,"Scénario magistral. Une construction d'une intelligence rare, des personnages d'une richesse peu commune, presque aucune fausse note."],[7.5,"Excellent scénario. Récit captivant, personnages bien écrits et rebondissements intelligents qui maintiennent un fort engagement."],[6.5,"Bonne écriture, quelques idées qui sortent du lot, mais sans jamais atteindre une vraie fulgurance."],[5.5,"Une histoire classique et fonctionnelle. Fait le travail correctement, mais suit des sentiers battus ou manque d'une vraie prise de risque."],[4.5,"Des maladresses évidentes. Rythme narratif inconstant, facilités scénaristiques ou dialogues un peu artificiels qui sortent du récit."],[3.5,"Scénario poussif. Les ficelles se voient, certains personnages sonnent creux, l'ensemble peine à convaincre."],[2.5,"Récit laborieux. De graves incohérences, des intrigues secondaires inutiles ou des personnages aux réactions incompréhensibles."],[1.5,"Écriture quasi inexistante. Le fil narratif se perd, les enjeux ne tiennent debout à aucun moment."],[0,"Un naufrage scénaristique total. Dénué de sens, ennuyeux à mourir ou insultant pour l'intelligence du spectateur."]],realisation:[[9.5,"Une masterclass de mise en scène. Une vision d'auteur absolue où chaque plan respire l'intelligence, la maîtrise et l'audace visuelle."],[8.5,"Réalisation éblouissante. Un vrai geste de cinéma, ambitieux et maîtrisé de bout en bout."],[7.5,"Réalisation forte et inspirée. Le réalisateur a un vrai point de vue, avec une caméra dynamique qui sublime le propos du film."],[6.5,"Mise en scène assurée, quelques idées visuelles marquantes, sans toutefois transcender le sujet."],[5.5,"Mise en scène artisanale et propre. Efficace, lisible, mais qui s'efface souvent derrière son sujet sans fulgurance visuelle."],[4.5,"Une réalisation impersonnelle. Ressemble plus à un produit de commande ou à un téléfilm manquant cruellement de caractère."],[3.5,"Mise en scène poussive, découpage parfois maladroit, peu d'idées de mise en image."],[2.5,"Mise en scène paresseuse ou confuse. Découpage hasardeux, absence de rythme visuel ou tics qui fatiguent l'œil."],[1.5,"Réalisation à peine fonctionnelle. Cadres bancals, mise en scène qui dessert constamment le récit."],[0,"Catastrophique. Incompétence technique crasse, montage épileptique ou plans littéralement illisibles."]],photo:[[9.5,"Une claque visuelle absolue. Chaque plan est un tableau. Gestion de la lumière, colorimétrie et cadrages atteignent le sublime."],[8.5,"Photographie somptueuse, une signature visuelle forte et cohérente du début à la fin."],[7.5,"Superbe photographie. Une identité visuelle très marquée qui participe activement à l'ambiance et flatte constamment la rétine."],[6.5,"Belle image, quelques plans qui sortent du lot, sans être une œuvre visuellement unique."],[5.5,"Esthétique soignée mais standardisée. L'image est belle et propre, mais reste académique ou familière."],[4.5,"Visuellement terne ou inégal. Éclairages plats, étalonnage douteux (trop gris/sombre) ou effets spéciaux qui jurent."],[3.5,"Image assez pauvre, cadrages sans inspiration, colorimétrie qui manque de cohérence."],[2.5,"Laideur visuelle manifeste. Cadrages ratés, image numérique sans texture, ou filtres appliqués sans aucune cohérence artistique."],[1.5,"Image quasiment illisible ou dénuée de tout soin, très en dessous des standards attendus."],[0,"Une agression oculaire. Illisible, bouillie de pixels ou éclairage d'une pauvreté affligeante."]],acteurs:[[9.5,"Des performances magistrales et habitées. Des acteurs en état de grâce qui transcendent leurs personnages et crèvent l'écran."],[8.5,"Casting exceptionnel, des interprétations d'une justesse rare qui portent le film à elles seules."],[7.5,"Un casting redoutable. Des interprétations justes, intenses et nuancées qui portent le film avec un grand charisme."],[6.5,"Bonnes performances dans l'ensemble, une ou deux têtes d'affiche particulièrement convaincantes."],[5.5,"Jeu solide et convaincant. Les acteurs font le job honnêtement, sans pour autant livrer la performance de leur carrière."],[4.5,"Interprétations inégales. Certains tirent leur épingle du jeu, mais d'autres surjouent ou manquent cruellement d'alchimie."],[3.5,"Jeu d'acteur assez faible dans l'ensemble, direction d'acteurs peu convaincante."],[2.5,"Casting en roue libre. Mauvaise direction d'acteurs, expressions forcées, ou têtes d'affiche visiblement venues pour le chèque."],[1.5,"Interprétations quasi risibles, aucune alchimie ni conviction à l'écran."],[0,"Un festival de jeu monolithique ou d'hystérie ridicule. Impossible de croire une seule seconde aux personnages."]],ambiance:[[9.5,"Une immersion sensorielle totale. Bande originale mythique et sound design viscéral qui prennent littéralement aux tripes."],[8.5,"Atmosphère sonore exceptionnelle, musique et sound design qui deviennent indissociables du film."],[7.5,"Excellente atmosphère. La musique et les effets sonores enveloppent le spectateur et renforcent magistralement l'impact émotionnel."],[6.5,"Bon accompagnement sonore, quelques thèmes marquants, sans devenir mémorable dans son ensemble."],[5.5,"Ambiance réussie. Accompagnement sonore fonctionnel et agréable, qui soutient l'action sans pour autant marquer les esprits."],[4.5,"Sonorité générique. Musique d'ascenseur, thèmes oubliables ou mixage sonore parfois douteux en retrait."],[3.5,"Ambiance sonore faible, musique qui peine à installer une atmosphère cohérente."],[2.5,"Bande-son envahissante ou hors sujet. Musique omniprésente qui dicte les émotions, ou sound design artificiel qui brise l'immersion."],[1.5,"Son quasiment raté, mixage désagréable, aucune identité sonore."],[0,"Supplice auditif. Bruitages ratés, doublages asynchrones, ou bande originale qui ruine littéralement les scènes clés."]],rythme:[[9.5,"Un rythme d'une précision chirurgicale. Chaque scène a exactement la durée qu'il faut, montage d'orfèvre, pas une seconde de trop ni de manque."],[8.5,"Montage excellent, un tempo qui épouse parfaitement les intentions du film du début à la fin."],[7.5,"Très bon rythme. Le film se regarde sans effort, les transitions sont fluides et le montage sert bien le récit."],[6.5,"Rythme globalement maîtrisé, quelques longueurs ponctuelles qui n'entament pas trop l'ensemble."],[5.5,"Rythme correct mais irrégulier. Certains passages traînent un peu, d'autres filent trop vite, sans que ça gâche l'expérience."],[4.5,"Rythme mal calibré. Des longueurs qui se sentent, un montage qui casse parfois l'élan du film."],[3.5,"Film qui traîne clairement en longueur ou au contraire semble haché, avec des ruptures de rythme gênantes."],[2.5,"Rythme poussif ou décousu sur une bonne partie du film, l'attention décroche régulièrement."],[1.5,"Montage confus, tempo constamment à côté de la plaque, on regarde sa montre."],[0,"Rythme complètement raté. Interminable, ou monté de façon si chaotique que le film en devient illisible."]],affect:[[9.5,"Coup de foudre absolu. Un film qui bouleverse, obsède, et trouve une place immédiate dans mon panthéon personnel."],[8.5,"Immense claque émotionnelle. Un film qui restera gravé longtemps, que je recommande sans réserve."],[7.5,"Énorme coup de cœur. Une œuvre marquante qui m'a fait vibrer, rire ou pleurer, et que je reverrai avec grand plaisir."],[6.5,"Beau moment, quelques scènes qui marquent vraiment, une expérience que j'ai appréciée sincèrement."],[5.5,"Un très bon moment de cinéma. J'ai pris du plaisir devant ce film, même s'il ne me laissera pas un souvenir impérissable."],[4.5,"Sentiment mitigé. Pas désagréable, mais je reste totalement sur ma faim. Vite vu, assez vite oublié."],[3.5,"Peu d'accroche émotionnelle, le film m'a globalement laissé de marbre."],[2.5,"Ennui ou agacement profond. Une expérience pénible, où le temps a semblé particulièrement long. Très peu d'accroche."],[1.5,"Rejet quasi total, très peu de moments qui ont suscité un intérêt réel."],[0,"Rejet viscéral. Une perte de temps absolue, un film que j'ai détesté de bout en bout et que je veux effacer de ma mémoire."]]},DESCS_TV_OVERRIDES={photo:[[9.5,"Un final parfait, qui élève toute la saison et referme chaque fil narratif avec une intelligence rare."],[8.5,"Une conclusion magistrale, à la hauteur de tout ce qui précède, qui restera gravée longtemps."],[7.5,"Excellent épisode final. Il conclut la saison avec panache, sans faux pas majeur."],[6.5,"Bon final, qui referme l'essentiel sans forcément marquer les esprits."],[5.5,"Final honnête et satisfaisant, qui fait le travail sans surprendre."],[4.5,"Final en demi-teinte. Quelques fils narratifs bâclés ou une résolution un peu facile."],[3.5,"Conclusion décevante, qui peine à être à la hauteur de la saison."],[2.5,"Final raté, qui gâche une partie de ce que la saison avait construit."],[1.5,"Fin quasiment ratée, qui trahit l'attente installée par les épisodes précédents."],[0,"Un désastre. La fin détruit ce que la saison avait de mieux, ou ne conclut rien du tout."]],rythme:[[9.5,"Un rythme d'une précision chirurgicale sur toute la saison. Chaque épisode a sa place, aucun ventre mou, une cohérence sans faille du premier au dernier épisode."],[8.5,"Excellente cohérence de saison, un tempo qui épouse parfaitement l'arc narratif du premier au dernier épisode."],[7.5,"Très bonne tenue sur la durée. La saison se regarde sans effort, les épisodes s'enchaînent avec fluidité."],[6.5,"Rythme globalement maîtrisé sur la saison, quelques épisodes plus faibles qui n'entament pas l'ensemble."],[5.5,"Cohérence correcte mais irrégulière. Certains épisodes traînent, d'autres filent trop vite, sans que ça gâche l'ensemble."],[4.5,"Rythme mal calibré sur la saison. Des épisodes de remplissage qui cassent l'élan général."],[3.5,"Saison qui traîne clairement en longueur sur plusieurs épisodes, ou qui semble décousue d'un épisode à l'autre."],[2.5,"Cohérence poussive sur une bonne partie de la saison, l'intérêt décroche régulièrement d'un épisode à l'autre."],[1.5,"Enchaînement confus, tempo constamment à côté de la plaque sur la majorité des épisodes."],[0,"Rythme complètement raté sur toute la saison. Interminable, ou décousu au point de perdre le fil d'un épisode à l'autre."]]};function getDesc(e,t,s="movie"){getDesc._cache||(getDesc._cache={});const n=getDesc._cache,a=s+e+t;if(n[a])return n[a];const i="tv"===s&&DESCS_TV_OVERRIDES[e]||DESCS[e];for(let e=0;e<i.length;e++){const[s,o]=i[e];if(t<s)continue;const r=(e>0?i[e-1][0]:s+1)-s,l=t-s;let c="";r>.5&&(Math.abs(l)<.01?c=" (plutôt bas dans cette tranche)":Math.abs(l-(r-.5))<.01&&(c=" (plutôt haut dans cette tranche)"));const d=o+c;return n[a]=d,d}const o=i[i.length-1][1];return n[a]=o,o}function computeCriteriaAverages(e,t){const s={},n={};t.forEach(e=>{s[e]=0,n[e]=0}),e.forEach(e=>{"detail"===e.mode&&e.values&&t.forEach(t=>{const a=parseFloat(e.values[t]);isNaN(a)||(s[t]+=a,n[t]++)})});const a={};return t.forEach(e=>{a[e]=n[e]>0?s[e]/n[e]:null}),a}function formatWatchTime(e){if(!e||e<=0)return"—";const t=Math.floor(e/1440),s=Math.floor(e%1440/60),n=[];return t>0&&n.push(`${t} j`),(s>0||0===t)&&n.push(`${s} h`),n.join(" ")}function getISOWeekKey(e){const t=new Date(Date.UTC(e.getFullYear(),e.getMonth(),e.getDate())),s=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-s);const n=new Date(Date.UTC(t.getUTCFullYear(),0,1)),a=Math.ceil(((t-n)/864e5+1)/7);return`${t.getUTCFullYear()}-W${a}`}function computeWeekStreak(e,t=new Date){const s=new Set;e.forEach(e=>{const t=e.savedAt||e.date;if(!t)return;const n=new Date(t);isNaN(n)||s.add(getISOWeekKey(n))});let n=0;const a=new Date(t);for(;s.has(getISOWeekKey(a));)n++,a.setDate(a.getDate()-7);return n}function parseCsv(e){const t=[];let s=[],n="",a=!1;for(let i=0;i<e.length;i++){const o=e[i];a?'"'===o?'"'===e[i+1]?(n+='"',i++):a=!1:n+=o:'"'===o?a=!0:","===o?(s.push(n),n=""):"\n"===o||"\r"===o?("\r"===o&&"\n"===e[i+1]&&i++,s.push(n),n="",(s.length>1||""!==s[0])&&t.push(s),s=[]):n+=o}return(""!==n||s.length>0)&&(s.push(n),(s.length>1||""!==s[0])&&t.push(s)),t}function mapLetterboxdCsv(e){if(!e||e.length<2)return{items:[],skipped:0,kind:null};const t=e[0].map(e=>e.trim().toLowerCase()),s=e=>t.indexOf(e),n=s("name"),a=s("year"),i=s("rating"),o=s("watched date"),r=s("date");if(-1===n)return{items:[],skipped:0,kind:null};const l=-1!==o?"diary":-1!==i?"ratings":"watched",c=[];let d=0;for(let t=1;t<e.length;t++){const s=e[t],l=(s[n]||"").trim();if(!l){d++;continue}const u=-1!==a?(s[a]||"").trim():"",m=-1!==i?parseFloat(s[i]):NaN,p=!isNaN(m)&&m>0,v=p?(2*m).toFixed(1):"",g=-1!==o&&s[o]?s[o].trim():-1!==r&&s[r]?s[r].trim():"";c.push({title:l,year:u,score:v,mode:"quick",values:p?{quick:m}:{},date:g,savedAt:(new Date).toISOString(),importedFrom:"letterboxd"})}return{items:c,skipped:d,kind:l}}function computeDailyCounts(e){const t={};for(const s of e){if(!s.date)continue;const e=String(s.date).slice(0,10);t[e]=(t[e]||0)+1}return t}function computeDecadeStats(e){const t={};for(const s of e){const e=parseInt(s.year,10);if(isNaN(e)||e<1880||e>2100)continue;const n=10*Math.floor(e/10);t[n]||(t[n]={decade:n,count:0,scoreSum:0,scored:0}),t[n].count++;const a=parseFloat(s.score);isNaN(a)||(t[n].scoreSum+=a,t[n].scored++)}return Object.values(t).map(e=>({decade:e.decade,count:e.count,avg:e.scored>0?e.scoreSum/e.scored:null})).sort((e,t)=>t.count-e.count)}function findOneYearAgoFilm(e,t){const s=new Date(t);s.setFullYear(s.getFullYear()-1);for(let t=0;t<=3;t++)for(const n of 0===t?[0]:[-1,1]){const a=new Date(s);a.setDate(a.getDate()+t*n);const i=a.toISOString().slice(0,10),o=e.find(e=>e.date&&String(e.date).slice(0,10)===i);if(o)return{item:o,date:i}}return null}function normalizeHistoryItemV2(e){if(!e||"object"!=typeof e)return e;const t={...e};return t.savedAt||(t.savedAt=t.date?`${t.date}T12:00:00.000Z`:"1970-01-01T00:00:00.000Z"),t.values&&"object"==typeof t.values||(t.values={}),"string"!=typeof t.title&&(t.title=String(t.title??"")),t}function computeEloUpdate(e,t,s=32){const n=1/(1+Math.pow(10,(t-e)/400)),a=Math.round(s*(1-n));return{winnerElo:e+a,loserElo:t-a,delta:a}}function computeWrappedStats(e,t){const s=String(t),n=e.filter(e=>{const t=e.savedAt||e.date;return!!t&&t.slice(0,4)===s}),a=n.length,i=a>0?n.reduce((e,t)=>e+(parseFloat(t.score)||0),0)/a:0;function o(e){const t=Object.entries(e).sort((e,t)=>t[1]-e[1]);return t.length>0?{name:t[0][0],count:t[0][1]}:null}const r={};n.forEach(e=>{e.genre&&e.genre.split(",").forEach(e=>{const t=e.trim();t&&(r[t]=(r[t]||0)+1)})});const l={};n.forEach(e=>{if(e.director){const t=e.director.trim();t&&(l[t]=(l[t]||0)+1)}});const c={};n.forEach(e=>{e.actors&&e.actors.split(",").forEach(e=>{const t=e.trim();t&&(c[t]=(c[t]||0)+1)})});const d={};n.forEach(e=>{const t=e.savedAt||e.date;if(t){const e=t.slice(0,7);d[e]=(d[e]||0)+1}});const u=o(d),m=n.length>0?n.slice().sort((e,t)=>(parseFloat(t.score)||0)-(parseFloat(e.score)||0))[0]:null,p=n.reduce((e,t)=>{const s=parseInt(t.runtime,10);return e+(isNaN(s)?0:s)},0);return{year:t,totalFilms:a,avgScore:i,topGenre:o(r),topDirector:o(l),topActor:o(c),topMonth:u,bestRated:m,totalMinutes:p}}function computeBadges(e,t={}){const s=t.totalMinutes||0,n=t.streak||0,a=new Set,i={};e.forEach(e=>{e.genre&&e.genre.split(",").forEach(e=>{const t=e.trim();t&&(a.add(t),i[t]=(i[t]||0)+1)})});const o=e.filter(e=>e.review&&e.review.trim().length>0).length,r=[{id:"films_10",label:"10 films notés",unlocked:e.length>=10},{id:"films_50",label:"50 films notés",unlocked:e.length>=50},{id:"films_100",label:"100 films notés",unlocked:e.length>=100},{id:"genres_5",label:"5 genres différents",unlocked:a.size>=5},{id:"genres_10",label:"10 genres différents",unlocked:a.size>=10},{id:"reviews_10",label:"10 critiques écrites",unlocked:o>=10},{id:"streak_4",label:"4 semaines de suite",unlocked:n>=4},{id:"marathon",label:"Marathon (24h de films)",unlocked:s>=1440},{id:"cinephile",label:"Cinéphile (7j de films)",unlocked:s>=10080}],l=Object.entries(i).sort((e,t)=>t[1]-e[1]).slice(0,8).map(([e,t])=>({id:"genre_"+e.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"_"),label:`Fan de ${e} (${Math.min(t,5)}/5)`,unlocked:t>=5}));return r.concat(l)}"undefined"!=typeof module&&module.exports&&(module.exports={computeQuickScore:computeQuickScore,computeWeightedScore:computeWeightedScore,computeShowAverageScore:computeShowAverageScore,scoreToStars:scoreToStars,getStarStr:getStarStr,historyItemKey:historyItemKey,watchlistItemKey:watchlistItemKey,tvShowItemKey:tvShowItemKey,mergeTombstoneLists:mergeTombstoneLists,mergeHistory:mergeHistory,mergeWatchlist:mergeWatchlist,mergeTvShows:mergeTvShows,TOMBSTONE_MAX_AGE_MS:7776e6,getDesc:getDesc,DESCS:DESCS,DESCS_TV_OVERRIDES:DESCS_TV_OVERRIDES,computeCriteriaAverages:computeCriteriaAverages,formatWatchTime:formatWatchTime,getISOWeekKey:getISOWeekKey,computeWeekStreak:computeWeekStreak,computeBadges:computeBadges,computeWrappedStats:computeWrappedStats,computeEloUpdate:computeEloUpdate,parseCsv:parseCsv,mapLetterboxdCsv:mapLetterboxdCsv,computeDailyCounts:computeDailyCounts,computeDecadeStats:computeDecadeStats,findOneYearAgoFilm:findOneYearAgoFilm,normalizeHistoryItemV2:normalizeHistoryItemV2}),document.querySelectorAll(".ctx-tag").forEach(e=>{e.addEventListener("click",()=>{const t=e.dataset.tag;activeContextTags.has(t)?(activeContextTags.delete(t),e.classList.remove("active")):(activeContextTags.add(t),e.classList.add("active")),saveDraft()})});const searchEl=document.getElementById("movie-search"),suggestEl=document.getElementById("suggestions"),searchStatus=document.getElementById("search-status"),searchClearBtn=document.getElementById("search-clear-btn");let searchTimer;async function fetchPersonMatch(e){try{const t=await fetch(`/api/search?personSearch=${encodeURIComponent(e)}`),s=((await t.json()).results||[])[0];if(!s)return null;const n=e.trim().toLowerCase();return(s.name||"").toLowerCase().includes(n)?s:null}catch{return null}}function buildPersonSuggestionEl(e){const t=tmdbImage(e.profile_path,"w92"),s=document.createElement("div");s.className="suggestion-item suggestion-person";const n=t?`<img class="suggestion-poster" style="border-radius:50%;object-fit:cover;" src="${t}" alt="Photo de ${escAttr(e.name)}" loading="lazy">`:`<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;return s.innerHTML=`${n}<div class="suggestion-info"><div class="suggestion-title">🎬 ${escAttr(e.name)}</div><div class="suggestion-year">Voir sa filmographie</div></div>`,s.addEventListener("click",()=>{suggestEl.style.display="none",openPersonDetailSheet(e.id,e.name)}),s}function selectManual(e){document.getElementById("movie-title").value=e,document.getElementById("movie-year").value="",document.getElementById("movie-poster").value="",document.getElementById("movie-genre").value="",document.getElementById("movie-runtime").value="",document.getElementById("movie-director").value="",document.getElementById("movie-actors").value="",document.getElementById("movie-tmdb-score").value="",document.getElementById("movie-tmdb-id").value="",document.getElementById("strip-ratings").style.display="none";document.getElementById("film-strip").classList.add("visible"),document.getElementById("strip-title").textContent=e,document.getElementById("strip-genre").innerHTML='<span style="color:var(--text);font-size:0.75rem;">Film ajouté manuellement</span>',document.getElementById("strip-poster").style.display="none",saveDraft()}async function fetchSuggestions(e){try{const[t,s]=await Promise.all([fetch(`/api/search?query=${encodeURIComponent(e)}`),fetchPersonMatch(e)]),n=await readApiJson(t);if(searchStatus.style.display="none",!n.results?.length&&!s)return void(suggestEl.style.display="none");suggestEl.innerHTML="",suggestEl.style.display="block",s&&suggestEl.appendChild(buildPersonSuggestionEl(s)),(n.results||[]).slice(0,6).forEach(e=>{const t=e.release_date?.slice(0,4)||"????",s=document.createElement("div");s.className="suggestion-item";const n=e.poster_path?`<img class="suggestion-poster" src="${tmdbImage(e.poster_path,"w92")}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;s.innerHTML=`${n}<div class="suggestion-info"><div class="suggestion-title">${escAttr(e.title)}</div><div class="suggestion-year">${t}</div></div>`,s.addEventListener("click",()=>selectMovie(e,t)),suggestEl.appendChild(s)});const a=document.createElement("div");a.className="suggestion-item suggestion-manual",a.innerHTML=`<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${e}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`,a.addEventListener("click",()=>{suggestEl.style.display="none",selectManual(e)}),suggestEl.appendChild(a)}catch(e){searchStatus.style.display="none",suggestEl.style.display="none",showToast(describeApiFailure(e))}}async function selectMovie(e,t){document.getElementById("movie-title").value=e.title,document.getElementById("movie-year").value=t,document.getElementById("movie-poster").value=tmdbImage(e.poster_path,"w185"),document.getElementById("movie-tmdb-id").value=e.id,searchEl.value=`${escAttr(e.title)} (${t})`,suggestEl.style.display="none",document.getElementById("strip-ratings").style.display="none",searchStatus.style.display="block",searchStatus.textContent="⏳ Récupération des détails...",isFetchingMovie=!0;try{const s=await fetch(`/api/search?id=${e.id}`),n=await s.json(),a=n.genres?.map(e=>e.name)||[],i=a.join(", "),o=n.runtime?`${n.runtime} min`:"";let r="",l="";if(n.credits&&n.credits.crew){const e=n.credits.crew.find(e=>"Director"===e.job);e&&(r=e.name),n.credits.cast&&n.credits.cast.length>0&&(l=n.credits.cast.slice(0,3).map(e=>e.name).join(", "))}else n.director&&(r=n.director);document.getElementById("movie-genre").value=i,document.getElementById("movie-runtime").value=o,document.getElementById("movie-director").value=r,document.getElementById("movie-actors").value=l;!1!==JSON.parse(localStorage.getItem("lbx_settings")||"{}").genreWeightsEnabled&&suggestGenreWeights(a),document.getElementById("strip-genre").innerHTML=buildStripMeta({genre:i,runtime:o,year:t,director:r,actors:l});const c=n.vote_average,d=n.vote_count;c&&c>0&&(document.getElementById("movie-tmdb-score").value=c.toFixed(1),document.getElementById("strip-tmdb-score").textContent=c.toFixed(1)+"/10",document.getElementById("strip-votes").textContent=d?`${d.toLocaleString("fr-FR")} votes`:"",document.getElementById("strip-ratings").style.display="flex")}catch(e){document.getElementById("strip-genre").textContent=t||"",showToast("Détails du film indisponibles, réessaie plus tard.")}finally{searchStatus.style.display="none",isFetchingMovie=!1}document.getElementById("film-strip").classList.add("visible"),document.getElementById("strip-title").textContent=e.title,e.poster_path&&(document.getElementById("strip-poster").src=tmdbImage(e.poster_path,"w92"),document.getElementById("strip-poster").alt=`Affiche de ${escAttr(e.title)}`,document.getElementById("strip-poster").style.display="block"),saveDraft()}function setMode(e){currentMode=e,document.body.classList.toggle("quick-mode","quick"===e),document.getElementById("tab-detail").classList.toggle("active","detail"===e),document.getElementById("tab-quick").classList.toggle("active","quick"===e),calculateScore(),saveDraft()}function updateQuickLabel(){const e=document.getElementById("quick-rating-label");if(!e)return;const t=2*quickRating,s=getStarStr(Math.round(t/2*2)/2);e.innerHTML=`<span>${s}</span> — ${t.toFixed(1)}/10`}function toggleWeights(){weightsOpen=!weightsOpen,document.getElementById("weights-panel").classList.toggle("open",weightsOpen),document.getElementById("weights-toggle").style.color=weightsOpen?"var(--orange)":"",document.getElementById("weights-toggle-chevron").style.transform=weightsOpen?"rotate(90deg)":""}function getWeights(){const e={};return CRITERIA.forEach(t=>{const s=parseFloat(document.getElementById(`w-${t}`).value);e[t]=isNaN(s)||s<0?0:s}),e}function resetWeights(){CRITERIA.forEach(e=>{document.getElementById(`w-${e}`).value=1}),updateWeightBadges(),calculateScore(),document.getElementById("genre-weight-suggest").style.display="none"}function updateWeightBadges(){const e=getWeights();CRITERIA.forEach(t=>{document.getElementById(`wb-${t}`).textContent=`×${e[t]}`})}searchEl.addEventListener("input",()=>{searchClearBtn.style.display=searchEl.value?"flex":"none"}),searchClearBtn.addEventListener("click",()=>{searchEl.value="",searchEl.dispatchEvent(new Event("input")),searchEl.focus()}),searchEl.addEventListener("input",()=>{clearTimeout(searchTimer);const e=searchEl.value.trim();if(saveDraft(),e.length<2)return suggestEl.style.display="none",void(searchStatus.style.display="none");searchStatus.style.display="none",suggestEl.style.display="block",suggestEl.innerHTML='\n    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>\n    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>\n    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>\n  ',searchTimer=setTimeout(()=>fetchSuggestions(e),280)}),searchEl.addEventListener("keydown",e=>{if("Enter"===e.key){e.preventDefault();const t=searchEl.value.trim();if(!t)return;suggestEl.style.display="none",searchStatus.style.display="none",clearTimeout(searchTimer),selectManual(t)}}),document.addEventListener("click",e=>{e.target!==searchEl&&(suggestEl.style.display="none")}),document.getElementById("heart-btn").addEventListener("click",()=>{navigator.vibrate&&navigator.vibrate(50),hapticPulse(document.getElementById("heart-btn"),"medium"),isLiked=!isLiked,document.getElementById("heart-btn").classList.toggle("active",isLiked),document.getElementById("heart-btn").setAttribute("aria-pressed",String(isLiked)),saveDraft()}),document.getElementById("view-date").addEventListener("change",saveDraft),document.getElementById("review-text").addEventListener("input",saveDraft),document.getElementById("quick-stars-container").addEventListener("change",e=>{quickRating=parseFloat(e.target.value),calculateScore(),updateQuickLabel(),saveDraft()}),function(){const e=document.getElementById("quick-stars-container");if(!e)return;let t=!1;function s(e,t){const s=document.elementFromPoint(e,t),n=s&&s.closest("#quick-stars-container label");if(!n||!n.htmlFor)return;const a=document.getElementById(n.htmlFor);a&&!a.checked&&(a.checked=!0,a.dispatchEvent(new Event("change",{bubbles:!0})))}e.addEventListener("touchstart",e=>{e.stopPropagation(),t=!0;const n=e.touches[0];s(n.clientX,n.clientY)},{passive:!0}),e.addEventListener("touchmove",e=>{if(!t)return;e.stopPropagation();const n=e.touches[0];s(n.clientX,n.clientY)},{passive:!0}),e.addEventListener("touchend",()=>{t=!1}),e.addEventListener("touchcancel",()=>{t=!1}),e.addEventListener("mousedown",e=>{t=!0,s(e.clientX,e.clientY)}),document.addEventListener("mousemove",e=>{t&&s(e.clientX,e.clientY)}),document.addEventListener("mouseup",()=>{t=!1})}(),CRITERIA.forEach(e=>{const t=document.getElementById(`w-${e}`);t&&t.addEventListener("input",()=>{updateWeightBadges(),calculateScore(),document.getElementById("genre-weight-suggest").style.display="none"})});const GENRE_WEIGHT_PRESETS={Horreur:{scenario:1,realisation:1,photo:1,acteurs:1,ambiance:2,rythme:1.5,affect:1},Musique:{scenario:1,realisation:1,photo:1,acteurs:1.25,ambiance:2,rythme:1,affect:1},Romance:{scenario:1,realisation:1,photo:1,acteurs:1.5,ambiance:1,rythme:.75,affect:2},Documentaire:{scenario:1.5,realisation:1,photo:1,acteurs:.5,ambiance:.75,rythme:1,affect:.75},Animation:{scenario:1.25,realisation:1.25,photo:1.5,acteurs:.75,ambiance:1,rythme:1,affect:1},"Science-Fiction":{scenario:1.5,realisation:1.25,photo:1.5,acteurs:1,ambiance:1,rythme:1,affect:1},Fantastique:{scenario:1.25,realisation:1.25,photo:1.5,acteurs:1,ambiance:1.25,rythme:1,affect:1},Guerre:{scenario:1.25,realisation:1.25,photo:1,acteurs:1.25,ambiance:1,rythme:1,affect:1.5},Thriller:{scenario:1.25,realisation:1.25,photo:1,acteurs:1,ambiance:1.25,rythme:1.5,affect:1},Drame:{scenario:1.5,realisation:1,photo:1,acteurs:1.5,ambiance:1,rythme:1,affect:1.5},"Comédie":{scenario:1.25,realisation:1,photo:.75,acteurs:1.5,ambiance:1,rythme:1,affect:1.5},Action:{scenario:.75,realisation:1.25,photo:1.5,acteurs:1,ambiance:1,rythme:1.5,affect:1}},GENRE_PRIORITY=["Horreur","Musique","Romance","Documentaire","Animation","Science-Fiction","Fantastique","Guerre","Thriller","Drame","Comédie","Action"];let pendingGenrePreset=null;function weightsAreDefault(){return CRITERIA.every(e=>1===parseFloat(document.getElementById(`w-${e}`).value))}function applyWeightPreset(e){CRITERIA.forEach(t=>{const s=document.getElementById(`w-${t}`);s&&void 0!==e[t]&&(s.value=e[t])}),updateWeightBadges(),calculateScore()}function pickGenrePreset(e){if(!e||!e.length)return null;for(const t of GENRE_PRIORITY)if(e.includes(t)&&GENRE_WEIGHT_PRESETS[t])return{name:t,weights:GENRE_WEIGHT_PRESETS[t]};return null}function suggestGenreWeights(e){const t=document.getElementById("genre-weight-suggest"),s=pickGenrePreset(e);if(!s)return t.style.display="none",void(pendingGenrePreset=null);weightsAreDefault()?(applyWeightPreset(s.weights),showToast(`Pondérations ajustées pour le genre "${s.name}" 🎯`),t.style.display="none",pendingGenrePreset=null):(pendingGenrePreset=s,t.textContent=`🎯 Suggestion "${escAttr(s.name)}"`,t.style.display="inline-flex")}function animateValueTowards(e,t,s=1,n=200){const a=parseFloat(e.textContent)||0;if(Math.abs(t-a)<.01)return void(e.textContent=t.toFixed(s));if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return void(e.textContent=t.toFixed(s));e._scoreAnimId&&cancelAnimationFrame(e._scoreAnimId);const i=performance.now();e._scoreAnimId=requestAnimationFrame(function o(r){const l=Math.min((r-i)/n,1),c=1-Math.pow(1-l,2);e.textContent=(a+(t-a)*c).toFixed(s),l<1?e._scoreAnimId=requestAnimationFrame(o):(e.textContent=t.toFixed(s),e._scoreAnimId=null)})}function calculateScore(){let e;if("quick"===currentMode)e=computeQuickScore(quickRating);else{const t=getWeights(),s={};CRITERIA.forEach(e=>{const t=parseFloat(document.getElementById(e).value);s[e]=t,document.getElementById(`val-${e}`).textContent=t.toFixed(1);const n=document.getElementById(`desc-${e}`);n.textContent=getDesc(e,t,currentMediaType),n.classList.toggle("revealed",5!==t)}),e=computeWeightedScore(s,t)}const t=document.getElementById("score-big"),s=document.querySelector(".score-denom");animateValueTowards(t,e,1,200),s.textContent="/10",t.className="score-big "+(e>=7.5?"good":e>=5?"mid":"bad");const n=scoreToStars(e);return document.getElementById("stars-display").textContent=getStarStr(n),e}function updateSliderPct(e){const t=parseFloat(e.value),s=parseFloat(e.min)||0,n=parseFloat(e.max)||10;e.style.setProperty("--slider-pct",(t-s)/(n-s)*100+"%")}function updateAllSliders(){CRITERIA.forEach(e=>{const t=document.getElementById(e);t&&updateSliderPct(t)})}function renderCriteriaAverageMarkers(){const e=computeCriteriaAverages(loadHistory(),CRITERIA);CRITERIA.forEach(t=>{const s=document.getElementById(`avg-marker-${t}`);if(!s)return;const n=e[t];null!==n?(s.style.left=n/10*100+"%",s.title=`Ta moyenne habituelle sur ce critère : ${n.toFixed(1)}`,s.style.display="block"):s.style.display="none"})}function playSaveConfirmation(){const e=document.createElement("div");e.className="save-confirm-overlay",e.setAttribute("aria-hidden","true"),e.innerHTML=`\n    <div class="save-confirm-ticket">\n      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>\n      <div class="save-confirm-ticket-perf"></div>\n      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>\n    </div>\n  `,document.body.appendChild(e),navigator.vibrate&&navigator.vibrate([12,25,12]),setTimeout(()=>e.remove(),850)}function resetForm(){searchEl.value="",setTodayDate(),document.getElementById("movie-title").value="",document.getElementById("movie-year").value="",document.getElementById("movie-poster").value="",document.getElementById("movie-genre").value="",document.getElementById("movie-runtime").value="",document.getElementById("movie-director").value="",document.getElementById("movie-actors").value="",document.getElementById("movie-tmdb-score").value="",document.getElementById("movie-tmdb-id").value="",document.getElementById("review-text").value="",document.getElementById("strip-ratings").style.display="none",document.getElementById("film-strip").classList.remove("visible"),isLiked=!1,document.getElementById("heart-btn").classList.remove("active"),document.getElementById("heart-btn").setAttribute("aria-pressed","false"),setTodayDate(),activeContextTags.clear(),document.querySelectorAll(".ctx-tag").forEach(e=>e.classList.remove("active")),CRITERIA.forEach(e=>{document.getElementById(e).value=5}),quickRating=2.5;const e=document.getElementById("s5");e&&(e.checked=!0),setMode("detail"),updateAllSliders(),renderCriteriaAverageMarkers(),updateQuickLabel()}document.getElementById("genre-weight-suggest").addEventListener("click",()=>{pendingGenrePreset&&(applyWeightPreset(pendingGenrePreset.weights),showToast(`Pondérations ajustées pour le genre "${pendingGenrePreset.name}" 🎯`),document.getElementById("genre-weight-suggest").style.display="none",pendingGenrePreset=null)}),CRITERIA.forEach(e=>{document.getElementById(e).addEventListener("input",()=>{updateSliderPct(document.getElementById(e)),calculateScore(),saveDraft(),navigator.vibrate&&navigator.vibrate(8),hapticPulse(document.getElementById(`val-${e}`),"light")})}),document.querySelectorAll(".criterion-step-btn").forEach(e=>{e.addEventListener("click",()=>{const t=document.getElementById(e.dataset.target),s=parseFloat(e.dataset.step),n=parseFloat(t.min),a=parseFloat(t.max),i=Math.min(a,Math.max(n,parseFloat(t.value)+s));t.value=i,t.dispatchEvent(new Event("input"))})}),document.getElementById("new-btn").addEventListener("click",()=>{openModal("Nouvelle critique","Voulez-vous effacer le formulaire actuel pour commencer une nouvelle critique ?",()=>{localStorage.removeItem("lbx_draft"),resetForm(),showToast("Formulaire réinitialisé")})}),document.getElementById("copy-btn").addEventListener("click",()=>{const e=document.getElementById("movie-title").value.trim()||searchEl.value.trim()||"Film sans titre",t=document.getElementById("movie-year").value,s=document.getElementById("movie-director").value,n=document.getElementById("movie-actors").value,a=document.getElementById("view-date").value,i=a?new Date(a+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"",o=document.getElementById("review-text").value.trim(),r=calculateScore(),l=document.getElementById("stars-display").textContent;let c=`📽 ${e} ${t?"("+t+") ":""}${isLiked?" ❤️":""}\n`;if(s&&(c+=`🎬 Un film de ${s}\n`),n&&(c+=`🎭 Avec ${n}\n`),i&&(c+=`🗓 Vu le ${i}\n`),activeContextTags.size>0&&(c+=`🏷 ${Array.from(activeContextTags).join(" · ")}\n`),c+=`⭐ ${l} (${r.toFixed(1)}/10)\n`,"detail"===currentMode){const e=CRITERIA.reduce((e,t)=>(e[t]=parseFloat(document.getElementById(t).value).toFixed(1),e),{});c+=`\nScénario ${e.scenario} · Réal ${e.realisation} · Photo ${e.photo} · Acteurs ${e.acteurs} · Son ${e.ambiance} · Affect ${e.affect}\n`}o&&(c+=`\n${o}`),navigator.clipboard.writeText(c).then(()=>{const e=document.getElementById("copy-btn");e.innerHTML=`${ICONS.check} Copié !`,e.classList.add("copied"),setTimeout(()=>{e.innerHTML=`${ICONS.copy} Texte`,e.classList.remove("copied")},2e3),showToast("Critique copiée dans le presse-papier")})}),document.getElementById("save-btn").addEventListener("click",()=>{if(navigator.vibrate&&navigator.vibrate([50,50,50]),hapticPulse(document.getElementById("save-btn"),"strong"),"tv"===currentMediaType)return void saveTvSeasonRating();const e=document.getElementById("movie-title").value.trim()||searchEl.value.trim();if(!e)return void showToast("Entrez un titre de film avant de sauvegarder.");const t=loadHistory(),s=t.find(t=>t.title.toLowerCase()===e.toLowerCase()),n=calculateScore(),a=document.getElementById("score-big")?.closest(".score-main");a&&(a.classList.remove("stamp-pulse"),a.offsetWidth,a.classList.add("stamp-pulse"));const i={title:e,year:document.getElementById("movie-year").value,poster:document.getElementById("movie-poster").value,genre:document.getElementById("movie-genre").value,runtime:document.getElementById("movie-runtime").value,director:document.getElementById("movie-director").value,actors:document.getElementById("movie-actors").value,tmdbScore:document.getElementById("movie-tmdb-score").value||null,tmdbId:document.getElementById("movie-tmdb-id").value||null,date:document.getElementById("view-date").value,liked:isLiked,contextTags:Array.from(activeContextTags),score:n.toFixed(1),stars:document.getElementById("stars-display").textContent,mode:currentMode,review:document.getElementById("review-text").value.trim(),values:"detail"===currentMode?CRITERIA.reduce((e,t)=>(e[t]=document.getElementById(t).value,e),{}):{quick:quickRating},savedAt:s&&s.savedAt?s.savedAt:(new Date).toISOString(),updatedAt:(new Date).toISOString()};if(s)openModal("Film déjà noté",`"${e}" est déjà dans votre historique avec ${s.score}/10.\nVoulez-vous écraser cette note ?`,()=>{const s=t.findIndex(t=>t.title.toLowerCase()===e.toLowerCase());t.splice(s,1),t.unshift(i),saveHistory(t),localStorage.removeItem("lbx_draft"),resetForm(),window._justSavedHistoryTitle=e.toLowerCase(),renderAll(),showToast(`"${e}" mis à jour`),playSaveConfirmation()});else{t.unshift(i),saveHistory(t),localStorage.removeItem("lbx_draft"),resetForm(),window._justSavedHistoryTitle=e.toLowerCase(),renderAll(),showToast(`"${e}" enregistré`),playSaveConfirmation();const s=document.getElementById("save-btn"),n=s.innerHTML;s.innerHTML=`${ICONS.check} Sauvé !`,s.style.background="var(--green)",s.style.color="#0d1117",setTimeout(()=>{s.innerHTML=n,s.style.background="",s.style.color=""},1800)}}),window.loadItem=function(e){const t=loadHistory()[e];if(!t)return;document.getElementById("movie-title").value=t.title,document.getElementById("movie-year").value=t.year||"",document.getElementById("movie-poster").value=t.poster||"",document.getElementById("movie-genre").value=t.genre||"",document.getElementById("movie-runtime").value=t.runtime||"",document.getElementById("movie-director").value=t.director||"",document.getElementById("movie-actors").value=t.actors||"",document.getElementById("movie-tmdb-id").value=t.tmdbId||"",document.getElementById("movie-tmdb-score").value=t.tmdbScore||"",searchEl.value=t.title,document.getElementById("view-date").value=t.date||"",document.getElementById("review-text").value=t.review||"",isLiked=t.liked||!1,document.getElementById("heart-btn").classList.toggle("active",isLiked),document.getElementById("heart-btn").setAttribute("aria-pressed",String(isLiked)),activeContextTags=new Set(t.contextTags||[]),document.querySelectorAll(".ctx-tag").forEach(e=>{activeContextTags.has(e.dataset.tag)?e.classList.add("active"):e.classList.remove("active")});if(document.getElementById("film-strip").classList.add("visible"),document.getElementById("strip-title").textContent=t.title,document.getElementById("strip-genre").innerHTML=buildStripMeta({genre:t.genre,runtime:t.runtime,year:t.year,director:t.director,actors:t.actors}),t.tmdbScore?document.getElementById("strip-tmdb-score").textContent=t.tmdbScore+"/10":document.getElementById("strip-tmdb-score").textContent="—",t.poster&&(document.getElementById("strip-poster").src=t.poster,document.getElementById("strip-poster").alt=t.title?`Affiche de ${escAttr(t.title)}`:"",document.getElementById("strip-poster").style.display="block"),"quick"===t.mode&&void 0!==t.values?.quick){setMode("quick"),quickRating=parseFloat(t.values.quick);const e="s"+2*quickRating,s=document.getElementById(e);s&&(s.checked=!0)}else setMode("detail"),CRITERIA.forEach(e=>{document.getElementById(e).value=t.values&&void 0!==t.values[e]?t.values[e]:5});calculateScore(),renderCriteriaAverageMarkers(),saveDraft(),window.innerWidth<=860&&switchMobileNav("rating"),window.scrollTo({top:0,behavior:"smooth"})};const FOCUS_MODE_KEY="lbx_focus_mode";let focusModeOn="true"===localStorage.getItem(FOCUS_MODE_KEY),focusIndex=0;const criteriaListEl=document.getElementById("criteria-list"),focusModeToggle=document.getElementById("focus-mode-toggle"),focusNavEl=document.getElementById("focus-nav"),focusPrevBtn=document.getElementById("focus-prev-btn"),focusNextBtn=document.getElementById("focus-next-btn"),focusProgressEl=document.getElementById("focus-progress");function renderFocusStep(){CRITERIA.forEach((e,t)=>{const s=document.getElementById(e).closest(".criterion-block");s&&s.classList.toggle("focus-active",t===focusIndex)}),focusProgressEl.textContent=`${focusIndex+1} / ${CRITERIA.length}`,focusPrevBtn.disabled=0===focusIndex,focusNextBtn.disabled=focusIndex===CRITERIA.length-1}function applyFocusMode(){criteriaListEl.classList.toggle("focus-mode",focusModeOn),focusNavEl.style.display=focusModeOn?"flex":"none",focusModeToggle.classList.toggle("active",focusModeOn),focusModeToggle.setAttribute("aria-pressed",String(focusModeOn)),focusModeOn&&renderFocusStep()}function goToFocusStep(e){e<0||e>=CRITERIA.length||e===focusIndex||(focusIndex=e,renderFocusStep(),navigator.vibrate&&navigator.vibrate(10),hapticPulse(document.getElementById("focus-progress"),"light"))}function renderTagLabel(e){const t={"🍿":ICONS.popcorn,"🔄":ICONS.refresh,"📝":ICONS.edit,"🛋️":ICONS.sofa,"🛋":ICONS.sofa},[s,...n]=e.split(" "),a=t[s];return a?`${a} ${n.join(" ")}`:e}focusModeToggle.addEventListener("click",()=>{focusModeOn=!focusModeOn,localStorage.setItem(FOCUS_MODE_KEY,String(focusModeOn)),focusIndex=0,applyFocusMode()}),focusPrevBtn.addEventListener("click",()=>goToFocusStep(focusIndex-1)),focusNextBtn.addEventListener("click",()=>goToFocusStep(focusIndex+1)),function(){let e=0,t=0,s=!1;criteriaListEl.addEventListener("touchstart",n=>{focusModeOn?(e=n.touches[0].clientX,t=n.touches[0].clientY,s=!0):s=!1},{passive:!0}),criteriaListEl.addEventListener("touchend",n=>{if(!s||!focusModeOn)return;s=!1;const a=n.changedTouches[0],i=a.clientX-e,o=a.clientY-t;Math.abs(i)<40||Math.abs(i)<1.3*Math.abs(o)||(n.stopPropagation(),goToFocusStep(i<0?focusIndex+1:focusIndex-1))})}(),applyFocusMode();const MONTH_LABELS_FR=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];function monthKeyOf(e){return(e.date||e.savedAt||"").slice(0,7)}function monthLabelOf(e){const[t,s]=e.split("-"),n=parseInt(s,10)-1;return!t||n<0||n>11?"Date inconnue":`${MONTH_LABELS_FR[n]} ${t}`}function renderHistoryHero(e){const t=document.getElementById("history-hero");if(!t)return;if(!isDefaultComposition()||"date"!==sortOrder||0===e.length)return void(t.innerHTML="");const s=e[0],n=s.poster?`<img class="hero-entry-poster" src="${s.poster}" alt="Affiche de ${escAttr(s.title)}" loading="lazy" decoding="async">`:'<div class="hero-entry-poster"></div>';t.innerHTML=`\n    <div class="hero-entry">\n      ${n}\n      <div class="hero-entry-body">\n        <div class="hero-entry-eyebrow">Dernier film noté</div>\n        <div class="hero-entry-title">${escAttr(s.title)}</div>\n        <div class="hero-entry-score">${s.score}<small>/10</small></div>\n      </div>\n    </div>`}let histSearchTimer;function renderActiveHistoryView(){"tv"===historyMediaFilter?"function"==typeof renderTvHistory&&renderTvHistory():renderHistory()}const historySearchEl=document.getElementById("history-search"),historySearchClearBtn=document.getElementById("history-search-clear-btn");function getGenres(e){const t=new Set;return e.forEach(e=>{e.genre&&e.genre.split(",").forEach(e=>{const s=e.trim();s&&t.add(s)})}),[...t].sort((e,t)=>e.localeCompare(t))}function renderGenreChips(e,t=renderHistory){const s=getGenres(e),n=document.getElementById("genre-fold"),a=document.getElementById("genre-chips"),i=document.getElementById("genre-fold-current");if(0===s.length)return void(n.style.display="none");n.style.display="block",i&&(i.textContent=activeGenre||"Tous"),a.innerHTML="";const o=document.createElement("button");o.className="genre-chip all-chip"+(null===activeGenre?" active":""),o.textContent="Tous",o.addEventListener("click",()=>{activeGenre=null,activeScoreFilter=null,renderGenreChips(e,t),t()}),a.appendChild(o),s.forEach(s=>{const n=document.createElement("button");n.className="genre-chip"+(activeGenre===s?" active":""),n.textContent=s,n.addEventListener("click",()=>{activeGenre=activeGenre===s?null:s,renderGenreChips(e,t),t()}),a.appendChild(n)})}historySearchEl.addEventListener("input",e=>{historySearchQuery=e.target.value.toLowerCase(),historySearchClearBtn.style.display=e.target.value?"flex":"none",clearTimeout(histSearchTimer),histSearchTimer=setTimeout(renderActiveHistoryView,150)}),historySearchClearBtn.addEventListener("click",()=>{historySearchEl.value="",historySearchEl.dispatchEvent(new Event("input")),historySearchEl.focus()});const SCORE_RANGES={50:[9,10],45:[8.5,9],40:[7.5,8.5],35:[6.5,7.5],30:[5.5,6.5],25:[4.5,5.5],20:[3.5,4.5],15:[2.5,3.5],10:[1.5,2.5],"05":[0,1.5]};function isScoreInActiveRange(e){if(null===activeScoreFilter)return!0;const[t,s]=SCORE_RANGES[activeScoreFilter]||[0,10],n=parseFloat(e);return n>=t&&("50"===activeScoreFilter?n<=s:n<s)}function getSorted(e){let t=e;if(activeGenre&&(t=t.filter(e=>e.genre&&e.genre.split(",").map(e=>e.trim()).includes(activeGenre))),null!==activeScoreFilter&&(t=t.filter(e=>isScoreInActiveRange(e.score))),historySearchQuery){const e=/^\d{3,4}$/.test(historySearchQuery.trim());t=t.filter(t=>{const s=t.title&&t.title.toLowerCase().includes(historySearchQuery),n=t.director&&t.director.toLowerCase().includes(historySearchQuery),a=t.actors&&t.actors.toLowerCase().includes(historySearchQuery),i=e&&t.year&&String(t.year).startsWith(historySearchQuery.trim());return s||n||a||i})}return"date"===sortOrder?[...t].sort((e,t)=>{const s=e.date||e.savedAt||"";return(t.date||t.savedAt||"").localeCompare(s)}):"score-desc"===sortOrder?[...t].sort((e,t)=>parseFloat(t.score)-parseFloat(e.score)):"score-asc"===sortOrder?[...t].sort((e,t)=>parseFloat(e.score)-parseFloat(t.score)):"title"===sortOrder?[...t].sort((e,t)=>e.title.localeCompare(t.title)):t}function renderHistory(){const e=window.captureArmedHistoryState?window.captureArmedHistoryState():null,t=loadHistory(),s=getSorted(t),n=document.getElementById("history-list"),a=document.getElementById("hist-count-badge"),i=loadTvShows().length,o=` · ${i} série${i>1?"s":""}`;if(activeGenre||historySearchQuery||activeScoreFilter?(a.textContent=`${s.length} / ${t.length} film${t.length>1?"s":""}${o}`,a.style.color="var(--orange)"):(a.textContent=t.length+" film"+(t.length>1?"s":"")+o,a.style.color=""),renderGenreChips(t),document.getElementById("filter-row").style.display=0===t.length?"none":"",0===t.length)return document.getElementById("history-hero").innerHTML="",n.innerHTML=`<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`,void(window._justSavedHistoryTitle=null);if(0===s.length)return document.getElementById("history-hero").innerHTML="",n.innerHTML=`<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`,void(window._justSavedHistoryTitle=null);renderHistoryHero(s);const r=isDefaultComposition()&&"date"===sortOrder;let l=null;const c=document.getElementById("view-history")?.classList.contains("active"),d=r&&c&&!window._historyFirstRenderDone;r&&c&&(window._historyFirstRenderDone=!0),n.innerHTML="",s.forEach((e,s)=>{const a=t.findIndex(t=>t.savedAt===e.savedAt&&t.title===e.title);if(r){const t=monthKeyOf(e);if(t!==l){const e=document.createElement("div");e.className="hist-month-sep",e.textContent=monthLabelOf(t),d&&e.classList.add("hist-cascade-in"),n.appendChild(e),l=t}}const i=document.createElement("div");i.className="hist-item",i.dataset.idx=a,i.dataset.savedAt=e.savedAt||"",i.dataset.titleKey=e.title.toLowerCase(),window._justSavedHistoryTitle&&e.title.toLowerCase()===window._justSavedHistoryTitle?i.classList.add("hist-item-entering"):d&&(i.classList.add("hist-cascade-in"),i.style.animationDelay=25*Math.min(s,20)+"ms");const o=parseFloat(e.score);let c="var(--red)";o>=7.5?c="var(--green)":o>=5&&(c="var(--gold)");const u=e.poster?`<img class="hist-poster" src="${e.poster}" alt="Affiche de ${escAttr(e.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`:`<div class="hist-poster-ph">${ICONS.clapper}</div>`,m=e.tmdbScore?`<span class="hist-tmdb">★ ${e.tmdbScore} TMDb</span>`:"";let p="";const v=[e.year,e.runtime,escAttr(e.genre||"")].filter(Boolean).join(" · ");v&&(p+=`<span class="hist-meta-line">${v}</span>`),e.director&&(p+=`<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(e.director)}</b></span>`),e.actors&&(p+=`<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(e.actors)}</b></span>`);const g=(e.contextTags||[]).map(e=>`<span class="h-tag">${renderTagLabel(e)}</span>`).join("");let h="";e.review&&(h=`\n        <div class="hist-review" onclick="this.classList.toggle('expanded')">\n          <div class="hist-review-content">"${escAttr(e.review)}"</div>\n          <span class="hist-review-toggle"></span>\n        </div>\n      `),i.innerHTML=`\n      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>\n      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>\n      <div class="hist-item-content">\n        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">\n          ${u}\n          <div class="hist-body">\n            <div class="hist-title">${escAttr(e.title)}${e.liked?` <span class="liked-badge">${ICONS.heart}</span>`:""}</div>\n            <div class="hist-meta">${p}</div>\n            <div class="hist-score-row"><span style="color:${c};font-weight:700;">${e.score}/10</span>${m}${g}</div>\n            <div class="hist-stars">${e.stars||""}<span class="hist-score"></span></div>\n            ${h}\n          </div>\n        </div>\n        <div class="hist-actions">\n          <button class="hist-action-btn" onclick="loadItem(${a})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(e.title)}">${ICONS.edit}</button>\n          <button class="hist-action-btn del" onclick="deleteItem(${a}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(e.title)} de l'historique">${ICONS.trash}</button>\n        </div>\n      </div>`,n.appendChild(i),applyPosterAccent(e.poster,i)}),window._justSavedHistoryTitle=null,window.reapplyArmedHistoryState&&window.reapplyArmedHistoryState(e)}document.getElementById("filter-row").addEventListener("click",e=>{const t=e.target.closest(".filter-btn");t&&(sortOrder=t.dataset.sort,document.querySelectorAll(".filter-btn").forEach(e=>e.classList.remove("active")),t.classList.add("active"),renderActiveHistoryView())});const SWIPE_HINT_KEY="lbx_swipe_hint_seen";function maybePlaySwipeHint(){if(localStorage.getItem(SWIPE_HINT_KEY))return;const e=document.querySelector(".hist-item");if(!e)return;const t=e.querySelector(".hist-item-content");t&&(localStorage.setItem(SWIPE_HINT_KEY,"1"),window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches||setTimeout(()=>{e.classList.add("hist-swipe-left"),t.style.transition="transform var(--dur-slow) var(--ease-out)",t.style.transform="translateX(-56px)",setTimeout(()=>{t.style.transform="",setTimeout(()=>{e.classList.remove("hist-swipe-left"),t.style.transition=""},450)},900)},600))}let toastTimer,deletedItemCache=null,deletedItemIndex=null;function showToast(e,t=!1,s="undoDelete"){const n=document.getElementById("toast");n.textContent="";const a=document.createElement("span");if(a.textContent=e,n.appendChild(a),t){const e=document.createElement("button");e.className="toast-undo-btn",e.textContent="Annuler",e.addEventListener("click",()=>{"function"==typeof window[s]&&window[s]()}),n.appendChild(e)}n.classList.add("show"),clearTimeout(toastTimer),toastTimer=setTimeout(()=>{n.classList.remove("show"),deletedItemCache=null},t?4500:2800)}function buildCopyTextForItem(e){const t=e.liked?" ❤️":"",s=e.date?new Date(e.date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"",n=parseFloat(e.score)||0,a=getStarStr(scoreToStars(n));let i=`📽 ${escAttr(e.title)} ${e.year?"("+e.year+") ":""}${t}\n`;if(e.director&&(i+=`🎬 Un film de ${e.director}\n`),e.actors&&(i+=`🎭 Avec ${e.actors}\n`),s&&(i+=`🗓 Vu le ${s}\n`),e.contextTags&&e.contextTags.length>0&&(i+=`🏷 ${e.contextTags.join(" · ")}\n`),i+=`⭐ ${a} (${n.toFixed(1)}/10)\n`,"detail"===e.mode&&e.values){const t=e.values,s=e=>(parseFloat(e)||0).toFixed(1);i+=`\nScénario ${s(t.scenario)} · Réal ${s(t.realisation)} · Photo ${s(t.photo)} · Acteurs ${s(t.acteurs)} · Son ${s(t.ambiance)} · Affect ${s(t.affect)}\n`}return e.review&&(i+=`\n${escAttr(e.review)}`),i}window.deleteItem=function(e,t){const s=loadHistory();if(deletedItemCache=s[e],deletedItemIndex=e,t){t.closest(".hist-item").classList.add("deleting")}setTimeout(()=>{s.splice(e,1),saveHistory(s),deletedItemCache?.title&&recordTombstone(HISTORY_TOMBSTONES_KEY,deletedItemCache.title.toLowerCase()),renderAll(),showToast("Film supprimé.",!0)},300)},window.undoDelete=function(){if(!deletedItemCache)return;const e=loadHistory();e.splice(deletedItemIndex,0,deletedItemCache),saveHistory(e),deletedItemCache?.title&&removeTombstone(HISTORY_TOMBSTONES_KEY,deletedItemCache.title.toLowerCase()),renderAll(),showToast("Suppression annulée."),deletedItemCache=null},window.toggleLikedForItem=function(e){const t=loadHistory(),s=t[e];s&&(s.liked=!s.liked,s.updatedAt=(new Date).toISOString(),saveHistory(t),renderAll(),showToast(s.liked?`"${s.title}" ajouté à tes coups de cœur ❤️`:`"${s.title}" retiré de tes coups de cœur`))};const actionSheetEl=document.getElementById("action-sheet"),actionSheetTitleEl=document.getElementById("action-sheet-title"),actionSheetListEl=document.getElementById("action-sheet-list"),actionSheetCancelBtn=document.getElementById("action-sheet-cancel");function openActionSheetForItem(e){const t=loadHistory()[e];if(!t)return;actionSheetTitleEl.textContent=t.title;const s=[{label:"Modifier",icon:ICONS.edit,onClick:()=>loadItem(e)},{label:t.liked?"Retirer des coups de cœur":"Ajouter aux coups de cœur",icon:ICONS.heart,onClick:()=>toggleLikedForItem(e)},{label:"Copier le texte",icon:ICONS.copy,onClick:()=>{navigator.clipboard.writeText(buildCopyTextForItem(t)).then(()=>{showToast("Critique copiée dans le presse-papier")})}},{label:"Supprimer",icon:ICONS.trash,danger:!0,onClick:()=>{const t=document.querySelector(`.hist-item[data-idx="${e}"]`);deleteItem(e,t?t.querySelector(".hist-action-btn.del"):null)}}];actionSheetListEl.innerHTML="",s.forEach(({label:e,icon:t,onClick:s,danger:n})=>{const a=document.createElement("button");a.type="button",a.className="action-sheet-item"+(n?" danger":""),a.innerHTML=`${t} <span>${e}</span>`,a.addEventListener("click",()=>{closeActionSheet(),s()}),actionSheetListEl.appendChild(a)}),lastFocusedBeforeModal=document.activeElement,actionSheetEl.classList.add("open"),actionSheetListEl.querySelector(".action-sheet-item")?.focus()}function closeActionSheet(){closeModal(actionSheetEl)}function createRadarSVG(e,t="movie"){if(e.every(e=>0===e))return null;const s="tv"===t?{scenario:"Scén.",realisation:"Réal.",photo:"Final",acteurs:"Casting",ambiance:"Ambiance",rythme:"Cohér.",affect:"Affect"}:{scenario:"Scén.",realisation:"Réal.",photo:"Photo",acteurs:"Casting",ambiance:"Ambiance",rythme:"Rythme",affect:"Affect"},n=110,a=72,i=360/CRITERIA.length,o=CRITERIA.map((e,t)=>(t*i-90)*Math.PI/180),r=CRITERIA.map(e=>s[e]||e);let l='<svg viewBox="0 0 220 220" width="100%" height="100%" style="max-width:250px; overflow:visible;">';[10,6.66,3.33].forEach(e=>{const t=o.map(t=>`${n+e/10*a*Math.cos(t)},${n+e/10*a*Math.sin(t)}`).join(" ");l+=`<polygon points="${t}" fill="none" class="svg-grid" />`}),o.forEach((e,t)=>{l+=`<line x1="110" y1="110" x2="${n+a*Math.cos(e)}" y2="${n+a*Math.sin(e)}" class="svg-axis" />`;const s=n+86*Math.cos(e),i=n+80*Math.sin(e);l+=`<text x="${s}" y="${i}" class="svg-text" text-anchor="${s<100?"end":s>120?"start":"middle"}" dominant-baseline="middle">${r[t]}</text>`});const c=o.map((t,s)=>`${n+e[s]/10*a*Math.cos(t)},${n+e[s]/10*a*Math.sin(t)}`).join(" ");return l+=`<polygon points="${c}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" class="radar-fill-anim" style="transform-origin:110px 110px;" />`,o.forEach((t,s)=>{l+=`<circle cx="${n+e[s]/10*a*Math.cos(t)}" cy="${n+e[s]/10*a*Math.sin(t)}" r="3" fill="var(--blue)" class="radar-dot-anim" style="animation-delay:${.5+.05*s}s" />`}),l+="</svg>",l}function createTimelineSVG(e){const t={},s=new Date;for(let e=5;e>=0;e--){const n=new Date(s.getFullYear(),s.getMonth()-e,1);t[`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`]={c:0}}e.forEach(e=>{if(e.date){const s=e.date.substring(0,7);t[s]&&t[s].c++}});const n=Object.keys(t).sort(),a=Math.max(...n.map(e=>t[e].c),1),i=260/6-10;let o='<svg viewBox="0 0 300 100" width="100%" height="100%" style="overflow:visible;">';return n.forEach((e,s)=>{const n=t[e].c,r=n/a*70,l=20+s*(i+10),c=80-r;o+=`<rect x="${l}" y="${c}" width="${i}" height="${r}" fill="var(--border-hi)" rx="2" style="transition:height 0.5s ease, y 0.5s ease" />`,n>0&&(o+=`<text x="${l+i/2}" y="${c-4}" class="svg-text-mono" text-anchor="middle">${n}</text>`);const d=new Date(e+"-01").toLocaleDateString("fr-FR",{month:"short"}).substring(0,3);o+=`<text x="${l+i/2}" y="95" class="svg-text" fill="var(--text-mid)" text-anchor="middle">${d}</text>`}),o+="</svg>",o}function animateCountUp(e,t,{duration:s=700,decimals:n=0}={}){const a=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches,i=e=>n>0?e.toFixed(n):Math.round(e).toString();if(a)return void(e.textContent=i(t));const o=performance.now();requestAnimationFrame(function n(a){const r=Math.min((a-o)/s,1),l=1-Math.pow(1-r,3);e.textContent=i(0+(t-0)*l),r<1?requestAnimationFrame(n):e.textContent=i(t)})}function renderStats(){const e=loadHistory();if(animateCountUp(document.getElementById("kpi-total"),e.length),0===e.length)return document.getElementById("kpi-avg").textContent="-",document.getElementById("kpi-year").textContent="0",document.getElementById("radar-chart-container").innerHTML="",document.getElementById("radar-chart-container").style.minHeight="0",document.getElementById("radar-empty").style.display="block",document.getElementById("timeline-chart-container").innerHTML="",document.getElementById("top-directors-list").innerHTML=renderEmptyState({message:"Enregistrez plus de films avec un réalisateur pour générer ce top."}),buildHistogram({}),void resetProfileExtras();const t=e.reduce((e,t)=>e+parseFloat(t.score),0)/e.length;animateCountUp(document.getElementById("kpi-avg"),t,{decimals:1});const s=(new Date).getFullYear().toString(),n=e.filter(e=>e.date&&e.date.startsWith(s)).length;animateCountUp(document.getElementById("kpi-year"),n);const a=computeCriteriaAverages(e,CRITERIA),i=createRadarSVG(CRITERIA.map(e=>a[e]||0));i?(document.getElementById("radar-chart-container").innerHTML=i,document.getElementById("radar-chart-container").style.minHeight="160px",document.getElementById("radar-empty").style.display="none"):(document.getElementById("radar-chart-container").innerHTML="",document.getElementById("radar-chart-container").style.minHeight="0",document.getElementById("radar-empty").style.display="block"),document.getElementById("timeline-chart-container").innerHTML=createTimelineSVG(e.concat("function"==typeof getAllTvSeasonRatings?getAllTvSeasonRatings():[]));const o={};e.forEach(e=>{e.director&&e.director.split(",").forEach(t=>{const s=t.trim();s&&(o[s]||(o[s]={count:0,sum:0}),o[s].count++,o[s].sum+=parseFloat(e.score))})});const r=Object.entries(o).map(([e,t])=>({name:e,count:t.count,avg:t.sum/t.count})).filter(e=>e.count>1).sort((e,t)=>t.count-e.count||t.avg-e.avg).slice(0,4),l=document.getElementById("top-directors-list");r.length>0?l.innerHTML=r.map(e=>`<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(e.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(e.name)}</span><div class="top-item-meta"><span>${e.count} films</span><span class="top-item-score">★ ${e.avg.toFixed(1)}</span></div></div>`).join(""):l.innerHTML=renderEmptyState({message:"Enregistrez plus de films avec un réalisateur pour générer ce top."});const c={50:0,45:0,40:0,35:0,30:0,25:0,20:0,15:0,10:0,"05":0};e.forEach(e=>{const t=Math.round(parseFloat(e.score)/2*2)/2,s=Math.round(10*t).toString().padStart(2,"0");void 0!==c[s]&&c[s]++}),buildHistogram(c),renderProfileExtras(e),renderProfileDiscoveryCards()}function resetProfileExtras(){document.getElementById("profile-member-since").textContent="—",document.getElementById("profile-watch-time").textContent="—",document.getElementById("profile-fav-actor").textContent="—",document.getElementById("profile-streak").textContent="Pas de série en cours",renderBadges(computeBadges([],{})),drawProfileShareCard(null);const e=document.getElementById("profile-share-btn");e&&(e.disabled=!0,e.title="Note quelques films pour débloquer ta carte");const t=document.getElementById("wrapped-entry-card");t&&(t.style.display="none")}function renderProfileExtras(e){e=e||[];const t=document.getElementById("wrapped-entry-card");t&&(t.style.display=e.length>0?"":"none");const s=document.getElementById("profile-share-btn");s&&(s.disabled=0===e.length,s.title=0===e.length?"Note quelques films pour débloquer ta carte":"");const n=e.map(e=>e.savedAt||e.date).filter(Boolean).map(e=>new Date(e)).filter(e=>!isNaN(e));let a="—";if(n.length>0){a=new Date(Math.min(...n.map(e=>e.getTime()))).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}document.getElementById("profile-member-since").textContent=a;const i=e.reduce((e,t)=>{const s=parseInt(t.runtime,10);return e+(isNaN(s)?0:s)},0);document.getElementById("profile-watch-time").textContent=formatWatchTime(i);const o={};e.forEach(e=>{e.actors&&e.actors.split(",").forEach(t=>{const s=t.trim();s&&(o[s]||(o[s]={count:0,sum:0}),o[s].count++,o[s].sum+=parseFloat(e.score)||0)})});const r=Object.entries(o).map(([e,t])=>({name:e,count:t.count,avg:t.sum/t.count})).sort((e,t)=>t.count-e.count||t.avg-e.avg);document.getElementById("profile-fav-actor").textContent=r.length>0?`${r[0].name} (${r[0].count} film${r[0].count>1?"s":""})`:"—";const l=computeWeekStreak(e);document.getElementById("profile-streak").textContent=l>0?`${l} semaine${l>1?"s":""} de suite`:"Pas de série en cours";const c=computeBadges(e,{totalMinutes:i,streak:l});renderBadges(c);const d={};e.forEach(e=>{e.genre&&e.genre.split(",").forEach(e=>{const t=e.trim();t&&(d[t]=(d[t]||0)+1)})});const u=Object.entries(d).sort((e,t)=>t[1]-e[1])[0]?.[0]||null,m=computeCriteriaAverages(e,CRITERIA),p=Object.values(m).some(e=>null!==e);drawProfileShareCard({history:e,totalMinutes:i,memberSinceStr:a,topActor:r[0]?.name,topGenre:u,criteriaAverages:p?m:null,badges:c})}function renderBadges(e){const t=document.getElementById("badges-grid");if(!t)return;const s=document.getElementById("badges-count");if(s){const t=e.filter(e=>e.unlocked).length;s.textContent=`${t}/${e.length}`}t.innerHTML=e.map(e=>`\n    <div class="badge-item ${e.unlocked?"unlocked":"locked"}" title="${e.unlocked?"Débloqué":"Pas encore débloqué"}">\n      <div class="badge-icon">${ICONS.star}</div>\n      <div class="badge-label">${e.label}</div>\n    </div>\n  `).join("")}function buildHistogram(e){const t=document.getElementById("histogram");t.innerHTML="";const s=Math.max(...Object.values(e),0);if(0===s)return void(t.innerHTML=renderEmptyState({message:"Note quelques films pour voir apparaître leur répartition ici."}));const n={50:"★★★★★",45:"★★★★½",40:"★★★★",35:"★★★½",30:"★★★",25:"★★½",20:"★★",15:"★½",10:"★","05":"½"};[50,45,40,35,30,25,20,15,10,"05"].forEach(a=>{const i=e[a]||0,o=i/s*100,r=document.createElement("div"),l=activeScoreFilter===String(a);r.className="histo-row"+(l?" active":""),r.title=i>0?`Filtrer par ${n[a]}`:"",r.innerHTML=`\n      <span class="histo-label">${n[a]}</span>\n      <div class="histo-track"><div class="histo-bar" style="width:${o}%"></div></div>\n      <span class="histo-count">${i}</span>`,i>0&&r.addEventListener("click",()=>{activeScoreFilter===String(a)?activeScoreFilter=null:(activeScoreFilter=String(a),activeGenre=null),renderAll(),document.querySelector(".history-scroller")?.scrollIntoView({behavior:"smooth",block:"start"})}),t.appendChild(r)})}actionSheetCancelBtn.addEventListener("click",closeActionSheet),actionSheetEl.addEventListener("click",e=>{e.target===actionSheetEl&&closeActionSheet()}),function(){const e=130;let t=null,s=0,n=0,a=null,i=null,o=!1,r=!1,l=null,c=0,d=null,u=null;const m=document.getElementById("history-list");if(!m)return;function p(){if(!d)return;const e=d.querySelector(".hist-item-content");e&&(e.style.transition="transform var(--dur-base) var(--ease-out)",e.style.transform=""),d.classList.remove("hist-swipe-armed-left","hist-swipe-armed-right","hist-swipe-left","hist-swipe-right"),d=null,u=null}function v(e){e&&a&&e.stopPropagation(),clearTimeout(t),a&&a.classList.remove("hist-dragging"),t=null,a=null,i=null,l=null,c=0}function g(e){a&&(e&&e.stopPropagation(),clearTimeout(t),"swipe"===l&&(c<=-80?(p(),i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform="translateX(-120px)",a.classList.add("hist-swipe-armed-left"),d=a,u="left",hapticPulse(a,"medium")):c>=80?(p(),i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform="translateX(120px)",a.classList.add("hist-swipe-armed-right"),d=a,u="right",hapticPulse(a,"medium")):(i.style.transform="",a.classList.remove("hist-swipe-left","hist-swipe-right")),r=!0,setTimeout(()=>{r=!1},300)),v())}m.addEventListener("touchstart",e=>{const r=e.target.closest(".hist-item");!r||e.target.closest(".hist-action-btn")||e.target.closest(".hist-review")?v():(e.stopPropagation(),a=r,i=r.querySelector(".hist-item-content"),s=e.touches[0].clientX,n=e.touches[0].clientY,l=null,c=0,t=setTimeout(()=>{a&&"swipe"!==l&&(navigator.vibrate&&navigator.vibrate(20),hapticPulse(a,"medium"),openActionSheetForItem(parseInt(a.dataset.idx,10)),o=!0,setTimeout(()=>{o=!1},300),v())},500))},{passive:!0}),m.addEventListener("touchmove",o=>{if(!a)return;o.stopPropagation();const r=o.touches[0].clientX,u=o.touches[0].clientY,m=r-s,v=u-n;if(null===l){if(!(Math.abs(m)>12||Math.abs(v)>12))return;clearTimeout(t),l=Math.abs(m)>.5*Math.abs(v)?"swipe":"scroll","swipe"===l&&(d===a&&p(),a.classList.add("hist-dragging"))}"swipe"===l&&(c=Math.max(-130,Math.min(e,m)),i.style.transform=`translateX(${c}px)`,a.classList.toggle("hist-swipe-left",c<-10),a.classList.toggle("hist-swipe-right",c>10))},{passive:!0}),m.addEventListener("touchend",g),m.addEventListener("touchcancel",function(e){a&&(i&&(i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform=""),a.classList.remove("hist-swipe-left","hist-swipe-right")),v(e)});let h=!1;m.addEventListener("mousedown",e=>{const t=e.target.closest(".hist-item");!t||e.target.closest(".hist-action-btn")||e.target.closest(".hist-review")||(h=!0,a=t,i=t.querySelector(".hist-item-content"),s=e.clientX,n=e.clientY,l=null,c=0)}),document.addEventListener("mousemove",t=>{if(!h||!a)return;const o=t.clientX-s,r=t.clientY-n;if(null===l){if(!(Math.abs(o)>12||Math.abs(r)>12))return;l=Math.abs(o)>.5*Math.abs(r)?"swipe":"scroll","swipe"===l&&(d===a&&p(),a.classList.add("hist-dragging"))}"swipe"===l&&(c=Math.max(-130,Math.min(e,o)),i.style.transform=`translateX(${c}px)`,a.classList.toggle("hist-swipe-left",c<-10),a.classList.toggle("hist-swipe-right",c>10))}),document.addEventListener("mouseup",()=>{h&&(h=!1,g())}),m.addEventListener("click",e=>{if(d){const t=e.target.closest(".hist-swipe-hint"),s=e.target.closest(".hist-item");if(t&&s===d)return void function(){if(!d)return;const e=d,t=u,s=e.querySelector(".hist-item-content"),n=e.dataset.savedAt,a=e.dataset.titleKey;function i(){const t=loadHistory().findIndex(e=>e.savedAt===n&&e.title.toLowerCase()===a);return-1!==t?t:parseInt(e.dataset.idx,10)}d=null,u=null,"left"===t?(e.classList.add("hist-swipe-out-left"),s.style.transform="translateX(-110%)",navigator.vibrate&&navigator.vibrate(20),hapticPulse(e,"strong"),setTimeout(()=>deleteItem(i()),240)):(e.classList.add("hist-swipe-out-right"),s.style.transform="translateX(110%)",navigator.vibrate&&navigator.vibrate(20),hapticPulse(e,"strong"),setTimeout(()=>loadItem(i()),240))}();const n=s===d;if(p(),n)return}if(e.target.closest("#empty-state-history-cta")){window.innerWidth<=860&&switchMobileNav("rating");const e=document.getElementById("movie-search");return void(e&&e.focus())}if(o||r)return;const t=e.target.closest(".hist-item");if(!t||e.target.closest(".hist-action-btn")||e.target.closest(".hist-review"))return;const s=parseInt(t.dataset.idx,10),n=loadHistory()[s];n&&openMovieDetailSheet(n.tmdbId)}),m.addEventListener("keydown",e=>{if("Enter"!==e.key&&" "!==e.key)return;const t=e.target.closest(".hist-item-open");if(!t)return;e.preventDefault();const s=t.closest(".hist-item");if(!s)return;const n=parseInt(s.dataset.idx,10),a=loadHistory()[n];a&&openMovieDetailSheet(a.tmdbId)}),document.addEventListener("click",e=>{d&&!m.contains(e.target)&&p()},!0),window.captureArmedHistoryState=function(){if(d){const e={kind:"armed",savedAt:d.dataset.savedAt,titleKey:d.dataset.titleKey,direction:u};return v(),d=null,u=null,e}if(a){return{kind:"dragging",savedAt:a.dataset.savedAt,titleKey:a.dataset.titleKey,dx:c,swipeMode:l}}return null},window.reapplyArmedHistoryState=function(e){if(!e)return;const t=document.getElementById("history-list"),s=t?.querySelector(`.hist-item[data-saved-at="${CSS.escape(e.savedAt)}"][data-title-key="${CSS.escape(e.titleKey)}"]`);if(!s)return;const n=s.querySelector(".hist-item-content");if("armed"===e.kind){const t="left"===e.direction?"hist-swipe-armed-left":"hist-swipe-armed-right",a="left"===e.direction?"hist-swipe-left":"hist-swipe-right";s.classList.add(t,a),n&&(n.style.transform=`translateX(${"left"===e.direction?-120:120}px)`),d=s,u=e.direction}else"dragging"===e.kind&&(a=s,i=n,c=e.dx,l=e.swipeMode,n&&(n.style.transform=`translateX(${c}px)`),s.classList.toggle("hist-swipe-left",c<-10),s.classList.toggle("hist-swipe-right",c>10))}}(),function(){const e=document.getElementById("radar-chart-container");if(!e||!window.IntersectionObserver)return;new IntersectionObserver(t=>{t.forEach(t=>{t.isIntersecting&&e.classList.add("in-view")})},{threshold:.3}).observe(e)}();let statsDirty=!0;function renderActiveStatsView(){"tv"===statsMediaFilter?"function"==typeof renderTvStats&&renderTvStats():renderStats()}function renderAll(){const e=document.getElementById("view-profile");e&&e.classList.contains("active")?(renderActiveStatsView(),statsDirty=!1):statsDirty=!0,renderActiveHistoryView()}function renderProfileIfDirty(){statsDirty&&(renderActiveStatsView(),statsDirty=!1)}function renderYearAgoCard(e){const t=document.getElementById("year-ago-card"),s=document.getElementById("year-ago-body");if(!t||!s)return;const n=findOneYearAgoFilm(e,new Date);if(!n)return void(t.style.display="none");t.style.display="";const{item:a}=n,i=a.poster?`<img class="year-ago-poster" src="${a.poster}" alt="" loading="lazy" decoding="async">`:`<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;s.innerHTML=`\n    ${i}\n    <div>\n      <div class="year-ago-title">${escAttr(a.title)}</div>\n      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${a.year?` (${escAttr(String(a.year))})`:""}.</div>\n      ${a.score?`<div class="year-ago-score">Ta note : ${escAttr(String(a.score))}/10</div>`:""}\n    </div>\n  `}function renderHeatmap(e){const t=document.getElementById("heatmap-grid");if(!t)return;const s=computeDailyCounts(e),n=new Date;n.setHours(12,0,0,0);const a=new Date(n);a.setDate(a.getDate()-364);const i=(a.getDay()+6)%7;a.setDate(a.getDate()-i);let o="";const r=new Date(a);for(;r<=n;){const e=r.toISOString().slice(0,10),t=s[e]||0;o+=`<div class="heatmap-cell ${0===t?"l0":1===t?"l1":2===t?"l2":"l3"}" title="${e}${t>0?` — ${t} film${t>1?"s":""}`:""}"></div>`,r.setDate(r.getDate()+1)}t.innerHTML=o;const l=t.parentElement;l&&(l.scrollLeft=l.scrollWidth)}function renderDecades(e){const t=document.getElementById("decades-card"),s=document.getElementById("decades-list");if(!t||!s)return;const n=computeDecadeStats(e);if(0===n.length)return void(t.style.display="none");t.style.display="";const a=n[0].count;s.innerHTML=n.slice(0,6).map(e=>`\n    <div class="decade-row">\n      <span class="decade-label">${e.decade}s</span>\n      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(e.count/a*100)}%"></div></div>\n      <span class="decade-count">${e.count} · ${null!==e.avg?e.avg.toFixed(1):"—"}</span>\n    </div>\n  `).join("")}function renderProfileDiscoveryCards(){const e=loadHistory();renderYearAgoCard(e),renderHeatmap(e),renderDecades(e)}function drawMiniRadarOnCanvas(e,t,s,n,a,i,o){const r=CRITERIA,l=2*Math.PI/r.length;e.strokeStyle=o,e.lineWidth=1,e.beginPath(),r.forEach((a,i)=>{const o=i*l-Math.PI/2,r=t+n*Math.cos(o),c=s+n*Math.sin(o);0===i?e.moveTo(r,c):e.lineTo(r,c)}),e.closePath(),e.stroke(),e.beginPath(),r.forEach((i,o)=>{const r=(a[i]||0)/10*n,c=o*l-Math.PI/2,d=t+r*Math.cos(c),u=s+r*Math.sin(c);0===o?e.moveTo(d,u):e.lineTo(d,u)}),e.closePath(),e.globalAlpha=.3,e.fillStyle=i,e.fill(),e.globalAlpha=1,e.strokeStyle=i,e.lineWidth=2,e.stroke()}function drawFilmStripBand(e,t,s,n){e.fillStyle=n;for(let n=8;n<s-8;n+=18)e.fillRect(n,t,10,6)}function drawProfileShareCard(e){const t=document.getElementById("profile-share-canvas");if(!t||!t.getContext)return;const s=t.getContext("2d");if(!s)return;const n=t.width,a=t.height,i=getComputedStyle(document.documentElement),o=i.getPropertyValue("--surface").trim()||"#1f2935",r=i.getPropertyValue("--bg").trim()||"#14181c",l=i.getPropertyValue("--text-hi").trim()||"#fff",c=i.getPropertyValue("--text-mid").trim()||"#9ab",d=i.getPropertyValue("--orange").trim()||"#ff8000",u=i.getPropertyValue("--gold").trim()||d,m=i.getPropertyValue("--border").trim()||"#333",p=(i.getPropertyValue("--font-heading").trim()||"sans-serif").split(",")[0].replace(/['"]/g,"");s.clearRect(0,0,n,a);const v=s.createLinearGradient(0,0,0,a);if(v.addColorStop(0,o),v.addColorStop(1,r),s.fillStyle=v,s.fillRect(0,0,n,a),s.strokeStyle=d,s.lineWidth=4,s.strokeRect(2,2,n-4,a-4),drawFilmStripBand(s,10,n,d),s.textAlign="center",s.fillStyle=d,s.font=`900 26px "${p}", sans-serif`,s.fillText("LUDEX",n/2,52),s.fillStyle=c,s.font=`12px "${p}", sans-serif`,s.fillText("MON PROFIL CINÉPHILE",n/2,72),!e||!e.history||0===e.history.length)return s.fillStyle=c,s.font="15px sans-serif",s.fillText("Note quelques films pour",n/2,a/2-8),s.fillText("débloquer ta carte de profil",n/2,a/2+16),void drawFilmStripBand(s,a-16,n,d);const{history:g,totalMinutes:h,memberSinceStr:y,topActor:f,topGenre:S,criteriaAverages:E,badges:b}=e,w=g.reduce((e,t)=>e+(parseFloat(t.score)||0),0)/g.length;s.fillStyle=l,s.font=`900 68px "${p}", sans-serif`,s.fillText(String(g.length),n/2,148),s.fillStyle=c,s.font=`bold 12px "${p}", sans-serif`,s.fillText("FILMS NOTÉS",n/2,168),s.fillStyle=u,s.font="bold 20px sans-serif",s.fillText(`★ ${w.toFixed(1)}/10 de moyenne`,n/2,196),E?drawMiniRadarOnCanvas(s,n/2,275,65,E,d,m):(s.fillStyle=c,s.font="13px sans-serif",s.fillText("Utilise le mode Détaillé pour",n/2,260),s.fillText("débloquer ton profil de goûts (radar)",n/2,280)),s.font="11px sans-serif",s.fillStyle=c,s.fillText("GENRE FAVORI",.28*n,345),s.fillText("ACTEUR FAVORI",.72*n,345),s.fillStyle=l,s.font="bold 14px sans-serif",s.fillText(S||"—",.28*n,365),s.fillText(f||"—",.72*n,365);const I=(b||[]).filter(e=>e.unlocked).slice(0,6);let T=n/2-(38*I.length-10)/2+14;I.forEach(()=>{s.beginPath(),s.arc(T,400,14,0,2*Math.PI),s.fillStyle=u,s.fill(),T+=38}),I.length>0&&(s.fillStyle=c,s.font="10px sans-serif",s.fillText(`${I.length} badge${I.length>1?"s":""} débloqué${I.length>1?"s":""}`,n/2,432)),s.fillStyle=c,s.font="11px sans-serif",s.fillText(`Membre depuis ${y||"—"} · ${formatWatchTime(h)} de films`,n/2,a-26),drawFilmStripBand(s,a-16,n,d)}document.getElementById("profile-share-btn").addEventListener("click",()=>{const e=document.getElementById("profile-share-canvas");if(!e||!e.getContext||!e.getContext("2d"))return void showToast("Ton navigateur ne permet pas de générer cette image.");const t=document.createElement("a");t.download="ludex-profil.png",t.href=e.toDataURL("image/png"),t.click(),showToast("Image téléchargée.")});const MOIS_FR=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];function formatMonthLabel(e){const[t,s]=e.split("-");return`${MOIS_FR[parseInt(s,10)-1]} ${t}`}function getWrappedDefaultYear(e){const t=e.map(e=>{const t=e.savedAt||e.date;return t?parseInt(t.slice(0,4),10):null}).filter(Boolean);return t.length>0?Math.max(...t):(new Date).getFullYear()}function buildWrappedSlides(e){const t=[];return t.push(`\n    <div class="wrapped-slide-eyebrow">Ton année ${e.year}</div>\n    <div class="wrapped-slide-big">${e.totalFilms}</div>\n    <div class="wrapped-slide-label">film${e.totalFilms>1?"s":""} noté${e.totalFilms>1?"s":""}</div>\n    <div class="wrapped-slide-detail">Voyons ce que ${e.totalFilms>1?"ces films disent":"ce film dit"} de ton année cinéma...</div>\n  `),(e.topGenre||e.topDirector)&&t.push(`\n      <div class="wrapped-slide-eyebrow">Tes habitudes</div>\n      ${e.topGenre?`<div class="wrapped-slide-label">🎭 Genre favori : ${escAttr(e.topGenre.name)}</div><div class="wrapped-slide-detail">${e.topGenre.count} film${e.topGenre.count>1?"s":""}</div>`:""}\n      ${e.topDirector?`<div class="wrapped-slide-label" style="margin-top:22px;">🎬 Réalisateur favori : ${escAttr(e.topDirector.name)}</div><div class="wrapped-slide-detail">${e.topDirector.count} film${e.topDirector.count>1?"s":""}</div>`:""}\n    `),(e.topMonth||e.bestRated)&&t.push(`\n      <div class="wrapped-slide-eyebrow">Les temps forts</div>\n      ${e.topMonth?`<div class="wrapped-slide-label">📅 Mois le plus actif</div><div class="wrapped-slide-detail">${formatMonthLabel(e.topMonth.name)} — ${e.topMonth.count} film${e.topMonth.count>1?"s":""}</div>`:""}\n      ${e.bestRated?`<div class="wrapped-slide-label" style="margin-top:22px;">⭐ Ton coup de cœur</div><div class="wrapped-slide-detail">${escAttr(e.bestRated.title)} — ${e.bestRated.score}/10</div>`:""}\n    `),t.push(`\n    <div class="wrapped-slide-eyebrow">Le récap'</div>\n    <div class="wrapped-slide-big" style="font-size:2.2rem;">${e.avgScore.toFixed(1)}<span style="font-size:1.2rem;color:var(--text-mid);">/10</span></div>\n    <div class="wrapped-slide-label">note moyenne de l'année</div>\n    <div class="wrapped-slide-detail">${formatWatchTime(e.totalMinutes)} passées devant l'écran</div>\n  `),t.push('\n    <div class="wrapped-slide-eyebrow">À partager</div>\n    <div class="wrapped-share-canvas-wrap"><canvas id="wrapped-share-canvas" width="360" height="480"></canvas></div>\n    <button type="button" class="wrapped-share-btn" id="wrapped-share-download-btn">Télécharger l\'image</button>\n  '),t}function drawWrappedShareCard(e){const t=document.getElementById("wrapped-share-canvas");if(!t||!t.getContext)return;const s=t.getContext("2d");if(!s)return;const n=t.width,a=t.height,i=getComputedStyle(document.documentElement),o=i.getPropertyValue("--surface").trim()||"#1f2935",r=i.getPropertyValue("--bg").trim()||"#14181c",l=i.getPropertyValue("--text-hi").trim()||"#fff",c=i.getPropertyValue("--text-mid").trim()||"#9ab",d=i.getPropertyValue("--orange").trim()||"#ff8000",u=(i.getPropertyValue("--font-heading").trim()||"sans-serif").split(",")[0].replace(/['"]/g,"");s.clearRect(0,0,n,a);const m=s.createLinearGradient(0,0,0,a);m.addColorStop(0,o),m.addColorStop(1,r),s.fillStyle=m,s.fillRect(0,0,n,a),s.strokeStyle=d,s.lineWidth=4,s.strokeRect(2,2,n-4,a-4),s.textAlign="center",s.fillStyle=d,s.font=`900 24px "${u}", sans-serif`,s.fillText(`LUDEX WRAPPED ${e.year}`,n/2,55),s.fillStyle=l,s.font=`900 80px "${u}", sans-serif`,s.fillText(String(e.totalFilms),n/2,175),s.fillStyle=c,s.font=`bold 13px "${u}", sans-serif`,s.fillText(`FILM${e.totalFilms>1?"S":""} EN ${e.year}`,n/2,198);const p=[["Note moyenne",`${e.avgScore.toFixed(1)}/10`],["Genre favori",e.topGenre?.name||"—"],["Réalisateur favori",e.topDirector?.name||"—"],["Coup de cœur",e.bestRated?.title||"—"],["Temps visionné",formatWatchTime(e.totalMinutes)]];let v=250;p.forEach(([e,t])=>{s.textAlign="left",s.fillStyle=c,s.font="11px sans-serif",s.fillText(e.toUpperCase(),30,v),s.fillStyle=l,s.font="bold 18px sans-serif",s.fillText(t,30,v+22),v+=46})}!function(){const e=document.getElementById("wrapped-modal"),t=document.getElementById("wrapped-entry-card"),s=document.getElementById("wrapped-close-btn"),n=document.getElementById("wrapped-slides"),a=document.getElementById("wrapped-dots"),i=document.getElementById("wrapped-prev-btn"),o=document.getElementById("wrapped-next-btn");if(!e||!t)return;let r=[],l=0;function c(){if(n.innerHTML=r.map((e,t)=>`<div class="wrapped-slide${t===l?" active":""}${t<l?" leaving-left":""}">${e}</div>`).join(""),a.innerHTML=r.map((e,t)=>`<span class="onboarding-dot${t===l?" active":""}"></span>`).join(""),i.style.visibility=0===l?"hidden":"visible",o.textContent=l===r.length-1?"Fermer":"Suivant",l===r.length-1){const e=document.getElementById("wrapped-share-download-btn");drawWrappedShareCard(window._currentWrappedStats),e?.addEventListener("click",()=>{const e=document.getElementById("wrapped-share-canvas");if(!e)return;const t=document.createElement("a");t.download=`ludex-wrapped-${window._currentWrappedStats.year}.png`,t.href=e.toDataURL("image/png"),t.click(),showToast("Image téléchargée.")})}}t.addEventListener("click",()=>{const t=loadHistory(),n=computeWrappedStats(t,getWrappedDefaultYear(t));window._currentWrappedStats=n,r=buildWrappedSlides(n),l=0,c(),lastFocusedBeforeModal=document.activeElement,e.classList.add("open"),s.focus()}),o.addEventListener("click",()=>{l!==r.length-1?(l++,c()):closeModal(e)}),i.addEventListener("click",()=>{0!==l&&(l--,c())}),s.addEventListener("click",()=>closeModal(e))}();const LAST_EXPORT_KEY="lbx_last_export_at";function importLudexJson(e){const t=JSON.parse(e);let s,n;if(Array.isArray(t))s=t,n=[];else{if(!t||"object"!=typeof t||!Array.isArray(t.history)&&!Array.isArray(t.tvShows))throw new Error("Format invalide");s=Array.isArray(t.history)?t.history:[],n=Array.isArray(t.tvShows)?t.tvShows:[]}const a=[];s.length&&a.push(`${s.length} film${s.length>1?"s":""}`),n.length&&a.push(`${n.length} série${n.length>1?"s":""}`),0!==a.length?openModal("Importer la sauvegarde",`Importer ${a.join(" et ")} ? Cela fusionnera avec vos données actuelles (les doublons seront ignorés).`,()=>{let e=0,t=0,a=0;if(s.length){const t=loadHistory(),n=new Set(t.map(e=>(e.title+"|"+(e.year||"")).toLowerCase())),a=s.filter(e=>!n.has((String(e.title??"")+"|"+(e.year||"")).toLowerCase())).map(normalizeHistoryItemV2);e=a.length,saveHistory([...a,...t])}if(n.length&&"function"==typeof loadTvShows){const e=loadTvShows();n.forEach(s=>{let n=e.find(e=>String(e.tmdbTvId)===String(s.tmdbTvId));n||(n={tmdbTvId:s.tmdbTvId,title:s.title,poster_path:s.poster_path,genre:s.genre,seasons:{}},e.push(n),t++),Object.entries(s.seasons||{}).forEach(([e,t])=>{n.seasons[e]||(n.seasons[e]=t,a++)})}),saveTvShows(e)}renderAll(),"function"==typeof renderTvHistory&&document.getElementById("hist-tab-tv")?.classList.contains("active")&&renderTvHistory(),void 0!==statsDirty&&(statsDirty=!0);const i=[];e&&i.push(`${e} film${e>1?"s":""}`),t&&i.push(`${t} série${t>1?"s":""}`),a>t&&i.push(`${a} saison${a>1?"s":""} au total`),showToast(i.length?`${i.join(" · ")} importé${e+a>1?"s":""}`:"Rien de nouveau à importer (déjà présent)")}):showToast("Sauvegarde vide, rien à importer.")}function importLetterboxdCsv(e){const t=parseCsv(e),{items:s,kind:n}=mapLetterboxdCsv(t);if(!n)return void showToast("CSV non reconnu — attendu : un export Letterboxd (diary, ratings ou watched).");if(0===s.length)return void showToast("Aucun film trouvé dans ce fichier.");const a=loadHistory(),i=new Set(a.map(e=>(e.title+"|"+(e.year||"")).toLowerCase())),o=s.filter(e=>!i.has((e.title+"|"+(e.year||"")).toLowerCase())),r=s.length-o.length;openModal("Import Letterboxd",`Fichier ${{diary:"journal",ratings:"notes",watched:"films vus"}[n]} détecté : ${s.length} film${s.length>1?"s":""}, dont ${o.length} nouveau${o.length>1?"x":""}${r>0?` (${r} déjà présent${r>1?"s":""}, ignorés)`:""}. Importer ?`,()=>{saveHistory([...o,...loadHistory()]),renderAll(),showToast(`${o.length} film${o.length>1?"s":""} importé${o.length>1?"s":""} depuis Letterboxd 🎬`)})}document.getElementById("export-btn").addEventListener("click",()=>{const e=loadHistory(),t="function"==typeof loadTvShows?loadTvShows():[];if(!e.length&&!t.length)return void showToast("Rien à exporter.");const s={history:e,tvShows:t},n=new Blob([JSON.stringify(s,null,2)],{type:"application/json"}),a=URL.createObjectURL(n),i=document.createElement("a");i.href=a,i.download=`ludex-backup-${(new Date).toISOString().slice(0,10)}.json`,i.click(),URL.revokeObjectURL(a),localStorage.setItem(LAST_EXPORT_KEY,(new Date).toISOString());const o=document.getElementById("backup-reminder");o&&o.remove();const r=[];e.length&&r.push(`${e.length} film${e.length>1?"s":""}`),t.length&&r.push(`${t.length} série${t.length>1?"s":""}`),showToast(`${r.join(" · ")} exporté${e.length+t.length>1?"s":""}`)}),document.getElementById("import-trigger").addEventListener("click",()=>{document.getElementById("import-file").click()}),document.getElementById("import-file").addEventListener("change",e=>{const t=e.target.files[0];if(!t)return;const s=new FileReader;s.onload=t=>{const s=t.target.result;try{const e=s.trimStart();e.startsWith("[")||e.startsWith("{")?importLudexJson(s):importLetterboxdCsv(s)}catch{showToast("Fichier non reconnu (attendu : sauvegarde Ludex .json ou export Letterboxd .csv).")}e.target.value=""},s.readAsText(t)});const BACKUP_SNOOZE_KEY="lbx_backup_snoozed_at";function maybeShowBackupReminder(){const e=loadHistory(),t="function"==typeof loadTvShows?loadTvShows():[];if(e.length+t.length<10)return;const s=localStorage.getItem(LAST_EXPORT_KEY);if((s?(Date.now()-new Date(s).getTime())/864e5:1/0)<30)return;const n=localStorage.getItem(BACKUP_SNOOZE_KEY);if(n&&(Date.now()-new Date(n).getTime())/864e5<7)return;const a=document.createElement("div");a.id="backup-reminder",a.className="backup-reminder",a.innerHTML=`\n    <span class="backup-reminder-text">${s?"Dernière sauvegarde il y a plus de 30 jours.":`${e.length+t.length} élément${e.length+t.length>1?"s":""} noté${e.length+t.length>1?"s":""}, aucune sauvegarde.`}</span>\n    <button type="button" class="backup-reminder-btn" id="backup-reminder-export">Exporter</button>\n    <button type="button" class="backup-reminder-close" id="backup-reminder-close" aria-label="Plus tard">✕</button>\n  `,document.body.appendChild(a),document.getElementById("backup-reminder-export").addEventListener("click",()=>{document.getElementById("export-btn").click()}),document.getElementById("backup-reminder-close").addEventListener("click",()=>{localStorage.setItem(BACKUP_SNOOZE_KEY,(new Date).toISOString()),a.remove()})}setTimeout(maybeShowBackupReminder,2500);const WATCHLISTS_META_KEY="lbx_watchlists_meta",ACTIVE_WATCHLIST_KEY="lbx_active_watchlist_id",LEGACY_WATCHLIST_KEY="lbx_watchlist";function loadWatchlistsMeta(){try{return JSON.parse(localStorage.getItem(WATCHLISTS_META_KEY))||[]}catch{return[]}}function saveWatchlistsMeta(e){localStorage.setItem(WATCHLISTS_META_KEY,JSON.stringify(e))}function watchlistStorageKey(e){return`lbx_watchlist_${e}`}function watchlistTombstonesKey(e){return`lbx_watchlist_tombstones_${e}`}const WATCHLIST_LIST_TOMBSTONES_KEY="lbx_watchlist_list_tombstones",LEGACY_WATCHLIST_TOMBSTONES_KEY="lbx_watchlist_tombstones";function getActiveWatchlistId(){let e=localStorage.getItem(ACTIVE_WATCHLIST_KEY);const t=loadWatchlistsMeta();return e&&t.find(t=>t.id===e)||(e=t[0]?.id||"default",localStorage.setItem(ACTIVE_WATCHLIST_KEY,e)),e}function setActiveWatchlistId(e){localStorage.setItem(ACTIVE_WATCHLIST_KEY,e)}function createWatchlistList(e){const t=loadWatchlistsMeta(),s="wl_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);return t.push({id:s,name:e.trim()||"Nouvelle liste"}),saveWatchlistsMeta(t),localStorage.setItem(watchlistStorageKey(s),JSON.stringify([])),s}function renameWatchlistList(e,t){const s=loadWatchlistsMeta(),n=s.find(t=>t.id===e);n&&(n.name=t.trim()||n.name,saveWatchlistsMeta(s))}function deleteWatchlistList(e){let t=loadWatchlistsMeta();return!(t.length<=1)&&(t=t.filter(t=>t.id!==e),saveWatchlistsMeta(t),localStorage.removeItem(watchlistStorageKey(e)),localStorage.removeItem(watchlistTombstonesKey(e)),recordTombstone(WATCHLIST_LIST_TOMBSTONES_KEY,e),getActiveWatchlistId()===e&&setActiveWatchlistId(t[0].id),!0)}function loadWatchlist(e){try{return JSON.parse(localStorage.getItem(watchlistStorageKey(e||getActiveWatchlistId())))||[]}catch{return[]}}function saveWatchlist(e,t){localStorage.setItem(watchlistStorageKey(t||getActiveWatchlistId()),JSON.stringify(e))}function attachWatchlistSwipeHandlers(e,t){if(isDefaultComposition())return;const s=e.querySelector(".wl-card-content");let n=0,a=0,i=0,o=!1,r=!1;function l(t,s){n=t,a=s,i=0,o=!0,r=!1,e.classList.add("wl-dragging")}function c(t,l){if(!o)return;const c=t-n,d=l-a;Math.abs(d)>1.2*Math.abs(c)||(i=Math.max(-130,Math.min(130,c)),Math.abs(i)>8&&(r=!0),s.style.transform=`translateX(${i}px)`,e.classList.toggle("wl-swipe-left",i<-10),e.classList.toggle("wl-swipe-right",i>10))}function d(){if(!o)return;o=!1,e.classList.remove("wl-dragging");i<=-80?(e.classList.add("wl-swipe-out-left"),s.style.transform="translateX(-110%)",navigator.vibrate&&navigator.vibrate(20),hapticPulse(e,"strong"),setTimeout(()=>removeWatchlist(t),240)):i>=80?(e.classList.add("wl-swipe-out-right"),s.style.transform="translateX(110%)",navigator.vibrate&&navigator.vibrate(20),hapticPulse(e,"strong"),setTimeout(()=>watchlistToForm(t),240)):(s.style.transform="",e.classList.remove("wl-swipe-left","wl-swipe-right")),r&&setTimeout(()=>{r=!1},50)}e.addEventListener("touchstart",e=>{e.stopPropagation(),l(e.touches[0].clientX,e.touches[0].clientY)},{passive:!0}),e.addEventListener("touchmove",e=>{e.stopPropagation(),c(e.touches[0].clientX,e.touches[0].clientY)},{passive:!0}),e.addEventListener("touchend",e=>{e.stopPropagation(),d()}),e.addEventListener("touchcancel",d),e.addEventListener("mousedown",e=>{l(e.clientX,e.clientY);const t=e=>c(e.clientX,e.clientY),s=()=>{d(),document.removeEventListener("mousemove",t),document.removeEventListener("mouseup",s)};document.addEventListener("mousemove",t),document.addEventListener("mouseup",s)}),e.addEventListener("click",e=>{r&&(e.stopPropagation(),e.preventDefault())},!0)}function renderWatchlist(){const e=loadWatchlist(),t=document.getElementById("watchlist-list");if(document.getElementById("watchlist-count-badge").textContent=e.length+" film"+(e.length>1?"s":""),0===e.length)return t.innerHTML=`<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`,void(window._justSavedWatchlistTitle=null);t.innerHTML="",e.forEach((e,s)=>{const n=document.createElement("div");n.className="wl-card",n.id=`wl-item-${s}`,window._justSavedWatchlistTitle&&e.title.toLowerCase()===window._justSavedWatchlistTitle&&n.classList.add("wl-card-entering");const a=e.poster?`<div class="wl-poster"><img src="${e.poster}" alt="Affiche de ${escAttr(e.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`:`<div class="wl-poster">${ICONS.clapper}</div>`;if(n.innerHTML=`\n      <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>\n      <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>\n      <div class="wl-card-content">\n        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">\n          ${a}\n          <div class="wl-body">\n            <div class="wl-title">${escAttr(e.title)}</div>\n            <div class="wl-meta">${[e.year,e.genre].filter(Boolean).join(" · ")}</div>\n            <div class="wl-providers" id="wl-providers-${s}">\n              <span class="wl-provider-loading">⏳ Chargement streaming...</span>\n            </div>\n          </div>\n        </div>\n        <div class="wl-actions">\n          <button class="wl-btn rate" onclick="watchlistToForm(${s})" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(e.title)}, vu">${ICONS.star}</button>\n          <button class="wl-btn del" onclick="removeWatchlist(${s})" title="Retirer" aria-label="Retirer ${escAttr(e.title)} de la watchlist">${ICONS.close}</button>\n        </div>\n      </div>`,t.appendChild(n),applyPosterAccent(e.poster,n),attachWatchlistSwipeHandlers(n,s),e.tmdbId)fetchProviders(e.tmdbId,s);else{const e=document.getElementById(`wl-providers-${s}`);e&&(e.innerHTML="")}}),window._justSavedWatchlistTitle=null}function normalizeProviderName(e){return(e||"").toLowerCase().replace(/\+/g," plus").replace(/\s+/g," ").trim()}async function fetchProviders(e,t){const s=document.getElementById(`wl-providers-${t}`);if(s)try{const t=await fetch(`/api/search?id=${e}&providers=BE`),n=await t.json(),a=n["watch/providers"]?.results?.BE||n.providers?.results?.BE||n.watchProviders?.BE||null;if(!a)return void(s.innerHTML='<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>');const i=loadOwnedProviders().map(normalizeProviderName),o=e=>0===i.length?e:e.filter(e=>{const t=normalizeProviderName(e.provider_name);return i.some(e=>t.includes(e)||e.includes(t))}),r=a.flatrate||[],l=a.rent||[],c=o(r),d=o(l).filter(e=>!c.find(t=>t.provider_id===e.provider_id));let u="";if(c.length>0&&(u+='<span class="wl-provider-tag flatrate">Inclus</span>',c.slice(0,5).forEach(e=>{u+=`<img class="wl-provider-logo" src="${tmdbImage(e.logo_path,"original")}" title="${e.provider_name}" alt="${escAttr(e.provider_name)}" loading="lazy">`})),d.length>0&&(u+='<span class="wl-provider-tag rent">Location</span>',d.slice(0,4).forEach(e=>{u+=`<img class="wl-provider-logo" src="${tmdbImage(e.logo_path,"original")}" title="${e.provider_name}" alt="${escAttr(e.provider_name)}" loading="lazy">`})),u)s.innerHTML=u;else{const e=i.length>0&&(r.length>0||l.length>0);s.innerHTML=e?'<span class="wl-no-streaming">Disponible, mais pas sur tes plateformes 📵</span>':'<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>'}}catch{s&&(s.innerHTML='<span class="wl-no-streaming">Providers indisponibles</span>')}}async function addToWatchlistFromTMDb(e,t){openWatchlistPicker(e,t)}async function addToSpecificWatchlist(e,t,s){const n=loadWatchlist(s),a=(e.title+"|"+t).toLowerCase();if(n.find(e=>(e.title+"|"+(e.year||"")).toLowerCase()===a))return void showToast("Déjà dans cette liste.");let i="";try{const t=await fetch(`/api/search?id=${e.id}`),s=await t.json();i=s.genres?.map(e=>e.name).join(", ")||""}catch{}n.unshift({title:e.title,year:t,poster:tmdbImage(e.poster_path,"w185"),genre:i,tmdbId:e.id,addedAt:(new Date).toISOString()}),saveWatchlist(n,s),s===getActiveWatchlistId()&&(window._justSavedWatchlistTitle=e.title.toLowerCase(),renderWatchlist());const o=loadWatchlistsMeta().find(e=>e.id===s)?.name||"la liste";showToast(`"${e.title}" ajouté à "${o}" 🎯`)}function openWatchlistPicker(e,t){const s=document.getElementById("wl-picker-modal"),n=document.getElementById("wl-picker-list"),a=(document.getElementById("wl-picker-new-row"),document.getElementById("wl-picker-new-form")),i=document.getElementById("wl-picker-new-btn"),o=document.getElementById("wl-picker-new-input"),r=document.getElementById("wl-picker-new-confirm"),l=document.getElementById("wl-picker-cancel-btn");if(!s||!n)return;a.style.display="none",i.style.display="flex",o.value="";const c=loadWatchlistsMeta();function d(n){addToSpecificWatchlist(e,t,n),closeModal(s)}n.innerHTML=c.map(e=>{const t=loadWatchlist(e.id).length;return`<button type="button" class="wl-picker-item" data-list-id="${e.id}"><span>${escAttr(e.name)}</span><span class="wl-picker-item-count">${t} film${t>1?"s":""}</span></button>`}).join(""),n.querySelectorAll(".wl-picker-item").forEach(e=>{e.addEventListener("click",()=>d(e.dataset.listId))}),i.onclick=()=>{i.style.display="none",a.style.display="flex",o.focus()},r.onclick=()=>{const e=o.value.trim();if(!e)return void o.focus();d(createWatchlistList(e))},o.onkeydown=e=>{"Enter"===e.key&&r.click()},l.onclick=()=>closeModal(s),lastFocusedBeforeModal=document.activeElement,s.classList.add("open"),(c.length>0?n.querySelector(".wl-picker-item"):i)?.focus()}!function(){if(loadWatchlistsMeta().length>0)return;let e=[];try{e=JSON.parse(localStorage.getItem("lbx_watchlist"))||[]}catch{}let t=[];try{t=JSON.parse(localStorage.getItem("lbx_watchlist_tombstones"))||[]}catch{}const s="default";saveWatchlistsMeta([{id:s,name:"À voir"}]),localStorage.setItem(watchlistStorageKey(s),JSON.stringify(e)),localStorage.setItem(watchlistTombstonesKey(s),JSON.stringify(t)),localStorage.setItem(ACTIVE_WATCHLIST_KEY,s)}();let deletedWlItemCache=null,deletedWlItemIndex=null,deletedWlListId=null;window.removeWatchlist=function(e){const t=loadWatchlist(),s=t[e],n=s?.title;deletedWlItemCache=s||null,deletedWlItemIndex=e,deletedWlListId=getActiveWatchlistId(),t.splice(e,1),saveWatchlist(t),s&&recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()),watchlistItemKey(s)),renderWatchlist(),n&&showToast(`"${n}" retiré`,!0,"undoWatchlistDelete")},window.undoWatchlistDelete=function(){if(!deletedWlItemCache||!deletedWlListId)return;const e=watchlistStorageKey(deletedWlListId);let t=[];try{t=JSON.parse(localStorage.getItem(e))||[]}catch{}t.splice(Math.min(deletedWlItemIndex,t.length),0,deletedWlItemCache),localStorage.setItem(e,JSON.stringify(t)),removeTombstone(watchlistTombstonesKey(deletedWlListId),watchlistItemKey(deletedWlItemCache)),getActiveWatchlistId()===deletedWlListId&&renderWatchlist(),showToast("Retrait annulé."),deletedWlItemCache=null},window.watchlistToForm=function(e){const t=loadWatchlist(),s=t[e];s&&(searchEl.value=s.title,searchEl.dispatchEvent(new Event("input")),t.splice(e,1),saveWatchlist(t),recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()),watchlistItemKey(s)),renderWatchlist(),window.innerWidth<=860&&switchMobileNav("rating"),window.scrollTo({top:0,behavior:"smooth"}),showToast(`Recherche lancée pour "${s.title}"`))};const wlInput=document.getElementById("watchlist-input"),wlSuggestEl=document.getElementById("wl-suggestions");let wlSearchTimer;function renderWatchlistTabs(){const e=loadWatchlistsMeta(),t=getActiveWatchlistId(),s=e.find(e=>e.id===t)||e[0],n=document.getElementById("watchlist-active-name");n&&(n.textContent=s?s.name:"À voir");const a=document.getElementById("wl-lists-row");a&&(a.innerHTML=e.map(e=>`<button type="button" class="wl-list-pill${e.id===t?" active":""}" data-id="${e.id}">${escAttr(e.name)}</button>`).join("")+`<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`)}function openWlListManageMenu(e){const t=loadWatchlistsMeta().find(t=>t.id===e);if(!t)return;actionSheetTitleEl.textContent=t.name;const s=[{label:"Renommer",icon:ICONS.edit,onClick:()=>openWlListModal("rename",e)},{label:"Supprimer cette liste",icon:ICONS.trash,danger:!0,onClick:()=>{loadWatchlistsMeta().length<=1?showToast("Impossible de supprimer la dernière liste."):openModal("Supprimer la liste",`Supprimer "${escAttr(t.name)}" et tous ses films ? Cette action est définitive.`,()=>{deleteWatchlistList(e),renderWatchlistTabs(),renderWatchlist(),showToast("Liste supprimée.")},!0)}}];actionSheetListEl.innerHTML="",s.forEach(({label:e,icon:t,onClick:s,danger:n})=>{const a=document.createElement("button");a.type="button",a.className="action-sheet-item"+(n?" danger":""),a.innerHTML=`${t} <span>${e}</span>`,a.addEventListener("click",()=>{closeActionSheet(),s()}),actionSheetListEl.appendChild(a)}),lastFocusedBeforeModal=document.activeElement,actionSheetEl.classList.add("open")}wlInput.addEventListener("input",()=>{clearTimeout(wlSearchTimer);const e=wlInput.value.trim();e.length<2?wlSuggestEl.style.display="none":wlSearchTimer=setTimeout(async()=>{try{const[t,s]=await Promise.all([fetch(`/api/search?query=${encodeURIComponent(e)}`),fetchPersonMatch(e)]),n=await readApiJson(t);if(!n.results?.length&&!s)return void(wlSuggestEl.style.display="none");if(wlSuggestEl.innerHTML="",wlSuggestEl.style.display="block",s){const e=tmdbImage(s.profile_path,"w92"),t=document.createElement("div");t.className="wl-suggest-item",t.innerHTML=`\n          ${e?`<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${e}" alt="Photo de ${escAttr(s.name)}" loading="lazy">`:`<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}\n          <div>\n            <div class="wl-suggest-title">🎬 ${escAttr(s.name)}</div>\n            <div class="wl-suggest-year">Voir sa filmographie</div>\n          </div>`,t.addEventListener("click",()=>{wlSuggestEl.style.display="none",openPersonDetailSheet(s.id,s.name)}),wlSuggestEl.appendChild(t)}n.results.slice(0,5).forEach(e=>{const t=e.release_date?.slice(0,4)||"",s=document.createElement("div");s.className="wl-suggest-item",s.innerHTML=`\n          ${e.poster_path?`<img class="wl-suggest-poster" src="${tmdbImage(e.poster_path,"w92")}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}\n          <div>\n            <div class="wl-suggest-title">${escAttr(e.title)}</div>\n            <div class="wl-suggest-year">${t}</div>\n          </div>`,s.addEventListener("click",()=>{wlSuggestEl.style.display="none",wlInput.value="",addToWatchlistFromTMDb(e,t)}),wlSuggestEl.appendChild(s)})}catch(e){wlSuggestEl.style.display="none",showToast(describeApiFailure(e))}},280)}),document.addEventListener("click",e=>{wlInput.contains(e.target)||wlSuggestEl.contains(e.target)||(wlSuggestEl.style.display="none")}),document.getElementById("watchlist-add-btn").addEventListener("click",()=>{const e=wlInput.value.trim();if(!e)return;wlSuggestEl.style.display="none";const t=loadWatchlist(),s=e.toLowerCase();if(t.find(e=>e.title.toLowerCase()===s))return showToast("Déjà dans la liste."),void(wlInput.value="");t.unshift({title:e,year:"",poster:"",genre:"",tmdbId:null,addedAt:(new Date).toISOString()}),saveWatchlist(t),window._justSavedWatchlistTitle=e.toLowerCase(),renderWatchlist(),showToast(`"${e}" ajouté à la liste 🎯`),wlInput.value=""}),wlInput.addEventListener("keydown",e=>{"Escape"===e.key&&(wlSuggestEl.style.display="none")}),document.getElementById("watchlist-list").addEventListener("click",e=>{if(e.target.closest("#empty-state-watchlist-cta"))return void(window.innerWidth<=860?switchMobileNav("discover"):switchRightTab("discover"));const t=e.target.closest(".wl-card");if(!t||e.target.closest(".wl-btn"))return;const s=parseInt(t.id.replace("wl-item-",""),10),n=loadWatchlist()[s];n&&openMovieDetailSheet(n.tmdbId)});let wlModalMode="create",wlModalTargetId=null;function openWlListModal(e,t=null){wlModalMode=e,wlModalTargetId=t,document.getElementById("wl-list-modal-title").textContent="create"===e?"Nouvelle liste":"Renommer la liste",document.getElementById("wl-list-modal-confirm").textContent="create"===e?"Créer":"Renommer";const s=document.getElementById("wl-list-name-input");s.value="rename"===e&&loadWatchlistsMeta().find(e=>e.id===t)?.name||"",lastFocusedBeforeModal=document.activeElement,document.getElementById("wl-list-modal").classList.add("open"),setTimeout(()=>s.focus(),50)}document.getElementById("wl-lists-row").addEventListener("click",e=>{if(e.target.closest("#wl-list-add-btn"))return void openWlListModal("create");const t=e.target.closest(".wl-list-pill");if(!t)return;const s=t.dataset.id;s===getActiveWatchlistId()?openWlListManageMenu(s):(setActiveWatchlistId(s),renderWatchlistTabs(),renderWatchlist())}),document.getElementById("wl-list-modal-confirm").addEventListener("click",()=>{const e=document.getElementById("wl-list-name-input").value.trim();if(e){if("create"===wlModalMode){setActiveWatchlistId(createWatchlistList(e)),showToast(`Liste "${e}" créée.`)}else renameWatchlistList(wlModalTargetId,e),showToast("Liste renommée.");closeModal(document.getElementById("wl-list-modal")),renderWatchlistTabs(),renderWatchlist()}else showToast("Donne un nom à la liste.")}),document.getElementById("wl-list-modal-cancel").addEventListener("click",()=>{closeModal(document.getElementById("wl-list-modal"))}),renderWatchlistTabs(),renderWatchlist();let lastFocusedBeforeModal=null;function getFocusableElements(e){return Array.from(e.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).filter(e=>!e.disabled&&null!==e.offsetParent)}function trapFocus(e){const t=document.querySelector(".modal-overlay.open");if(!t||"Tab"!==e.key)return;const s=getFocusableElements(t);if(!s.length)return;const n=s[0],a=s[s.length-1];e.shiftKey&&document.activeElement===n?(e.preventDefault(),a.focus()):e.shiftKey||document.activeElement!==a||(e.preventDefault(),n.focus())}function closeModal(e){e.classList.remove("open"),"modal"===e.id&&(pendingAction=null),lastFocusedBeforeModal&&(lastFocusedBeforeModal.focus(),lastFocusedBeforeModal=null)}function openModal(e,t,s,n=!1){document.getElementById("modal-title").textContent=e,document.getElementById("modal-body").textContent=t;const a=document.getElementById("modal-confirm");a.className="modal-btn "+(n?"danger":"primary"),a.textContent=n?"Supprimer":"Confirmer",pendingAction=s,lastFocusedBeforeModal=document.activeElement,document.getElementById("modal").classList.add("open"),document.getElementById("modal-cancel").focus()}document.getElementById("modal-confirm").addEventListener("click",()=>{pendingAction&&(pendingAction(),pendingAction=null),closeModal(document.getElementById("modal"))}),document.getElementById("modal-cancel").addEventListener("click",()=>{closeModal(document.getElementById("modal"))}),document.querySelectorAll(".modal-overlay").forEach(e=>{e.addEventListener("click",t=>{t.target===e&&closeModal(e)})}),document.addEventListener("keydown",e=>{if("Escape"===e.key){const e=document.querySelector(".modal-overlay.open");e&&closeModal(e)}else"Tab"===e.key&&trapFocus(e)}),updateWeightBadges(),calculateScore(),updateAllSliders(),renderCriteriaAverageMarkers(),function(){const e=document.getElementById("app-splash");if(!e)return;const t=performance.now(),s=Math.max(0,1200-t);setTimeout(()=>{e.classList.add("hide"),setTimeout(()=>e.remove(),500)},s)}(),function(){const e="lbx_onboarding_seen";if(localStorage.getItem(e))return;const t=loadHistory().length>0,s=loadWatchlistsMeta().some(e=>{try{return(JSON.parse(localStorage.getItem(`lbx_watchlist_${e.id}`))||[]).length>0}catch{return!1}});if(t||s)return void localStorage.setItem(e,"1");const n=document.getElementById("onboarding-modal");if(!n)return;const a=Array.from(n.querySelectorAll(".onboarding-slide")),i=Array.from(n.querySelectorAll(".onboarding-dot")),o=document.getElementById("onboarding-next-btn"),r=document.getElementById("onboarding-skip-btn");let l=0;function c(){localStorage.setItem(e,"1"),closeModal(n)}o.addEventListener("click",()=>{var e;l!==a.length-1?(l++,e=l,a.forEach((t,s)=>{t.classList.toggle("active",s===e),t.classList.toggle("leaving-left",s<e)}),i.forEach((t,s)=>t.classList.toggle("active",s===e)),o.textContent=e===a.length-1?"Commencer":"Suivant"):c()}),r.addEventListener("click",c),setTimeout(()=>{lastFocusedBeforeModal=document.activeElement,n.classList.add("open"),o.focus()},1400)}();const SYNC_CODE_KEY="lbx_sync_code",SYNC_LAST_HASH_KEY="lbx_sync_last_hash",SYNC_LAST_TIME_KEY="lbx_sync_last_time",HISTORY_TOMBSTONES_KEY="lbx_history_tombstones",TV_SHOW_TOMBSTONES_KEY="lbx_tv_show_tombstones",TV_SEASON_TOMBSTONES_KEY="lbx_tv_season_tombstones",syncCodeInput=document.getElementById("setting-sync-code"),syncSaveBtn=document.getElementById("sync-save-btn"),syncRestoreBtn=document.getElementById("sync-restore-btn"),syncStatusEl=document.getElementById("sync-status");function getSyncCode(){return(localStorage.getItem(SYNC_CODE_KEY)||"").trim()}function setSyncCode(e){localStorage.setItem(SYNC_CODE_KEY,e.trim())}function setSyncStatus(e,t=!1){syncStatusEl.textContent=e,syncStatusEl.style.color=t?"#ff4040":"var(--text-mid)"}function formatDateTime(e){return new Date(e).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}function loadTombstones(e){try{return JSON.parse(localStorage.getItem(e))||[]}catch{return[]}}function saveTombstones(e,t){localStorage.setItem(e,JSON.stringify(t))}function recordTombstone(e,t){const s=loadTombstones(e),n=(new Date).toISOString(),a=s.findIndex(e=>e.key===t);a>=0?s[a].deletedAt=n:s.push({key:t,deletedAt:n}),saveTombstones(e,s)}function removeTombstone(e,t){saveTombstones(e,loadTombstones(e).filter(e=>e.key!==t))}function mergeWithRemote(e){const t=loadHistory(),s=loadTombstones(HISTORY_TOMBSTONES_KEY),n=Array.isArray(e?.history)?e.history:[],a=mergeTombstoneLists(s,Array.isArray(e?.historyTombstones)?e.historyTombstones:[]),i=mergeHistory(t,n,a);saveHistory(i),saveTombstones(HISTORY_TOMBSTONES_KEY,a);const o="function"==typeof loadTvShows?loadTvShows():[],r=Array.isArray(e?.tvShows)?e.tvShows:[],l=mergeTombstoneLists(loadTombstones(TV_SHOW_TOMBSTONES_KEY),Array.isArray(e?.tvShowTombstones)?e.tvShowTombstones:[]),c=mergeTombstoneLists(loadTombstones(TV_SEASON_TOMBSTONES_KEY),Array.isArray(e?.tvSeasonTombstones)?e.tvSeasonTombstones:[]),d=mergeTvShows(o,r,l,c);"function"==typeof saveTvShows&&saveTvShows(d),saveTombstones(TV_SHOW_TOMBSTONES_KEY,l),saveTombstones(TV_SEASON_TOMBSTONES_KEY,c);const u=loadWatchlistsMeta(),m=Array.isArray(e?.watchlistsMeta)?e.watchlistsMeta:[],p=mergeTombstoneLists(loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY),Array.isArray(e?.watchlistListTombstones)?e.watchlistListTombstones:[]);saveTombstones(WATCHLIST_LIST_TOMBSTONES_KEY,p);const v=new Set(p.map(e=>e.key)),g={};m.forEach(e=>{e&&e.id&&(g[e.id]={id:e.id,name:e.name})}),u.forEach(e=>{e&&e.id&&(g[e.id]={id:e.id,name:e.name})});let h=Object.values(g).filter(e=>!v.has(e.id));0===h.length&&(h=[{id:"default",name:"À voir"}]);const y=getActiveWatchlistId();saveWatchlistsMeta(h),h.find(e=>e.id===y)||setActiveWatchlistId(h[0].id);const f=e?.watchlists&&"object"==typeof e.watchlists?e.watchlists:{},S=e?.watchlistTombstones&&"object"==typeof e.watchlistTombstones?e.watchlistTombstones:{},E={},b={};h.forEach(({id:e})=>{let t=[];try{t=JSON.parse(localStorage.getItem(watchlistStorageKey(e)))||[]}catch{}const s=Array.isArray(f[e])?f[e]:[],n=mergeTombstoneLists(loadTombstones(watchlistTombstonesKey(e)),Array.isArray(S[e])?S[e]:[]),a=mergeWatchlist(t,s,n);localStorage.setItem(watchlistStorageKey(e),JSON.stringify(a)),saveTombstones(watchlistTombstonesKey(e),n),E[e]=a,b[e]=n});const w=JSON.parse(localStorage.getItem("lbx_settings")||"null"),I=w||e?.settings||null;return e?.settings&&!w&&localStorage.setItem("lbx_settings",JSON.stringify(e.settings)),applySettings(I||{}),renderAll(),"function"==typeof renderWatchlistTabs&&renderWatchlistTabs(),renderWatchlist(),"function"==typeof renderTvHistory&&document.getElementById("hist-tab-tv")?.classList.contains("active")&&renderTvHistory(),void 0!==statsDirty&&(statsDirty=!0),{history:i,historyTombstones:a,tvShows:d,tvShowTombstones:l,tvSeasonTombstones:c,watchlistsMeta:h,watchlists:E,watchlistTombstones:b,watchlistListTombstones:p,settings:I}}function hashPayload(e){const t=JSON.stringify(e);let s=0;for(let e=0;e<t.length;e++)s=31*s+t.charCodeAt(e)|0;return String(s)}function currentLocalSnapshot(){const e=loadWatchlistsMeta(),t={},s={};return e.forEach(({id:e})=>{try{t[e]=JSON.parse(localStorage.getItem(watchlistStorageKey(e)))||[]}catch{t[e]=[]}s[e]=loadTombstones(watchlistTombstonesKey(e))}),{history:loadHistory(),historyTombstones:loadTombstones(HISTORY_TOMBSTONES_KEY),tvShows:"function"==typeof loadTvShows?loadTvShows():[],tvShowTombstones:loadTombstones(TV_SHOW_TOMBSTONES_KEY),tvSeasonTombstones:loadTombstones(TV_SEASON_TOMBSTONES_KEY),watchlistsMeta:e,watchlists:t,watchlistTombstones:s,watchlistListTombstones:loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY)}}async function fetchCloudPayload(e){const t=await fetch(`/api/sync?code=${encodeURIComponent(e)}`),s=await t.json();if(!t.ok)throw new Error(s.error||"bad status");return s.found?s.payload:null}function describeSyncFailure(e){if(!navigator.onLine)return"Tu es hors ligne — la synchronisation reprendra à la reconnexion.";const t=e&&e.message?e.message:"";return!t||"bad status"===t||/^bad status \d+$/.test(t)||/Failed to fetch|NetworkError/i.test(t)?"Impossible de joindre le service de synchronisation. Réessaie dans un instant.":t}async function pushToCloud(e=!1){const t=getSyncCode();if(!t)return e||setSyncStatus("Renseigne un code de synchronisation avant de sauvegarder.",!0),!1;e||setSyncStatus("Synchronisation en cours…");try{const s=mergeWithRemote(await fetchCloudPayload(t)),n=await fetch(`/api/sync?code=${encodeURIComponent(t)}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(s)});if(!n.ok){let e="";try{e=(await n.json()).error||""}catch{}throw new Error(e||`bad status ${n.status}`)}const a=(new Date).toISOString();return localStorage.setItem(SYNC_LAST_HASH_KEY,hashPayload(currentLocalSnapshot())),localStorage.setItem(SYNC_LAST_TIME_KEY,a),e||setSyncStatus(`Synchronisé ✓ (${formatDateTime(a)})`),!0}catch(t){return e||setSyncStatus(describeSyncFailure(t),!0),!1}}async function pullFromCloud(){const e=getSyncCode();if(e){setSyncStatus("Récupération depuis le cloud…");try{const t=await fetchCloudPayload(e);if(!t)return void setSyncStatus("Aucune sauvegarde trouvée pour ce code.",!0);mergeWithRemote(t);const s=(new Date).toISOString();localStorage.setItem(SYNC_LAST_HASH_KEY,hashPayload(currentLocalSnapshot())),localStorage.setItem(SYNC_LAST_TIME_KEY,s),setSyncStatus(`Synchronisé depuis le cloud ✓ (${formatDateTime(s)})`),showToast("Données synchronisées depuis le cloud.")}catch(e){setSyncStatus(describeSyncFailure(e),!0)}}else setSyncStatus("Renseigne un code de synchronisation avant de restaurer.",!0)}document.getElementById("settings-btn").addEventListener("click",()=>{syncCodeInput.value=getSyncCode();const e=localStorage.getItem(SYNC_LAST_TIME_KEY);setSyncStatus(e?`Dernière synchronisation : ${formatDateTime(e)}`:"")}),syncCodeInput.addEventListener("change",()=>setSyncCode(syncCodeInput.value)),syncSaveBtn.addEventListener("click",()=>{setSyncCode(syncCodeInput.value),pushToCloud(!1)}),syncRestoreBtn.addEventListener("click",()=>{setSyncCode(syncCodeInput.value),pullFromCloud()}),setInterval(()=>{if(!getSyncCode())return;hashPayload(currentLocalSnapshot())!==localStorage.getItem(SYNC_LAST_HASH_KEY)&&pushToCloud(!0)},45e3);const DISCOVER_PASSED_KEY="lbx_discover_passed",DISCOVER_PASSED_MAX=500,DISCOVER_SWIPE_THRESHOLD=100;function loadDiscoverPassed(){try{return JSON.parse(localStorage.getItem(DISCOVER_PASSED_KEY))||[]}catch{return[]}}function markDiscoverPassed(e){const t=loadDiscoverPassed(),s=String(e);t.includes(s)||t.push(s),localStorage.setItem(DISCOVER_PASSED_KEY,JSON.stringify(t.slice(-500)))}const DISCOVER_BASIS_USED_KEY="lbx_discover_basis_used";function loadBasisUsed(){try{return JSON.parse(localStorage.getItem(DISCOVER_BASIS_USED_KEY))||[]}catch{return[]}}function markBasisUsed(e){const t=loadBasisUsed();t.push(...e.map(String)),localStorage.setItem(DISCOVER_BASIS_USED_KEY,JSON.stringify(t.slice(-30)))}function pickDiverseBasisFilms(e,t){const s=new Set(loadBasisUsed()),n=e.filter(e=>!s.has(String(e.tmdbId))),a=n.length>=t?n:e,i={};a.forEach(e=>{const t=(e.genre||"").split(",")[0].trim()||"Autre";(i[t]=i[t]||[]).push(e)});const o=Object.keys(i).sort(()=>.5-Math.random()),r=[];for(const e of o){if(r.length>=t)break;const s=i[e];r.push(s[Math.floor(Math.random()*s.length)])}const l=a.filter(e=>!r.includes(e));for(;r.length<t&&l.length>0;){const e=Math.floor(Math.random()*l.length);r.push(l.splice(e,1)[0])}return r}let discoverQueue=[],discoverLoaded=!1,discoverLoadFailed=!1;const FILM_DU_JOUR_KEY="lbx_film_du_jour";async function loadFilmDuJour(){const e=(new Date).toISOString().slice(0,10);let t=null;try{t=JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY)||"null")}catch{}if(t&&t.date===e&&t.movie)renderGuessGame(t.movie,t.isWeekly);else try{const t=Math.floor(Date.now()/864e5),s=3===(new Date).getDay(),n=s?`/api/search?weeklyRelease=${t}`:`/api/search?dailyPick=${t}`,a=await fetch(n),i=(await a.json()).result;if(!i)return;const o=await fetch(`/api/search?id=${i.id}`),r=await o.json();if(!r||!r.title)return;localStorage.setItem(FILM_DU_JOUR_KEY,JSON.stringify({date:e,movie:r,isWeekly:s})),renderGuessGame(r,s)}catch(e){console.warn("Impossible de charger le film du jour",e)}}const ON_THIS_DAY_KEY="lbx_on_this_day";async function loadOnThisDay(){const e=document.getElementById("on-this-day-wrap"),t=document.getElementById("on-this-day-strip");if(!e||!t)return;const s=(new Date).toISOString().slice(0,10);let n,a=null;try{a=JSON.parse(localStorage.getItem(ON_THIS_DAY_KEY)||"null")}catch{}if(a&&a.date===s)n=a.anniversaries;else try{const e=await fetch("/api/search?onThisDay=1");n=(await e.json()).anniversaries||[],localStorage.setItem(ON_THIS_DAY_KEY,JSON.stringify({date:s,anniversaries:n}))}catch(e){return void console.warn('Impossible de charger "Ce jour-là"',e)}0!==n.length&&(t.innerHTML=n.flatMap(e=>e.films.map(t=>`\n      <div class="on-this-day-item" data-movie-id="${t.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(t.title)}">\n        <img class="on-this-day-poster" src="${tmdbImage(t.poster_path,"w200")}" alt="Affiche de ${escAttr(t.title)}" loading="lazy">\n        <div class="on-this-day-badge">Il y a ${e.yearsAgo} ans</div>\n        <div class="on-this-day-title">${escAttr(t.title)}</div>\n      </div>\n    `)).join(""),t.querySelectorAll(".on-this-day-item").forEach(e=>{e.addEventListener("click",()=>openMovieDetailSheet(e.dataset.movieId)),e.addEventListener("keydown",t=>{"Enter"!==t.key&&" "!==t.key||(t.preventDefault(),openMovieDetailSheet(e.dataset.movieId))})}),e.style.display="block")}function setFilmDuJourTitle(e){const t=document.getElementById("fdj-title-text");t&&(t.textContent=e?"Sortie de la semaine":"Film du jour")}async function fetchFilmDuJourProviders(e){const t=document.getElementById("fdj-providers");if(t)try{const s=await fetch(`/api/search?id=${e}&providers=BE`),n=await s.json(),a=n["watch/providers"]?.results?.BE||n.providers?.results?.BE||n.watchProviders?.BE||null,i=loadOwnedProviders().map(normalizeProviderName),o=e=>0===i.length?e:e.filter(e=>{const t=normalizeProviderName(e.provider_name);return i.some(e=>t.includes(e)||e.includes(t))}),r=a?.flatrate||[],l=a?.rent||[],c=o(r),d=o(l).filter(e=>!c.find(t=>t.provider_id===e.provider_id));let u="";if([...c,...d].slice(0,6).forEach(e=>{u+=`<img class="fdj-provider-logo" src="${tmdbImage(e.logo_path,"original")}" title="${e.provider_name}" alt="${escAttr(e.provider_name)}" loading="lazy">`}),u)t.innerHTML=u;else{const e=i.length>0&&(r.length>0||l.length>0);t.innerHTML=`<span class="fdj-no-streaming">${e?"Disponible, mais pas sur tes plateformes":"Non disponible en streaming 🇧🇪"}</span>`}}catch{t.innerHTML='<span class="fdj-no-streaming">Plateformes indisponibles</span>'}}document.getElementById("clear-fdj-cache-btn")?.addEventListener("click",()=>{localStorage.removeItem(FILM_DU_JOUR_KEY),loadFilmDuJour(),showToast("Film du jour actualisé.")});const GUESS_GAME_KEY="lbx_guess_game",GUESS_STREAK_KEY="lbx_guess_streak",GUESS_LAST_PLAYED_KEY="lbx_guess_last_played",GUESS_MAX_ATTEMPTS=5;document.addEventListener("click",e=>{if(e.target.closest(".guess-input-wrap"))return;const t=document.getElementById("guess-suggestions");t&&(t.style.display="none")});const GUESS_BLUR_LEVELS=[22,16,12,8,4,0];function normalizeGuessText(e){return String(e||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9\s]/g,"").replace(/\s+/g," ").trim()}function loadGuessGameState(e,t){let s=null;try{s=JSON.parse(localStorage.getItem(GUESS_GAME_KEY)||"null")}catch{}return s&&s.date===t&&s.movieId===e?s:{date:t,movieId:e,attempts:0,done:!1,won:null}}function saveGuessGameState(e){localStorage.setItem(GUESS_GAME_KEY,JSON.stringify(e))}function renderGuessStreakBadge(){const e=document.getElementById("guess-streak-badge");if(!e)return;const t=parseInt(localStorage.getItem(GUESS_STREAK_KEY),10)||0;e.innerHTML=t>0?`${ICONS.flame} ${t}`:""}async function fetchGuessSuggestions(e,t,s){try{const n=await fetch(`/api/search?query=${encodeURIComponent(e)}`),a=((await readApiJson(n)).results||[]).slice(0,6);if(!a.length)return void(s.style.display="none");s.innerHTML="",s.style.display="block",a.forEach(e=>{const n=e.release_date?.slice(0,4)||"????",a=document.createElement("div");a.className="guess-suggestion-item",a.setAttribute("role","option"),a.innerHTML=`<span class="guess-suggestion-title">${escAttr(e.title)}</span><span class="guess-suggestion-year">${n}</span>`,a.addEventListener("click",()=>{t.value=e.title,s.style.display="none",t.focus()}),s.appendChild(a)})}catch{s.style.display="none"}}function renderGuessGame(e,t){const s=document.getElementById("fdj-wrap"),n=document.getElementById("fdj-card");if(!s||!n)return;s.style.display="block";const a=(new Date).toISOString().slice(0,10),i=tmdbImage(e.poster_path,"w300"),o=e.release_date?e.release_date.slice(0,4):"",r="function"!=typeof loadFeatureFlags||loadFeatureFlags().guessGame;if(!e.poster_path||!r)return setFilmDuJourTitle(t),void renderRevealedFilm(e,i,o,null);const l=loadGuessGameState(e.id,a);if(l.done)return setFilmDuJourTitle(t),void renderRevealedFilm(e,i,o,l);const c=document.getElementById("fdj-title-text");c&&(c.textContent="Devine le Film du Jour"),renderGuessStreakBadge();const d=GUESS_BLUR_LEVELS[Math.min(l.attempts,GUESS_BLUR_LEVELS.length-1)],u=e.credits?.crew?.find(e=>"Director"===e.job)?.name,m=e.credits?.cast||[],p=[];l.attempts>=1&&o&&p.push(`Sorti en ${o}`),l.attempts>=2&&u&&p.push(`Réalisé par ${u}`),l.attempts>=3&&m[0]&&p.push(`Avec ${m[0].name}`),l.attempts>=4&&m[1]&&p.push(`Et aussi ${m[1].name}`),n.classList.add("fdj-guessing"),n.classList.remove("fdj-revealed");const v=Array.from({length:GUESS_MAX_ATTEMPTS},(e,t)=>`<span class="fdj-attempt-dot${t<l.attempts?" used":""}"></span>`).join("");n.innerHTML=`\n    <img class="guess-poster" src="${i}" alt="Affiche à deviner" style="filter:blur(${d}px)">\n    <div class="fdj-hero-overlay"></div>\n    <div class="fdj-hero-top">\n      <span class="fdj-hero-badge">Film du jour</span>\n      <div class="fdj-attempt-dots">\n        ${v}\n        <div class="guess-attempts">Essai ${l.attempts+1}/${GUESS_MAX_ATTEMPTS}</div>\n      </div>\n    </div>\n    <div class="fdj-hero-body">\n      <div class="fdj-title-mask" aria-hidden="true">? ? ? ? ? ? ?</div>\n      <div class="fdj-hero-pills">\n        ${o?`<span class="fdj-hero-pill accent">${escAttr(o)}</span>`:""}\n        ${e.genres?.[0]?.name?`<span class="fdj-hero-pill">${escAttr(e.genres[0].name)}</span>`:'<span class="fdj-hero-pill">Genre</span>'}\n      </div>\n      ${p.length?`<div class="guess-hints">${p.map(e=>`<span class="guess-hint">${escAttr(e)}</span>`).join("")}</div>`:""}\n      <form class="guess-form" id="guess-form" autocomplete="off">\n        <div class="guess-input-wrap">\n          <input type="text" class="guess-input" id="guess-input" placeholder="Devine le titre…" aria-label="Ta proposition" autocomplete="off">\n          <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>\n        </div>\n        <button type="submit" class="guess-submit-btn">Valider</button>\n      </form>\n    </div>\n  `;const g=document.getElementById("guess-input"),h=document.getElementById("guess-suggestions");let y;g.addEventListener("input",()=>{clearTimeout(y);const e=g.value.trim();e.length<2?h.style.display="none":y=setTimeout(()=>fetchGuessSuggestions(e,g,h),280)}),document.getElementById("guess-form").addEventListener("submit",s=>{s.preventDefault(),h.style.display="none";const n=normalizeGuessText(document.getElementById("guess-input").value);if(!n)return;const i=[normalizeGuessText(e.title)];e.original_title&&e.original_title!==e.title&&i.push(normalizeGuessText(e.original_title));const o=i.includes(n),r=new Date(Date.now()-864e5).toISOString().slice(0,10),c=localStorage.getItem(GUESS_LAST_PLAYED_KEY);if(l.attempts+=1,o){l.done=!0,l.won=!0;const e=parseInt(localStorage.getItem(GUESS_STREAK_KEY),10)||0,t=c===r?e+1:1;localStorage.setItem(GUESS_STREAK_KEY,String(t)),navigator.vibrate&&navigator.vibrate(20)}else l.attempts>=GUESS_MAX_ATTEMPTS&&(l.done=!0,l.won=!1,localStorage.setItem(GUESS_STREAK_KEY,"0")),navigator.vibrate&&navigator.vibrate([20,40,20]);localStorage.setItem(GUESS_LAST_PLAYED_KEY,a),saveGuessGameState(l),renderGuessGame(e,t)})}function renderRevealedFilm(e,t,s,n){const a=document.getElementById("fdj-card");a.classList.add("fdj-revealed"),a.classList.remove("fdj-guessing"),renderGuessStreakBadge();const i=n?`<div class="guess-result ${n.won?"guess-won":"guess-lost"}">\n         ${n.won?`Trouvé en ${n.attempts} essai${n.attempts>1?"s":""} !`:`Perdu — c'était « ${escAttr(e.title)} »`}\n       </div>`:"",o=e.credits?.crew?.find(e=>"Director"===e.job)?.name,r=[];o&&r.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.clapper}</span>Réalisé par ${escAttr(o)}</span>`),e.vote_average&&r.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.star}</span>${e.vote_average.toFixed(1)}/10</span>`);const l=r.length?`<div class="fdj-meta-line">${r.join("")}</div>`:"",c=e.overview&&e.overview.length>180,d=e.overview?`<div class="fdj-synopsis-card">\n         <div class="fdj-synopsis-icon" aria-hidden="true">${ICONS.clapper}</div>\n         <div class="fdj-synopsis-body">\n           <p class="fdj-synopsis-text${c?" fdj-synopsis-clamped":""}">${escAttr(e.overview)}</p>\n           ${c?'<button type="button" class="fdj-synopsis-toggle">Lire la suite</button>':""}\n         </div>\n       </div>`:"";a.innerHTML=`\n    ${t?`<img class="fdj-poster" src="${t}" alt="Affiche de ${escAttr(e.title)}" loading="lazy" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">`:`<div class="fdj-poster fdj-poster-ph" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">${ICONS.clapper}</div>`}\n    <div class="fdj-info">\n      ${i}\n      <div class="fdj-film-title">${escAttr(e.title)}${s?` <span class="fdj-year">(${s})</span>`:""}</div>\n      ${l}\n      ${d}\n      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>\n    </div>\n  `,a.dataset.movieId=String(e.id),a.addEventListener("click",t=>{t.target.closest(".fdj-providers")||t.target.closest(".fdj-synopsis-toggle")||openMovieDetailSheet(e.id)});const u=a.querySelector(".fdj-poster");u&&u.addEventListener("keydown",t=>{"Enter"!==t.key&&" "!==t.key||(t.preventDefault(),openMovieDetailSheet(e.id))});const m=a.querySelector(".fdj-synopsis-toggle");m&&m.addEventListener("click",()=>{const e=a.querySelector(".fdj-synopsis-text"),t=e.classList.toggle("fdj-synopsis-expanded");e.classList.toggle("fdj-synopsis-clamped",!t),m.textContent=t?"Réduire":"Lire la suite"}),fetchFilmDuJourProviders(e.id)}let trendingLoaded=!1;async function loadTrendingCarousel(){if(!trendingLoaded){trendingLoaded=!0;try{const e=await fetch("/api/search?trending=true"),t=((await e.json()).results||[]).filter(e=>e.poster_path&&("movie"===e.media_type||"tv"===e.media_type)).slice(0,15);if(0===t.length)return;renderTrendingCarousel(t),document.getElementById("trending-carousel-wrap").style.display="block"}catch(e){console.warn("Impossible de charger les tendances du moment",e)}}}function renderTrendingCarousel(e){const t=document.getElementById("trending-carousel"),s=e.map(e=>{const t=tmdbImage(e.poster_path,"w200"),s=e.title||e.name||"",n="tv"===e.media_type;return`\n      <div class="trending-item" data-media-id="${e.id}" data-media-type="${e.media_type}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(s)}">\n        <img class="trending-item-poster" src="${t}" alt="Affiche de ${escAttr(s)}" loading="lazy">\n        <span class="trending-item-type">${n?"Série":"Film"}</span>\n        <div class="trending-item-title">${escAttr(s)}</div>\n      </div>`}).join("");t.innerHTML=`<div class="trending-carousel-track">${s}${s}</div>`;const n=t.querySelector(".trending-carousel-track");t.addEventListener("click",e=>{const t=e.target.closest(".trending-item");t&&("tv"===t.dataset.mediaType?openTvDetailSheet(t.dataset.mediaId):openMovieDetailSheet(t.dataset.mediaId))});let a=!1,i=null;function o(){a=!0,clearTimeout(i),i=setTimeout(()=>{a=!1},3e3)}requestAnimationFrame(function e(){const s=document.getElementById("view-discover")?.classList.contains("active");if(s&&!a){t.scrollLeft+=.5;const e=n.scrollWidth/2;e>0&&t.scrollLeft>=e&&(t.scrollLeft-=e)}requestAnimationFrame(e)}),t.addEventListener("touchstart",e=>{e.stopPropagation(),o()},{passive:!0}),t.addEventListener("touchmove",e=>{e.stopPropagation(),o()},{passive:!0}),t.addEventListener("wheel",o,{passive:!0}),t.addEventListener("scroll",o,{passive:!0}),document.getElementById("trending-prev-btn").addEventListener("click",()=>{o(),t.scrollBy({left:-200,behavior:"smooth"})}),document.getElementById("trending-next-btn").addEventListener("click",()=>{o(),t.scrollBy({left:200,behavior:"smooth"})})}const discoverStack=document.getElementById("discover-stack"),discoverActionsEl=document.getElementById("discover-actions"),discoverReloadBtn=document.getElementById("discover-reload-btn"),discoverPassBtn=document.getElementById("discover-pass-btn"),discoverLikeBtn=document.getElementById("discover-like-btn"),surpriseMeBtn=document.getElementById("surprise-me-btn");async function loadDiscoverQueue(){discoverReloadBtn.classList.add("spinning");try{await loadDiscoverQueueInner()}finally{discoverReloadBtn.classList.remove("spinning")}}async function loadDiscoverQueueInner(){discoverActionsEl.style.display="none",discoverStack.style.height="",discoverStack.innerHTML='\n    <div class="discover-card discover-card-skeleton">\n      <div class="skeleton-bg" style="width:100%;aspect-ratio:2/3;border-radius:var(--radius-sm);"></div>\n      <div class="skeleton-text long skeleton-bg" style="margin-top:10px;height:16px;"></div>\n      <div class="skeleton-text short skeleton-bg"></div>\n    </div>';const e=loadHistory(),t=loadWatchlist(),s=e.filter(e=>e.tmdbId);if(0===s.length)return discoverStack.style.height="120px",void(discoverStack.innerHTML='<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>');const n=pickDiverseBasisFilms(s,3);markBasisUsed(n.map(e=>e.tmdbId));const a=new Set(e.map(e=>String(e.tmdbId)).filter(Boolean)),i=new Set(t.map(e=>String(e.tmdbId)).filter(Boolean)),o=new Set(loadDiscoverPassed());let r=[];const l=await Promise.allSettled(n.map(e=>fetch(`/api/search?id=${e.tmdbId}&recommendations=true`).then(e=>e.json())));l.forEach((e,t)=>{if("fulfilled"===e.status){const t=e.value,s=t.results||(Array.isArray(t)?t:null);s&&r.push(...s)}else console.warn("Impossible de charger les suggestions pour l'ID "+n[t].tmdbId,e.reason)}),discoverLoadFailed=n.length>0&&!l.some(e=>"fulfilled"===e.status);const c=[],d=new Set;r.forEach(e=>{if(!e||!e.id)return;const t=String(e.id);d.has(t)||a.has(t)||i.has(t)||o.has(t)||(d.add(t),c.push(e))});for(let e=c.length-1;e>0;e--){const t=Math.floor(Math.random()*(e+1));[c[e],c[t]]=[c[t],c[e]]}discoverQueue=c.slice(0,15),discoverLoaded=!0,renderDiscoverCards()}function renderDiscoverCards(){document.documentElement.classList.contains("discover-swipe-compact")?renderDiscoverCompactList():renderDiscoverStack()}function renderDiscoverStack(){if(0===discoverQueue.length)return discoverActionsEl.style.display="none",discoverStack.style.height="120px",void(discoverStack.innerHTML=discoverLoadFailed?'\n        <div class="error-state">\n          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>\n          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>\n          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>\n        </div>':'<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>');discoverStack.style.height="",discoverActionsEl.style.display="flex";const e=discoverStack.querySelector(".discover-card.top");e&&e.remove();const t=discoverStack.querySelector(".discover-card.behind");if(t&&t.dataset.movieId===String(discoverQueue[0].id))t.classList.remove("behind"),t.classList.add("top"),t.setAttribute("tabindex","0"),t.setAttribute("role","group"),t.setAttribute("aria-label",`Suggestion : ${discoverQueue[0].title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`),attachSwipeHandlers(t,discoverQueue[0]);else{t&&t.remove();const e=buildDiscoverCardEl(discoverQueue[0],!0);discoverStack.appendChild(e),attachSwipeHandlers(e,discoverQueue[0])}if(discoverQueue[1]){const e=buildDiscoverCardEl(discoverQueue[1],!1);discoverStack.insertBefore(e,discoverStack.firstChild)}}function buildDiscoverCardEl(e,t){const s=e.release_date?.slice(0,4)||"????",n=e.vote_average?e.vote_average.toFixed(1):null,a=tmdbImage(e.poster_path,"w500");let i=e.overview?e.overview:"Pas de synopsis disponible.";i.length>160&&(i=i.slice(0,160)+"…");const o=document.createElement("div");return o.className="discover-card "+(t?"top":"behind"),o.dataset.movieId=String(e.id),o.innerHTML=`\n    <div class="discover-card-poster-wrap">\n      ${a?`<img class="discover-card-poster" src="${a}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}\n      <div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>\n    </div>\n    <div class="discover-card-info">\n      <div class="discover-card-title">${escAttr(e.title)}</div>\n      <div class="discover-card-meta">${s}${n?" · ⭐ "+n+"/10":""}</div>\n      <div class="discover-card-overview">${escAttr(i)}</div>\n    </div>\n  `,t&&(o.setAttribute("tabindex","0"),o.setAttribute("role","group"),o.setAttribute("aria-label",`Suggestion : ${escAttr(e.title)}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`)),applyPosterAccent(a,o),o}function resolveDiscoverSwipe(e){const t=discoverQueue.shift();if(t){if("like"===e){const e=t.release_date?.slice(0,4)||"????";addToWatchlistFromTMDb(t,e),navigator.vibrate&&navigator.vibrate(20)}else markDiscoverPassed(t.id),navigator.vibrate&&navigator.vibrate(15);hapticPulse(discoverStack,"medium"),renderDiscoverStack()}}function renderDiscoverCompactList(){if(0===discoverQueue.length)return discoverActionsEl.style.display="none",discoverStack.style.height="",void(discoverStack.innerHTML=discoverLoadFailed?'\n        <div class="error-state">\n          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>\n          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>\n          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>\n        </div>':'<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>');discoverActionsEl.style.display="none",discoverStack.style.height="",discoverStack.innerHTML=`<div class="discover-compact-list">${discoverQueue.map(e=>{const t=e.release_date?.slice(0,4)||"????",s=e.vote_average?e.vote_average.toFixed(1):null,n=tmdbImage(e.poster_path,"w200");return`\n      <div class="discover-compact-row" data-movie-id="${e.id}">\n        <div class="discover-compact-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">\n          ${n?`<img class="discover-compact-poster" src="${n}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="discover-compact-poster-ph">${ICONS.clapper}</div>`}\n          <div class="discover-compact-info">\n            <div class="discover-compact-title">${escAttr(e.title)}</div>\n            <div class="discover-compact-meta">${t}${s?" · ⭐ "+s+"/10":""}</div>\n          </div>\n        </div>\n        <div class="discover-compact-actions">\n          <button type="button" class="discover-compact-btn pass" data-action="pass" aria-label="Passer ${escAttr(e.title)}" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>\n          <button type="button" class="discover-compact-btn like" data-action="like" aria-label="Ajouter ${escAttr(e.title)} à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>\n        </div>\n      </div>`}).join("")}</div>`}function resolveDiscoverCompact(e,t){const s=discoverQueue.findIndex(t=>String(t.id)===String(e));if(-1===s)return;const[n]=discoverQueue.splice(s,1);if("like"===t){const e=n.release_date?.slice(0,4)||"????";addToWatchlistFromTMDb(n,e),navigator.vibrate&&navigator.vibrate(20)}else markDiscoverPassed(n.id),navigator.vibrate&&navigator.vibrate(15);renderDiscoverCompactList()}function attachSwipeHandlers(e,t){let s=0,n=0,a=0,i=0,o=!1;const r=e.querySelector(".discover-stamp.like"),l=e.querySelector(".discover-stamp.pass");function c(t,r){s=t,n=r,a=0,i=0,o=!0,e.classList.add("dragging"),e.classList.remove("snap-back","flying")}function d(t,c){if(!o)return;a=t-s,i=c-n,e.style.transform=`translate(${a}px, ${.4*i}px) rotate(${a/18}deg)`;const d=Math.min(1,Math.abs(a)/100);a>0?(r.style.opacity=d,l.style.opacity=0):a<0&&(l.style.opacity=d,r.style.opacity=0)}function u(){if(o)if(o=!1,e.classList.remove("dragging"),Math.abs(a)>100){const t=a>0?"like":"pass";e.classList.add("flying"),e.style.transform=`translate(${a>0?900:-900}px, ${.4*i}px) rotate(${a/10}deg)`,e.style.opacity="0",setTimeout(()=>resolveDiscoverSwipe(t),200)}else Math.abs(a)<6&&Math.abs(i)<6?(e.style.transform="",r.style.opacity=0,l.style.opacity=0,t&&openMovieDetailSheet(t.id)):(e.classList.add("snap-back"),e.style.transform="",r.style.opacity=0,l.style.opacity=0)}e.addEventListener("touchstart",e=>{e.stopPropagation(),e.preventDefault(),c(e.touches[0].clientX,e.touches[0].clientY)},{passive:!1}),e.addEventListener("touchmove",e=>{e.stopPropagation(),e.preventDefault(),d(e.touches[0].clientX,e.touches[0].clientY)},{passive:!1}),e.addEventListener("touchend",e=>{e.stopPropagation(),u()}),e.addEventListener("mousedown",e=>{e.preventDefault(),c(e.clientX,e.clientY);const t=e=>d(e.clientX,e.clientY),s=()=>{u(),document.removeEventListener("mousemove",t),document.removeEventListener("mouseup",s)};document.addEventListener("mousemove",t),document.addEventListener("mouseup",s)}),e.addEventListener("keydown",e=>{"ArrowRight"===e.key?(e.preventDefault(),resolveDiscoverSwipe("like")):"ArrowLeft"===e.key&&(e.preventDefault(),resolveDiscoverSwipe("pass"))})}surpriseMeBtn?.addEventListener("click",async()=>{if(surpriseMeBtn.disabled)return;surpriseMeBtn.disabled=!0;const e=surpriseMeBtn.innerHTML;surpriseMeBtn.textContent="⏳ Recherche...";try{const e=await fetch("/api/search?random=true"),t=await e.json();if(!t.result||!t.result.id)return void showToast("Impossible de trouver un film pour l'instant, réessaie.");openMovieDetailSheet(t.result.id)}catch{showToast("Impossible de charger un film au hasard pour l'instant.")}finally{surpriseMeBtn.disabled=!1,surpriseMeBtn.innerHTML=e}}),discoverStack?.addEventListener("click",e=>{const t=e.target.closest(".discover-compact-row");if(!t)return;const s=e.target.closest(".discover-compact-btn");s?resolveDiscoverCompact(t.dataset.movieId,s.dataset.action):e.target.closest(".discover-compact-open")&&openMovieDetailSheet(t.dataset.movieId)}),discoverPassBtn.addEventListener("click",()=>resolveDiscoverSwipe("pass")),discoverLikeBtn.addEventListener("click",()=>resolveDiscoverSwipe("like")),discoverReloadBtn.addEventListener("click",()=>loadDiscoverQueue());const QUIZ_BATCH_KEY="lbx_quiz_batch",QUIZ_BATCH_FETCHED_DAY_KEY="lbx_quiz_batch_fetched_day",QUIZ_STREAK_KEY="lbx_quiz_streak",QUIZ_LAST_PLAYED_KEY="lbx_quiz_last_played_date",QUIZ_LAST_RESULT_KEY="lbx_quiz_last_result";function quizDaysSinceEpoch(){return Math.floor(Date.now()/864e5)}function quizTodayStr(){return(new Date).toISOString().slice(0,10)}function quizDecodeEntities(e){const t=document.createElement("textarea");return t.innerHTML=e,t.value}function quizSeededShuffle(e,t){const s=e.slice();let n=t||1;for(let e=s.length-1;e>0;e--){n=(9301*n+49297)%233280;const t=Math.floor(n/233280*(e+1));[s[e],s[t]]=[s[t],s[e]]}return s}async function ensureQuizBatch(){let e=[];try{e=JSON.parse(localStorage.getItem(QUIZ_BATCH_KEY))||[]}catch{}const t=parseInt(localStorage.getItem(QUIZ_BATCH_FETCHED_DAY_KEY),10)||0,s=quizDaysSinceEpoch()-t;if(!(0===e.length||s>=e.length||s>=30))return e;try{const t=await fetch("https://opentdb.com/api.php?amount=30&category=11&type=multiple&encode=url3986"),s=await t.json();0===s.response_code&&s.results?.length>0&&(e=s.results,localStorage.setItem(QUIZ_BATCH_KEY,JSON.stringify(e)),localStorage.setItem(QUIZ_BATCH_FETCHED_DAY_KEY,String(quizDaysSinceEpoch())))}catch{}return e}function getTodaysQuizQuestion(e){if(!e||0===e.length)return null;const t=quizDaysSinceEpoch()%e.length,s=e[t],n=quizDecodeEntities(decodeURIComponent(s.question)),a=quizDecodeEntities(decodeURIComponent(s.correct_answer));return{idx:t,question:n,correctAnswer:a,allAnswers:quizSeededShuffle([a,...s.incorrect_answers.map(e=>quizDecodeEntities(decodeURIComponent(e)))],t)}}function renderQuizStreakBadge(){const e=document.getElementById("quiz-streak-badge");if(!e)return;const t=parseInt(localStorage.getItem(QUIZ_STREAK_KEY),10)||0;e.innerHTML=t>0?`${ICONS.flame} ${t}`:""}function renderQuizAnsweredState(e,t,s){e.innerHTML=`\n    <div class="quiz-question">${escAttr(t.question)}</div>\n    <div class="quiz-answers">\n      ${t.allAnswers.map((e,n)=>{const a=e===t.correctAnswer?"correct":e===s.picked?"wrong":"",i=e===t.correctAnswer?ICONS.check:e===s.picked?ICONS.close:"";return`<button class="quiz-answer-btn ${a}" disabled>\n          <span class="quiz-answer-letter">${String.fromCharCode(65+n)}</span>\n          <span class="quiz-answer-text">${e}</span>\n          <span class="quiz-answer-icon" aria-hidden="true">${i}</span>\n        </button>`}).join("")}\n    </div>\n    <div class="quiz-already-played">${s.wasCorrect?"✓ Bonne réponse aujourd'hui — reviens demain pour la suite.":`La bonne réponse était « ${t.correctAnswer} » — reviens demain.`}</div>\n  `}async function loadDailyQuiz(){const e=document.getElementById("quiz-wrap"),t=document.getElementById("quiz-card");if(!e||!t)return;const s=getTodaysQuizQuestion(await ensureQuizBatch());if(!s)return;e.style.display="block",renderQuizStreakBadge();const n=quizTodayStr(),a=localStorage.getItem(QUIZ_LAST_PLAYED_KEY);let i=null;try{i=JSON.parse(localStorage.getItem(QUIZ_LAST_RESULT_KEY))}catch{}a===n&&i&&i.questionIdx===s.idx?renderQuizAnsweredState(t,s,i):(t.innerHTML=`\n    <div class="quiz-question">${escAttr(s.question)}</div>\n    <div class="quiz-answers">\n      ${s.allAnswers.map((e,t)=>`\n        <button class="quiz-answer-btn" data-answer="${escAttr(e)}">\n          <span class="quiz-answer-letter">${String.fromCharCode(65+t)}</span>\n          <span class="quiz-answer-text">${e}</span>\n          <span class="quiz-answer-icon" aria-hidden="true"></span>\n        </button>`).join("")}\n    </div>\n  `,t.querySelectorAll(".quiz-answer-btn").forEach(e=>{e.addEventListener("click",()=>{const i=e.dataset.answer,o=i===s.correctAnswer;t.querySelectorAll(".quiz-answer-btn").forEach(t=>{t.disabled=!0,t.dataset.answer===s.correctAnswer?(t.classList.add("correct"),t.querySelector(".quiz-answer-icon").innerHTML=ICONS.check):t===e&&(t.classList.add("wrong"),t.querySelector(".quiz-answer-icon").innerHTML=ICONS.close)});const r=parseInt(localStorage.getItem(QUIZ_STREAK_KEY),10)||0,l=new Date(Date.now()-864e5).toISOString().slice(0,10),c=o?a===l?r+1:1:0;localStorage.setItem(QUIZ_STREAK_KEY,String(c)),localStorage.setItem(QUIZ_LAST_PLAYED_KEY,n),localStorage.setItem(QUIZ_LAST_RESULT_KEY,JSON.stringify({questionIdx:s.idx,wasCorrect:o,picked:i})),renderQuizStreakBadge(),navigator.vibrate&&navigator.vibrate(o?20:[20,40,20]);const d=document.createElement("div");d.className="quiz-result",d.textContent=o?"Bonne réponse ! 🎉":`La bonne réponse était « ${s.correctAnswer} ».`,t.appendChild(d)})}))}discoverStack?.addEventListener("click",e=>{e.target.closest(".error-retry-btn[data-retry-discover]")&&(discoverLoadFailed=!1,loadDiscoverQueue())});const browseTabTheme=document.getElementById("browse-tab-theme"),browseTabClassics=document.getElementById("browse-tab-classics"),browsePanelTheme=document.getElementById("theme-explorer-wrap"),browsePanelClassics=document.getElementById("curated-lists-shortcut-wrap");function setBrowseTab(e){const t="theme"===e;browseTabTheme?.classList.toggle("active",t),browseTabClassics?.classList.toggle("active",!t),browsePanelTheme?.classList.toggle("active",t),browsePanelClassics?.classList.toggle("active",!t)}browseTabTheme?.addEventListener("click",()=>setBrowseTab("theme")),browseTabClassics?.addEventListener("click",()=>setBrowseTab("classics"));const mdsEl=document.getElementById("movie-detail-sheet"),mdsContentEl=document.getElementById("mds-content"),mdsCloseBtn=document.getElementById("mds-close-btn");function formatMoney(e){return!e||e<=0?"Non communiqué":new Intl.NumberFormat("fr-FR",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(e)}function buildMdsSkeleton(){return'\n    <div class="mds-skeleton">\n      <div class="mds-skeleton-poster skeleton-bg"></div>\n      <div class="mds-skeleton-lines">\n        <div class="skeleton-text long skeleton-bg" style="height:18px;"></div>\n        <div class="skeleton-text short skeleton-bg"></div>\n      </div>\n    </div>\n    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>\n    <div class="skeleton-text long skeleton-bg"></div>\n    <div class="skeleton-text short skeleton-bg"></div>\n  '}function findSavedPosterUrl(e,t){if(t&&t.poster)return t.poster;for(const t of loadWatchlistsMeta()){const s=loadWatchlist(t.id).find(t=>String(t.tmdbId)===String(e)&&t.poster);if(s)return s.poster}return null}function buildMdsContent(e,t,s){const n=findSavedPosterUrl(e.id,t)||tmdbImage(e.poster_path,"w342"),a=e.release_date?e.release_date.slice(0,4):"",i=e.runtime?`${e.runtime} min`:"",o=(e.genres||[]).map(e=>e.name).join(", "),r=e.credits?.crew?.find(e=>"Director"===e.job)||null,l=(e.credits?.cast||[]).slice(0,5),c=e.release_date?new Date(e.release_date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"Inconnue";function d(e){return`<span class="mds-person-link" data-person-id="${e.id}" data-person-name="${escAttr(e.name)}">${escAttr(e.name)}</span>`}const u=r?d(r):"",m=l.map(d).join(", ");let p="";if(t){const e=buildCriteriaBreakdown(t);p=`\n      <div class="mds-section mds-personal" style="animation-delay:.05s">\n        <div class="mds-section-title">Ta note</div>\n        <div class="mds-personal-score">${escAttr(t.score)}/10 <span class="mds-personal-stars">${escAttr(t.stars||"")}</span>${t.liked?` <span class="liked-badge">${ICONS.heart}</span>`:""}</div>\n        ${t.review?`<div class="mds-personal-review">« ${escAttr(t.review)} »</div>`:""}\n      </div>\n      ${e}\n    `}return`\n    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${e.backdrop_path?`url('${tmdbImage(e.backdrop_path,"w780")}')`:"none"}">\n      <div class="mds-header-left">\n        <div class="mds-poster-wrap">\n          ${n?`<img class="mds-poster" src="${n}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}\n          ${e.vote_average?`<div class="mds-score-stamp"><span class="mds-score-stamp-val">${e.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>`:""}\n        </div>\n        ${isInCollection(e.id)?`<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(e.id))}">Changer l'affiche</button>`:""}\n      </div>\n      <div class="mds-header-info">\n        <div class="mds-title" id="mds-title">${escAttr(e.title)}</div>\n        <div class="mds-meta">${[a,i,o].filter(Boolean).map(e=>`<span>${e}</span>`).join("")}</div>\n        <div class="mds-external-ratings" id="mds-external-ratings"></div>\n        ${r?`<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(r.name)}</b></div>`:""}\n      </div>\n    </div>\n\n    <div class="mds-actions" style="animation-delay:.02s">\n      ${t?`<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${s}" title="Modifier ma note">${ICONS.edit} Modifier ma note</button>`:`<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>\n           <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`}\n    </div>\n\n    ${p}\n\n    ${(()=>{const t=pickBestTrailer(e.videos?.results||[]);return t?`\n      <div class="mds-section" style="animation-delay:.08s">\n        <div class="mds-section-title">Bande-annonce</div>\n        <div class="mds-trailer-wrap" data-video-key="${t.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(e.title)}">\n          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${t.key}/hqdefault.jpg" alt="" loading="lazy">\n          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>\n        </div>\n      </div>`:""})()}\n\n    ${e.overview?`\n      <div class="mds-section" style="animation-delay:.1s">\n        <div class="mds-section-title">Synopsis</div>\n        <div class="mds-overview" id="mds-overview">${escAttr(e.overview)}</div>\n        <button type="button" class="mds-overview-toggle" id="mds-overview-toggle">Lire la suite ▾</button>\n      </div>`:""}\n\n    <div class="mds-section" style="animation-delay:.15s">\n      <div class="mds-section-title">Équipe</div>\n      ${u?`<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${u}</span></div>`:""}\n      ${m?`<div class="mds-row"><span class="mds-label">Avec</span><span>${m}</span></div>`:""}\n      ${u||m?"":'<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>'}\n    </div>\n\n    <div class="mds-section" style="animation-delay:.2s">\n      <div class="mds-section-title">Détails</div>\n      <div class="mds-row"><span class="mds-label">Sortie</span><span>${c}</span></div>\n      <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(e.budget)}</span></div>\n      <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(e.revenue)}</span></div>\n    </div>\n\n    ${(e.credits?.cast||[]).length>0?'\n      <div class="mds-section" style="animation-delay:.25s">\n        <div class="mds-section-title">Casting</div>\n        <div class="mds-cast-carousel" id="mds-cast-carousel"></div>\n      </div>':""}\n\n    ${e.belongs_to_collection?`\n      <div class="mds-section" style="animation-delay:.3s">\n        <div class="mds-section-title">\n          Fait partie d'une saga\n          <span class="mds-saga-link" id="mds-saga-link" data-collection-id="${e.belongs_to_collection.id}" data-collection-name="${escAttr(e.belongs_to_collection.name)}" role="button" tabindex="0">${escAttr(e.belongs_to_collection.name)} →</span>\n        </div>\n        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>\n      </div>`:""}\n\n    <div class="mds-section" style="animation-delay:.35s">\n      ${"function"==typeof buildAnalysisSectionHtml?buildAnalysisSectionHtml(e.id,e.title):""}\n    </div>\n  `}mdsContentEl.addEventListener("click",e=>{const t=e.target.closest(".mds-trailer-wrap");if(!t||t.querySelector("iframe"))return;const s=t.dataset.videoKey;t.innerHTML=`<iframe class="mds-trailer" src="https://www.youtube.com/embed/${s}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`});const MDS_CRITERIA_LABELS={scenario:"Scénario",realisation:"Réalisation",photo:"Photo",acteurs:"Acteurs",ambiance:"Ambiance",rythme:"Rythme",affect:"Affect"};function buildCriteriaBreakdown(e){if("detail"!==e.mode||!e.values)return"";return`\n    <div class="mds-section mds-crit-breakdown" style="animation-delay:.08s">\n      <div class="mds-section-title">Détail par critère</div>\n      ${CRITERIA.map((t,s)=>{const n=parseFloat(e.values[t]);if(isNaN(n))return"";const a=n/10*100;return`\n      <div class="mds-crit-row" style="animation-delay:${.05*s}s">\n        <span class="mds-crit-label">${MDS_CRITERIA_LABELS[t]||t}</span>\n        <div class="mds-crit-track"><div class="mds-crit-fill" style="--mds-crit-pct:${a}%"></div></div>\n        <span class="mds-crit-value">${n.toFixed(1)}</span>\n      </div>`}).join("")}\n    </div>\n  `}function renderCastCarousel(e){const t=document.getElementById("mds-cast-carousel");if(!t)return;const s=e.filter(e=>e.id).slice(0,20);if(0===s.length)return;const n=s.map(e=>{const t=tmdbImage(e.profile_path,"w185");return`\n      <div class="mds-cast-item" data-person-id="${e.id}" data-person-name="${escAttr(e.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.name)}">\n        ${t?`<img class="mds-cast-photo" src="${t}" alt="Photo de ${escAttr(e.name)}" loading="lazy">`:`<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}\n        <div class="mds-cast-name">${escAttr(e.name)}</div>\n        ${e.character?`<div class="mds-cast-character">${escAttr(e.character)}</div>`:""}\n      </div>`}).join("");t.innerHTML=`<div class="mds-cast-track">${n}${n}</div>`;const a=t.querySelector(".mds-cast-track");t.addEventListener("click",e=>{const t=e.target.closest(".mds-cast-item");t&&openPersonDetailSheet(t.dataset.personId,t.dataset.personName)});let i=!1,o=null;function r(){i=!0,clearTimeout(o),o=setTimeout(()=>{i=!1},3e3)}requestAnimationFrame(function e(){if(!i&&mdsEl.classList.contains("open")){t.scrollLeft+=.3;const e=a.scrollWidth/2;e>0&&t.scrollLeft>=e&&(t.scrollLeft-=e)}mdsEl.classList.contains("open")&&requestAnimationFrame(e)}),t.addEventListener("touchstart",e=>{e.stopPropagation(),r()},{passive:!0}),t.addEventListener("touchmove",e=>{e.stopPropagation(),r()},{passive:!0}),t.addEventListener("wheel",r,{passive:!0}),t.addEventListener("scroll",r,{passive:!0})}async function populateSagaStrip(e,t){const s=document.getElementById("mds-saga-strip");if(s)try{const n=await fetch(`/api/search?collectionId=${e}`),a=((await readApiJson(n)).parts||[]).filter(e=>e.poster_path).sort((e,t)=>(e.release_date||"9999").localeCompare(t.release_date||"9999"));if(0===a.length)return void(s.innerHTML="");s.innerHTML=a.map(e=>`\n      <div class="mds-saga-item${String(e.id)===String(t)?" current":""}" data-movie-id="${e.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">\n        <img class="mds-saga-poster" src="${tmdbImage(e.poster_path,"w185")}" alt="" loading="lazy">\n        <div class="mds-saga-title">${escAttr(e.title)}</div>\n      </div>\n    `).join("")}catch{s.innerHTML=""}}async function populateExternalRatings(e){const t=document.getElementById("mds-external-ratings");if(t)try{const s=await fetch(`/api/search?imdbId=${e}`),n=(await readApiJson(s)).ratings||[];if(0===n.length)return;const a={"Internet Movie Database":"IMDb","Rotten Tomatoes":"RT",Metacritic:"Metacritic"};t.innerHTML=n.filter(e=>a[e.Source]).map(e=>`<span class="mds-external-rating"><b>${a[e.Source]}</b> ${escAttr(e.Value)}</span>`).join("")}catch{}}function setupOverviewToggle(){const e=document.getElementById("mds-overview"),t=document.getElementById("mds-overview-toggle");e&&t&&requestAnimationFrame(()=>{e.scrollHeight<=e.clientHeight+2&&(t.style.display="none")})}const STICKY_HEADER_THRESHOLD=80,stickyHeaderHandlers=new WeakMap;function setupStickyHeader(e=mdsEl){const t=e.querySelector(".mds-box"),s=e.querySelector(".mds-header");if(!t||!s)return;const n=stickyHeaderHandlers.get(e);n&&t.removeEventListener("scroll",n);const a=()=>{s.classList.toggle("compact",t.scrollTop>80)};stickyHeaderHandlers.set(e,a),t.addEventListener("scroll",a,{passive:!0})}function pickBestTrailer(e){const t=e.filter(e=>"YouTube"===e.site);if(0===t.length)return null;const s=t.filter(e=>"Trailer"===e.type),n=s.length>0?s:t;return n.find(e=>e.official&&"fr"===e.iso_639_1)||n.find(e=>"fr"===e.iso_639_1)||n.find(e=>e.official)||n[0]}let mdsCurrentData=null;async function openMovieDetailSheet(e){if(!e)return void showToast("Ce film n'a pas de fiche TMDb liée (ajouté en saisie manuelle).");lastFocusedBeforeModal=document.activeElement,mdsContentEl.innerHTML=buildMdsSkeleton(),mdsEl.classList.add("open"),mdsCloseBtn.focus();const t=mdsEl.querySelector(".mds-box");t&&(t.scrollTop=0);try{const t=await fetch(`/api/search?id=${e}`);if(!t.ok)throw new Error("bad status");const s=await t.json();if(!s||!s.title)throw new Error("no data");const n=loadHistory(),a=n.find(t=>String(t.tmdbId)===String(e)),i=n.findIndex(t=>String(t.tmdbId)===String(e));mdsContentEl.innerHTML=buildMdsContent(s,a,i),mdsCurrentData=s,renderCastCarousel(s.credits?.cast||[]),setupOverviewToggle(),setupStickyHeader();applyPosterAccent(tmdbImage(s.poster_path,"w342"),mdsEl.querySelector(".mds-box")),s.belongs_to_collection&&populateSagaStrip(s.belongs_to_collection.id,s.id),s.external_ids?.imdb_id&&populateExternalRatings(s.external_ids.imdb_id),"function"==typeof wireAnalysisSection&&wireAnalysisSection(s.id,s.title)}catch(t){mdsCurrentData=null,mdsContentEl.innerHTML=`\n      <div class="error-state">\n        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>\n        <div class="error-state-msg">Impossible de charger les détails du film. Vérifie ta connexion.</div>\n        <button type="button" class="error-retry-btn" data-retry-tmdb-id="${escAttr(String(e))}">Réessayer</button>\n      </div>`}}function closeMovieDetailSheet(){closeModal(mdsEl)}mdsCloseBtn.addEventListener("click",closeMovieDetailSheet),mdsEl.addEventListener("click",e=>{if(e.target===mdsEl)return void closeMovieDetailSheet();const t=e.target.closest(".mds-person-link");if(t)return void openPersonDetailSheet(t.dataset.personId,t.dataset.personName);const s=e.target.closest("#mds-overview-toggle");if(s){const e=document.getElementById("mds-overview").classList.toggle("expanded");return void(s.textContent=e?"Réduire ▴":"Lire la suite ▾")}const n=e.target.closest(".mds-saga-item");if(n&&!n.classList.contains("current"))return void openMovieDetailSheet(n.dataset.movieId);const a=e.target.closest(".mds-saga-link");if(a)return closeMovieDetailSheet(),void openSagaSheet(a.dataset.collectionId,a.dataset.collectionName);if(e.target.closest("#mds-rate-btn")){if(!mdsCurrentData)return;const e=mdsCurrentData.release_date?mdsCurrentData.release_date.slice(0,4):"????";return closeMovieDetailSheet(),selectMovie(mdsCurrentData,e),window.innerWidth<=860&&switchMobileNav("rating"),void window.scrollTo({top:0,behavior:"smooth"})}if(e.target.closest("#mds-watchlist-btn")){if(!mdsCurrentData)return;const e=mdsCurrentData.release_date?mdsCurrentData.release_date.slice(0,4):"";return addToWatchlistFromTMDb(mdsCurrentData,e),void closeMovieDetailSheet()}const i=e.target.closest("#mds-edit-btn");if(i){const e=parseInt(i.dataset.idx,10);closeMovieDetailSheet(),loadItem(e),window.innerWidth<=860&&switchMobileNav("rating"),window.scrollTo({top:0,behavior:"smooth"})}});const pdsEl=document.getElementById("person-detail-sheet"),pdsContentEl=document.getElementById("pds-content"),pdsCloseBtn=document.getElementById("pds-close-btn");function buildPdsSkeleton(e){return`\n    <div class="mds-skeleton">\n      <div class="mds-skeleton-poster skeleton-bg"></div>\n      <div class="mds-skeleton-lines">\n        <div class="skeleton-text long skeleton-bg" style="height:18px;">${escAttr(e||"")}</div>\n        <div class="skeleton-text short skeleton-bg"></div>\n      </div>\n    </div>\n    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>\n    <div class="skeleton-text long skeleton-bg"></div>\n  `}function buildPersonFilmography(e){const t=loadHistory(),s=new Set(t.map(e=>String(e.tmdbId)).filter(Boolean)),n=e.known_for_department;let a;a="Directing"===n?(e.movie_credits?.crew||[]).filter(e=>"Director"===e.job):"Writing"===n?(e.movie_credits?.crew||[]).filter(e=>"Writing"===e.department):"Acting"===n?e.movie_credits?.cast||[]:[...e.movie_credits?.cast||[],...e.movie_credits?.crew||[]];const i=new Set,o=[];return a.forEach(e=>{e.id&&!i.has(e.id)&&(i.add(e.id),o.push({id:e.id,title:e.title,release_date:e.release_date,poster_path:e.poster_path,isSeen:s.has(String(e.id))}))}),o.sort((e,t)=>(t.release_date||"").localeCompare(e.release_date||"")),o}function computeSeenPercentage(e){const t=e.filter(e=>e.isSeen).length,s=e.length>0?Math.round(t/e.length*100):0;return{seenCount:t,total:e.length,pct:s}}function buildPdsContent(e){const t=buildPersonFilmography(e),{seenCount:s,total:n,pct:a}=computeSeenPercentage(t),i=tmdbImage(e.profile_path,"w185"),o=e.biography?e.biography.length>400?e.biography.slice(0,400)+"…":e.biography:"";return`\n    <div class="mds-header" style="animation-delay:0s">\n      ${i?`<img class="mds-poster" src="${i}" alt="Photo de ${escAttr(e.name)}" loading="lazy">`:`<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}\n      <div class="mds-header-info">\n        <div class="mds-title" id="pds-title">${escAttr(e.name)}</div>\n        <div class="mds-meta">${escAttr(e.known_for_department||"")}</div>\n      </div>\n    </div>\n\n    <div class="mds-section pds-completion" style="animation-delay:.05s">\n      <div class="mds-section-title">Films vus dans sa filmographie</div>\n      <div class="pds-completion-bar"><div class="pds-completion-fill" style="width:${a}%"></div></div>\n      <div class="pds-completion-label">${s} / ${n} film${n>1?"s":""} vus (${a}%)</div>\n    </div>\n\n    ${o?`\n      <div class="mds-section" style="animation-delay:.1s">\n        <div class="mds-section-title">Biographie</div>\n        <div class="mds-overview">${escAttr(o)}</div>\n      </div>`:""}\n\n    <div class="mds-section" style="animation-delay:.15s">\n      <div class="mds-section-title">Filmographie (${n})</div>\n      <div class="pds-filmography">\n        ${t.map(e=>{const t=tmdbImage(e.poster_path,"w185"),s=e.release_date?e.release_date.slice(0,4):"";return`\n            <div class="pds-film-item${e.isSeen?" seen":""}" data-movie-id="${e.id}" title="${e.isSeen?"Déjà vu":""}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}${e.isSeen?", déjà vu":""}">\n              ${t?`<img class="pds-film-poster" src="${t}" alt="Affiche de ${escAttr(e.title)}" loading="lazy">`:`<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}\n              <div class="pds-film-title">${escAttr(e.title)}</div>\n              <div class="pds-film-year">${s}</div>\n            </div>`}).join("")}\n      </div>\n    </div>\n  `}async function openPersonDetailSheet(e,t){if(e){lastFocusedBeforeModal=document.activeElement,pdsContentEl.innerHTML=buildPdsSkeleton(t),pdsEl.classList.add("open"),pdsCloseBtn.focus();try{const t=await fetch(`/api/search?personId=${e}`);if(!t.ok)throw new Error("bad status");const s=await t.json();if(!s||!s.name)throw new Error("no data");pdsContentEl.innerHTML=buildPdsContent(s)}catch(e){pdsContentEl.innerHTML='<div class="mds-error">Impossible de charger cette fiche pour l\'instant. Vérifie ta connexion et réessaie.</div>'}}}function closePersonDetailSheet(){closeModal(pdsEl)}function initSwipeToClose(e,t){const s=e.querySelector(".mds-box");if(!s)return;let n=0,a=!1,i=0;s.addEventListener("touchstart",e=>{s.scrollTop>5||e.target.closest(".mds-cast-carousel, .mds-trailer-wrap")||(n=e.touches[0].clientY,a=!0,s.style.transition="none")},{passive:!0}),s.addEventListener("touchmove",t=>{if(!a)return;const o=t.touches[0].clientY-n;if(o<=0||s.scrollTop>5)return a=!1,s.style.transition="",void(s.style.transform="");i=o,s.style.transform=`translateY(${o}px) scale(1)`,e.style.backgroundColor=`rgba(0,0,0,${Math.max(0,.8-o/250)})`},{passive:!0}),s.addEventListener("touchend",()=>{if(!a)return;a=!1;s.style.transition="transform 240ms var(--ease-out)",i>110?(s.style.transform="translateY(100%) scale(1)",setTimeout(()=>{t(),s.style.transform="",s.style.transition="",e.style.backgroundColor=""},240)):(s.style.transform="",e.style.backgroundColor=""),i=0})}function isInCollection(e){return!!loadHistory().some(t=>String(t.tmdbId)===String(e))||loadWatchlistsMeta().some(t=>loadWatchlist(t.id).some(t=>String(t.tmdbId)===String(e)))}function applyChosenPoster(e,t){let s=0;const n=(new Date).toISOString(),a=loadHistory();let i=!1;for(const o of a)String(o.tmdbId)===String(e)&&(o.poster=t,o.updatedAt=n,i=!0,s++);i&&saveHistory(a);for(const a of loadWatchlistsMeta()){const i=loadWatchlist(a.id);let o=!1;for(const a of i)String(a.tmdbId)===String(e)&&(a.poster=t,a.updatedAt=n,o=!0,s++);o&&saveWatchlist(i,a.id)}return s}function applyPosterCellHeights(e){function t(){const t=e.querySelectorAll(".poster-picker-cell");if(0===t.length)return;const s=t[0].getBoundingClientRect().width;if(s<=0)return;const n=Math.round(1.5*s);t.forEach(e=>{e.style.height=`${n}px`})}requestAnimationFrame(t);const s=document.getElementById("poster-picker-modal"),n=()=>t();window.addEventListener("resize",n);function a(){s.classList.contains("open")||(window.removeEventListener("resize",n),s?.removeEventListener("transitionend",a))}s?.addEventListener("transitionend",a)}async function openPosterPicker(e,t="movie"){const s=document.getElementById("poster-picker-modal"),n=document.getElementById("poster-picker-grid");if(s&&n){s.classList.add("open"),n.innerHTML=`<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;try{const s="tv"===t?"tvImages":"images",a=await fetch(`/api/search?${s}=${encodeURIComponent(e)}`),i=await readApiJson(a),o=i&&i.posters||[];if(0===o.length)return void(n.innerHTML=`<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${"tv"===t?"cette série":"ce film"}.</div>`);n.innerHTML=o.map(e=>`\n      <button type="button" class="poster-picker-cell" data-poster-path="${escAttr(e.file_path)}" aria-label="Choisir cette affiche">\n        <img src="${tmdbImage(e.file_path,"w185")}" alt="" loading="lazy" decoding="async">\n      </button>\n    `).join(""),n.dataset.tmdbId=String(e),n.dataset.mediaType=t,applyPosterCellHeights(n)}catch(s){n.innerHTML=`\n      <div class="error-state">\n        <div class="error-state-msg">${escAttr(describeApiFailure(s))}</div>\n        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(e))}" data-retry-media-type="${t}">Réessayer</button>\n      </div>`}}}pdsCloseBtn.addEventListener("click",closePersonDetailSheet),pdsEl.addEventListener("click",e=>{if(e.target===pdsEl)return void closePersonDetailSheet();const t=e.target.closest(".pds-film-item");t&&(closePersonDetailSheet(),openMovieDetailSheet(t.dataset.movieId))}),initSwipeToClose(mdsEl,closeMovieDetailSheet),initSwipeToClose(pdsEl,closePersonDetailSheet),mdsContentEl?.addEventListener("click",e=>{const t=e.target.closest(".error-retry-btn[data-retry-tmdb-id]");t&&openMovieDetailSheet(t.dataset.retryTmdbId)}),document.getElementById("movie-detail-sheet")?.addEventListener("click",e=>{const t=e.target.closest(".mds-poster-change-btn");t&&openPosterPicker(t.dataset.posterPicker)}),document.getElementById("poster-picker-modal")?.addEventListener("click",e=>{const t=document.getElementById("poster-picker-modal");if(e.target===t)return void t.classList.remove("open");if(e.target.closest("#poster-picker-close"))return void t.classList.remove("open");const s=e.target.closest(".error-retry-btn[data-retry-posters]");if(s)return void openPosterPicker(s.dataset.retryPosters,s.dataset.retryMediaType||"movie");const n=e.target.closest(".poster-picker-cell[data-poster-path]");if(!n)return;const a=document.getElementById("poster-picker-grid"),i=a.dataset.tmdbId,o=a.dataset.mediaType||"movie";if(t.classList.remove("open"),"tv"===o){"function"==typeof applyChosenTvPoster&&applyChosenTvPoster(i,n.dataset.posterPath),navigator.vibrate&&navigator.vibrate(15);const e=document.querySelector("#tv-detail-sheet .mds-poster");return e&&"IMG"===e.tagName&&(e.src=tmdbImage(n.dataset.posterPath,"w342")),"function"==typeof renderTvHistory&&document.getElementById("hist-tab-tv")?.classList.contains("active")&&renderTvHistory(),void showToast("Affiche mise à jour")}const r=applyChosenPoster(i,tmdbImage(n.dataset.posterPath,"w342"));navigator.vibrate&&navigator.vibrate(15);const l=document.querySelector("#movie-detail-sheet .mds-poster");l&&"IMG"===l.tagName&&(l.src=tmdbImage(n.dataset.posterPath,"w342")),renderAll(),showToast(r>0?"Affiche mise à jour dans ta collection":"Affiche mise à jour")});const DUELS_KEY="lbx_duels",DUEL_START_ELO=1200,DUEL_K=32;function duelFilmKey(e){return(e.title+"|"+(e.year||"")).toLowerCase()}function loadDuelsData(){try{const e=JSON.parse(localStorage.getItem(DUELS_KEY))||{};return{ratings:e.ratings||{},totalDuels:e.totalDuels||0,pairs:e.pairs||{}}}catch{return{ratings:{},totalDuels:0,pairs:{}}}}function duelPairKey(e,t){return[e,t].sort().join("||")}function saveDuelsData(e){localStorage.setItem(DUELS_KEY,JSON.stringify(e))}function getDuelRating(e,t){return e.ratings[t]||{elo:1200,duels:0}}function pickDuelPair(){const e=loadHistory();if(e.length<2)return null;const t=loadDuelsData(),s=new Set,n=[];for(const a of e){const e=duelFilmKey(a);s.has(e)||(s.add(e),n.push({key:e,item:a,...getDuelRating(t,e)}))}if(n.length<2)return null;const a=[];for(let e=0;e<n.length;e++){const s=parseFloat(n[e].item.score);if(!isNaN(s))for(let i=e+1;i<n.length;i++)parseFloat(n[i].item.score)===s&&(t.pairs[duelPairKey(n[e].key,n[i].key)]||a.push([n[e],n[i]]))}if(a.length>0){a.sort((e,t)=>e[0].duels+e[1].duels-(t[0].duels+t[1].duels)||Math.random()-.5);const[e,t]=a[0];return Math.random()<.5?[e,t]:[t,e]}const i=n.slice().sort((e,t)=>e.duels-t.duels||Math.random()-.5);for(const e of i){const s=n.filter(s=>s.key!==e.key&&!t.pairs[duelPairKey(e.key,s.key)]);if(0===s.length)continue;s.sort((t,s)=>Math.abs(t.elo-e.elo)-Math.abs(s.elo-e.elo));const a=s.slice(0,Math.min(5,s.length)),i=a[Math.floor(Math.random()*a.length)];return Math.random()<.5?[e,i]:[i,e]}return{exhausted:!0}}function resolveDuel(e,t){const s=loadDuelsData(),n=getDuelRating(s,e),a=getDuelRating(s,t),{winnerElo:i,loserElo:o,delta:r}=computeEloUpdate(n.elo,a.elo,32);return s.ratings[e]={elo:i,duels:n.duels+1},s.ratings[t]={elo:o,duels:a.duels+1},s.pairs[duelPairKey(e,t)]=!0,s.totalDuels=(s.totalDuels||0)+1,saveDuelsData(s),r}function computeDuelRanking(e=3){const t=loadHistory(),s=loadDuelsData(),n=new Set,a=[];for(const i of t){const t=duelFilmKey(i);if(n.has(t))continue;n.add(t);const o=s.ratings[t];o&&o.duels>=e&&a.push({key:t,item:i,elo:o.elo,duels:o.duels})}return a.sort((e,t)=>t.elo-e.elo),a}let currentDuelPair=null;function duelPosterHtml(e){return e.poster?`<img class="duel-poster" src="${e.poster}" alt="" loading="lazy" decoding="async">`:`<div class="duel-poster duel-poster-ph">${ICONS.clapper}</div>`}function renderDuel(){const e=document.getElementById("duel-arena"),t=document.getElementById("duel-empty");if(!e||!t)return;if(currentDuelPair=pickDuelPair(),!currentDuelPair||currentDuelPair.exhausted)return e.style.display="none",t.style.display="block",t.textContent=currentDuelPair&&currentDuelPair.exhausted?"Tous les duels possibles ont été joués — ton classement est complet ! Note de nouveaux films pour relancer l'arène.":"Note au moins 2 films pour lancer les duels.",void(currentDuelPair&&currentDuelPair.exhausted&&(currentDuelPair=null));e.style.display="",t.style.display="none";const[s,n]=currentDuelPair;e.innerHTML=`\n    <div class="duel-side" data-key="${escAttr(s.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(s.item.title)}">\n      ${duelPosterHtml(s.item)}\n      <div class="duel-title">${escAttr(s.item.title)}</div>\n      <div class="duel-year">${s.item.year||""}</div>\n    </div>\n    <div class="duel-vs">VS</div>\n    <div class="duel-side" data-key="${escAttr(n.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(n.item.title)}">\n      ${duelPosterHtml(n.item)}\n      <div class="duel-title">${escAttr(n.item.title)}</div>\n      <div class="duel-year">${n.item.year||""}</div>\n    </div>\n  `}function renderDuelRanking(){const e=document.getElementById("duel-ranking-list"),t=document.getElementById("duel-counter");if(!e)return;const s=loadDuelsData();t&&(t.textContent=s.totalDuels>0?`${s.totalDuels} duel${s.totalDuels>1?"s":""}`:"");const n=computeDuelRanking().slice(0,10);if(0===n.length)return void(e.innerHTML='<div class="duel-ranking-empty">Ton podium apparaîtra après quelques duels (3 duels minimum par film).</div>');const a=[`<span class="duel-medal duel-medal-gold">${ICONS.medal}</span>`,`<span class="duel-medal duel-medal-silver">${ICONS.medal}</span>`,`<span class="duel-medal duel-medal-bronze">${ICONS.medal}</span>`],i=(e,t)=>`\n    <div class="duel-rank-row">\n      <span class="duel-rank-pos">${a[t]||t+1}</span>\n      <span class="duel-rank-title">${escAttr(e.item.title)}</span>\n    </div>`,o=n.slice(0,3).map(i).join(""),r=n.slice(3),l=r.length>0?`\n    <details class="duel-rank-more">\n      <summary>Voir le reste du top 10 (${r.length})</summary>\n      ${r.map((e,t)=>i(e,t+3)).join("")}\n    </details>`:"";e.innerHTML=o+l}function renderDuelsSection(){renderDuel(),renderDuelRanking()}document.getElementById("duel-arena")?.addEventListener("click",e=>{const t=e.target.closest(".duel-side");if(!t||!currentDuelPair)return;const s=t.dataset.key,n=currentDuelPair.find(e=>e.key!==s),a=currentDuelPair.find(e=>e.key===s);a&&n&&(resolveDuel(a.key,n.key),navigator.vibrate&&navigator.vibrate(15),t.classList.add("duel-winner"),currentDuelPair=null,setTimeout(()=>{renderDuelsSection()},450))}),document.getElementById("duel-arena")?.addEventListener("keydown",e=>{if("Enter"!==e.key&&" "!==e.key)return;const t=e.target.closest(".duel-side");t&&(e.preventDefault(),t.click())}),document.getElementById("duel-skip-btn")?.addEventListener("click",()=>{renderDuel()}),document.getElementById("reset-duels-btn")?.addEventListener("click",()=>{openModal("Réinitialiser les duels ?","Le classement, les cotes et l'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.",()=>{localStorage.removeItem(DUELS_KEY),"function"==typeof renderDuelsSection&&renderDuelsSection(),showToast("Duels réinitialisés.")},!0)});const CURATED_RESOLVED_KEY="lbx_curated_alltime_resolved",CURATED_DECADE_KEY_PREFIX="lbx_curated_decade_v2_",CURATED_DECADE_CACHE_DAYS=30,CURATED_DECADES=[1920,1930,1940,1950,1960,1970,1980,1990,2e3,2010,2020];function curatedDecadeLabel(e){return`Les meilleurs des années ${e}`}function loadResolvedAllTime(){try{return JSON.parse(localStorage.getItem(CURATED_RESOLVED_KEY)||"{}")}catch{return{}}}function saveResolvedAllTime(e){localStorage.setItem(CURATED_RESOLVED_KEY,JSON.stringify(e))}async function resolveOneCuratedFilm(e){try{const t=await fetch(`/api/search?query=${encodeURIComponent(e.title)}`),s=(await readApiJson(t)).results||[],n=s.find(t=>{const s=t.release_date?parseInt(t.release_date.slice(0,4),10):null;return s&&Math.abs(s-e.year)<=1})||s[0];return n?{id:n.id,title:n.title,year:e.year,poster_path:n.poster_path}:null}catch{return null}}let curatedResolutionInProgress=!1;async function ensureAllTimeResolved(e){const t=loadResolvedAllTime(),s=CURATED_ALL_TIME.filter(e=>!t[e.title]);if(0===s.length)return t;if(curatedResolutionInProgress)return t;curatedResolutionInProgress=!0;for(let n=0;n<s.length;n+=8){const a=s.slice(n,n+8),i=await Promise.all(a.map(resolveOneCuratedFilm));a.forEach((e,s)=>{i[s]&&(t[e.title]=i[s])}),saveResolvedAllTime(t),e&&e(Object.keys(t).length,CURATED_ALL_TIME.length),n+8<s.length&&await new Promise(e=>setTimeout(e,1500))}return curatedResolutionInProgress=!1,t}function getAllTimeFilmsFromCache(){const e=loadResolvedAllTime();return CURATED_ALL_TIME.map(t=>e[t.title]).filter(Boolean)}function loadDecadeCache(e){try{const t=JSON.parse(localStorage.getItem("lbx_curated_decade_v2_"+e)||"null");if(!t)return null;return(Date.now()-t.fetchedAt)/864e5>30?null:t.films}catch{return null}}function withExtractedYear(e){return e.map(e=>({...e,year:e.year||(e.release_date?e.release_date.slice(0,4):"")}))}async function fetchDecadeList(e){const t=loadDecadeCache(e);if(t)return t;try{const t=await fetch(`/api/search?decadeTop=${e}`),s=withExtractedYear((await readApiJson(t)).results||[]);return localStorage.setItem("lbx_curated_decade_v2_"+e,JSON.stringify({films:s,fetchedAt:Date.now()})),s}catch{return[]}}const CURATED_STUDIO_KEY_PREFIX="lbx_curated_studio_";function loadStudioCache(e){try{const t=JSON.parse(localStorage.getItem("lbx_curated_studio_"+e)||"null");if(!t)return null;return(Date.now()-t.fetchedAt)/864e5>30?null:t.films}catch{return null}}async function fetchStudioList(e){const t=loadStudioCache(e);if(t)return t;try{const t=await fetch(`/api/search?studioId=${e}`),s=withExtractedYear((await readApiJson(t)).results||[]);return localStorage.setItem("lbx_curated_studio_"+e,JSON.stringify({films:s,fetchedAt:Date.now()})),s}catch{return[]}}const CURATED_COUNTRY_KEY_PREFIX="lbx_curated_country_";function loadCountryCache(e){try{const t=JSON.parse(localStorage.getItem("lbx_curated_country_"+e)||"null");if(!t)return null;return(Date.now()-t.fetchedAt)/864e5>30?null:t.films}catch{return null}}async function fetchCountryList(e){const t=loadCountryCache(e);if(t)return t;try{const t=await fetch(`/api/search?countryCode=${e}`),s=withExtractedYear((await readApiJson(t)).results||[]);return localStorage.setItem("lbx_curated_country_"+e,JSON.stringify({films:s,fetchedAt:Date.now()})),s}catch{return[]}}function computeCuratedSeenPercentage(e){const t=loadHistory(),s=new Set(t.map(e=>String(e.tmdbId)).filter(Boolean)),n=e.map(e=>({...e,isSeen:s.has(String(e.id))})),a=n.filter(e=>e.isSeen).length,i=n.length>0?Math.round(a/n.length*100):0;return{films:n,seenCount:a,total:n.length,pct:i}}function renderCuratedListsCard(){const e=document.getElementById("curated-lists-container");if(!e)return;const t=e=>`\n    <button type="button" class="curated-list-row" data-list-id="${e.id}">\n      <div class="curated-list-row-text">\n        <div class="curated-list-row-label">${escAttr(e.label)}</div>\n        <div class="curated-list-row-sub">${escAttr(e.sub)}</div>\n      </div>\n      <div class="curated-list-row-pct" id="curated-pct-${e.id}">…</div>\n    </button>`,s=CURATED_DECADES.map(e=>({id:`decade-${e}`,label:curatedDecadeLabel(e),sub:"Mieux notés sur TMDb (500 votes min.)"})),n=CURATED_STUDIOS.map(e=>({id:`studio-${e.id}`,label:e.name,sub:e.sub})),a=CURATED_COUNTRIES.map(e=>({id:`country-${e.code}`,label:`${e.flag} ${e.name}`,sub:"Mieux notés sur TMDb (200 votes min.)"}));e.innerHTML=`\n    ${t({id:"alltime",label:"Tous les temps",sub:"Classement Sight & Sound 2022"})}\n    <details class="curated-decades-accordion">\n      <summary>Par décennie (${CURATED_DECADES.length})</summary>\n      <div class="curated-decades-list">${s.map(t).join("")}</div>\n    </details>\n    <details class="curated-decades-accordion">\n      <summary>Par studio (${CURATED_STUDIOS.length})</summary>\n      <div class="curated-decades-list">${n.map(t).join("")}</div>\n    </details>\n    <details class="curated-decades-accordion">\n      <summary>Par pays (${CURATED_COUNTRIES.length})</summary>\n      <div class="curated-decades-list">${a.map(t).join("")}</div>\n    </details>\n  `,e.querySelectorAll(".curated-list-row").forEach(e=>{e.addEventListener("click",()=>openCuratedListSheet(e.dataset.listId))}),CURATED_DECADES.forEach(async e=>{const t=await fetchDecadeList(e),{pct:s,total:n}=computeCuratedSeenPercentage(t),a=document.getElementById(`curated-pct-decade-${e}`);a&&(a.textContent=n>0?`${s}%`:"—")}),CURATED_STUDIOS.forEach(async e=>{const t=await fetchStudioList(e.id),{pct:s,total:n}=computeCuratedSeenPercentage(t),a=document.getElementById(`curated-pct-studio-${e.id}`);a&&(a.textContent=n>0?`${s}%`:"—")}),CURATED_COUNTRIES.forEach(async e=>{const t=await fetchCountryList(e.code),{pct:s,total:n}=computeCuratedSeenPercentage(t),a=document.getElementById(`curated-pct-country-${e.code}`);a&&(a.textContent=n>0?`${s}%`:"—")});const i=getAllTimeFilmsFromCache();if(i.length===CURATED_ALL_TIME.length){const{pct:e}=computeCuratedSeenPercentage(i),t=document.getElementById("curated-pct-alltime");t&&(t.textContent=`${e}%`)}else ensureAllTimeResolved((e,t)=>{const s=document.getElementById("curated-pct-alltime");if(!s)return;if(e<t)return void(s.textContent=`${e}/${t}`);const{pct:n}=computeCuratedSeenPercentage(getAllTimeFilmsFromCache());s.textContent=`${n}%`})}const clsEl=document.getElementById("curated-list-sheet"),clsContentEl=document.getElementById("cls-content"),clsCloseBtn=document.getElementById("cls-close-btn");async function openCuratedListSheet(e){let t,s;if(lastFocusedBeforeModal=document.activeElement,clsContentEl.innerHTML='<div class="mds-header"><div class="mds-title">Chargement…</div></div>',clsEl.classList.add("open"),clsCloseBtn.focus(),"alltime"===e)t="Tous les temps",s=getAllTimeFilmsFromCache();else if(e.startsWith("studio-")){const n=parseInt(e.replace("studio-",""),10),a=CURATED_STUDIOS.find(e=>e.id===n);t=a?a.name:"Studio",s=await fetchStudioList(n)}else if(e.startsWith("country-")){const n=e.replace("country-",""),a=CURATED_COUNTRIES.find(e=>e.code===n);t=a?`Cinéma ${a.flag} ${a.name}`:"Cinéma",s=await fetchCountryList(n)}else{const n=parseInt(e.replace("decade-",""),10);t=curatedDecadeLabel(n),s=await fetchDecadeList(n)}renderFilmGridSheet(t,s)}async function openSagaSheet(e,t){lastFocusedBeforeModal=document.activeElement,clsContentEl.innerHTML='<div class="mds-header"><div class="mds-title">Chargement…</div></div>',clsEl.classList.add("open"),clsCloseBtn.focus();try{const s=await fetch(`/api/search?collectionId=${e}`),n=await readApiJson(s),a=(n.parts||[]).filter(e=>e.poster_path).sort((e,t)=>(e.release_date||"9999").localeCompare(t.release_date||"9999")).map(e=>({id:e.id,title:e.title,poster_path:e.poster_path,year:e.release_date?e.release_date.slice(0,4):""}));renderFilmGridSheet(n.name||t,a)}catch{clsContentEl.innerHTML='<div class="mds-error">Impossible de charger la saga. Vérifie ta connexion.</div>'}}function renderFilmGridSheet(e,t){const{films:s,seenCount:n,total:a,pct:i}=computeCuratedSeenPercentage(t),o=a-n;clsContentEl.innerHTML=`\n    <div class="mds-header" style="animation-delay:0s">\n      <div class="mds-header-info">\n        <div class="mds-title" id="cls-title">${escAttr(e)}</div>\n        <div class="mds-meta">${a} film${a>1?"s":""}</div>\n      </div>\n    </div>\n    <div class="mds-section pds-completion" style="animation-delay:.05s">\n      <div class="mds-section-title">Films vus dans cette liste</div>\n      <div class="pds-completion-bar"><div class="pds-completion-fill" style="width:${i}%"></div></div>\n      <div class="pds-completion-label">${n} / ${a} déjà vus (${i}%)</div>\n      ${o>0?`<button type="button" class="icon-btn" id="cls-add-missing-btn" style="margin-top:8px;">Ajouter les ${o} manquant${o>1?"s":""} à ma watchlist</button>`:""}\n    </div>\n    <div class="mds-section pds-filmography" style="animation-delay:.1s">\n      ${s.map(e=>`\n        <div class="pds-film-item${e.isSeen?" seen":""}" data-movie-id="${e.id}" title="${e.isSeen?"Déjà vu":""}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}${e.isSeen?", déjà vu":""}">\n          ${e.poster_path?`<img class="pds-film-poster" src="${tmdbImage(e.poster_path,"w185")}" alt="" loading="lazy">`:`<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}\n          <div class="pds-film-title">${escAttr(e.title)}</div>\n          <div class="pds-film-year">${e.year||""}</div>\n        </div>\n      `).join("")}\n    </div>\n  `;const r=document.getElementById("cls-add-missing-btn");r&&r.addEventListener("click",async()=>{r.disabled=!0,r.textContent="Ajout en cours…";const e=getActiveWatchlistId(),t=s.filter(e=>!e.isSeen);for(const s of t)await addToSpecificWatchlist({id:s.id,title:s.title,poster_path:s.poster_path},s.year,e);showToast(`${t.length} film${t.length>1?"s":""} ajouté${t.length>1?"s":""} à ta watchlist.`),r.textContent="Ajouté !"})}function closeCuratedListSheet(){closeModal(clsEl)}clsCloseBtn.addEventListener("click",closeCuratedListSheet),clsEl.addEventListener("click",e=>{if(e.target===clsEl)return void closeCuratedListSheet();const t=e.target.closest(".pds-film-item");t&&(closeCuratedListSheet(),openMovieDetailSheet(t.dataset.movieId))}),document.getElementById("curated-lists-shortcut-btn")?.addEventListener("click",()=>{switchMobileNav("profile"),setTimeout(()=>{document.getElementById("curated-lists-card")?.scrollIntoView({behavior:"smooth",block:"start"})},100)});const CURATED_THEME_KEY_PREFIX="lbx_curated_theme_",CURATED_THEME_CACHE_DAYS=5;function loadThemeCache(e){try{const t=JSON.parse(localStorage.getItem("lbx_curated_theme_"+e)||"null");if(!t)return null;return(Date.now()-t.fetchedAt)/864e5>5?null:t.films}catch{return null}}async function fetchThemeList(e){const t=loadThemeCache(e);if(t)return t;try{const t=await fetch(`/api/search?keywordId=${e}`),s=withExtractedYear((await readApiJson(t)).results||[]);return localStorage.setItem("lbx_curated_theme_"+e,JSON.stringify({films:s,fetchedAt:Date.now()})),s}catch{return[]}}function renderThemeChips(){const e=document.getElementById("theme-chips-row");e&&(e.innerHTML=CURATED_THEMES.map(e=>`\n    <button type="button" class="theme-chip" data-theme-id="${e.id}" data-theme-name="${escAttr(e.name)}">\n      ${ICONS[e.icon]||""} ${escAttr(e.name)}\n    </button>\n  `).join(""),e.querySelectorAll(".theme-chip").forEach(e=>{e.addEventListener("click",()=>openThemeSheet(e.dataset.themeId,e.dataset.themeName))}))}async function openThemeSheet(e,t){lastFocusedBeforeModal=document.activeElement,clsContentEl.innerHTML='<div class="mds-header"><div class="mds-title">Chargement…</div></div>',clsEl.classList.add("open"),clsCloseBtn.focus();const s=await fetchThemeList(e);clsContentEl.innerHTML=`\n    <div class="mds-header" style="animation-delay:0s">\n      <div class="mds-header-info">\n        <div class="mds-title" id="cls-title">${escAttr(t)}</div>\n        <div class="mds-meta">${s.length} film${s.length>1?"s":""}</div>\n      </div>\n    </div>\n    <div class="mds-section pds-filmography" style="animation-delay:.05s">\n      ${s.map(e=>`\n        <div class="pds-film-item" data-movie-id="${e.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.title)}">\n          ${e.poster_path?`<img class="pds-film-poster" src="${tmdbImage(e.poster_path,"w185")}" alt="" loading="lazy">`:`<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}\n          <div class="pds-film-title">${escAttr(e.title)}</div>\n          <div class="pds-film-year">${e.year||""}</div>\n        </div>\n      `).join("")}\n    </div>\n  `}renderThemeChips();const CREATOR_MATCH_CACHE_KEY="lbx_creator_match_cache",BLIND_SPOTS_CACHE_KEY="lbx_blind_spots",BLIND_SPOTS_CACHE_DAYS=7;function loadCreatorMatchCache(){try{return JSON.parse(localStorage.getItem(CREATOR_MATCH_CACHE_KEY)||"{}")}catch{return{}}}function saveCreatorMatchCache(e){localStorage.setItem(CREATOR_MATCH_CACHE_KEY,JSON.stringify(e))}async function resolveOneFilmDirector(e){try{const t=await fetch(`/api/search?id=${e}`),s=await readApiJson(t),n=s.credits?.crew?.find(e=>"Director"===e.job);return n?{directorId:n.id,directorName:n.name}:{directorId:null}}catch{return null}}let creatorMatchInProgress=!1;async function ensureCreatorMatchesResolved(e){if(creatorMatchInProgress)return;const t=loadHistory().filter(e=>e.tmdbId),s=loadCreatorMatchCache(),n=t.filter(e=>!(e.tmdbId in s)).sort((e,t)=>(parseFloat(t.score)||0)-(parseFloat(e.score)||0));if(0===n.length)return;creatorMatchInProgress=!0;for(let t=0;t<n.length;t+=8){const a=n.slice(t,t+8),i=await Promise.all(a.map(e=>resolveOneFilmDirector(e.tmdbId)));a.forEach((e,t)=>{i[t]&&(s[e.tmdbId]=i[t])}),saveCreatorMatchCache(s),e&&e(),t+8<n.length&&await new Promise(e=>setTimeout(e,1500))}creatorMatchInProgress=!1}function computeTopCreators(e=2,t=3){const s=loadHistory().filter(e=>e.tmdbId),n=loadCreatorMatchCache(),a=(new Set(s.map(e=>String(e.tmdbId))),{});return s.forEach(e=>{const t=n[e.tmdbId];if(!t||!t.directorId)return;const s=parseFloat(e.score);s&&(a[t.directorId]||(a[t.directorId]={id:t.directorId,name:t.directorName,scores:[],seenFilmIds:new Set}),a[t.directorId].scores.push(s),a[t.directorId].seenFilmIds.add(String(e.tmdbId)))}),Object.values(a).filter(t=>t.scores.length>=e).map(e=>({...e,avg:e.scores.reduce((e,t)=>e+t,0)/e.scores.length})).sort((e,t)=>t.avg-e.avg).slice(0,t)}async function fetchCreatorBlindSpot(e){try{const t=await fetch(`/api/search?personId=${e}`),s=await readApiJson(t);if(!s||!s.name)return null;const n=buildPersonFilmography(s),{seenCount:a,total:i}=computeSeenPercentage(n);return{unseenCount:i-a,total:i}}catch{return null}}function loadBlindSpotsCache(){try{const e=JSON.parse(localStorage.getItem(BLIND_SPOTS_CACHE_KEY)||"null");if(!e)return null;return(Date.now()-e.fetchedAt)/864e5>7?null:e.creators}catch{return null}}async function renderBlindSpotsSection(){const e=document.getElementById("blind-spots-wrap"),t=document.getElementById("blind-spots-container");if(!e||!t)return;const s=loadBlindSpotsCache();if(s)return renderBlindSpotsCards(s),void ensureCreatorMatchesResolved();await ensureCreatorMatchesResolved();const n=computeTopCreators();if(0===n.length)return;const a=(await Promise.all(n.map(async e=>{const t=await fetchCreatorBlindSpot(e.id);return t&&t.unseenCount>0?{...e,...t}:null}))).filter(Boolean);localStorage.setItem(BLIND_SPOTS_CACHE_KEY,JSON.stringify({creators:a,fetchedAt:Date.now()})),renderBlindSpotsCards(a)}function renderBlindSpotsCards(e){const t=document.getElementById("blind-spots-wrap"),s=document.getElementById("blind-spots-container");0!==e.length&&(s.innerHTML=e.map(e=>`\n    <button type="button" class="blind-spot-card" data-person-id="${e.id}" data-person-name="${escAttr(e.name)}">\n      <div class="blind-spot-text">\n        <span class="blind-spot-highlight">Tu adores ${escAttr(e.name)}</span>\n        <span class="blind-spot-detail">${e.avg.toFixed(1)}/10 en moyenne sur ${e.scores.length} film${e.scores.length>1?"s":""} — il te reste ${e.unseenCount} film${e.unseenCount>1?"s":""} à découvrir</span>\n      </div>\n      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon blind-spot-arrow"><path d="M9 18l6-6-6-6"/></svg>\n    </button>\n  `).join(""),s.querySelectorAll(".blind-spot-card").forEach(e=>{e.addEventListener("click",()=>openPersonDetailSheet(e.dataset.personId,e.dataset.personName))}),t.style.display="block")}const FILM_ANALYSES_KEY="lbx_analyses";function loadAnalyses(){try{return JSON.parse(localStorage.getItem("lbx_analyses"))||[]}catch{return[]}}function saveAnalyses(e){localStorage.setItem("lbx_analyses",JSON.stringify(e))}function getAnalysesForFilm(e){return loadAnalyses().filter(t=>String(t.filmId)===String(e)).sort((e,t)=>t.date.localeCompare(e.date))}function buildAnalysisSectionHtml(e,t){const s=getAnalysesForFilm(e);return`\n    <div class="mds-section-title">Analyse</div>\n    <div class="analysis-form">\n      <label class="analysis-label" for="analysis-technique">Analyse technique</label>\n      <textarea class="analysis-textarea" id="analysis-technique" rows="3" placeholder="Cadrage, lumière, montage, son, mise en scène..."></textarea>\n      <label class="analysis-label" for="analysis-theme">Analyse thématique</label>\n      <textarea class="analysis-textarea" id="analysis-theme" rows="3" placeholder="Sujet apparent vs sujet réel, comment la forme sert le fond..."></textarea>\n      <button type="button" class="icon-btn analysis-submit-btn" id="analysis-submit-btn">\n        <span class="analysis-submit-spinner" id="analysis-submit-spinner" style="display:none;" aria-hidden="true">${ICONS.refresh}</span>\n        <span id="analysis-submit-label">Envoyer pour analyse</span>\n      </button>\n      <div class="analysis-error" id="analysis-error" style="display:none;" role="alert">\n        <span class="analysis-error-icon" aria-hidden="true">⚠</span>\n        <span id="analysis-error-text"></span>\n      </div>\n    </div>\n    <div class="analysis-history" id="analysis-history">${s.map(renderAnalysisEntry).join("")}</div>\n  `}function renderAnalysisEntry(e){const t=new Date(e.date).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}),s=e.retour;return`\n    <div class="analysis-entry">\n      <div class="analysis-entry-date">${escAttr(t)}</div>\n      <p class="analysis-synthese">${escAttr(s.synthese||"")}</p>\n      ${renderAnalysisGroup("Points forts",s.pointsForts)}\n      ${renderAnalysisGroup("Angles morts",s.anglesMorts)}\n      ${renderAnalysisGroup("Questions pour approfondir",s.questions)}\n    </div>\n  `}function renderAnalysisGroup(e,t){return t&&0!==t.length?`\n    <div class="analysis-retour-group">\n      <div class="analysis-retour-label">${escAttr(e)}</div>\n      <ul>${t.map(e=>`<li>${escAttr(e)}</li>`).join("")}</ul>\n    </div>\n  `:""}function wireAnalysisSection(e,t){const s=document.getElementById("analysis-submit-btn");if(!s)return;const n=document.getElementById("analysis-submit-spinner"),a=document.getElementById("analysis-submit-label");s.addEventListener("click",async()=>{const i=document.getElementById("analysis-technique"),o=document.getElementById("analysis-theme"),r=document.getElementById("analysis-error"),l=document.getElementById("analysis-error-text"),c=i.value.trim(),d=o.value.trim();if(r.style.display="none",!c&&!d)return l.textContent="Écris au moins un des deux champs avant d'envoyer.",void(r.style.display="flex");s.disabled=!0,n.style.display="inline-flex",a.textContent="Analyse en cours…";try{const s=await fetch("/api/analyse-film",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({titre:t,technique:c,theme:d})}),n=await readApiJson(s),a={id:`${Date.now()}-${Math.random().toString(36).slice(2,8)}`,filmId:e,filmTitle:t,date:(new Date).toISOString(),texteTechnique:c,texteThematique:d,retour:n.retour},r=loadAnalyses();r.push(a),saveAnalyses(r);const l=document.getElementById("analysis-history"),u=document.createElement("div");u.innerHTML=renderAnalysisEntry(a),l.prepend(u.firstElementChild),i.value="",o.value="",showToast("Analyse enregistrée.")}catch(e){l.textContent=describeApiFailure(e),r.style.display="flex"}finally{s.disabled=!1,n.style.display="none",a.textContent="Envoyer pour analyse"}})}let selectedShow=null;function setMediaType(e){currentMediaType=e,document.getElementById("tab-media-movie").classList.toggle("active","movie"===e),document.getElementById("tab-media-tv").classList.toggle("active","tv"===e);const t=document.getElementById("movie-only-fields"),s=document.getElementById("tv-only-fields");"movie"===e?fadeSwitchDisplay(s,t):fadeSwitchDisplay(t,s),document.getElementById("film-card-title").textContent="movie"===e?"Film":"Série",applyCriteriaLabelsForMediaType(e),document.getElementById("notation-card").style.display="movie"===e||null!=selectedSeasonNumber?"":"none","tv"===e&&"function"==typeof renderTvContinueList&&renderTvContinueList()}const TV_CRITERIA_LABELS={photo:"Qualité du final",rythme:"Rythme & Cohérence de la saison"},_originalCriteriaLabels={};function applyCriteriaLabelsForMediaType(e){Object.keys(TV_CRITERIA_LABELS).forEach(t=>{const s=document.getElementById(`crit-label-${t}`);if(!s||!s.firstChild)return;t in _originalCriteriaLabels||(_originalCriteriaLabels[t]=s.firstChild.nodeValue);const n=("tv"===e?TV_CRITERIA_LABELS[t]:_originalCriteriaLabels[t].trim())+" ";s.firstChild.nodeValue=n;const a=n.trim();document.querySelectorAll(`.criterion-step-btn[data-target="${t}"]`).forEach(e=>{const t=e.dataset.step.startsWith("-")?"Diminuer":"Augmenter";e.setAttribute("aria-label",`${t} ${a} de 0,5`)})})}const tvSearchEl=document.getElementById("tv-search"),tvSuggestEl=document.getElementById("tv-suggestions"),tvSearchStatus=document.getElementById("tv-search-status"),tvSearchClearBtn=document.getElementById("tv-search-clear-btn");let tvSearchTimer;async function fetchTvSuggestions(e){try{const t=await fetch(`/api/search?tvQuery=${encodeURIComponent(e)}`),s=((await readApiJson(t)).results||[]).filter(e=>e.poster_path).slice(0,8);if(0===s.length)return tvSuggestEl.style.display="none",tvSearchStatus.textContent="Aucune série trouvée.",void(tvSearchStatus.style.display="block");tvSuggestEl.innerHTML=s.map(e=>`\n      <div class="suggestion-item" data-show-id="${e.id}" data-show-name="${escAttr(e.name)}" data-show-poster="${escAttr(e.poster_path||"")}">\n        <img class="suggestion-poster" src="${tmdbImage(e.poster_path,"w92")}" alt="" loading="lazy">\n        <div class="suggestion-info">\n          <div class="suggestion-title">${escAttr(e.name)}</div>\n          <div class="suggestion-year">${e.first_air_date?e.first_air_date.slice(0,4):""}</div>\n        </div>\n      </div>\n    `).join(""),tvSuggestEl.querySelectorAll(".suggestion-item").forEach(e=>{e.addEventListener("click",()=>selectShow({id:e.dataset.showId,name:e.dataset.showName,poster_path:e.dataset.showPoster}))})}catch(e){tvSuggestEl.style.display="none",tvSearchStatus.textContent=describeApiFailure(e),tvSearchStatus.style.display="block"}}async function selectShow(e){selectedShow=e,tvSuggestEl.style.display="none",tvSearchEl.value=e.name,document.getElementById("tv-season-strip").style.display="none",document.getElementById("tv-season-picker").style.display="none",openTvDetailSheet(e.id)}function selectSeason(e){document.getElementById("tv-season-strip").style.display="flex";document.getElementById("tv-strip-poster").src=tmdbImage(e.poster,"w200"),document.getElementById("tv-strip-title").textContent=`${selectedShow.name} — ${e.name}`,document.getElementById("tv-strip-genre").textContent=`${e.episodeCount} épisode${e.episodeCount>1?"s":""}`,selectedSeasonNumber=Number(e.number),selectedSeasonName=e.name,selectedSeasonEpisodeCount=Number(e.episodeCount),document.getElementById("tv-season-complete-banner").style.display="none",refreshShowAverageDisplay();const t=loadTvShows().find(e=>String(e.tmdbTvId)===String(selectedShow.id)),s=t?.seasons?.[String(selectedSeasonNumber)],n=s&&s.totalEpisodes>0&&s.watchedEpisodes.length>=s.totalEpisodes,a=s&&(n||s.rating),i=document.getElementById("tv-season-start-prompt"),o=document.getElementById("tv-season-in-progress-msg"),r=document.getElementById("notation-card");a?(i.style.display="none",o.style.display="none",r.style.display="",loadSeasonRatingIntoForm()):s?(r.style.display="none",i.style.display="none",o.style.display="flex",document.getElementById("tv-in-progress-text").textContent=`${s.watchedEpisodes.length}/${s.totalEpisodes} épisodes déjà vus — continue depuis le widget "En cours" en haut de cet onglet.`):(r.style.display="none",o.style.display="none",i.style.display="flex",document.getElementById("tv-start-prompt-text").textContent=`Commencer "${selectedShow.name} — ${e.name}" ?`)}function startTrackingSeason(){const e=loadTvShows(),t=getOrCreateTvShow(e),s=String(selectedSeasonNumber);t.seasons[s]||(t.seasons[s]={seasonName:selectedSeasonName,watchedEpisodes:[],totalEpisodes:selectedSeasonEpisodeCount}),saveTvShows(e),document.getElementById("tv-season-start-prompt").style.display="none",document.getElementById("tv-season-in-progress-msg").style.display="flex",document.getElementById("tv-in-progress-text").textContent=`0/${selectedSeasonEpisodeCount} épisodes vus — continue depuis le widget "En cours" en haut de cet onglet.`,"function"==typeof renderTvContinueList&&renderTvContinueList(),showToast(`"${selectedShow.name} — ${selectedSeasonName}" ajoutée à En cours`)}tvSearchEl.addEventListener("input",()=>{clearTimeout(tvSearchTimer),tvSearchClearBtn.style.display=tvSearchEl.value?"flex":"none";const e=tvSearchEl.value.trim();if(e.length<2)return tvSuggestEl.style.display="none",void(tvSearchStatus.style.display="none");tvSearchStatus.style.display="none",tvSuggestEl.style.display="block",tvSuggestEl.innerHTML='\n    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>\n    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>\n  ',tvSearchTimer=setTimeout(()=>fetchTvSuggestions(e),280)}),tvSearchClearBtn.addEventListener("click",()=>{tvSearchEl.value="",tvSearchEl.dispatchEvent(new Event("input")),tvSearchEl.focus()}),document.getElementById("tv-start-season-btn").addEventListener("click",startTrackingSeason);const TV_SHOWS_KEY="lbx_tv_shows";let selectedSeasonNumber=null,selectedSeasonName=null,selectedSeasonEpisodeCount=0;function loadTvShows(){try{return JSON.parse(localStorage.getItem(TV_SHOWS_KEY))||[]}catch{return[]}}function saveTvShows(e){localStorage.setItem(TV_SHOWS_KEY,JSON.stringify(e))}function getOrCreateTvShow(e){let t=e.find(e=>String(e.tmdbTvId)===String(selectedShow.id));return t||(t={tmdbTvId:selectedShow.id,title:selectedShow.name,poster_path:selectedShow.poster_path,genre:selectedShow.genres||"",seasons:{}},e.push(t)),t}function getOrCreateTvSeason(e,t,s){const n=String(selectedSeasonNumber);return e.seasons[n]||(e.seasons[n]={seasonName:t,watchedEpisodes:[],totalEpisodes:s}),e.seasons[n].totalEpisodes=s,e.seasons[n]}function loadSeasonRatingIntoForm(){const e=loadTvShows().find(e=>String(e.tmdbTvId)===String(selectedShow.id)),t=e&&e.seasons[String(selectedSeasonNumber)],s=t&&t.rating;if(s&&"quick"===s.mode&&void 0!==s.values?.quick){setMode("quick"),quickRating=parseFloat(s.values.quick);const e=document.getElementById("s"+2*quickRating);e&&(e.checked=!0)}else setMode("detail"),CRITERIA.forEach(e=>{document.getElementById(e).value=s&&s.values&&void 0!==s.values[e]?s.values[e]:5});document.getElementById("review-text").value=s&&s.review||"",calculateScore()}function getAllTvSeasonRatings(){return loadTvShows().flatMap(e=>Object.values(e.seasons||{}).filter(e=>e.rating).map(e=>e.rating))}function refreshShowAverageDisplay(){const e=loadTvShows().find(e=>String(e.tmdbTvId)===String(selectedShow.id)),t=computeShowAverageScore(e),s=document.getElementById("tv-show-average");if(null==t)return void(s.style.display="none");const n=Object.values(e.seasons).filter(e=>e.rating).length;s.textContent=`Note globale : ${t.toFixed(1)}/10 (moyenne de ${n} saison${n>1?"s":""} notée${n>1?"s":""})`,s.style.display="block"}function saveTvSeasonRating(){if(!selectedShow||null==selectedSeasonNumber)return void showToast("Sélectionne une série et une saison avant de noter.");const e=calculateScore(),t=loadTvShows(),s=getOrCreateTvShow(t),n=String(selectedSeasonNumber);s.seasons[n]||(s.seasons[n]={seasonName:selectedSeasonName,watchedEpisodes:[],totalEpisodes:selectedSeasonEpisodeCount}),s.seasons[n].rating={mode:currentMode,values:"detail"===currentMode?CRITERIA.reduce((e,t)=>(e[t]=document.getElementById(t).value,e),{}):{quick:quickRating},score:e.toFixed(1),stars:document.getElementById("stars-display").textContent,review:document.getElementById("review-text").value.trim(),date:(new Date).toISOString()},saveTvShows(t),document.getElementById("tv-season-complete-banner").style.display="none",showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`),"function"==typeof playSaveConfirmation&&playSaveConfirmation(),refreshShowAverageDisplay(),void 0!==statsDirty&&(statsDirty=!0)}function maybeShowSeasonCompleteBanner(e,t,s){if(s.watchedEpisodes.length<s.totalEpisodes)return;const n=document.getElementById("tv-season-complete-banner");n.dataset.showId=e,n.dataset.seasonKey=t,n.style.display="flex"}function switchHistoryMediaFilter(e){historyMediaFilter=e,document.getElementById("hist-tab-movie").classList.toggle("active","movie"===e),document.getElementById("hist-tab-tv").classList.toggle("active","tv"===e);const t=document.getElementById("history-list"),s=document.getElementById("tv-history-list");"movie"===e?fadeSwitchDisplay(s,t):fadeSwitchDisplay(t,s),renderActiveHistoryView(),"tv"===e&&retrofitMissingTvGenres()}async function retrofitMissingTvGenres(){const e=loadTvShows().filter(e=>!e.genre);if(0!==e.length){for(const t of e)try{const e=((await fetch(`/api/search?tvId=${t.tmdbTvId}`).then(readApiJson)).genres||[]).map(e=>e.name).join(", "),s=loadTvShows(),n=s.find(e=>String(e.tmdbTvId)===String(t.tmdbTvId));n&&e&&(n.genre=e,saveTvShows(s))}catch{}"tv"===historyMediaFilter&&renderTvHistory()}}function getSortedTvShows(){let e=loadTvShows();historySearchQuery&&(e=e.filter(e=>e.title&&e.title.toLowerCase().includes(historySearchQuery))),null!==activeScoreFilter&&(e=e.filter(e=>isScoreInActiveRange(computeShowAverageScore(e)))),activeGenre&&(e=e.filter(e=>e.genre&&e.genre.split(",").map(e=>e.trim()).includes(activeGenre)));const t=e=>computeShowAverageScore(e);if("score-desc"===sortOrder)return[...e].sort((e,s)=>(t(s)??-1)-(t(e)??-1));if("score-asc"===sortOrder)return[...e].sort((e,s)=>(t(e)??11)-(t(s)??11));if("title"===sortOrder)return[...e].sort((e,t)=>e.title.localeCompare(t.title));const s=e=>Object.values(e.seasons||{}).reduce((e,t)=>{const s=t.rating?.date||"";return s>e?s:e},"");return[...e].sort((e,t)=>s(t).localeCompare(s(e)))}function renderTvHistory(){const e=loadTvShows(),t=getSortedTvShows(),s=document.getElementById("tv-history-list");renderGenreChips(e,renderTvHistory),document.getElementById("filter-row").style.display=0===e.length?"none":"";const n=document.getElementById("hist-count-badge"),a=loadHistory().length,i=`${a} film${a>1?"s":""}`;historySearchQuery||activeScoreFilter?(n.textContent=`${i} · ${t.length} / ${e.length} série${e.length>1?"s":""}`,n.style.color="var(--orange)"):(n.textContent=`${i} · ${e.length} série${e.length>1?"s":""}`,n.style.color=""),0!==e.length?0!==t.length?(s.innerHTML=t.map(renderTvShowCard).join(""),s.querySelectorAll(".tv-show-card").forEach((e,s)=>{applyPosterAccent(tmdbImage(t[s]?.poster_path,"w154"),e)}),s.querySelectorAll(".tv-show-card-open-btn").forEach(e=>{e.addEventListener("click",()=>openTvDetailSheet(e.dataset.showId))}),s.querySelectorAll(".tv-show-delete-btn").forEach(e=>{e.addEventListener("click",t=>{t.stopPropagation();const s=e.dataset.showId,n=loadTvShows().find(e=>String(e.tmdbTvId)===String(s));n&&openModal("Retirer cette série",`"${n.title}" et toutes ses saisons suivies/notées seront définitivement retirées. Continuer ?`,()=>{saveTvShows(loadTvShows().filter(e=>String(e.tmdbTvId)!==String(s))),"function"==typeof recordTombstone&&recordTombstone("lbx_tv_show_tombstones",String(s)),renderTvHistory(),showToast(`"${n.title}" retirée`),void 0!==statsDirty&&(statsDirty=!0)},!0)})}),s.querySelectorAll(".tv-season-reopen-btn").forEach(e=>{e.addEventListener("click",()=>reopenTvSeason(e.dataset.showId,e.dataset.seasonKey))}),s.querySelectorAll(".tv-season-delete-btn").forEach(e=>{e.addEventListener("click",t=>{t.stopPropagation(),deleteTvSeasonWithConfirm(e.dataset.showId,e.dataset.seasonKey)})}),initTvSeasonSwipeGestures(s),initTvShowCardSwipeGestures(s)):s.innerHTML='<div class="empty-state">Aucun résultat pour ce filtre.</div>':s.innerHTML=`<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`}function deleteTvSeasonWithConfirm(e,t){const s=loadTvShows().find(t=>String(t.tmdbTvId)===String(e));if(!s)return;const n=s.seasons[t]?.seasonName||`Saison ${t}`;openModal("Retirer cette saison",1===Object.keys(s.seasons).length?`"${n}" est la dernière saison suivie de "${s.title}" — la retirer retire toute la série. Continuer ?`:`"${n}" de "${s.title}" sera définitivement retirée. Continuer ?`,()=>{const s=loadTvShows(),a=s.find(t=>String(t.tmdbTvId)===String(e));if(!a)return;delete a.seasons[t],"function"==typeof recordTombstone&&recordTombstone("lbx_tv_season_tombstones",`${e}:${t}`);const i=0===Object.keys(a.seasons).length?s.filter(t=>String(t.tmdbTvId)!==String(e)):s;0===Object.keys(a.seasons).length&&"function"==typeof recordTombstone&&recordTombstone("lbx_tv_show_tombstones",String(e)),saveTvShows(i),renderTvHistory(),showToast(`"${n}" retirée`),void 0!==statsDirty&&(statsDirty=!0)},!0)}function renderTvShowCard(e){const t=computeShowAverageScore(e),s=Object.entries(e.seasons||{}).sort((e,t)=>Number(e[0])-Number(t[0])),n=s.filter(([,e])=>e.rating).length,a=tmdbImage(e.poster_path,"w154");return`\n    <div class="tv-show-card">\n      <div class="tv-show-card-header-wrap" data-show-id="${e.tmdbTvId}">\n        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>\n        <div class="tv-show-card-header">\n          <button type="button" class="tv-show-card-open-btn" data-show-id="${e.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(e.title)}">\n            ${a?`<img class="tv-show-card-poster" src="${a}" alt="" loading="lazy">`:`<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv||"📺"}</div>`}\n            <div class="tv-show-card-info">\n              <div class="tv-show-card-title">${escAttr(e.title)}</div>\n              <div class="tv-show-card-score">${null!=t?`${t.toFixed(1)}/10`:"Pas encore notée"} <span class="tv-show-card-count">(${n}/${s.length} saison${s.length>1?"s":""} notée${n>1?"s":""})</span></div>\n            </div>\n          </button>\n          <button type="button" class="tv-show-delete-btn" data-show-id="${e.tmdbTvId}" aria-label="Retirer ${escAttr(e.title)}">${ICONS.trash}</button>\n        </div>\n      </div>\n      <details class="tv-show-seasons-fold">\n        <summary>Voir les ${s.length} saison${s.length>1?"s":""}</summary>\n        <div class="tv-show-seasons-list">\n          ${s.map(([t,s])=>`\n            <div class="tv-season-row" data-show-id="${e.tmdbTvId}" data-season-key="${t}">\n              <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>\n              <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>\n              <div class="tv-season-row-content">\n                <button type="button" class="tv-season-reopen-btn" data-show-id="${e.tmdbTvId}" data-season-key="${t}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">\n                  <span>${escAttr(s.seasonName)}</span>\n                  <span>${s.rating?`${s.rating.score}/10`:`${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>\n                </button>\n                <button type="button" class="tv-season-delete-btn" data-show-id="${e.tmdbTvId}" data-season-key="${t}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>\n              </div>\n            </div>\n          `).join("")}\n        </div>\n      </details>\n    </div>\n  `}function initTvSeasonSwipeGestures(e){const t=130;let s=0,n=0,a=null,i=null,o=!1,r=null,l=0,c=null,d=null;function u(){if(!c)return;const e=c.querySelector(".tv-season-row-content");e&&(e.style.transition="transform var(--dur-base) var(--ease-out)",e.style.transform=""),c.classList.remove("hist-swipe-armed-left","hist-swipe-armed-right","hist-swipe-left","hist-swipe-right"),c=null,d=null}function m(){a&&a.classList.remove("hist-dragging"),a=null,i=null,r=null,l=0}function p(){a&&("swipe"===r&&(l<=-80?(u(),i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform="translateX(-120px)",a.classList.add("hist-swipe-armed-left"),c=a,d="left",hapticPulse(a,"medium")):l>=80?(u(),i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform="translateX(120px)",a.classList.add("hist-swipe-armed-right"),c=a,d="right",hapticPulse(a,"medium")):(i.style.transform="",a.classList.remove("hist-swipe-left","hist-swipe-right")),o=!0,setTimeout(()=>{o=!1},300)),m())}e.addEventListener("touchstart",e=>{const t=e.target.closest(".tv-season-row");!t||e.target.closest(".tv-season-reopen-btn")||e.target.closest(".tv-season-delete-btn")?m():(e.stopPropagation(),a=t,i=t.querySelector(".tv-season-row-content"),s=e.touches[0].clientX,n=e.touches[0].clientY,r=null,l=0)},{passive:!0}),e.addEventListener("touchmove",e=>{if(!a)return;e.stopPropagation();const o=e.touches[0].clientX-s,d=e.touches[0].clientY-n;if(null===r){if(!(Math.abs(o)>12||Math.abs(d)>12))return;r=Math.abs(o)>.5*Math.abs(d)?"swipe":"scroll","swipe"===r&&(c===a&&u(),a.classList.add("hist-dragging"))}"swipe"===r&&(l=Math.max(-130,Math.min(t,o)),i.style.transform=`translateX(${l}px)`,a.classList.toggle("hist-swipe-left",l<-10),a.classList.toggle("hist-swipe-right",l>10))},{passive:!0}),e.addEventListener("touchend",p),e.addEventListener("touchcancel",function(){a&&(i&&(i.style.transition="transform var(--dur-base) var(--ease-out)",i.style.transform=""),a.classList.remove("hist-swipe-left","hist-swipe-right")),m()});let v=!1;e.addEventListener("mousedown",e=>{const t=e.target.closest(".tv-season-row");!t||e.target.closest(".tv-season-reopen-btn")||e.target.closest(".tv-season-delete-btn")||(v=!0,a=t,i=t.querySelector(".tv-season-row-content"),s=e.clientX,n=e.clientY,r=null,l=0)}),document.addEventListener("mousemove",e=>{if(!v||!a)return;const o=e.clientX-s,d=e.clientY-n;if(null===r){if(!(Math.abs(o)>12||Math.abs(d)>12))return;r=Math.abs(o)>.5*Math.abs(d)?"swipe":"scroll","swipe"===r&&(c===a&&u(),a.classList.add("hist-dragging"))}"swipe"===r&&(l=Math.max(-130,Math.min(t,o)),i.style.transform=`translateX(${l}px)`,a.classList.toggle("hist-swipe-left",l<-10),a.classList.toggle("hist-swipe-right",l>10))}),document.addEventListener("mouseup",()=>{v&&(v=!1,p())}),e.addEventListener("click",e=>{if(c){const t=e.target.closest(".hist-swipe-hint"),s=e.target.closest(".tv-season-row");if(t&&s===c)return void function(){if(!c)return;const e=c.dataset.showId,t=c.dataset.seasonKey,s=d;c=null,d=null,"left"===s?deleteTvSeasonWithConfirm(e,t):reopenTvSeason(e,t)}();const n=s===c;if(u(),n)return}},!0),document.addEventListener("click",t=>{c&&!e.contains(t.target)&&u()},!0)}function initTvShowCardSwipeGestures(e){let t=0,s=0,n=null,a=null,i=null,o=0,r=null;function l(){if(!r)return;const e=r.querySelector(".tv-show-card-header");e&&(e.style.transition="transform var(--dur-base) var(--ease-out)",e.style.transform=""),r.classList.remove("hist-swipe-armed-left","hist-swipe-left"),r=null}function c(){n&&n.classList.remove("hist-dragging"),n=null,a=null,i=null,o=0}e.addEventListener("touchstart",e=>{const r=e.target.closest(".tv-show-card-header-wrap");!r||e.target.closest(".tv-show-card-open-btn")||e.target.closest(".tv-show-delete-btn")?c():(e.stopPropagation(),n=r,a=r.querySelector(".tv-show-card-header"),t=e.touches[0].clientX,s=e.touches[0].clientY,i=null,o=0)},{passive:!0}),e.addEventListener("touchmove",e=>{if(!n)return;e.stopPropagation();const c=e.touches[0].clientX-t,d=e.touches[0].clientY-s;if(null===i){if(!(Math.abs(c)>12||Math.abs(d)>12))return;i=Math.abs(c)>.5*Math.abs(d)?"swipe":"scroll","swipe"===i&&(r===n&&l(),n.classList.add("hist-dragging"))}"swipe"===i&&(o=Math.max(-130,Math.min(0,c)),a.style.transform=`translateX(${o}px)`,n.classList.toggle("hist-swipe-left",o<-10))},{passive:!0}),e.addEventListener("touchend",()=>{n&&("swipe"===i&&(o<=-80?(l(),a.style.transition="transform var(--dur-base) var(--ease-out)",a.style.transform="translateX(-120px)",n.classList.add("hist-swipe-armed-left"),r=n,hapticPulse(n,"medium")):(a.style.transform="",n.classList.remove("hist-swipe-left"))),c())}),e.addEventListener("touchcancel",()=>{n&&a&&(a.style.transition="transform var(--dur-base) var(--ease-out)",a.style.transform="",n.classList.remove("hist-swipe-left")),c()}),e.addEventListener("click",t=>{if(!r)return;const s=t.target.closest(".hist-swipe-hint"),n=t.target.closest(".tv-show-card-header-wrap");if(s&&n===r)return void function(){if(!r)return;const t=r.dataset.showId;r=null;const s=e.querySelector(`.tv-show-delete-btn[data-show-id="${t}"]`);s&&s.click()}();l()},!0),document.addEventListener("click",t=>{r&&!e.contains(t.target)&&l()},!0)}function reopenTvSeason(e,t){const s=loadTvShows().find(t=>String(t.tmdbTvId)===String(e));if(!s)return;switchMobileNav("rating"),setMediaType("tv"),selectedShow={id:s.tmdbTvId,name:s.title,poster_path:s.poster_path},document.getElementById("tv-search").value=s.title,document.getElementById("tv-season-picker").style.display="none";const n=s.seasons[t];selectSeason({number:t,name:n.seasonName,episodeCount:n.totalEpisodes,poster:s.poster_path}),document.getElementById("notation-card").scrollIntoView({behavior:"smooth",block:"start"})}function switchStatsMediaFilter(e){statsMediaFilter=e,document.getElementById("stats-tab-movie").classList.toggle("active","movie"===e),document.getElementById("stats-tab-tv").classList.toggle("active","tv"===e);const t=document.querySelector(".dashboard-grid"),s=()=>{document.getElementById("kpi-total-label").textContent="movie"===e?"Films notés":"Séries suivies",document.getElementById("top-directors-box").style.display="movie"===e?"":"none","tv"===e?renderTvStats():renderStats()};t?(t.style.transition="opacity var(--dur-fast) var(--ease-out)",t.style.opacity="0",setTimeout(()=>{s(),requestAnimationFrame(()=>{t.style.opacity="1",setTimeout(()=>{t.style.removeProperty("opacity"),t.style.removeProperty("transition")},150)})},140)):s()}function renderTvStats(){const e=loadTvShows();animateCountUp(document.getElementById("kpi-total"),e.length);const t=e.map(computeShowAverageScore).filter(e=>null!=e);if(0===t.length)document.getElementById("kpi-avg").textContent="-";else{const e=t.reduce((e,t)=>e+t,0)/t.length;animateCountUp(document.getElementById("kpi-avg"),e,{decimals:1})}const s=(new Date).getFullYear().toString(),n=e.filter(e=>Object.values(e.seasons||{}).some(e=>e.rating?.date?.startsWith(s))).length;animateCountUp(document.getElementById("kpi-year"),n);const a=getAllTvSeasonRatings();if(0===a.length)document.getElementById("radar-chart-container").innerHTML="",document.getElementById("radar-chart-container").style.minHeight="0",document.getElementById("radar-empty").style.display="block";else{const e=computeCriteriaAverages(a,CRITERIA),t=createRadarSVG(CRITERIA.map(t=>e[t]||0),"tv");t?(document.getElementById("radar-chart-container").innerHTML=t,document.getElementById("radar-chart-container").style.minHeight="160px",document.getElementById("radar-empty").style.display="none"):(document.getElementById("radar-chart-container").innerHTML="",document.getElementById("radar-chart-container").style.minHeight="0",document.getElementById("radar-empty").style.display="block")}document.getElementById("timeline-chart-container").innerHTML=createTimelineSVG(loadHistory().concat(a));const i={50:0,45:0,40:0,35:0,30:0,25:0,20:0,15:0,10:0,"05":0};a.forEach(e=>{const t=Math.round(parseFloat(e.score)/2*2)/2,s=Math.round(10*t).toString().padStart(2,"0");void 0!==i[s]&&i[s]++}),buildHistogram(i)}async function renderTvContinueList(){const e=document.getElementById("tv-continue-list"),t=document.getElementById("tv-continue-section"),s=loadTvShows(),n=[];for(const e of s){const t=Object.entries(e.seasons||{}),s=t.filter(([,e])=>e.totalEpisodes>0&&e.watchedEpisodes.length<e.totalEpisodes&&!e.paused).sort((e,t)=>Number(t[0])-Number(e[0]))[0];if(s){n.push({show:e,seasonKey:s[0],seasonEntry:s[1]});continue}const a=t.filter(([,e])=>e.totalEpisodes>0&&e.watchedEpisodes.length>=e.totalEpisodes).sort((e,t)=>Number(t[0])-Number(e[0]))[0];a&&n.push({show:e,seasonKey:a[0],seasonEntry:a[1],needsNextSeasonCheck:!0})}if(0===n.length)return t.style.display="none",void(e.innerHTML="");t.style.display="block",document.getElementById("tv-continue-count").textContent=`(${n.length})`,e.innerHTML=n.map((e,t)=>`<div class="tv-continue-card tv-continue-loading" data-continue-idx="${t}">Chargement…</div>`).join(""),n.forEach(async(t,s)=>{const n=await resolveNextTvEpisode(t),a=e.querySelector(`[data-continue-idx="${s}"]`);if(!a)return;if(!n)return a.remove(),void(0===e.children.length&&(document.getElementById("tv-continue-section").style.display="none"));const i=document.createElement("div");i.innerHTML=renderTvContinueCard(n),a.replaceWith(i.firstElementChild)})}async function resolveNextTvEpisode(e){const{show:t,needsNextSeasonCheck:s}=e;let n=e.seasonKey,a=e.seasonEntry;if(s){const e=Number(n)+1;try{const s=((await fetch(`/api/search?tvId=${t.tmdbTvId}`).then(readApiJson)).seasons||[]).find(t=>t.season_number===e);if(!s)return null;const i=loadTvShows(),o=i.find(e=>String(e.tmdbTvId)===String(t.tmdbTvId));n=String(e),o.seasons[n]||(o.seasons[n]={seasonName:s.name,watchedEpisodes:[],totalEpisodes:s.episode_count},saveTvShows(i)),a=o.seasons[n]}catch{return null}}try{const e=await fetch(`/api/search?tvSeasonShowId=${t.tmdbTvId}&tvSeasonNumber=${n}`).then(readApiJson),s=(e.episodes||[]).find(e=>!a.watchedEpisodes.includes(e.episode_number));return s?{show:t,seasonKey:n,seasonEntry:a,episode:s}:null}catch{return null}}function renderTvContinueCard({show:e,seasonKey:t,seasonEntry:s,episode:n}){const a=tmdbImage(e.poster_path,"w154"),i=[n.air_date?new Date(n.air_date).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"",n.runtime?`${n.runtime} min`:""].filter(Boolean).join(" · ");return`\n    <div class="tv-continue-card">\n      <div class="tv-continue-card-actions">\n        <button type="button" class="tv-continue-pause-btn" data-show-id="${e.tmdbTvId}" data-season-key="${t}" aria-label="Mettre en pause" title="Mettre en pause — reprends-la depuis sa fiche">${ICONS.pause}</button>\n        <button type="button" class="tv-continue-remove-btn" data-show-id="${e.tmdbTvId}" data-season-key="${t}" aria-label="Retirer ${escAttr(e.title)} de cette liste" title="Retirer de la liste">${ICONS.close||"✕"}</button>\n      </div>\n      ${a?`<img class="tv-continue-poster" src="${a}" alt="" loading="lazy">`:`<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}\n      <div class="tv-continue-info">\n        <div class="tv-continue-show-title">${escAttr(e.title)}</div>\n        <div class="tv-continue-ep-title">${escAttr(s.seasonName)} · Ép. ${n.episode_number} — ${escAttr(n.name||"Sans titre")}</div>\n        ${i?`<div class="tv-continue-meta">${escAttr(i)}</div>`:""}\n        ${n.overview?`\n          <details class="tv-continue-synopsis">\n            <summary>Synopsis</summary>\n            <p>${escAttr(n.overview)}</p>\n          </details>\n        `:""}\n      </div>\n      <button type="button" class="tv-continue-check-btn" data-show-id="${e.tmdbTvId}" data-season-key="${t}" data-episode="${n.episode_number}" aria-label="Valider l'épisode ${n.episode_number} de ${escAttr(e.title)}">\n        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>\n      </button>\n    </div>\n  `}document.getElementById("tv-season-complete-dismiss").addEventListener("click",()=>{document.getElementById("tv-season-complete-banner").style.display="none"}),document.getElementById("tv-rate-season-btn").addEventListener("click",()=>{const e=document.getElementById("tv-season-complete-banner"),t=e.dataset.showId,s=e.dataset.seasonKey;e.style.display="none";const n=loadTvShows().find(e=>String(e.tmdbTvId)===String(t));if(n){switchMobileNav("rating"),setMediaType("tv"),selectedShow={id:n.tmdbTvId,name:n.title,poster_path:n.poster_path},document.getElementById("tv-search").value=n.title,document.getElementById("tv-season-picker").style.display="none";const e=n.seasons[s];selectedSeasonNumber=Number(s),selectedSeasonName=e.seasonName,document.getElementById("tv-season-strip").style.display="flex",document.getElementById("tv-strip-poster").src=tmdbImage(n.poster_path,"w200"),document.getElementById("tv-strip-title").textContent=`${n.title} — ${e.seasonName}`,document.getElementById("tv-strip-genre").textContent=`${e.totalEpisodes} épisodes`,document.getElementById("tv-season-start-prompt").style.display="none",document.getElementById("tv-season-in-progress-msg").style.display="none",refreshShowAverageDisplay(),loadSeasonRatingIntoForm()}const a=document.getElementById("notation-card");a.style.display="",a.scrollIntoView({behavior:"smooth",block:"start"})}),document.getElementById("tv-continue-list").addEventListener("click",async e=>{const t=e.target.closest(".tv-continue-remove-btn");if(t){t.closest(".tv-continue-card").remove();return void(0===document.getElementById("tv-continue-list").children.length&&(document.getElementById("tv-continue-section").style.display="none"))}const s=e.target.closest(".tv-continue-pause-btn");if(s){const e=loadTvShows(),t=e.find(e=>String(e.tmdbTvId)===String(s.dataset.showId)),n=t?.seasons?.[s.dataset.seasonKey];n&&(n.paused=!0,saveTvShows(e));s.closest(".tv-continue-card").remove();return 0===document.getElementById("tv-continue-list").children.length&&(document.getElementById("tv-continue-section").style.display="none"),void showToast("Mise en pause — reprends-la depuis sa fiche")}const n=e.target.closest(".tv-continue-check-btn");if(!n)return;const a=n.dataset.showId,i=n.dataset.seasonKey,o=Number(n.dataset.episode),r=loadTvShows(),l=r.find(e=>String(e.tmdbTvId)===String(a));if(!l)return;const c=l.seasons[i];c.watchedEpisodes.includes(o)||c.watchedEpisodes.push(o),saveTvShows(r),void 0!==statsDirty&&(statsDirty=!0),maybeShowSeasonCompleteBanner(a,i,c);const d=n.closest(".tv-continue-card");d.classList.add("tv-continue-loading");const u=await resolveNextTvEpisode({show:l,seasonKey:i,seasonEntry:c,needsNextSeasonCheck:c.watchedEpisodes.length>=c.totalEpisodes}),m=document.getElementById("tv-continue-list");if(u){const e=document.createElement("div");e.innerHTML=renderTvContinueCard(u),d.replaceWith(e.firstElementChild)}else d.remove(),0===m.children.length&&(document.getElementById("tv-continue-section").style.display="none")}),document.getElementById("tv-continue-toggle").addEventListener("click",()=>{const e=document.getElementById("tv-continue-list"),t=document.getElementById("tv-continue-toggle"),s="none"===e.style.display;e.style.display=s?"":"none",t.setAttribute("aria-expanded",String(s)),t.classList.toggle("collapsed",!s),localStorage.setItem("lbx_tv_continue_collapsed",s?"0":"1")}),"1"===localStorage.getItem("lbx_tv_continue_collapsed")&&(document.getElementById("tv-continue-list").style.display="none",document.getElementById("tv-continue-toggle").setAttribute("aria-expanded","false"),document.getElementById("tv-continue-toggle").classList.add("collapsed"));const tdsEl=document.getElementById("tv-detail-sheet"),tdsContentEl=document.getElementById("tds-content"),tdsCloseBtn=document.getElementById("tds-close-btn");function buildTdsSkeleton(){return'\n    <div class="mds-skeleton">\n      <div class="mds-skeleton-poster skeleton-bg"></div>\n      <div class="mds-skeleton-lines">\n        <div class="skeleton-text long skeleton-bg" style="height:18px;"></div>\n        <div class="skeleton-text short skeleton-bg"></div>\n      </div>\n    </div>\n    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>\n    <div class="skeleton-text long skeleton-bg"></div>\n    <div class="skeleton-text short skeleton-bg"></div>\n  '}function buildSeasonProgressionSection(e,t){const s=(e.seasons||[]).filter(e=>e.season_number>0&&e.episode_count>0);if(0===s.length)return"";const n=t?computeShowAverageScore(t):null;return`\n    <div class="mds-section mds-personal" style="animation-delay:.05s">\n      <div class="mds-section-title">Progression</div>\n      ${null!=n?`<div class="mds-personal-score">${n.toFixed(1)}/10 <span class="mds-personal-stars">note globale</span></div>`:'<div class="mds-row"><span class="mds-label">—</span><span>Pas encore notée</span></div>'}\n    </div>\n    <div class="mds-section" style="animation-delay:.08s">\n      <div class="mds-section-title">Détail par saison</div>\n      <div class="tds-season-progress-list">${s.map(s=>{const n=String(s.season_number),a=t?.seasons?.[n];let i;return i=a?.rating?`<span class="tds-season-status tds-season-rated">${a.rating.score}/10</span>`:a?`<span class="tds-season-status">${a.watchedEpisodes.length}/${a.totalEpisodes} ép.</span>`:'<span class="tds-season-status tds-season-untracked">Non suivie</span>',`\n      <details class="tds-season-details" data-season-number="${s.season_number}" data-episode-count="${s.episode_count}" data-season-name="${escAttr(s.name)}" data-season-poster="${escAttr(s.poster_path||e.poster_path||"")}">\n        <summary class="tds-season-progress-row">\n          <span>${escAttr(s.name)}</span>\n          ${i}\n        </summary>\n        <div class="tds-season-episodes" data-loaded="false"></div>\n      </details>\n    `}).join("")}</div>\n    </div>\n  `}function buildTdsContent(e,t){const s=tmdbImage(e.poster_path,"w342"),n=e.first_air_date?e.first_air_date.slice(0,4):"",a=(e.genres||[]).map(e=>e.name).join(", ");const i=(e.created_by||[]).map(function(e){return`<span class="mds-person-link" data-person-id="${e.id}" data-person-name="${escAttr(e.name)}">${escAttr(e.name)}</span>`}).join(", "),o=(e.credits?.cast||[]).slice(0,5).map(e=>escAttr(e.name)).join(", "),r=e.first_air_date?new Date(e.first_air_date+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}):"Inconnue",l={"Returning Series":"En cours",Ended:"Terminée",Canceled:"Annulée"}[e.status]||e.status||"Inconnu",c=(e.seasons||[]).filter(e=>e.season_number>0).length;return`\n    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${e.backdrop_path?`url('${tmdbImage(e.backdrop_path,"w780")}')`:"none"}">\n      <div class="mds-header-left">\n        <div class="mds-poster-wrap">\n          ${s?`<img class="mds-poster" src="${s}" alt="Affiche de ${escAttr(e.name)}" loading="lazy">`:`<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}\n          ${e.vote_average?`<div class="mds-score-stamp"><span class="mds-score-stamp-val">${e.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>`:""}\n        </div>\n        ${t?`<button type="button" class="mds-poster-change-btn" data-tv-poster-picker="${escAttr(String(e.id))}">Changer l'affiche</button>`:""}\n      </div>\n      <div class="mds-header-info">\n        <div class="mds-title" id="tds-title">${escAttr(e.name)}</div>\n        <div class="mds-meta">${[n,`${c} saison${c>1?"s":""}`,a].filter(Boolean).map(e=>`<span>${e}</span>`).join("")}</div>\n        <div class="mds-external-ratings" id="tds-external-ratings"></div>\n        ${i?`<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${i}</b></div>`:""}\n      </div>\n    </div>\n\n    ${t?"":`\n    <div class="mds-actions" style="animation-delay:.02s">\n      <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>\n    </div>\n    `}\n\n    ${buildSeasonProgressionSection(e,t)}\n\n    ${(()=>{const t=pickBestTrailer(e.videos?.results||[]);return t?`\n      <div class="mds-section" style="animation-delay:.12s">\n        <div class="mds-section-title">Bande-annonce</div>\n        <div class="mds-trailer-wrap" data-video-key="${t.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(e.name)}">\n          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${t.key}/hqdefault.jpg" alt="" loading="lazy">\n          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>\n        </div>\n      </div>`:""})()}\n\n    ${e.overview?`\n      <div class="mds-section" style="animation-delay:.15s">\n        <div class="mds-section-title">Synopsis</div>\n        <div class="mds-overview" id="tds-overview">${escAttr(e.overview)}</div>\n        <button type="button" class="mds-overview-toggle" id="tds-overview-toggle">Lire la suite ▾</button>\n      </div>`:""}\n\n    <div class="mds-section" style="animation-delay:.18s">\n      <div class="mds-section-title">Détails</div>\n      <div class="mds-row"><span class="mds-label">Première diffusion</span><span>${r}</span></div>\n      <div class="mds-row"><span class="mds-label">Statut</span><span>${escAttr(l)}</span></div>\n      ${o?`<div class="mds-row"><span class="mds-label">Avec</span><span>${o}</span></div>`:""}\n    </div>\n\n    ${(e.credits?.cast||[]).length>0?'\n      <div class="mds-section" style="animation-delay:.22s">\n        <div class="mds-section-title">Casting</div>\n        <div class="mds-cast-carousel" id="tds-cast-carousel"></div>\n      </div>':""}\n  `}async function populateTdsExternalRatings(e){const t=document.getElementById("tds-external-ratings");if(t&&e)try{const s=await fetch(`/api/search?imdbId=${e}`),n=(await readApiJson(s)).ratings||[];if(0===n.length)return;const a={"Internet Movie Database":"IMDb","Rotten Tomatoes":"RT",Metacritic:"Metacritic"};t.innerHTML=n.filter(e=>a[e.Source]).map(e=>`<span class="mds-external-rating"><b>${a[e.Source]}</b> ${escAttr(e.Value)}</span>`).join("")}catch{}}function setupTdsOverviewToggle(){const e=document.getElementById("tds-overview"),t=document.getElementById("tds-overview-toggle");e&&t&&requestAnimationFrame(()=>{e.scrollHeight<=e.clientHeight+2&&(t.style.display="none")})}function renderTdsCastCarousel(e){const t=document.getElementById("tds-cast-carousel");if(!t)return;const s=e.filter(e=>e.id).slice(0,20);if(0===s.length)return;const n=s.map(e=>{const t=tmdbImage(e.profile_path,"w185");return`\n      <div class="mds-cast-item" data-person-id="${e.id}" data-person-name="${escAttr(e.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(e.name)}">\n        ${t?`<img class="mds-cast-photo" src="${t}" alt="Photo de ${escAttr(e.name)}" loading="lazy">`:`<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}\n        <div class="mds-cast-name">${escAttr(e.name)}</div>\n        ${e.character?`<div class="mds-cast-character">${escAttr(e.character)}</div>`:""}\n      </div>`}).join("");t.innerHTML=`<div class="mds-cast-track">${n}${n}</div>`;const a=t.querySelector(".mds-cast-track");t.addEventListener("click",e=>{const t=e.target.closest(".mds-cast-item");t&&openPersonDetailSheet(t.dataset.personId,t.dataset.personName)});let i=!1,o=null;function r(){i=!0,clearTimeout(o),o=setTimeout(()=>{i=!1},3e3)}requestAnimationFrame(function e(){if(!i&&tdsEl.classList.contains("open")){t.scrollLeft+=.3;const e=a.scrollWidth/2;e>0&&t.scrollLeft>=e&&(t.scrollLeft-=e)}tdsEl.classList.contains("open")&&requestAnimationFrame(e)}),t.addEventListener("touchstart",e=>{e.stopPropagation(),r()},{passive:!0}),t.addEventListener("touchmove",e=>{e.stopPropagation(),r()},{passive:!0}),t.addEventListener("wheel",r,{passive:!0}),t.addEventListener("scroll",r,{passive:!0})}function applyChosenTvPoster(e,t){const s=loadTvShows(),n=s.find(t=>String(t.tmdbTvId)===String(e));return n?(n.poster_path=t,saveTvShows(s),1):0}tdsContentEl.addEventListener("click",e=>{const t=e.target.closest(".mds-trailer-wrap");if(!t||t.querySelector("iframe"))return;const s=t.dataset.videoKey;t.innerHTML=`<iframe class="mds-trailer" src="https://www.youtube.com/embed/${s}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`});let tdsCurrentData=null;async function openTvDetailSheet(e){if(!e)return;lastFocusedBeforeModal=document.activeElement,tdsContentEl.innerHTML=buildTdsSkeleton(),tdsEl.classList.add("open"),tdsCloseBtn.focus();const t=tdsEl.querySelector(".mds-box");t&&(t.scrollTop=0);try{const t=await fetch(`/api/search?tvId=${e}`);if(!t.ok)throw new Error("bad status");const s=await readApiJson(t);if(!s||!s.name)throw new Error("no data");const n=loadTvShows().find(t=>String(t.tmdbTvId)===String(e));tdsContentEl.innerHTML=buildTdsContent(s,n),tdsCurrentData=s,renderTdsCastCarousel(s.credits?.cast||[]);applyPosterAccent(tmdbImage(s.poster_path,"w342"),tdsEl.querySelector(".mds-box")),setupTdsOverviewToggle(),setupStickyHeader(tdsEl),s.external_ids?.imdb_id&&populateTdsExternalRatings(s.external_ids.imdb_id),wireSeasonDetailsToggles()}catch(t){tdsCurrentData=null,tdsContentEl.innerHTML=`\n      <div class="error-state">\n        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>\n        <div class="error-state-msg">Impossible de charger les détails de la série. Vérifie ta connexion.</div>\n        <button type="button" class="error-retry-btn" data-retry-tv-id="${escAttr(String(e))}">Réessayer</button>\n      </div>`}}function wireSeasonDetailsToggles(){tdsContentEl.querySelectorAll(".tds-season-details").forEach(e=>{e.addEventListener("toggle",()=>{if(!e.open)return;const t=e.querySelector(".tds-season-episodes");"true"!==t.dataset.loaded&&loadAndRenderSeasonEpisodes(e,t)})})}async function loadAndRenderSeasonEpisodes(e,t){const s=tdsCurrentData.id,n=e.dataset.seasonNumber;t.innerHTML='<div class="search-status" style="display:block;">Chargement des épisodes…</div>';try{const a=(await fetch(`/api/search?tvSeasonShowId=${s}&tvSeasonNumber=${n}`).then(readApiJson)).episodes||[];if(0===a.length)return void(t.innerHTML='<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>');renderTdsEpisodeChecklist(t,s,String(n),e.dataset.seasonName,a),t.dataset.loaded="true"}catch(e){t.innerHTML=`<div class="search-status" style="display:block;">${escAttr(describeApiFailure(e))}</div>`}}function renderTdsEpisodeChecklist(e,t,s,n,a){const i=loadTvShows().find(e=>String(e.tmdbTvId)===String(t)),o=i?.seasons?.[s],r=o?o.watchedEpisodes:[],l=a.map(e=>{const t=r.includes(e.episode_number),s=[e.air_date?new Date(e.air_date).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}):"",e.runtime?`${e.runtime} min`:""].filter(Boolean).join(" · ");return`\n      <div class="tv-episode-row" data-episode="${e.episode_number}">\n        <button type="button" class="tv-episode-check${t?" watched":""}" data-episode="${e.episode_number}" aria-pressed="${t}" aria-label="Marquer l'épisode ${e.episode_number} comme ${t?"non vu":"vu"}">\n          <svg class="tv-episode-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>\n        </button>\n        <div class="tv-episode-info">\n          <div class="tv-episode-title">${e.episode_number}. ${escAttr(e.name||"Sans titre")}</div>\n          ${s?`<div class="tv-episode-meta">${escAttr(s)}</div>`:""}\n        </div>\n      </div>\n    `}).join("");e.innerHTML=`\n    <div class="tds-episode-list">${l}</div>\n    <button type="button" class="mds-action-btn primary tds-rate-now-btn" style="display:none;" data-show-id="${t}" data-season-key="${s}">Noter cette saison</button>\n  `,e.querySelectorAll(".tv-episode-check").forEach(i=>{i.addEventListener("click",()=>onTdsEpisodeCheckClick(t,s,n,a.length,Number(i.dataset.episode),e))}),updateTdsRateButtonVisibility(e,t,s)}function onTdsEpisodeCheckClick(e,t,s,n,a,i){const o=loadTvShows(),r=o.find(t=>String(t.tmdbTvId)===String(e));if(!r)return;r.seasons[t]||(r.seasons[t]={seasonName:s,watchedEpisodes:[],totalEpisodes:n});const l=r.seasons[t],c=l.watchedEpisodes.includes(a),d=(e,t)=>{const s=i.querySelector(`.tv-episode-check[data-episode="${e}"]`);s&&(s.classList.toggle("watched",t),s.setAttribute("aria-pressed",String(t)))};if(c)return l.watchedEpisodes=l.watchedEpisodes.filter(e=>e!==a),saveTvShows(o),d(a,!1),updateTdsRateButtonVisibility(i,e,t),updateSeasonProgressRowStatus(e,t),void(void 0!==statsDirty&&(statsDirty=!0));const u=l.watchedEpisodes.length?Math.max(...l.watchedEpisodes):0,m=s=>{for(const e of s)l.watchedEpisodes.includes(e)||l.watchedEpisodes.push(e);saveTvShows(o);for(const e of s)d(e,!0);updateTdsRateButtonVisibility(i,e,t),updateSeasonProgressRowStatus(e,t),void 0!==statsDirty&&(statsDirty=!0)};if(a>u+1){const e=u+1,t=[];if(confirm(`Marquer aussi les épisodes ${e} à ${a-1} comme vus ?`))for(let s=e;s<=a;s++)t.push(s);else t.push(a);m(t)}else m([a])}function updateTdsRateButtonVisibility(e,t,s){const n=loadTvShows().find(e=>String(e.tmdbTvId)===String(t)),a=n?.seasons?.[s],i=e.querySelector(".tds-rate-now-btn");if(!i||!a)return;const o=a.totalEpisodes>0&&a.watchedEpisodes.length>=a.totalEpisodes;i.style.display=o?"block":"none"}function updateSeasonProgressRowStatus(e,t){const s=loadTvShows().find(t=>String(t.tmdbTvId)===String(e)),n=s?.seasons?.[t];if(!n||n.rating)return;const a=tdsContentEl.querySelector(`.tds-season-details[data-season-number="${t}"]`),i=a?.querySelector(".tds-season-status");i&&(i.textContent=`${n.watchedEpisodes.length}/${n.totalEpisodes} ép.`)}function closeTvDetailSheet(){closeModal(tdsEl)}tdsCloseBtn.addEventListener("click",closeTvDetailSheet),tdsEl.addEventListener("click",e=>{if(e.target===tdsEl)return void closeTvDetailSheet();const t=e.target.closest(".mds-person-link");if(t)return void openPersonDetailSheet(t.dataset.personId,t.dataset.personName);const s=e.target.closest("[data-retry-tv-id]");if(s)return void openTvDetailSheet(s.dataset.retryTvId);const n=e.target.closest(".mds-poster-change-btn[data-tv-poster-picker]");if(n)return void openPosterPicker(n.dataset.tvPosterPicker,"tv");if(e.target.closest("#tds-start-btn")){const e=tdsCurrentData;if(!e)return;const t=(e.seasons||[]).filter(e=>e.season_number>0&&e.episode_count>0).sort((e,t)=>e.season_number-t.season_number)[0];if(!t)return;const s=loadTvShows();let n=s.find(t=>String(t.tmdbTvId)===String(e.id));if(!n){const t=(e.genres||[]).map(e=>e.name).join(", ");n={tmdbTvId:e.id,title:e.name,poster_path:e.poster_path,genre:t,seasons:{}},s.push(n)}const a=String(t.season_number);return n.seasons[a]||(n.seasons[a]={seasonName:t.name,watchedEpisodes:[],totalEpisodes:t.episode_count}),saveTvShows(s),showToast(`"${e.name} — ${t.name}" ajoutée à En cours`),"function"==typeof renderTvContinueList&&renderTvContinueList(),void openTvDetailSheet(e.id)}const a=e.target.closest(".tds-rate-now-btn");if(a&&tdsCurrentData){const e=a.dataset.showId,t=a.dataset.seasonKey,s=loadTvShows().find(t=>String(t.tmdbTvId)===String(e));if(s&&s.seasons[t]){const e=s.seasons[t];closeTvDetailSheet(),switchMobileNav("rating"),setMediaType("tv"),selectedShow={id:s.tmdbTvId,name:s.title,poster_path:s.poster_path},document.getElementById("tv-search").value=s.title,document.getElementById("tv-season-picker").style.display="none",selectSeason({number:t,name:e.seasonName,episodeCount:e.totalEpisodes,poster:s.poster_path})}return}}),initSwipeToClose(tdsEl,closeTvDetailSheet);
+// ⚠️ FICHIER GÉNÉRÉ AUTOMATIQUEMENT — NE PAS ÉDITER DIRECTEMENT.
+// Modifie les fichiers dans src/, puis lance `npm run build`.
+// Assemblé depuis : 00-pwa.js, 00a-migrations.js, 00b-icons.js, 00c-poster-color.js, 00d-error-log.js, 00e-feature-flags.js, 00f-curated-lists-data.js, 01-navigation.js, 02-theme.js, 03-foundation.js, 03b-pure-logic.js, 04-search.js, 05-rating-form.js, 06a-history-list.js, 06b-history-actions.js, 06c-profile-stats.js, 06d-profile-share-cards.js, 07-data-io.js, 08-watchlist.js, 09-modal-init.js, 10-cloud-sync.js, 11-discover.js, 12-movie-detail.js, 13-duels.js, 15-curated-lists.js, 16-blind-spots.js, 17-film-analysis.js, 18-tv-shows.js, 19-tv-detail.js
+
+// ═══════════════════════════════════════════
+//  PWA : enregistrement du service worker
+// ═══════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((registration) => {
+      // Détecte une NOUVELLE version qui vient de s'installer (pas la toute
+      // première installation — on ne veut prévenir que d'un vrai changement
+      // de contenu par rapport à ce que l'utilisateur a déjà ouvert).
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            const banner = document.getElementById('update-banner');
+            if (banner) banner.classList.add('show');
+          }
+        });
+      });
+    }).catch(() => {
+      // Échec silencieux : l'app reste 100% fonctionnelle sans service worker,
+      // seul l'usage hors-ligne / l'installation ne sera pas dispo.
+    });
+  });
+}
+
+document.getElementById('update-banner-reload-btn')?.addEventListener('click', () => {
+  window.location.reload();
+});
+
+// ── Indicateur hors-ligne ──
+// L'app fonctionne largement sans réseau (historique, watchlist, duels,
+// stats : tout est local) — seuls TMDb et le quiz en dépendent. Un badge
+// discret l'indique plutôt que de laisser les recherches échouer sans
+// explication. Créé une fois, simplement montré/caché ensuite.
+(function initOfflineIndicator() {
+  const badge = document.createElement('div');
+  badge.id = 'offline-badge';
+  badge.className = 'offline-badge';
+  badge.setAttribute('role', 'status');
+  badge.textContent = 'Hors-ligne — tes données restent disponibles';
+  document.body.appendChild(badge);
+
+  function update() {
+    badge.classList.toggle('visible', !navigator.onLine);
+  }
+  window.addEventListener('online', update);
+  window.addEventListener('offline', update);
+  update();
+})();
+
+// ═══════════════════════════════════════════
+//  MIGRATIONS DE SCHÉMA
+// ═══════════════════════════════════════════
+// Les données vivent dans localStorage sans serveur pour les faire évoluer :
+// quand la FORME d'un item change (nouveau champ obligatoire, renommage...),
+// les données déjà en place chez l'utilisateur doivent être mises à niveau au
+// chargement, sinon le code qui suppose la nouvelle forme casse.
+//
+// Principes de sécurité, dans l'ordre d'importance :
+// 1. NON DESTRUCTIF EN CAS D'ÉCHEC : si une migration lève une erreur, on
+//    s'arrête, on ne sauvegarde rien de partiel, et la version stockée reste
+//    celle de la dernière migration réussie — l'app tourne avec les données
+//    telles quelles plutôt que de risquer de les corrompre.
+// 2. SAUVEGARDE PRÉ-MIGRATION : avant toute chaîne de migrations, une copie de
+//    l'historique (la donnée critique) est posée dans une clé dédiée, écrasée
+//    à chaque nouvelle chaîne — un filet de dernier recours.
+// 3. MIGRATIONS IDEMPOTENTES : chaque étape peut être rejouée sans effet
+//    (propriété vérifiée par les tests) — protège contre les doubles exécutions.
+//
+// Ce fichier est nommé 00a-* pour s'exécuter AVANT tout code qui lit les
+// données (concaténation alphabétique du build). Les clés sont en littéraux
+// ici (pas STORE_KEY) : les const des fichiers suivants n'existent pas encore
+// à cet instant de l'exécution (zone morte temporelle).
+
+(function runSchemaMigrations() {
+  const VERSION_KEY = 'lbx_schema_version';
+  const HISTORY_KEY = 'lbx_v2'; // = STORE_KEY de 03-foundation.js
+  const BACKUP_KEY = 'lbx_pre_migration_backup';
+
+  // Chaque migration : { to: <version cible>, up: () => void }.
+  // Elles s'exécutent en séquence depuis la version stockée.
+  const MIGRATIONS = [
+    {
+      to: 2,
+      up: () => {
+        // v2 : normalise chaque item d'historique (savedAt, values, title
+        // garantis) — voir normalizeHistoryItemV2 dans 03b-pure-logic.js.
+        // Ce fichier s'exécute avant 03b : la fonction est disponible quand
+        // même car les DÉCLARATIONS de fonctions du script concaténé sont
+        // hissées avant toute exécution.
+        const raw = localStorage.getItem(HISTORY_KEY);
+        if (!raw) return;
+        const history = JSON.parse(raw);
+        if (!Array.isArray(history)) return;
+        const migrated = history.map(normalizeHistoryItemV2);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
+      },
+    },
+  ];
+
+  const CURRENT_VERSION = MIGRATIONS.length > 0 ? MIGRATIONS[MIGRATIONS.length - 1].to : 1;
+
+  let stored;
+  try { stored = parseInt(localStorage.getItem(VERSION_KEY), 10); } catch { stored = NaN; }
+  if (isNaN(stored)) stored = 1; // données d'avant le versioning = baseline v1
+
+  if (stored >= CURRENT_VERSION) return; // à jour, rien à faire
+
+  // Filet de dernier recours : copie de l'historique avant la chaîne
+  try {
+    const current = localStorage.getItem(HISTORY_KEY);
+    if (current) {
+      localStorage.setItem(BACKUP_KEY, JSON.stringify({ fromVersion: stored, at: new Date().toISOString(), history: current }));
+    }
+  } catch { /* le quota peut refuser la copie : la migration reste tentée */ }
+
+  for (const migration of MIGRATIONS) {
+    if (migration.to <= stored) continue;
+    try {
+      migration.up();
+      stored = migration.to;
+      localStorage.setItem(VERSION_KEY, String(stored));
+    } catch (e) {
+      // Échec : on s'arrête là, version inchangée depuis la dernière réussite,
+      // données intactes. L'app fonctionne avec l'ancien schéma.
+      console.error(`Migration vers v${migration.to} échouée (données intactes) :`, e);
+      break;
+    }
+  }
+})();
+
+// ═══════════════════════════════════════════
+//  BIBLIOTHÈQUE D'ICÔNES SVG (remplace les emoji de l'interface)
+// ═══════════════════════════════════════════
+// Icônes en traits fins (style "line icon"), en `currentColor` : elles héritent
+// automatiquement la couleur du texte environnant, donc s'adaptent au thème
+// actif sans configuration supplémentaire. L'épaisseur du trait elle-même
+// est pilotée par la variable CSS --icon-stroke (définie par thème dans
+// styles.css), pour que chaque thème garde une identité de trait différente
+// (ex: traits plus fins et élégants pour Wes Anderson, plus épais et
+// tranchants pour Scuderia) sans dupliquer les SVG eux-mêmes.
+//
+// Usage : ICONS.trash, ICONS.heart, etc. — chaîne de balisage SVG prête à
+// insérer dans un template literal (voir 06-history.js, 08-watchlist.js...).
+// Pour le HTML statique (index.html), les mêmes icônes sont recopiées
+// directement dans le balisage (pas de dépendance à l'exécution du JS).
+
+const ICON_ATTRS = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"';
+
+const ICONS = {
+  settings: `<svg ${ICON_ATTRS}><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="7" cy="18" r="2" fill="currentColor" stroke="none"/></svg>`,
+
+  exportIcon: `<svg ${ICON_ATTRS}><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,
+
+  importIcon: `<svg ${ICON_ATTRS}><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>`,
+
+  plus: `<svg ${ICON_ATTRS}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+
+  heart: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`,
+
+
+  search: `<svg ${ICON_ATTRS}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+
+  barChart: `<svg ${ICON_ATTRS}><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg>`,
+
+  target: `<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>`,
+
+  flame: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2c1 3-2 4-2 7a3 3 0 0 0 6 0c0-1-.5-2-1-3 2 1 4 4 4 7a7 7 0 0 1-14 0c0-4 3-6 4-8 .5-1 .5-2 0-3 1 0 2.5 0 3 0z"/></svg>`,
+  medal: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M7 2h4l1.5 4L14 2h4l-3.6 7.2a6 6 0 1 1-4.8 0L7 2z" opacity="0.55"/><circle cx="12" cy="15" r="5.4"/><circle cx="12" cy="15" r="3" fill="#fff" opacity="0.28"/></svg>`,
+
+  clapper: `<svg ${ICON_ATTRS}><path d="M3 8l1.5-3h4L7 8"/><path d="M8.5 8l1.5-3h4l-1.5 3"/><path d="M14 8l1.5-3h4l-1.5 3"/><rect x="3" y="8" width="18" height="12" rx="1"/></svg>`,
+  lightbulb: `<svg ${ICON_ATTRS}><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2.05V17h6v-2.25c0-.85.4-1.55 1-2.05A7 7 0 0 0 12 2z"/></svg>`,
+
+  copy: `<svg ${ICON_ATTRS}><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>`,
+
+  refresh: `<svg ${ICON_ATTRS}><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></svg>`,
+
+  trash: `<svg ${ICON_ATTRS}><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6"/><line x1="10" y1="11" x2="10" y2="16"/><line x1="14" y1="11" x2="14" y2="16"/></svg>`,
+
+  palette: `<svg ${ICON_ATTRS}><path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.9-.5-1.4 0-1.1.9-2 2-2h2.3c1.8 0 3.2-1.4 3.2-3.2C21 6.6 17 2 12 2z"/><circle cx="7" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="9" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="17" cy="12" r="1.1" fill="currentColor" stroke="none"/></svg>`,
+
+  cloud: `<svg ${ICON_ATTRS}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>`,
+
+  moon: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>`,
+
+  edit: `<svg ${ICON_ATTRS}><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`,
+
+  check: `<svg ${ICON_ATTRS}><polyline points="20 6 9 17 4 12"/></svg>`,
+
+  close: `<svg ${ICON_ATTRS}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+
+  pause: `<svg ${ICON_ATTRS}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`,
+
+  play: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg>`,
+
+  star: `<svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>`,
+
+  popcorn: `<svg ${ICON_ATTRS}><path d="M6 8h12l-1.4 12.1a1 1 0 0 1-1 .9H8.4a1 1 0 0 1-1-.9L6 8z"/><path d="M9 8v13M12 8v13M15 8v13"/><path d="M5 8a2 2 0 0 1 2-3h10a2 2 0 0 1 2 3"/></svg>`,
+
+  sofa: `<svg ${ICON_ATTRS}><path d="M5 12a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3H5v-3z"/><path d="M4 15v4M20 15v4"/><path d="M6 10V8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/></svg>`,
+
+  // ── Thèmes Découvrir (remplacent les emoji, cohérence avec le reste de
+  //    l'app) : voir 00f-curated-lists-data.js pour l'association thème → icône.
+  moneyBag: `<svg ${ICON_ATTRS}><path d="M9 6a3 3 0 0 1 6 0"/><path d="M6.5 6h11l1.3 11a2 2 0 0 1-2 2.2H7.2a2 2 0 0 1-2-2.2L6.5 6z"/><line x1="12" y1="10" x2="12" y2="15"/></svg>`,
+  timeLoop: `<svg ${ICON_ATTRS}><circle cx="12" cy="13" r="7"/><path d="M12 9v4l3 2"/><path d="M9 2l3 3 3-3"/></svg>`,
+  sword: `<svg ${ICON_ATTRS}><line x1="5" y1="19" x2="19" y2="5"/><line x1="14" y1="8" x2="17" y2="11"/><line x1="4" y1="20" x2="6" y2="18"/></svg>`,
+  sprout: `<svg ${ICON_ATTRS}><path d="M12 22v-9"/><path d="M12 13c0-4-3-6-7-6 0 4 3 6 7 6z"/><path d="M12 9c0-3 2-5 6-5 0 3-2 5-6 5z"/></svg>`,
+  compass: `<svg ${ICON_ATTRS}><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>`,
+  road: `<svg ${ICON_ATTRS}><path d="M9 3L5 21"/><path d="M15 3l4 18"/><line x1="12" y1="5" x2="12" y2="8"/><line x1="12" y1="11" x2="12" y2="14"/><line x1="12" y1="17" x2="12" y2="20"/></svg>`,
+  hauntedHouse: `<svg ${ICON_ATTRS}><path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5a2 2 0 0 1 4 0v5"/><circle cx="9" cy="14" r="0.7" fill="currentColor" stroke="none"/><circle cx="15" cy="14" r="0.7" fill="currentColor" stroke="none"/></svg>`,
+  skyline: `<svg ${ICON_ATTRS}><rect x="3" y="10" width="4" height="11"/><rect x="9" y="5" width="4" height="16"/><rect x="15" y="13" width="4" height="8"/></svg>`,
+};
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ICONS };
+}
+
+// ═══════════════════════════════════════════
+//  EXTRACTION DE COULEUR DOMINANTE (thème "Moderne")
+// ═══════════════════════════════════════════
+// Implémentation "maison" légère (pas de librairie externe type Color Thief) :
+// charge l'affiche dans une image SÉPARÉE et invisible (jamais la balise <img>
+// réellement affichée à l'écran — celle-ci n'est jamais touchée, aucun risque
+// pour son affichage normal), l'échantillonne sur un petit canvas hors-écran
+// et moyenne les couleurs (en ignorant les pixels quasi blancs/noirs, souvent
+// des bordures ou du texte, pour ne pas biaiser la moyenne). Donne à chaque
+// carte un accent visuel tiré de sa propre affiche — signature du thème
+// "L'Affiche d'Art Moderne". Se dégrade silencieusement (aucune erreur
+// visible) en cas de restriction CORS ou toute autre erreur : la carte garde
+// alors simplement la couleur d'accent par défaut du thème.
+// Cache en mémoire (URL -> couleur, ou null si l'extraction a échoué) : sans
+// lui, la MÊME affiche serait ré-analysée (chargement d'image + dessin canvas
+// + boucle sur les pixels) à chaque nouveau rendu de la liste — y compris pour
+// des films dont l'affiche n'a pas changé, juste parce qu'un AUTRE film de la
+// liste a été modifié/supprimé (ce qui redessine tout). Un vrai coût de
+// performance répété inutilement, maintenant évité.
+const posterAccentCache = new Map();
+
+function extractPosterAccentColorFromUrl(url) {
+  if (posterAccentCache.has(url)) return Promise.resolve(posterAccentCache.get(url));
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const size = 24;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, size, size);
+          const { data } = ctx.getImageData(0, 0, size, size);
+
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 4) {
+            const lum = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            if (lum < 15 || lum > 245) continue;
+            r += data[i]; g += data[i + 1]; b += data[i + 2];
+            count++;
+          }
+          const color = count === 0 ? null : `rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`;
+          posterAccentCache.set(url, color);
+          resolve(color);
+        } catch (e) {
+          posterAccentCache.set(url, null); // canvas "tainted" (CORS) : dégradation silencieuse
+          resolve(null);
+        }
+      };
+      img.onerror = () => { posterAccentCache.set(url, null); resolve(null); };
+      img.src = url;
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+
+// N'agit que pour le thème "moderne" — ailleurs, l'extraction ne servirait à
+// rien et coûterait du temps de traitement pour rien à chaque affiche chargée.
+function applyPosterAccent(posterUrl, cardEl) {
+  if (!posterUrl || !cardEl || document.documentElement.dataset.theme !== 'moderne') return;
+  extractPosterAccentColorFromUrl(posterUrl).then(color => {
+    if (color) cardEl.style.setProperty('--poster-accent', color);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  JOURNAL D'ERREURS (filet de sécurité)
+// ═══════════════════════════════════════════
+// Jusqu'ici, une erreur JS imprévue (chemin de code non couvert par les
+// tests, bug d'un futur changement...) échouait silencieusement : écran figé
+// ou partiellement cassé, et RIEN n'était jamais visible nulle part — ni pour
+// l'utilisateur, ni pour un développeur qui voudrait corriger ensuite.
+//
+// Ce module ne fait QUE deux choses, volontairement peu ambitieuses :
+// 1. Journaliser localement les erreurs (petit tampon circulaire, jamais les
+//    données de films — uniquement des messages techniques et une pile
+//    d'appels), consultable/exportable depuis Réglages.
+// 2. Prévenir une fois, discrètement (pas de rechargement automatique, pas de
+//    tentative de "réparation" — trop risqué, pourrait perdre des données non
+//    sauvegardées ; la personne reste maître de ce qu'elle fait ensuite).
+//
+// Ce N'EST PAS un système de télémétrie : rien ne quitte l'appareil tant que
+// l'utilisateur ne choisit pas explicitement de copier/partager le journal.
+
+const ERROR_LOG_KEY = 'lbx_error_log';
+const ERROR_LOG_MAX = 20; // tampon circulaire : les plus anciennes sortent
+
+function loadErrorLog() {
+  try { return JSON.parse(localStorage.getItem(ERROR_LOG_KEY)) || []; }
+  catch { return []; }
+}
+
+function logClientError(entry) {
+  try {
+    const log = loadErrorLog();
+    log.push({ ...entry, at: new Date().toISOString() });
+    while (log.length > ERROR_LOG_MAX) log.shift();
+    localStorage.setItem(ERROR_LOG_KEY, JSON.stringify(log));
+  } catch {
+    // localStorage plein/inaccessible : on abandonne la journalisation plutôt
+    // que de risquer une boucle (une erreur DANS le gestionnaire d'erreurs
+    // serait le pire des scénarios).
+  }
+  notifyOnce();
+}
+
+// Un seul avertissement par session, même si plusieurs erreurs surviennent en
+// cascade (une erreur en entraîne souvent d'autres) — jamais un flot de toasts.
+let notified = false;
+function notifyOnce() {
+  if (notified) return;
+  notified = true;
+  // Différé : si l'erreur survient tout au début du chargement, showToast /
+  // le DOM du toast peuvent ne pas encore être prêts.
+  setTimeout(() => {
+    try {
+      if (typeof showToast === 'function') {
+        showToast("Un problème technique est survenu. Tes données sont saines — voir Réglages pour le signaler.");
+      }
+      const section = document.getElementById('error-log-section');
+      if (section) section.style.display = 'block';
+    } catch { /* le toast lui-même ne doit jamais faire planter la page */ }
+  }, 300);
+}
+
+window.addEventListener('error', (e) => {
+  logClientError({
+    type: 'error',
+    message: e.message || String(e.error),
+    stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 2000) : '',
+    source: e.filename ? `${e.filename}:${e.lineno}:${e.colno}` : '',
+  });
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+  const reason = e.reason;
+  logClientError({
+    type: 'unhandledrejection',
+    message: reason && reason.message ? reason.message : String(reason),
+    stack: reason && reason.stack ? String(reason.stack).slice(0, 2000) : '',
+    source: '',
+  });
+});
+
+// Affichage/export depuis Réglages (voir index.html #error-log-section) :
+// affiche la section si un journal existe déjà (rouvrir Réglages après coup),
+// et copie un résumé texte dans le presse-papiers pour signalement facile.
+function initErrorLogUI() {
+  const section = document.getElementById('error-log-section');
+  const copyBtn = document.getElementById('error-log-copy-btn');
+  if (!section || !copyBtn) return;
+
+  if (loadErrorLog().length > 0) section.style.display = 'block';
+
+  copyBtn.addEventListener('click', async () => {
+    const log = loadErrorLog();
+    const text = log.map(e => `[${e.at}] ${e.type}: ${e.message}${e.source ? ' (' + e.source + ')' : ''}`).join('\n')
+      || 'Aucune erreur journalisée.';
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Journal copié dans le presse-papiers.');
+    } catch {
+      showToast('Impossible de copier automatiquement — le journal reste visible dans les données du site.');
+    }
+  });
+}
+document.addEventListener('DOMContentLoaded', initErrorLogUI);
+
+// ═══════════════════════════════════════════
+//  FONCTIONNALITÉS ACTIVABLES/DÉSACTIVABLES
+// ═══════════════════════════════════════════
+// Purement de l'affichage : désactiver une fonctionnalité masque sa section,
+// mais ne touche JAMAIS aux données sous-jacentes (le classement de duels
+// existant reste intact si on coupe les Duels, par exemple — la case à
+// cocher "Réinitialiser les duels" dans Réglages est une action séparée et
+// explicite pour ça).
+
+const FEATURES_KEY = 'lbx_features';
+const FEATURE_DEFAULTS = { duels: true, quiz: true, trending: true, discoverRecs: true, guessGame: true, onThisDay: true, themeExplorer: true, blindSpots: true, curatedShortcut: true };
+
+function loadFeatureFlags() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(FEATURES_KEY)) || {};
+    return { ...FEATURE_DEFAULTS, ...stored }; // les clés absentes retombent sur "activé"
+  } catch {
+    return { ...FEATURE_DEFAULTS };
+  }
+}
+
+function saveFeatureFlags(flags) {
+  localStorage.setItem(FEATURES_KEY, JSON.stringify(flags));
+}
+
+// Applique l'état actuel des bascules à l'interface : masque/affiche chaque
+// section concernée. Appelé au chargement ET à chaque changement dans
+// Réglages — jamais besoin de recharger la page pour qu'un changement prenne effet.
+//
+// IMPORTANT : cette fonction ne fait QUE montrer/cacher des conteneurs déjà
+// en place, elle ne déclenche JAMAIS elle-même un chargement de contenu
+// (renderDuel/loadDailyQuiz/loadTrendingCarousel restent uniquement
+// déclenchés par la navigation vers Découvrir, voir 01-navigation.js). Les
+// appeler ici, sans condition d'onglet, créait des éléments .duel-side
+// cachés (le Duel du jour se rendait même en restant sur Profil) qui
+// entraient en collision avec le même sélecteur utilisé ailleurs.
+function applyFeatureFlags() {
+  const flags = loadFeatureFlags();
+
+  const duelsCard = document.getElementById('duels-card');
+  if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
+  // L'arène vit désormais dans Découvrir (déplacée depuis Profil, qui ne
+  // garde que le classement) — c'est elle qu'il faut masquer, pas l'ancien
+  // "daily-duel-wrap" qui n'existe plus depuis cette réorganisation (résidu
+  // de migration jamais mis à jour ici : la bascule "Duels" ne masquait donc
+  // plus vraiment l'arène, seulement le classement dans Profil).
+  const duelArenaWrap = document.getElementById('duel-arena-wrap');
+  if (duelArenaWrap) duelArenaWrap.style.display = flags.duels ? '' : 'none';
+
+  const quizWrap = document.getElementById('quiz-wrap');
+  if (quizWrap && !flags.quiz) quizWrap.style.display = 'none';
+
+  const trendingWrap = document.getElementById('trending-carousel-wrap');
+  if (trendingWrap && !flags.trending) trendingWrap.style.display = 'none';
+
+  const discoverTinder = document.querySelector('.discover-section-tinder');
+  if (discoverTinder) discoverTinder.style.display = flags.discoverRecs ? '' : 'none';
+
+  // "Ce jour-là" et "D'après tes goûts" masquent déjà leur section par
+  // défaut tant qu'aucun contenu n'est trouvé (voir loadOnThisDay/
+  // renderBlindSpotsSection) — la bascule ne force donc que le MASQUAGE,
+  // jamais l'affichage (sinon on risquerait de montrer un encart vide sur
+  // un jour sans anniversaire, ou avant que l'agrégation des goûts soit
+  // faite), même schéma asymétrique que Quiz/Tendances.
+  const onThisDayWrap = document.getElementById('on-this-day-wrap');
+  if (onThisDayWrap && !flags.onThisDay) onThisDayWrap.style.display = 'none';
+  const blindSpotsWrap = document.getElementById('blind-spots-wrap');
+  if (blindSpotsWrap && !flags.blindSpots) blindSpotsWrap.style.display = 'none';
+
+  // "Explorer par thème" et le raccourci "Classiques à explorer" sont
+  // toujours visibles dès leur premier rendu (pas de dépendance à des
+  // données qui arrivent après coup) — bascule symétrique, comme Duels.
+  const themeExplorerWrap = document.getElementById('theme-explorer-wrap');
+  if (themeExplorerWrap) themeExplorerWrap.style.display = flags.themeExplorer ? '' : 'none';
+  const curatedShortcutWrap = document.getElementById('curated-lists-shortcut-wrap');
+  if (curatedShortcutWrap) curatedShortcutWrap.style.display = flags.curatedShortcut ? '' : 'none';
+}
+
+// Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
+// Réglages — action explicite déclenchée par le changement de bascule
+// uniquement, jamais au chargement de page (voir le commentaire ci-dessus).
+function reloadReenabledFeature(key) {
+  // renderDuel (pas "renderDailyDuel", qui n'existe plus depuis que l'arène
+  // a été déplacée vers Découvrir — résidu de migration jamais mis à jour :
+  // réactiver "Duels" depuis Réglages ne rechargeait donc jamais l'arène).
+  if (key === 'duels' && typeof renderDuel === 'function') renderDuel();
+  if (key === 'quiz' && typeof loadDailyQuiz === 'function') loadDailyQuiz();
+  if (key === 'trending' && typeof loadTrendingCarousel === 'function') loadTrendingCarousel();
+  if (key === 'onThisDay' && typeof loadOnThisDay === 'function') loadOnThisDay();
+  if (key === 'blindSpots' && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
+  // themeExplorer/curatedShortcut : contenu statique déjà rendu au premier
+  // chargement de Découvrir (pas de données à recharger), applyFeatureFlags
+  // suffit à les réafficher.
+  // discoverRecs : la pile existante réapparaît simplement avec applyFeatureFlags
+  // (son contenu n'a jamais été détruit, juste masqué) — rien à recharger.
+}
+
+// Réglages : lit l'état actuel à l'ouverture, sauvegarde à chaque bascule.
+function initFeatureToggleUI() {
+  const map = {
+    'setting-feature-duels': 'duels',
+    'setting-feature-quiz': 'quiz',
+    'setting-feature-trending': 'trending',
+    'setting-feature-discover-recs': 'discoverRecs',
+    'setting-feature-guess-game': 'guessGame',
+    'setting-feature-on-this-day': 'onThisDay',
+    'setting-feature-theme-explorer': 'themeExplorer',
+    'setting-feature-blind-spots': 'blindSpots',
+    'setting-feature-curated-shortcut': 'curatedShortcut',
+  };
+  const flags = loadFeatureFlags();
+  for (const [id, key] of Object.entries(map)) {
+    const input = document.getElementById(id);
+    if (!input) continue;
+    input.checked = flags[key];
+    input.addEventListener('change', () => {
+      const current = loadFeatureFlags();
+      const wasOff = !current[key];
+      current[key] = input.checked;
+      saveFeatureFlags(current);
+      applyFeatureFlags();
+      // Rechargement du contenu UNIQUEMENT si on vient de réactiver une
+      // fonctionnalité ET que Découvrir est l'onglet réellement affiché —
+      // sinon on créerait le même problème qu'au chargement de page (contenu
+      // rendu alors qu'un autre onglet est actif).
+      const discoverView = document.getElementById('view-discover');
+      const discoverActive = discoverView && discoverView.classList.contains('active');
+      if (wasOff && input.checked && discoverActive) reloadReenabledFeature(key);
+      // "Devine le Film du Jour" fait exception : désactiver DOIT révéler
+      // immédiatement le film en cours si la devinette était affichée (pas
+      // de sens à laisser un mystère non désiré à l'écran) — dans les deux
+      // sens, contrairement aux autres bascules qui ne rechargent qu'à la
+      // réactivation.
+      if (key === 'guessGame' && discoverActive && typeof loadFilmDuJour === 'function') loadFilmDuJour();
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', initFeatureToggleUI);
+
+// Application initiale : différée comme le reste du premier rendu (voir le
+// commentaire sur setTimeout(...,0) dans 03-foundation.js — évite tout accès
+// à une fonction/constante d'un fichier pas encore exécuté).
+setTimeout(applyFeatureFlags, 0);
+
+// ═══════════════════════════════════════════
+//  LISTES PRÉDÉFINIES — "Tous les temps"
+// ═══════════════════════════════════════════
+// Compilée à la main à partir du classement Sight & Sound 2022 (revue du
+// British Film Institute, sondage de 1 639 critiques — la référence la plus
+// citée du milieu critique, publiée tous les 10 ans, prochaine édition en
+// 2032). Une liste de titres n'est pas protégée par le droit d'auteur (ce
+// sont des faits, pas une création) — seuls titre/année sont repris ici,
+// aucun commentaire ni texte de BFI. Pas d'ID TMDb pré-résolu : résolus à la
+// demande (voir resolveCuratedFilm dans 15-curated-lists.js) et mis en
+// cache localement une fois trouvés, plutôt que 100 appels réseau à chaque
+// consultation.
+const CURATED_ALL_TIME = [
+  { title: 'Jeanne Dielman, 23, quai du Commerce, 1080 Bruxelles', year: 1975 },
+  { title: 'Vertigo', year: 1958 },
+  { title: 'Citizen Kane', year: 1941 },
+  { title: 'Tokyo Story', year: 1953 },
+  { title: 'In the Mood for Love', year: 2000 },
+  { title: '2001: A Space Odyssey', year: 1968 },
+  { title: 'Beau travail', year: 1998 },
+  { title: 'Mulholland Drive', year: 2001 },
+  { title: 'Man with a Movie Camera', year: 1929 },
+  { title: "Singin' in the Rain", year: 1952 },
+  { title: 'Sunrise: A Song of Two Humans', year: 1927 },
+  { title: 'The Godfather', year: 1972 },
+  { title: 'La Règle du jeu', year: 1939 },
+  { title: 'Cléo from 5 to 7', year: 1962 },
+  { title: 'The Searchers', year: 1956 },
+  { title: 'Meshes of the Afternoon', year: 1943 },
+  { title: 'Close-up', year: 1990 },
+  { title: 'Persona', year: 1966 },
+  { title: 'Apocalypse Now', year: 1979 },
+  { title: 'Seven Samurai', year: 1954 },
+  { title: 'The Passion of Joan of Arc', year: 1927 },
+  { title: 'Late Spring', year: 1949 },
+  { title: 'Playtime', year: 1967 },
+  { title: 'Do the Right Thing', year: 1989 },
+  { title: 'Au hasard Balthazar', year: 1966 },
+  { title: 'The Night of the Hunter', year: 1955 },
+  { title: 'Shoah', year: 1985 },
+  { title: 'Daisies', year: 1966 },
+  { title: 'Taxi Driver', year: 1976 },
+  { title: 'Portrait of a Lady on Fire', year: 2019 },
+  { title: 'Psycho', year: 1960 },
+  { title: 'Mirror', year: 1975 },
+  { title: '8½', year: 1963 },
+  { title: "L'Atalante", year: 1934 },
+  { title: 'Pather Panchali', year: 1955 },
+  { title: 'M', year: 1931 },
+  { title: 'City Lights', year: 1931 },
+  { title: 'Rear Window', year: 1954 },
+  { title: 'À bout de souffle', year: 1960 },
+  { title: 'Some Like It Hot', year: 1959 },
+  { title: 'Rashomon', year: 1950 },
+  { title: 'Bicycle Thieves', year: 1948 },
+  { title: 'Stalker', year: 1979 },
+  { title: 'Killer of Sheep', year: 1977 },
+  { title: 'Barry Lyndon', year: 1975 },
+  { title: 'North by Northwest', year: 1959 },
+  { title: 'The Battle of Algiers', year: 1966 },
+  { title: 'Ordet', year: 1955 },
+  { title: 'Wanda', year: 1970 },
+  { title: 'The Piano', year: 1992 },
+  { title: 'The 400 Blows', year: 1959 },
+  { title: 'News from Home', year: 1976 },
+  { title: 'Fear Eats the Soul', year: 1974 },
+  { title: 'The Apartment', year: 1960 },
+  { title: 'Sherlock Jr.', year: 1924 },
+  { title: 'Le Mépris', year: 1963 },
+  { title: 'Battleship Potemkin', year: 1925 },
+  { title: 'Blade Runner', year: 1982 },
+  { title: 'Sans soleil', year: 1983 },
+  { title: 'Daughters of the Dust', year: 1991 },
+  { title: 'La dolce vita', year: 1960 },
+  { title: 'Moonlight', year: 2016 },
+  { title: 'The Third Man', year: 1949 },
+  { title: 'GoodFellas', year: 1990 },
+  { title: 'Casablanca', year: 1942 },
+  { title: 'Touki Bouki', year: 1973 },
+  { title: 'The Red Shoes', year: 1948 },
+  { title: 'Metropolis', year: 1927 },
+  { title: 'Andrei Rublev', year: 1966 },
+  { title: 'La Jetée', year: 1962 },
+  { title: 'The Gleaners and I', year: 2000 },
+  { title: "L'avventura", year: 1960 },
+  { title: 'Journey to Italy', year: 1954 },
+  { title: 'My Neighbour Totoro', year: 1988 },
+  { title: 'Spirited Away', year: 2001 },
+  { title: 'Sansho the Bailiff', year: 1954 },
+  { title: 'Imitation of Life', year: 1959 },
+  { title: 'Histoire(s) du cinéma', year: 1988 },
+  { title: 'A Matter of Life and Death', year: 1946 },
+  { title: 'Modern Times', year: 1936 },
+  { title: 'Sunset Boulevard', year: 1950 },
+  { title: 'Céline and Julie Go Boating', year: 1974 },
+  { title: 'A Brighter Summer Day', year: 1991 },
+  { title: 'Sátántangó', year: 1994 },
+  { title: 'Blue Velvet', year: 1986 },
+  { title: 'The Spirit of the Beehive', year: 1973 },
+  { title: 'Pierrot le fou', year: 1965 },
+  { title: 'The Shining', year: 1980 },
+  { title: 'Chungking Express', year: 1994 },
+  { title: 'Yi Yi', year: 2000 },
+  { title: 'Ugetsu', year: 1953 },
+  { title: 'The Leopard', year: 1963 },
+  { title: 'Madame de...', year: 1953 },
+  { title: 'Parasite', year: 2019 },
+  { title: 'Once Upon a Time in the West', year: 1968 },
+  { title: 'A Man Escaped', year: 1956 },
+  { title: 'The General', year: 1926 },
+  { title: 'Black Girl', year: 1966 },
+  { title: 'Tropical Malady', year: 2004 },
+  { title: 'Get Out', year: 2017 },
+];
+
+// Studios/maisons de production à identité créative forte et catalogue
+// resserré (pas les grands studios généralistes type Universal/Warner, qui
+// ont des milliers de films sans vraie identité de "collection à
+// compléter"). Identifiants TMDb vérifiés un par un (une erreur ici
+// casserait silencieusement la fonctionnalité) :
+// A24 themoviedb.org/company/41077-a24, Studio Ghibli .../company/10342,
+// Pixar .../company/3-pixar, Blumhouse .../company/3172-blumhouse-productions,
+// Marvel Studios .../company/420-marvel-studios.
+const CURATED_STUDIOS = [
+  { id: 41077, name: 'A24', sub: 'Cinéma indépendant et arthouse' },
+  { id: 10342, name: 'Studio Ghibli', sub: 'Animation japonaise' },
+  { id: 3, name: 'Pixar', sub: 'Animation 3D' },
+  { id: 3172, name: 'Blumhouse', sub: 'Horreur à petit budget' },
+  { id: 420, name: 'Marvel Studios', sub: 'Univers cinématographique Marvel' },
+];
+
+// Carte du monde du cinéma — sélection restreinte de pays à forte identité
+// cinématographique (pas les ~195 pays du monde, dont la plupart n'auraient
+// pas grand-chose à montrer avec un vrai filtre TMDb). Codes ISO 3166-1
+// pour with_origin_country. `top`/`left` en pourcentage : position
+// APPROXIMATIVE sur une carte stylisée (pas de vraies frontières
+// géographiques précises — voir la discussion sur l'ergonomie tactile),
+// juste assez pour suggérer la bonne région du monde.
+const CURATED_COUNTRIES = [
+  { code: 'JP', name: 'Japon', flag: '🇯🇵' },
+  { code: 'KR', name: 'Corée du Sud', flag: '🇰🇷' },
+  { code: 'DK', name: 'Danemark', flag: '🇩🇰' },
+  { code: 'IT', name: 'Italie', flag: '🇮🇹' },
+  { code: 'IR', name: 'Iran', flag: '🇮🇷' },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'IN', name: 'Inde', flag: '🇮🇳' },
+  { code: 'MX', name: 'Mexique', flag: '🇲🇽' },
+];
+
+// Exploration par thème (Découvrir) — mots-clés TMDb, indépendants des
+// genres classiques (un genre dit "c'est un thriller", un mot-clé dit
+// "c'est un film de braquage"). Sélection choisie à la main plutôt qu'une
+// recherche en texte libre (risque réel de recherches sans résultat) —
+// identifiants vérifiés un par un. Contrairement aux décennies/studios/pays
+// (un vrai "canon" à suivre, dans Profil), un mot-clé n'a pas de nombre
+// canonique de films : vit dans Découvrir comme un outil de
+// navigation/suggestion, pas de suivi de complétion.
+const CURATED_THEMES = [
+  { id: 10051, name: 'Braquage', icon: 'moneyBag' },
+  { id: 10854, name: 'Boucle temporelle', icon: 'timeLoop' },
+  { id: 9748, name: 'Vengeance', icon: 'sword' },
+  { id: 10683, name: "Passage à l'âge adulte", icon: 'sprout' },
+  { id: 10349, name: 'Survie', icon: 'compass' },
+  { id: 7312, name: 'Road trip', icon: 'road' },
+  { id: 3358, name: 'Maison hantée', icon: 'hauntedHouse' },
+  { id: 4565, name: 'Dystopie', icon: 'skyline' },
+];
+
+// ═══════════════════════════════════════════
+//  GESTION DES ONGLETS (Desktop & Mobile)
+// ═══════════════════════════════════════════
+const tabHistBtn = document.getElementById('tab-right-history');
+const tabWlBtn = document.getElementById('tab-right-watchlist');
+const tabDiscoverBtn = document.getElementById('tab-right-discover');
+const tabProfileBtn = document.getElementById('tab-right-profile');
+const viewHist = document.getElementById('view-history');
+const viewWl = document.getElementById('view-watchlist');
+const viewDiscover = document.getElementById('view-discover');
+const viewProfile = document.getElementById('view-profile');
+
+function switchRightTab(tabName) {
+  const tabs = {
+    history:   { btn: tabHistBtn,     view: viewHist },
+    watchlist: { btn: tabWlBtn,       view: viewWl },
+    discover:  { btn: tabDiscoverBtn, view: viewDiscover },
+    profile:   { btn: tabProfileBtn,  view: viewProfile },
+  };
+  for (const [name, { btn, view }] of Object.entries(tabs)) {
+    const isActive = name === tabName;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    view.classList.toggle('active', isActive);
+  }
+  // Charge les suggestions "Découvrir" au premier affichage seulement (pas de
+  // re-fetch à chaque fois qu'on revient sur l'onglet) — chaque chargeur est
+  // gardé par sa bascule Réglages : un chargeur async (comme loadDailyQuiz)
+  // pourrait sinon réafficher sa section APRÈS le masquage d'applyFeatureFlags
+  // plus bas (chargeurs asynchrones = la dernière écriture DOM gagne).
+  if (tabName === 'discover' && !discoverLoaded) {
+    const flags = typeof loadFeatureFlags === 'function' ? loadFeatureFlags() : {};
+    if (flags.discoverRecs !== false) loadDiscoverQueue();
+    if (flags.trending !== false) loadTrendingCarousel();
+    loadFilmDuJour(); // pas dans la liste des bascules demandées
+    if (flags.onThisDay !== false) loadOnThisDay();
+    if (flags.blindSpots !== false && typeof renderBlindSpotsSection === 'function') renderBlindSpotsSection();
+    if (flags.quiz !== false) loadDailyQuiz();
+  }
+  // Duels : l'arène vit désormais dans Découvrir (déplacée depuis Profil,
+  // qui ne garde que le classement) — re-rendue à chaque affichage pour que
+  // la paire proposée reste à jour avec les derniers films notés.
+  if (tabName === 'discover' && typeof renderDuel === 'function') {
+    renderDuel();
+  }
+  // Réapplique les bascules Réglages (masque les sections désactivées) après
+  // les chargeurs ci-dessus, qui affichent leurs sections indépendamment sans
+  // connaître l'état des fonctionnalités désactivées.
+  if (tabName === 'discover' && typeof applyFeatureFlags === 'function') {
+    applyFeatureFlags();
+  }
+  // Duels : seul le classement s'affiche dans le Profil désormais (l'arène a
+  // été déplacée vers Découvrir) — rendu léger, à jour à chaque affichage.
+  if (tabName === 'profile' && typeof renderDuelRanking === 'function') {
+    renderDuelRanking();
+    if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
+    if (typeof renderCuratedListsCard === 'function') renderCuratedListsCard();
+  }
+  // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu
+  // ciblé : pas de recalcul du radar/heatmap/badges à chaque sauvegarde si
+  // personne ne regardait cet onglet — voir renderAll() dans 06-history.js).
+  if (tabName === 'profile' && typeof renderProfileIfDirty === 'function') {
+    renderProfileIfDirty();
+  }
+  // Aperçu unique du geste de swipe à la première visite de l'historique
+  if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
+    maybePlaySwipeHint();
+  }
+}
+
+tabHistBtn.addEventListener('click', () => switchRightTab('history'));
+tabWlBtn.addEventListener('click', () => switchRightTab('watchlist'));
+tabDiscoverBtn.addEventListener('click', () => switchRightTab('discover'));
+tabProfileBtn.addEventListener('click', () => switchRightTab('profile'));
+
+const navRating = document.getElementById('nav-rating');
+const navHistory = document.getElementById('nav-history');
+const navWatchlist = document.getElementById('nav-watchlist');
+const navDiscover = document.getElementById('nav-discover');
+const navProfile = document.getElementById('nav-profile');
+const colRating = document.getElementById('col-rating');
+const colRightViews = document.getElementById('col-right-views');
+
+// Redémarre l'animation d'entrée (mobileViewIn) sur un élément : on retire la
+// classe, on force un reflow (lecture d'une propriété layout), puis on la
+// rajoute — sinon le navigateur ne rejoue pas l'animation si la classe était
+// déjà présente.
+function playMobileViewAnim(el) {
+  el.classList.remove('mobile-view-anim');
+  requestAnimationFrame(() => el.classList.add('mobile-view-anim'));
+}
+
+function switchMobileNav(view) {
+  navRating.classList.remove('active');
+  navHistory.classList.remove('active');
+  navWatchlist.classList.remove('active');
+  navDiscover.classList.remove('active');
+  navProfile.classList.remove('active');
+  navRating.removeAttribute('aria-current');
+  navHistory.removeAttribute('aria-current');
+  navWatchlist.removeAttribute('aria-current');
+  navDiscover.removeAttribute('aria-current');
+  navProfile.removeAttribute('aria-current');
+
+  colRating.style.display = 'none';
+  colRightViews.style.display = 'none';
+
+  if (view === 'rating') {
+    navRating.classList.add('active');
+    navRating.setAttribute('aria-current', 'page');
+    colRating.style.display = 'block'; 
+    playMobileViewAnim(colRating);
+  } else if (view === 'history') {
+    navHistory.classList.add('active');
+    navHistory.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('history');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'watchlist') {
+    navWatchlist.classList.add('active');
+    navWatchlist.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('watchlist');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'discover') {
+    navDiscover.classList.add('active');
+    navDiscover.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('discover');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'profile') {
+    navProfile.classList.add('active');
+    navProfile.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('profile');
+    playMobileViewAnim(colRightViews);
+  }
+}
+
+navRating.addEventListener('click', () => switchMobileNav('rating'));
+navHistory.addEventListener('click', () => switchMobileNav('history'));
+navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
+navDiscover.addEventListener('click', () => switchMobileNav('discover'));
+navProfile.addEventListener('click', () => switchMobileNav('profile'));
+
+// Un seul système de bascule de vue à toutes les tailles d'écran désormais
+// (voir styles.css : la grille à deux colonnes est remplacée par des onglets
+// uniques, positionnés en haut sur PC et en bas sur mobile) — plus besoin de
+// réagir différemment au redimensionnement selon la largeur.
+switchMobileNav('rating');
+
+// ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
+// Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,
+// dans l'ordre affiché en bas de l'écran : Noter → Historique → À voir → Découvrir.
+// Complète les boutons de la barre de navigation, ne les remplace pas.
+// Zones où un glissement (horizontal ou vertical) a déjà un sens propre
+// (scroller un carrousel, déplacer un curseur, swiper une carte "Découvrir"...)
+// : ni le changement d'onglet, ni le tirer-pour-rafraîchir ne doivent s'y
+// déclencher. Fonction partagée (pas enfermée dans une IIFE) exprès — elle
+// sert à plusieurs mécanismes de geste distincts dans ce fichier.
+function isExcludedTarget(target) {
+  return !!target.closest(
+    '#carousel-container, .discover-card, .wl-card, .hist-item, .trending-carousel, .on-this-day-strip, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+  );
+}
+
+(function initMobileSwipeNav() {
+  const TAB_ORDER = ['rating', 'history', 'watchlist', 'discover', 'profile'];
+  const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on considère que ce n'est pas volontaire
+  const SWIPE_ANGLE_RATIO = 1.5; // le geste doit être nettement plus horizontal que vertical
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  function currentView() {
+    if (navHistory.classList.contains('active')) return 'history';
+    if (navWatchlist.classList.contains('active')) return 'watchlist';
+    if (navDiscover.classList.contains('active')) return 'discover';
+    if (navProfile.classList.contains('active')) return 'profile';
+    return 'rating';
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (window.innerWidth > 860) { tracking = false; return; }
+    if (e.touches.length !== 1 || isExcludedTarget(e.target)) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return; // trop vertical, probablement un scroll
+
+    const idx = TAB_ORDER.indexOf(currentView());
+    if (dx < 0 && idx < TAB_ORDER.length - 1) {
+      switchMobileNav(TAB_ORDER[idx + 1]); // glissement vers la gauche -> onglet suivant
+      if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
+    } else if (dx > 0 && idx > 0) {
+      switchMobileNav(TAB_ORDER[idx - 1]); // glissement vers la droite -> onglet précédent
+      if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
+    }
+  }, { passive: true });
+})();
+
+// ═══════════════════════════════════════════
+//  TIRER VERS LE BAS POUR RAFRAÎCHIR
+// ═══════════════════════════════════════════
+// Uniquement quand la page est déjà tout en haut (rien à scroller au-dessus) —
+// sinon on interférerait avec un simple scroll vers le bas de contenu. Exclut
+// les mêmes zones que le swipe d'onglet (cartes, listes, carrousels...) qui
+// gèrent déjà leurs propres gestes tactiles.
+(function initPullToRefresh() {
+  const indicator = document.getElementById('ptr-indicator');
+  if (!indicator) return;
+
+  const THRESHOLD = 70;
+  const MAX_PULL = 100;
+  let startY = 0;
+  let pulling = false;
+  let refreshing = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (refreshing) return;
+    if (window.scrollY > 5) return;
+    if (isExcludedTarget(e.target)) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling || refreshing) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || window.scrollY > 5) { pulling = false; indicator.style.opacity = '0'; return; }
+    const capped = Math.min(deltaY, MAX_PULL);
+    indicator.style.transform = `translateX(-50%) translateY(${capped}px) rotate(${capped * 2.4}deg)`;
+    indicator.style.opacity = String(Math.min(capped / THRESHOLD, 1));
+    indicator.classList.toggle('ptr-ready', capped >= THRESHOLD);
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!pulling || refreshing) { pulling = false; return; }
+    pulling = false;
+    const wasReady = indicator.classList.contains('ptr-ready');
+
+    if (!wasReady) {
+      indicator.style.opacity = '0';
+      return;
+    }
+
+    refreshing = true;
+    indicator.classList.add('ptr-spinning');
+    indicator.style.transform = `translateX(-50%) translateY(${THRESHOLD}px)`;
+    try {
+      if (getSyncCode()) {
+        await pullFromCloud(); // affiche déjà son propre toast de confirmation
+      } else {
+        renderAll();
+        showToast('Actualisé.');
+      }
+    } catch {
+      showToast("Impossible d'actualiser pour l'instant.");
+    } finally {
+      refreshing = false;
+      indicator.classList.remove('ptr-spinning', 'ptr-ready');
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'translateX(-50%) translateY(0)';
+    }
+  });
+})();
+
+// Accessibilité clavier : un vrai <button> déclenche déjà un clic sur
+// Entrée/Espace nativement, mais un <div role="button" tabindex="0"> (utilisé
+// pour les cartes cliquables — tendances, casting, filmographie, lignes
+// d'historique/watchlist...) ne le fait PAS tout seul, le navigateur ne le
+// câble pas automatiquement pour un rôle ARIA sur un élément non natif. Un
+// seul écouteur global plutôt que de le répéter à chaque nouvel élément.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const target = e.target.closest('[role="button"][tabindex="0"]');
+  if (!target) return;
+  e.preventDefault();
+  target.click();
+});
+
+// ═══════════════════════════════════════════
+//  THEMING & SETTINGS
+// ═══════════════════════════════════════════
+
+// Applique une classe temporaire qui active une transition douce sur (quasi)
+// tous les éléments pendant un changement de thème, plutôt qu'un changement
+// de couleurs instantané et net. Limité à une courte fenêtre (350ms) pour ne
+// pas garder ces transitions actives en permanence (coût de perf inutile,
+// et risque d'interférer avec d'autres animations ponctuelles de l'app).
+function withThemeTransition(applyFn) {
+  const root = document.documentElement;
+  root.classList.add('theme-transitioning');
+  applyFn();
+  setTimeout(() => root.classList.remove('theme-transitioning'), 350);
+}
+
+function loadSettings() {
+  const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "default" };
+  try {
+    const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
+    applySettings(saved);
+  } catch (e) {
+    applySettings(defaultSettings);
+  }
+}
+
+function applySettings(settings) {
+  document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
+  
+  let themeToApply = settings.theme || "default";
+  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
+  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
+  // que de retomber sur des couleurs cohérentes.
+  if (themeToApply === 'meridien') themeToApply = 'default';
+  
+  if (themeToApply === "system") {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    themeToApply = prefersDark ? "default" : "filmnoir"; 
+    
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme === 'system') {
+            document.documentElement.setAttribute('data-theme', e.matches ? "default" : "filmnoir");
+            renderAll();
+        }
+    });
+  }
+  
+  document.documentElement.setAttribute('data-theme', themeToApply);
+  document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
+  document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
+  // Suggestions Découvrir en liste compacte plutôt qu'en pile à glisser —
+  // false par défaut (comportement historique conservé). Le changement de
+  // mise en page proprement dit vit dans 11-discover.js (renderDiscoverCards
+  // lit ce même data-attribute au moment du rendu).
+  document.getElementById('setting-discover-swipe-compact').checked = settings.discoverSwipeCompact === true;
+  document.documentElement.classList.toggle('discover-swipe-compact', settings.discoverSwipeCompact === true);
+  const owned = loadOwnedProviders();
+  document.querySelectorAll('.platform-chip').forEach(chip => {
+    chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
+  });
+  const th = settings.theme || 'default';
+  document.querySelectorAll('.theme-card').forEach(tc => {
+    const isSelected = tc.dataset.theme === th;
+    tc.classList.toggle('selected', isSelected);
+    tc.setAttribute('aria-checked', String(isSelected));
+  });
+}
+
+document.getElementById('settings-btn').addEventListener('click', () => {
+  lastFocusedBeforeModal = document.getElementById('settings-btn');
+  document.getElementById('settings-modal').classList.add('open');
+  document.getElementById('setting-app-name').focus();
+});
+
+document.getElementById('settings-cancel').addEventListener('click', () => {
+  const s = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+  applySettings(s); 
+  document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('settings-btn').focus();
+});
+
+function selectThemeCard(card) {
+  document.querySelectorAll('.theme-card').forEach(tc => {
+    tc.classList.remove('selected');
+    tc.setAttribute('aria-checked', 'false');
+  });
+  card.classList.add('selected');
+  card.setAttribute('aria-checked', 'true');
+  withThemeTransition(() => {
+    if (card.dataset.theme !== "system") {
+        document.documentElement.setAttribute('data-theme', card.dataset.theme);
+    } else {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
+    }
+  });
+  renderAll();
+}
+
+document.getElementById('theme-grid').addEventListener('click', e => {
+  const card = e.target.closest('.theme-card');
+  if (!card) return;
+  selectThemeCard(card);
+});
+
+// Accessibilité clavier : les cartes de thème ont role="radio" (voir index.html),
+// donc Entrée et Espace doivent les activer comme un vrai bouton radio.
+document.getElementById('theme-grid').addEventListener('keydown', e => {
+  const card = e.target.closest('.theme-card');
+  if (!card) return;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    selectThemeCard(card);
+  }
+});
+
+const OWNED_PROVIDERS_KEY = 'lbx_owned_providers';
+function loadOwnedProviders() {
+  try { return JSON.parse(localStorage.getItem(OWNED_PROVIDERS_KEY)) || []; } catch { return []; }
+}
+function saveOwnedProviders(list) {
+  localStorage.setItem(OWNED_PROVIDERS_KEY, JSON.stringify(list));
+}
+
+document.getElementById('platform-chips-grid').addEventListener('click', (e) => {
+  const chip = e.target.closest('.platform-chip');
+  if (!chip) return;
+  chip.classList.toggle('selected');
+});
+
+document.getElementById('settings-save').addEventListener('click', () => {
+  let rawName = document.getElementById('setting-app-name').value.trim();
+  if(!rawName) rawName = "Ludex Rating Companion";
+  const firstWord = rawName.split(' ')[0];
+  const formattedName = rawName.replace(firstWord, `<em>${firstWord}</em>`);
+  
+  const newSettings = {
+    appName: formattedName,
+    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
+    genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
+    discoverSwipeCompact: document.getElementById('setting-discover-swipe-compact').checked,
+  };
+  
+  localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
+  const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
+  saveOwnedProviders(selectedProviders);
+  applySettings(newSettings);
+  // Le mode d'affichage a pu changer : redessine la pile de suggestions dans
+  // sa nouvelle forme si elle a déjà des films chargés (sinon rien à faire,
+  // le prochain chargement lira directement la classe posée par applySettings).
+  if (typeof renderDiscoverCards === 'function' && discoverQueue.length > 0) renderDiscoverCards();
+  renderAll();
+  document.getElementById('settings-modal').classList.remove('open');
+  document.getElementById('settings-btn').focus();
+});
+
+loadSettings();
+
+
+// ── theme-color dynamique ──
+// La barre de statut iOS (et la couleur de fenêtre PWA) suit le thème actif
+// au lieu de rester figée sur une couleur générique : le meta theme-color est
+// resynchronisé avec le --bg calculé à chaque changement d'attribut data-theme
+// (MutationObserver : couvre TOUS les chemins d'application — réglages,
+// système, bascule jour/nuit de Méridien — sans dupliquer l'appel partout).
+(function initDynamicThemeColor() {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (!meta) return;
+  function sync() {
+    // rAF : attend que le nouveau thème soit appliqué au style calculé
+    requestAnimationFrame(() => {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (bg) meta.setAttribute('content', bg);
+    });
+  }
+  new MutationObserver(sync).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+  sync(); // etat initial
+})();
+
+// ═══════════════════════════════════════════
+//  GESTION DE LA DATE LOCALE
+// ═══════════════════════════════════════════
+function setTodayDate() {
+  const today = new Date();
+  const offset = today.getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(today - offset)).toISOString().slice(0, -1);
+  document.getElementById('view-date').value = localISOTime.split('T')[0];
+}
+
+// ═══════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════
+const STORE_KEY = "lbx_v2";
+const CRITERIA = ['scenario','realisation','photo','acteurs','ambiance','rythme','affect'];
+
+
+// ═══════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════
+function buildStripMeta({ genre = '', runtime = '', year = '', director = '', actors = '' } = {}) {
+  let meta = [genre, runtime, year].filter(Boolean).join(' · ');
+  if (director) meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Réalisé par <b>${director}</b></span>`;
+  if (actors)   meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Avec <b>${actors}</b></span>`;
+  return meta;
+}
+
+// Échappe une chaîne pour une insertion sûre dans un attribut HTML (alt, aria-label, title...)
+// Utilisé pour les titres de films (qui peuvent contenir des guillemets ou des chevrons).
+function escAttr(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Construit une URL d'affiche/photo TMDb à partir d'un chemin brut — évite
+// de répéter "https://image.tmdb.org/t/p/..." à la main à chaque appelant
+// (un audit en a compté ~33 occurrences dispersées). Retourne une chaîne
+// vide si path est absent, pour que les appelants gardent leur `? :` habituel
+// sans avoir à vérifier deux fois.
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois +
+// grille d'affiches watchlist" est désormais appliquée aux 6 thèmes
+// (décision confirmée : compositions identiques partout, seules les
+// couleurs/polices changent déjà par thème via les tokens) — nom conservé
+// pour ne pas devoir toucher chaque site d'appel, mais ne dépend plus du
+// thème actif. Un seul point de vérité, partagé par l'historique, la
+// watchlist et l'écran Noter.
+function isDefaultComposition() {
+  return true;
+}
+
+function tmdbImage(path, size = 'w185') {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+}
+
+// État vide unifié — soit compact (juste un texte, pour une section déjà
+// titrée comme "Top Réalisateurs" ou "Distribution des notes"), soit
+// complet (icône + message + CTA optionnel, pour un écran autonome comme
+// Historique/À voir vides). Les états déjà riches et fonctionnels ne sont
+// pas retouchés par cette fonction — elle sert à ne plus avoir à
+// réinventer le motif à la main à chaque nouvel endroit qui en a besoin.
+function renderEmptyState({ icon = null, message, ctaLabel = null, ctaId = null } = {}) {
+  const iconHtml = icon ? `<div class="empty-state-icon">${icon}</div>` : '';
+  const ctaHtml = ctaLabel ? `<button type="button" class="empty-state-cta"${ctaId ? ` id="${ctaId}"` : ''}>${escAttr(ctaLabel)}</button>` : '';
+  const cls = icon || ctaLabel ? 'empty-state' : 'empty-state empty-state-compact';
+  return `<div class="${cls}">${iconHtml}${escAttr(message)}${ctaHtml}</div>`;
+}
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let isLiked     = false;
+let currentMode = 'detail'; 
+let quickRating = 2.5;      
+let sortOrder   = 'date';
+// Bascule Film/Série (module Séries) : déclarée ici plutôt que dans
+// 18-tv-shows.js (son fichier "naturel", chargé en dernier) car
+// calculateScore() (05-rating-form.js) la lit, et calculateScore() est
+// appelée dès l'initialisation par 09-modal-init.js — AVANT que
+// 18-tv-shows.js n'ait eu la chance d'exécuter sa propre déclaration.
+// Contrairement aux fonctions (hissées entièrement), un "let" reste
+// inaccessible tant que sa ligne n'a pas été atteinte : la même variable
+// déclarée dans le fichier 18 provoquait "Cannot access before
+// initialization" au chargement — trouvé en testant le flux complet de
+// notation de saison, pas visible sur des tests plus étroits.
+let currentMediaType = 'movie';
+// Bascule Films/Séries dans l'Historique — déclarée ici pour la même
+// raison que currentMediaType juste au-dessus (voir ce commentaire).
+let historyMediaFilter = 'movie';
+let statsMediaFilter = 'movie';
+let activeGenre = null; 
+let weightsOpen = false;
+let pendingAction = null; 
+let activeContextTags = new Set(); 
+let historySearchQuery = ''; 
+let isFetchingMovie = false; 
+let activeScoreFilter = null; 
+
+// ═══════════════════════════════════════════
+//  STORAGE & DRAFT
+// ═══════════════════════════════════════════
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+}
+function saveHistory(history) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(history));
+    if (window.storage) window.storage.set(STORE_KEY, JSON.stringify(history));
+  } catch(e) { console.warn('Storage full', e); }
+}
+
+function saveDraft() {
+  if (isFetchingMovie) return;
+  const draft = {
+    title: document.getElementById('movie-title').value,
+    year: document.getElementById('movie-year').value,
+    poster: document.getElementById('movie-poster').value,
+    genre: document.getElementById('movie-genre').value,
+    runtime: document.getElementById('movie-runtime').value,
+    director: document.getElementById('movie-director').value,
+    actors: document.getElementById('movie-actors').value,
+    tmdbScore: document.getElementById('movie-tmdb-score').value,
+    tmdbId: document.getElementById('movie-tmdb-id').value,
+    searchValue: document.getElementById('movie-search').value,
+    date: document.getElementById('view-date').value,
+    liked: isLiked,
+    mode: currentMode,
+    quickRating: quickRating,
+    values: CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {}),
+    review: document.getElementById('review-text').value,
+    tags: Array.from(activeContextTags)
+  };
+  localStorage.setItem('lbx_draft', JSON.stringify(draft));
+}
+
+function loadDraft() {
+  try {
+    const draftStr = localStorage.getItem('lbx_draft');
+    if (!draftStr) {
+      setTodayDate();
+      return;
+    }
+    const draft = JSON.parse(draftStr);
+    
+    if (draft.title) {
+      document.getElementById('movie-title').value = draft.title;
+      document.getElementById('movie-year').value = draft.year || '';
+      document.getElementById('movie-poster').value = draft.poster || '';
+      document.getElementById('movie-genre').value = draft.genre || '';
+      document.getElementById('movie-runtime').value = draft.runtime || '';
+      document.getElementById('movie-director').value = draft.director || '';
+      document.getElementById('movie-actors').value = draft.actors || '';
+      document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
+      document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
+      document.getElementById('movie-search').value = draft.searchValue || '';
+      
+      const strip = document.getElementById('film-strip');
+      strip.classList.add('visible');
+      document.getElementById('strip-title').textContent = draft.title;
+      document.getElementById('strip-genre').innerHTML = buildStripMeta({
+        genre: draft.genre, runtime: draft.runtime, year: draft.year,
+        director: draft.director, actors: draft.actors
+      });
+      if (draft.poster) {
+        document.getElementById('strip-poster').src = draft.poster;
+        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
+        document.getElementById('strip-poster').style.display = 'block';
+      }
+      if (draft.tmdbScore) {
+        document.getElementById('strip-tmdb-score').textContent = draft.tmdbScore + '/10';
+        document.getElementById('strip-ratings').style.display = 'flex';
+      }
+    }
+
+    if (draft.date) {
+      document.getElementById('view-date').value = draft.date;
+    } else {
+      setTodayDate();
+    }
+
+    if (draft.review) document.getElementById('review-text').value = draft.review;
+    
+    isLiked = draft.liked || false;
+    document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
+
+    activeContextTags = new Set(draft.tags || []);
+    document.querySelectorAll('.ctx-tag').forEach(b => {
+      if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    if (draft.mode) setMode(draft.mode);
+    if (draft.quickRating) {
+      quickRating = parseFloat(draft.quickRating);
+      const radioId = 's' + (quickRating * 2);
+      const radioEl = document.getElementById(radioId);
+      if(radioEl) radioEl.checked = true;
+    }
+    if (draft.values) {
+      CRITERIA.forEach(c => {
+        if (draft.values[c]) document.getElementById(c).value = draft.values[c];
+      });
+    }
+    calculateScore();
+    updateAllSliders();
+    renderCriteriaAverageMarkers();
+
+  } catch(e) { console.error("Erreur de chargement du brouillon", e); }
+}
+
+// ═══════════════════════════════════════════
+//  RETOUR VISUEL "PSEUDO-HAPTIQUE"
+// ═══════════════════════════════════════════
+// Safari iOS n'implémente l'API Vibration sur AUCUNE version (choix
+// délibéré d'Apple, pas un bug) — `navigator.vibrate` y est simplement
+// absent, donc tous les `if (navigator.vibrate) navigator.vibrate(...)` de
+// l'app s'y taisent silencieusement, sans erreur mais aussi sans aucun
+// retour. Cette fonction ajoute un petit à-coup visuel (léger/moyen/fort)
+// sur l'élément concerné, en complément de chaque appel à vibrate() — pour
+// que la sensation de "clic" reste présente même sans vraie vibration.
+function hapticPulse(el, intensity = 'light') {
+  if (!el) return;
+  const cls = `haptic-pulse-${intensity}`;
+  el.classList.remove('haptic-pulse-light', 'haptic-pulse-medium', 'haptic-pulse-strong');
+  // requestAnimationFrame (plutôt qu'une lecture forcée de offsetWidth) pour
+  // rejouer l'animation : évite un reflow SYNCHRONE à chaque appel. Sur cette
+  // fonction en particulier, c'est important — elle est appelée à CHAQUE
+  // glissement de slider (potentiellement des dizaines de fois par seconde
+  // pendant un geste), et un reflow forcé à cette fréquence-là créait du
+  // saccadé pendant l'interaction la plus courante de l'app.
+  requestAnimationFrame(() => {
+    el.classList.add(cls);
+    el.addEventListener('animationend', () => el.classList.remove(cls), { once: true });
+  });
+}
+
+// Bascule l'affichage entre deux éléments mutuellement exclusifs (onglets
+// Films/Séries, dans Historique/Statistiques/Noter) avec un léger fondu
+// plutôt qu'un changement instantané — motif répété à 3 endroits, d'où
+// cette fonction partagée. Reste sobre (juste opacity, pas de mouvement)
+// pour rester cohérent avec le reste de l'app, jamais chargée en effets.
+function fadeSwitchDisplay(hideEl, showEl) {
+  if (!hideEl || !showEl || hideEl === showEl) return;
+  hideEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  hideEl.style.opacity = '0';
+  setTimeout(() => {
+    hideEl.style.display = 'none';
+    hideEl.style.removeProperty('opacity');
+    hideEl.style.removeProperty('transition');
+    showEl.style.display = '';
+    showEl.style.opacity = '0';
+    requestAnimationFrame(() => {
+      showEl.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+      showEl.style.opacity = '1';
+      setTimeout(() => {
+        showEl.style.removeProperty('opacity');
+        showEl.style.removeProperty('transition');
+      }, 150);
+    });
+  }, 140);
+}
+
+// Différé au tick suivant (setTimeout 0) plutôt qu'appelé immédiatement ici :
+// app.js est la concaténation de 16 fichiers exécutés dans l'ordre, et ce
+// fichier-ci (03-foundation.js) est encore tôt dans cet ordre. Un appel
+// immédiat à renderAll()/loadDraft() peut donc atteindre du code plus tard
+// dans le fichier (une const d'un fichier chargé après) qui n'a pas encore
+// été exécuté — c'est la cause de plusieurs bugs "Cannot access ... before
+// initialization" rencontrés dans ce projet (CRITERIA_SHORT_LABELS,
+// CONTEXT_TAG_ICONS, GENRE_BADGE_THRESHOLD, _descCache, DESCS...). En
+// repoussant l'appel au tick suivant, TOUT le script (les 16 fichiers) a fini
+// de s'exécuter avant que renderAll()/loadDraft() ne démarrent réellement —
+// plus aucune const ne peut alors être "pas encore initialisée", quel que
+// soit l'ordre des fichiers.
+setTimeout(() => {
+  renderAll();
+  loadDraft();
+}, 0);
+
+
+// ── Lecture fiable des réponses de l'API (voir describeSyncFailure dans
+//    10-cloud-sync.js pour le même principe côté synchro cloud) ──
+// Sans ça, une vraie erreur serveur (limite de requêtes, panne, mauvaise
+// configuration) — qui renvoie un statut non-200 avec un message précis dans
+// le corps JSON — était traitée exactement comme "aucun résultat trouvé" :
+// aucune erreur n'apparaissait nulle part, la recherche semblait juste vide.
+// readApiJson() lève une erreur explicite dans ce cas, pour que le code
+// appelant sache qu'il a vraiment échoué (et puisse le dire).
+async function readApiJson(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur de l'API (${res.status})`);
+  return data;
+}
+
+// Message d'erreur honnête pour un appel API en échec : ne blâme "ta
+// connexion" que si c'est vraiment le cas (hors ligne), affiche le message
+// précis du serveur s'il y en a un, et reste neutre sinon — jamais un
+// "vérifie ta connexion" générique qui peut être complètement à côté.
+function describeApiFailure(err) {
+  if (!navigator.onLine) return 'Tu es hors ligne.';
+  const msg = err && err.message ? err.message : '';
+  const isGeneric = !msg || /Failed to fetch|NetworkError/i.test(msg);
+  return isGeneric ? 'Service indisponible pour le moment, réessaie dans un instant.' : msg;
+}
+
+// ═══════════════════════════════════════════
+//  LOGIQUE PURE (testable) : calcul du score & fusion cloud
+// ═══════════════════════════════════════════
+//
+// Ce fichier ne touche JAMAIS au DOM ni à localStorage : chaque fonction ici
+// prend des données en entrée et renvoie un résultat, sans effet de bord.
+// C'est délibéré : c'est ce qui permet de les tester automatiquement avec
+// Node (voir tests/) sans avoir besoin d'un navigateur.
+//
+// Les fichiers qui ont besoin d'effets de bord (lire un slider, écrire dans le
+// DOM, lire/écrire localStorage...) restent des fines couches au-dessus de ces
+// fonctions — voir calculateScore() dans 05-rating-form.js et mergeWithRemote()
+// dans 10-cloud-sync.js.
+//
+// Le bloc tout en bas (`if (typeof module !== 'undefined')...`) permet à ce
+// même fichier de fonctionner à la fois :
+//  - dans le navigateur : concaténé tel quel dans app.js, les fonctions
+//    deviennent de simples fonctions globales (comme avant l'extraction) ;
+//  - dans Node (tests) : `require()` direct, sans DOM.
+
+const TOMBSTONE_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 jours
+
+// ─── Score ────────────────────────────────────────────────────────────────
+
+// Mode rapide : note en étoiles (0.5 à 5, pas de 0.5) -> score sur 10.
+function computeQuickScore(quickRatingStars) {
+  return quickRatingStars * 2;
+}
+
+// Mode détaillé : moyenne pondérée des 6 critères (scenario, realisation,
+// photo, acteurs, ambiance, affect), chacun noté de 0 à 10.
+// `criteriaValues` : { scenario: 7.5, realisation: 8, ... }
+// `weights`        : { scenario: 1, realisation: 1.5, ... }
+function computeWeightedScore(criteriaValues, weights) {
+  let weightedSum = 0;
+  let totalWeight = 0;
+  for (const key of Object.keys(criteriaValues)) {
+    const val = criteriaValues[key];
+    const wt = weights[key] ?? 1;
+    weightedSum += val * wt;
+    totalWeight += wt;
+  }
+  return totalWeight > 0 ? weightedSum / totalWeight : 5;
+}
+
+// Note globale d'une série : moyenne des saisons NOTÉES uniquement (une
+// saison sans note n'entre pas dans le calcul, plutôt que de compter comme
+// 0 et fausser la moyenne). Jamais stockée — toujours recalculée à partir
+// des saisons, exactement comme convenu : une série qui change de
+// direction en cours de route (True Detective, Twin Peaks...) n'a pas sa
+// meilleure/pire saison lissée dans une note unique figée.
+function computeShowAverageScore(showEntry) {
+  if (!showEntry || !showEntry.seasons) return null;
+  const rated = Object.values(showEntry.seasons).filter(s => s.rating && s.rating.score != null);
+  if (rated.length === 0) return null;
+  const sum = rated.reduce((acc, s) => acc + parseFloat(s.rating.score), 0);
+  return sum / rated.length;
+}
+
+// Convertit un score sur 10 en équivalent "étoiles" (pas de 0.5), pour l'affichage.
+function scoreToStars(score) {
+  return Math.round((score / 2) * 2) / 2;
+}
+
+// Formatte un nombre d'étoiles en chaîne ★★★½
+function getStarStr(stars) {
+  let s = '';
+  const full = Math.floor(stars);
+  const half = (stars % 1) !== 0;
+  for (let i = 0; i < full; i++) s += '★';
+  if (half) s += '½';
+  return s || '½';
+}
+
+// ─── Fusion cloud : clés d'identité ─────────────────────────────────────────
+
+function historyItemKey(item) {
+  return (item.title || '').toLowerCase();
+}
+
+function watchlistItemKey(item) {
+  return item.tmdbId ? `id:${item.tmdbId}` : `title:${(item.title || '').toLowerCase()}`;
+}
+
+function tvShowItemKey(show) {
+  return String(show.tmdbTvId);
+}
+
+// ─── Fusion cloud : séries suivies ───────────────────────────────────────────
+// Contrairement aux films/watchlist (listes plates), une série contient des
+// saisons imbriquées — la fusion se fait donc à deux niveaux : d'abord les
+// séries elles-mêmes, puis pour chaque série ses saisons une par une. Deux
+// listes de tombstones séparées (série entière / saison individuelle, clé
+// composée tmdbTvId:numéroSaison) — chaque suppression, quel que soit son
+// niveau, doit rester respectée après une synchronisation.
+function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
+  const byId = new Map();
+  for (const show of [...local, ...remote]) {
+    const key = tvShowItemKey(show);
+    if (!key || key === 'undefined') continue;
+    if (!byId.has(key)) {
+      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, seasons: {} });
+    }
+    const target = byId.get(key);
+    if (show.title) target.title = show.title;
+    if (show.poster_path) target.poster_path = show.poster_path;
+    if (show.genre) target.genre = show.genre;
+
+    for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
+      const existing = target.seasons[seasonKey];
+      if (!existing) { target.seasons[seasonKey] = season; continue; }
+      // Deux versions de la même saison : pas de vrai horodatage de dernière
+      // modification au niveau saison pour trancher finement — priorité à
+      // celle qui a une note (plus "aboutie"), puis à la date de note la
+      // plus récente, puis au nombre d'épisodes vus le plus élevé.
+      const existingRated = !!existing.rating;
+      const seasonRated = !!season.rating;
+      if (seasonRated && !existingRated) {
+        target.seasons[seasonKey] = season;
+      } else if (seasonRated && existingRated) {
+        if (new Date(season.rating.date || 0) > new Date(existing.rating.date || 0)) target.seasons[seasonKey] = season;
+      } else if (!seasonRated && !existingRated) {
+        if ((season.watchedEpisodes || []).length > (existing.watchedEpisodes || []).length) target.seasons[seasonKey] = season;
+      }
+    }
+  }
+
+  for (const show of byId.values()) {
+    for (const seasonKey of Object.keys(show.seasons)) {
+      const tomb = seasonTombstones.find(t => t.key === `${show.tmdbTvId}:${seasonKey}`);
+      if (!tomb) continue;
+      const seasonTime = new Date(show.seasons[seasonKey].rating?.date || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= seasonTime) delete show.seasons[seasonKey];
+    }
+  }
+
+  const result = [];
+  for (const show of byId.values()) {
+    const tomb = showTombstones.find(t => t.key === tvShowItemKey(show));
+    if (tomb) {
+      const latestSeasonTime = Math.max(0, ...Object.values(show.seasons).map(s => new Date(s.rating?.date || 0).getTime()));
+      if (new Date(tomb.deletedAt).getTime() >= latestSeasonTime) continue;
+    }
+    if (Object.keys(show.seasons).length === 0) continue;
+    result.push(show);
+  }
+  return result;
+}
+
+// ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
+
+// Fusionne deux listes de tombstones : garde la date de suppression la plus
+// récente par clé, et purge celles plus vieilles que TOMBSTONE_MAX_AGE_MS
+// (pas la peine de trainer une trace de suppression indéfiniment).
+function mergeTombstoneLists(a, b) {
+  const map = new Map();
+  for (const t of [...a, ...b]) {
+    const existing = map.get(t.key);
+    if (!existing || new Date(t.deletedAt) > new Date(existing.deletedAt)) map.set(t.key, t);
+  }
+  const cutoff = Date.now() - TOMBSTONE_MAX_AGE_MS;
+  return [...map.values()].filter(t => new Date(t.deletedAt).getTime() > cutoff);
+}
+
+// ─── Fusion cloud : historique ───────────────────────────────────────────────
+
+function mergeHistory(local, remote, tombstones) {
+  const merged = new Map(); // key -> entry
+  for (const entry of [...local, ...remote]) {
+    const key = historyItemKey(entry);
+    if (!key) continue;
+    const existing = merged.get(key);
+    const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
+    if (!existing) {
+      merged.set(key, entry);
+    } else {
+      const existingTime = new Date(existing.updatedAt || existing.savedAt || 0).getTime();
+      if (entryTime >= existingTime) merged.set(key, entry);
+    }
+  }
+
+  const result = [];
+  for (const [key, entry] of merged) {
+    const tomb = tombstones.find(t => t.key === key);
+    if (tomb) {
+      const entryTime = new Date(entry.updatedAt || entry.savedAt || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= entryTime) continue; // supprimé plus récemment que la dernière modif
+    }
+    result.push(entry);
+  }
+  result.sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0));
+  return result;
+}
+
+// ─── Fusion cloud : watchlist ────────────────────────────────────────────────
+
+function mergeWatchlist(local, remote, tombstones) {
+  const merged = new Map();
+  for (const item of [...local, ...remote]) {
+    const key = watchlistItemKey(item);
+    if (!merged.has(key)) merged.set(key, item);
+  }
+
+  const result = [];
+  for (const [key, item] of merged) {
+    const tomb = tombstones.find(t => t.key === key);
+    if (tomb) {
+      const itemTime = new Date(item.addedAt || 0).getTime();
+      if (new Date(tomb.deletedAt).getTime() >= itemTime) continue;
+    }
+    result.push(item);
+  }
+  result.sort((a, b) => new Date(b.addedAt || 0) - new Date(a.addedAt || 0));
+  return result;
+}
+
+// ─── Descriptions qualitatives par critère (paliers + qualificatif fin) ────
+
+const DESCS = {
+  scenario: [
+    [9.5,"Un chef-d'œuvre narratif absolu. Écriture brillante, dialogues ciselés, structure parfaite et thèmes d'une profondeur rare qui hantent longtemps après le visionnage."],
+    [8.5,"Scénario magistral. Une construction d'une intelligence rare, des personnages d'une richesse peu commune, presque aucune fausse note."],
+    [7.5,"Excellent scénario. Récit captivant, personnages bien écrits et rebondissements intelligents qui maintiennent un fort engagement."],
+    [6.5,"Bonne écriture, quelques idées qui sortent du lot, mais sans jamais atteindre une vraie fulgurance."],
+    [5.5,"Une histoire classique et fonctionnelle. Fait le travail correctement, mais suit des sentiers battus ou manque d'une vraie prise de risque."],
+    [4.5,"Des maladresses évidentes. Rythme narratif inconstant, facilités scénaristiques ou dialogues un peu artificiels qui sortent du récit."],
+    [3.5,"Scénario poussif. Les ficelles se voient, certains personnages sonnent creux, l'ensemble peine à convaincre."],
+    [2.5,"Récit laborieux. De graves incohérences, des intrigues secondaires inutiles ou des personnages aux réactions incompréhensibles."],
+    [1.5,"Écriture quasi inexistante. Le fil narratif se perd, les enjeux ne tiennent debout à aucun moment."],
+    [0,  "Un naufrage scénaristique total. Dénué de sens, ennuyeux à mourir ou insultant pour l'intelligence du spectateur."]
+  ],
+  realisation: [
+    [9.5,"Une masterclass de mise en scène. Une vision d'auteur absolue où chaque plan respire l'intelligence, la maîtrise et l'audace visuelle."],
+    [8.5,"Réalisation éblouissante. Un vrai geste de cinéma, ambitieux et maîtrisé de bout en bout."],
+    [7.5,"Réalisation forte et inspirée. Le réalisateur a un vrai point de vue, avec une caméra dynamique qui sublime le propos du film."],
+    [6.5,"Mise en scène assurée, quelques idées visuelles marquantes, sans toutefois transcender le sujet."],
+    [5.5,"Mise en scène artisanale et propre. Efficace, lisible, mais qui s'efface souvent derrière son sujet sans fulgurance visuelle."],
+    [4.5,"Une réalisation impersonnelle. Ressemble plus à un produit de commande ou à un téléfilm manquant cruellement de caractère."],
+    [3.5,"Mise en scène poussive, découpage parfois maladroit, peu d'idées de mise en image."],
+    [2.5,"Mise en scène paresseuse ou confuse. Découpage hasardeux, absence de rythme visuel ou tics qui fatiguent l'œil."],
+    [1.5,"Réalisation à peine fonctionnelle. Cadres bancals, mise en scène qui dessert constamment le récit."],
+    [0,  "Catastrophique. Incompétence technique crasse, montage épileptique ou plans littéralement illisibles."]
+  ],
+  photo: [
+    [9.5,"Une claque visuelle absolue. Chaque plan est un tableau. Gestion de la lumière, colorimétrie et cadrages atteignent le sublime."],
+    [8.5,"Photographie somptueuse, une signature visuelle forte et cohérente du début à la fin."],
+    [7.5,"Superbe photographie. Une identité visuelle très marquée qui participe activement à l'ambiance et flatte constamment la rétine."],
+    [6.5,"Belle image, quelques plans qui sortent du lot, sans être une œuvre visuellement unique."],
+    [5.5,"Esthétique soignée mais standardisée. L'image est belle et propre, mais reste académique ou familière."],
+    [4.5,"Visuellement terne ou inégal. Éclairages plats, étalonnage douteux (trop gris/sombre) ou effets spéciaux qui jurent."],
+    [3.5,"Image assez pauvre, cadrages sans inspiration, colorimétrie qui manque de cohérence."],
+    [2.5,"Laideur visuelle manifeste. Cadrages ratés, image numérique sans texture, ou filtres appliqués sans aucune cohérence artistique."],
+    [1.5,"Image quasiment illisible ou dénuée de tout soin, très en dessous des standards attendus."],
+    [0,  "Une agression oculaire. Illisible, bouillie de pixels ou éclairage d'une pauvreté affligeante."]
+  ],
+  acteurs: [
+    [9.5,"Des performances magistrales et habitées. Des acteurs en état de grâce qui transcendent leurs personnages et crèvent l'écran."],
+    [8.5,"Casting exceptionnel, des interprétations d'une justesse rare qui portent le film à elles seules."],
+    [7.5,"Un casting redoutable. Des interprétations justes, intenses et nuancées qui portent le film avec un grand charisme."],
+    [6.5,"Bonnes performances dans l'ensemble, une ou deux têtes d'affiche particulièrement convaincantes."],
+    [5.5,"Jeu solide et convaincant. Les acteurs font le job honnêtement, sans pour autant livrer la performance de leur carrière."],
+    [4.5,"Interprétations inégales. Certains tirent leur épingle du jeu, mais d'autres surjouent ou manquent cruellement d'alchimie."],
+    [3.5,"Jeu d'acteur assez faible dans l'ensemble, direction d'acteurs peu convaincante."],
+    [2.5,"Casting en roue libre. Mauvaise direction d'acteurs, expressions forcées, ou têtes d'affiche visiblement venues pour le chèque."],
+    [1.5,"Interprétations quasi risibles, aucune alchimie ni conviction à l'écran."],
+    [0,  "Un festival de jeu monolithique ou d'hystérie ridicule. Impossible de croire une seule seconde aux personnages."]
+  ],
+  ambiance: [
+    [9.5,"Une immersion sensorielle totale. Bande originale mythique et sound design viscéral qui prennent littéralement aux tripes."],
+    [8.5,"Atmosphère sonore exceptionnelle, musique et sound design qui deviennent indissociables du film."],
+    [7.5,"Excellente atmosphère. La musique et les effets sonores enveloppent le spectateur et renforcent magistralement l'impact émotionnel."],
+    [6.5,"Bon accompagnement sonore, quelques thèmes marquants, sans devenir mémorable dans son ensemble."],
+    [5.5,"Ambiance réussie. Accompagnement sonore fonctionnel et agréable, qui soutient l'action sans pour autant marquer les esprits."],
+    [4.5,"Sonorité générique. Musique d'ascenseur, thèmes oubliables ou mixage sonore parfois douteux en retrait."],
+    [3.5,"Ambiance sonore faible, musique qui peine à installer une atmosphère cohérente."],
+    [2.5,"Bande-son envahissante ou hors sujet. Musique omniprésente qui dicte les émotions, ou sound design artificiel qui brise l'immersion."],
+    [1.5,"Son quasiment raté, mixage désagréable, aucune identité sonore."],
+    [0,  "Supplice auditif. Bruitages ratés, doublages asynchrones, ou bande originale qui ruine littéralement les scènes clés."]
+  ],
+  rythme: [
+    [9.5,"Un rythme d'une précision chirurgicale. Chaque scène a exactement la durée qu'il faut, montage d'orfèvre, pas une seconde de trop ni de manque."],
+    [8.5,"Montage excellent, un tempo qui épouse parfaitement les intentions du film du début à la fin."],
+    [7.5,"Très bon rythme. Le film se regarde sans effort, les transitions sont fluides et le montage sert bien le récit."],
+    [6.5,"Rythme globalement maîtrisé, quelques longueurs ponctuelles qui n'entament pas trop l'ensemble."],
+    [5.5,"Rythme correct mais irrégulier. Certains passages traînent un peu, d'autres filent trop vite, sans que ça gâche l'expérience."],
+    [4.5,"Rythme mal calibré. Des longueurs qui se sentent, un montage qui casse parfois l'élan du film."],
+    [3.5,"Film qui traîne clairement en longueur ou au contraire semble haché, avec des ruptures de rythme gênantes."],
+    [2.5,"Rythme poussif ou décousu sur une bonne partie du film, l'attention décroche régulièrement."],
+    [1.5,"Montage confus, tempo constamment à côté de la plaque, on regarde sa montre."],
+    [0,  "Rythme complètement raté. Interminable, ou monté de façon si chaotique que le film en devient illisible."]
+  ],
+  affect: [
+    [9.5,"Coup de foudre absolu. Un film qui bouleverse, obsède, et trouve une place immédiate dans mon panthéon personnel."],
+    [8.5,"Immense claque émotionnelle. Un film qui restera gravé longtemps, que je recommande sans réserve."],
+    [7.5,"Énorme coup de cœur. Une œuvre marquante qui m'a fait vibrer, rire ou pleurer, et que je reverrai avec grand plaisir."],
+    [6.5,"Beau moment, quelques scènes qui marquent vraiment, une expérience que j'ai appréciée sincèrement."],
+    [5.5,"Un très bon moment de cinéma. J'ai pris du plaisir devant ce film, même s'il ne me laissera pas un souvenir impérissable."],
+    [4.5,"Sentiment mitigé. Pas désagréable, mais je reste totalement sur ma faim. Vite vu, assez vite oublié."],
+    [3.5,"Peu d'accroche émotionnelle, le film m'a globalement laissé de marbre."],
+    [2.5,"Ennui ou agacement profond. Une expérience pénible, où le temps a semblé particulièrement long. Très peu d'accroche."],
+    [1.5,"Rejet quasi total, très peu de moments qui ont suscité un intérêt réel."],
+    [0,  "Rejet viscéral. Une perte de temps absolue, un film que j'ai détesté de bout en bout et que je veux effacer de ma mémoire."]
+  ]
+};
+
+// Séries — Phase 3 : descriptions propres aux deux critères reformulés
+// pour une saison ("photo" -> Qualité du final, "rythme" -> Rythme &
+// Cohérence de la saison). Les 5 autres critères (scenario, realisation,
+// acteurs, ambiance, affect) restent transposables tels quels, mêmes
+// textes que pour un film — pas de doublon nécessaire pour eux. Même
+// structure à 10 paliers que DESCS, pour rester cohérent.
+const DESCS_TV_OVERRIDES = {
+  photo: [
+    [9.5,"Un final parfait, qui élève toute la saison et referme chaque fil narratif avec une intelligence rare."],
+    [8.5,"Une conclusion magistrale, à la hauteur de tout ce qui précède, qui restera gravée longtemps."],
+    [7.5,"Excellent épisode final. Il conclut la saison avec panache, sans faux pas majeur."],
+    [6.5,"Bon final, qui referme l'essentiel sans forcément marquer les esprits."],
+    [5.5,"Final honnête et satisfaisant, qui fait le travail sans surprendre."],
+    [4.5,"Final en demi-teinte. Quelques fils narratifs bâclés ou une résolution un peu facile."],
+    [3.5,"Conclusion décevante, qui peine à être à la hauteur de la saison."],
+    [2.5,"Final raté, qui gâche une partie de ce que la saison avait construit."],
+    [1.5,"Fin quasiment ratée, qui trahit l'attente installée par les épisodes précédents."],
+    [0,  "Un désastre. La fin détruit ce que la saison avait de mieux, ou ne conclut rien du tout."]
+  ],
+  rythme: [
+    [9.5,"Un rythme d'une précision chirurgicale sur toute la saison. Chaque épisode a sa place, aucun ventre mou, une cohérence sans faille du premier au dernier épisode."],
+    [8.5,"Excellente cohérence de saison, un tempo qui épouse parfaitement l'arc narratif du premier au dernier épisode."],
+    [7.5,"Très bonne tenue sur la durée. La saison se regarde sans effort, les épisodes s'enchaînent avec fluidité."],
+    [6.5,"Rythme globalement maîtrisé sur la saison, quelques épisodes plus faibles qui n'entament pas l'ensemble."],
+    [5.5,"Cohérence correcte mais irrégulière. Certains épisodes traînent, d'autres filent trop vite, sans que ça gâche l'ensemble."],
+    [4.5,"Rythme mal calibré sur la saison. Des épisodes de remplissage qui cassent l'élan général."],
+    [3.5,"Saison qui traîne clairement en longueur sur plusieurs épisodes, ou qui semble décousue d'un épisode à l'autre."],
+    [2.5,"Cohérence poussive sur une bonne partie de la saison, l'intérêt décroche régulièrement d'un épisode à l'autre."],
+    [1.5,"Enchaînement confus, tempo constamment à côté de la plaque sur la majorité des épisodes."],
+    [0,  "Rythme complètement raté sur toute la saison. Interminable, ou décousu au point de perdre le fil d'un épisode à l'autre."]
+  ]
+};
+
+// Le cache est attaché à la fonction elle-même (pas une const top-level) et
+// initialisé au premier appel — ainsi aucune ligne de déclaration à atteindre
+// avant de pouvoir l'utiliser. C'est exactement la même classe de bug
+// rencontrée plusieurs fois dans ce projet (CRITERIA_SHORT_LABELS,
+// CONTEXT_TAG_ICONS, GENRE_BADGE_THRESHOLD) : une const top-level référencée
+// par une fonction appelée via le renderAll() précoce de 03-foundation.js,
+// AVANT que ce fichier-ci (qui charge après) n'ait fini de s'exécuter et
+// atteint sa propre déclaration. Cette fois le remède habituel ("rendre la
+// constante locale à la fonction") ne suffit pas seul, puisque ce cache doit
+// justement SURVIVRE entre les appels — d'où cette variante.
+function getDesc(criterion, val, mediaType = 'movie') {
+  if (!getDesc._cache) getDesc._cache = {};
+  const _descCache = getDesc._cache;
+  const key = mediaType + criterion + val;
+  if (_descCache[key]) return _descCache[key];
+  const tiers = (mediaType === 'tv' && DESCS_TV_OVERRIDES[criterion]) || DESCS[criterion];
+
+  for (let i = 0; i < tiers.length; i++) {
+    const [thresh, text] = tiers[i];
+    if (val < thresh) continue;
+
+    // Chaque palier couvre en général 2 valeurs voisines (ex: 8.5 et 9.0 pour
+    // le seuil 8.5), sauf le dernier qui en couvre 3 (0, 0.5, 1.0). On ajoute
+    // un court qualificatif selon la position exacte dans cette fourchette,
+    // pour un retour plus fin que le seul texte du palier (qui, lui, ne
+    // change qu'environ tous les 1 point) — sans avoir à réécrire 147 textes
+    // différents pour un gain de nuance souvent minime entre deux valeurs
+    // voisines.
+    const nextThresh = i > 0 ? tiers[i - 1][0] : thresh + 1; // borne haute (exclue) du palier actuel
+    const rangeSpan = nextThresh - thresh;
+    const posInRange = val - thresh;
+
+    let qualifier = '';
+    if (rangeSpan > 0.5) {
+      if (Math.abs(posInRange) < 0.01) {
+        qualifier = ' (plutôt bas dans cette tranche)';
+      } else if (Math.abs(posInRange - (rangeSpan - 0.5)) < 0.01) {
+        qualifier = ' (plutôt haut dans cette tranche)';
+      }
+      // Valeur médiane (uniquement pour le dernier palier, qui couvre 3
+      // valeurs) : pas de qualificatif, elle est déjà bien au centre.
+    }
+
+    const result = text + qualifier;
+    _descCache[key] = result;
+    return result;
+  }
+
+  const fallback = tiers[tiers.length - 1][1];
+  _descCache[key] = fallback;
+  return fallback;
+}
+
+// ─── Moyennes personnelles par critère (repère sur les sliders + radar) ─────
+// Retourne { scenario: 7.2, realisation: null, ... } — null si aucune entrée
+// de l'historique n'a de valeur pour ce critère (ex: 'rythme' avant son ajout).
+function computeCriteriaAverages(history, criteria) {
+  const sums = {};
+  const counts = {};
+  criteria.forEach(c => { sums[c] = 0; counts[c] = 0; });
+
+  history.forEach(h => {
+    if (h.mode === 'detail' && h.values) {
+      criteria.forEach(c => {
+        const val = parseFloat(h.values[c]);
+        if (!isNaN(val)) { sums[c] += val; counts[c]++; }
+      });
+    }
+  });
+
+  const avgs = {};
+  criteria.forEach(c => { avgs[c] = counts[c] > 0 ? sums[c] / counts[c] : null; });
+  return avgs;
+}
+
+// ─── Onglet Profil : temps visionné, série en cours, badges ────────────────
+function formatWatchTime(totalMinutes) {
+  if (!totalMinutes || totalMinutes <= 0) return '—';
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const parts = [];
+  if (days > 0) parts.push(`${days} j`);
+  if (hours > 0 || days === 0) parts.push(`${hours} h`);
+  return parts.join(' ');
+}
+
+// Clé "année-semaine ISO" pour une date donnée — deux dates de la même semaine
+// ISO (lundi à dimanche) produisent la même clé, peu importe le jour exact.
+function getISOWeekKey(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${weekNo}`;
+}
+
+// Nombre de semaines ISO consécutives (en remontant depuis AUJOURD'HUI) avec
+// au moins un film noté — 0 si la semaine en cours n'a rien.
+function computeWeekStreak(history, referenceDate = new Date()) {
+  const weeksWithActivity = new Set();
+  history.forEach(h => {
+    const raw = h.savedAt || h.date;
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    weeksWithActivity.add(getISOWeekKey(d));
+  });
+
+  let streak = 0;
+  const cursor = new Date(referenceDate);
+  while (weeksWithActivity.has(getISOWeekKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+
+// Badges débloqués selon l'historique — chaque entrée est indépendante,
+// aucune ne dépend d'un ordre de déblocage particulier.
+// ─── Rétrospective annuelle ("Wrapped") ─────────────────────────────────────
+// Filtre l'historique sur UNE année (par savedAt, ou date à défaut) et en
+// tire les temps forts — genre/réalisateur/acteur/mois les plus présents,
+// film le mieux noté, temps total visionné. Fonction pure : ne touche à
+// aucun DOM, juste des données en entrée/sortie, pour rester testable
+// facilement (contrairement aux tests E2E, plus lents et parfois instables).
+// ── Import Letterboxd (voir 07-data-io.js pour l'UI) ──
+// Parseur CSV minimal mais correct : gère les champs entre guillemets
+// (contenant virgules, retours à la ligne, guillemets doublés ""), le cas le
+// plus piégeux des exports Letterboxd (titres comme "Paris, Texas").
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      if (row.length > 1 || row[0] !== '') rows.push(row);
+      row = [];
+    } else field += c;
+  }
+  if (field !== '' || row.length > 0) { row.push(field); if (row.length > 1 || row[0] !== '') rows.push(row); }
+  return rows;
+}
+
+// Convertit les lignes d'un CSV Letterboxd (diary.csv, ratings.csv ou
+// watched.csv — colonnes détectées par l'en-tête, insensible à l'ordre) en
+// items d'historique Ludex. Note Letterboxd sur 5 étoiles -> score sur 10.
+// Retourne aussi le type détecté et les lignes ignorées (sans titre).
+function mapLetterboxdCsv(rows) {
+  if (!rows || rows.length < 2) return { items: [], skipped: 0, kind: null };
+  const header = rows[0].map(h => h.trim().toLowerCase());
+  const col = (name) => header.indexOf(name);
+  const iName = col('name'), iYear = col('year'), iRating = col('rating');
+  const iWatched = col('watched date'), iDate = col('date');
+  if (iName === -1) return { items: [], skipped: 0, kind: null }; // pas un CSV Letterboxd
+
+  const kind = iWatched !== -1 ? 'diary' : (iRating !== -1 ? 'ratings' : 'watched');
+  const items = [];
+  let skipped = 0;
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r];
+    const title = (cells[iName] || '').trim();
+    if (!title) { skipped++; continue; }
+    const year = iYear !== -1 ? (cells[iYear] || '').trim() : '';
+    const ratingRaw = iRating !== -1 ? parseFloat(cells[iRating]) : NaN;
+    const hasRating = !isNaN(ratingRaw) && ratingRaw > 0;
+    const score = hasRating ? (ratingRaw * 2).toFixed(1) : '';
+    const watchedDate = (iWatched !== -1 && cells[iWatched]) ? cells[iWatched].trim()
+                      : (iDate !== -1 && cells[iDate]) ? cells[iDate].trim() : '';
+    items.push({
+      title,
+      year,
+      score,
+      mode: 'quick',
+      values: hasRating ? { quick: ratingRaw } : {},
+      date: watchedDate,
+      savedAt: new Date().toISOString(),
+      importedFrom: 'letterboxd',
+    });
+  }
+  return { items, skipped, kind };
+}
+
+// ── Cartes Profil : "Il y a un an", heatmap, décennies ──
+// Compte de films par jour (clé YYYY-MM-DD), pour la heatmap calendrier.
+function computeDailyCounts(history) {
+  const counts = {};
+  for (const item of history) {
+    if (!item.date) continue;
+    const key = String(item.date).slice(0, 10);
+    counts[key] = (counts[key] || 0) + 1;
+  }
+  return counts;
+}
+
+// Films regroupés par décennie de sortie, avec compte et note moyenne.
+// Trié par compte décroissant. Les items sans année sont ignorés.
+function computeDecadeStats(history) {
+  const byDecade = {};
+  for (const item of history) {
+    const y = parseInt(item.year, 10);
+    if (isNaN(y) || y < 1880 || y > 2100) continue;
+    const decade = Math.floor(y / 10) * 10;
+    if (!byDecade[decade]) byDecade[decade] = { decade, count: 0, scoreSum: 0, scored: 0 };
+    byDecade[decade].count++;
+    const s = parseFloat(item.score);
+    if (!isNaN(s)) { byDecade[decade].scoreSum += s; byDecade[decade].scored++; }
+  }
+  return Object.values(byDecade)
+    .map(d => ({ decade: d.decade, count: d.count, avg: d.scored > 0 ? d.scoreSum / d.scored : null }))
+    .sort((a, b) => b.count - a.count);
+}
+
+// Le film regardé "il y a un an" : cherche autour de la même date l'an
+// dernier, en élargissant progressivement (jour exact, puis ±1, ±2, ±3 jours)
+// pour maximiser la chance d'un souvenir sans tricher sur "il y a un an".
+function findOneYearAgoFilm(history, today) {
+  const base = new Date(today);
+  base.setFullYear(base.getFullYear() - 1);
+  for (let spread = 0; spread <= 3; spread++) {
+    for (const sign of spread === 0 ? [0] : [-1, 1]) {
+      const d = new Date(base);
+      d.setDate(d.getDate() + spread * sign);
+      const key = d.toISOString().slice(0, 10);
+      const found = history.find(h => h.date && String(h.date).slice(0, 10) === key);
+      if (found) return { item: found, date: key };
+    }
+  }
+  return null;
+}
+
+// ── Migrations de schéma (voir 00a-migrations.js pour le runner) ──
+// Normalisation v2 d'un item d'historique : garantit les champs que le reste
+// du code suppose présents. Idempotente (la rejouer ne change rien) — c'est la
+// propriété clé d'une migration sûre. Pure et testée dans tests/migrations.test.js.
+function normalizeHistoryItemV2(item) {
+  if (!item || typeof item !== 'object') return item;
+  const out = { ...item };
+  // savedAt : des données très anciennes ou importées à la main peuvent ne pas
+  // l'avoir — repli sur la date de visionnage, sinon une époque neutre (pas
+  // "maintenant" : ça fausserait les tris "ajouté récemment" à chaque migration).
+  if (!out.savedAt) {
+    out.savedAt = out.date ? `${out.date}T12:00:00.000Z` : '1970-01-01T00:00:00.000Z';
+  }
+  // values : le code de rendu (radar, moyennes) suppose un objet
+  if (!out.values || typeof out.values !== 'object') out.values = {};
+  // title : chaîne toujours (un import cassé pourrait mettre null)
+  if (typeof out.title !== 'string') out.title = String(out.title ?? '');
+  return out;
+}
+
+// ── Duels ELO (voir 13-duels.js pour le stockage/rendu) ──
+// Probabilité attendue de victoire selon l'écart de cotes, puis mise à jour
+// symétrique : le vainqueur gagne exactement ce que le perdant perd. Battre
+// plus fort que soi rapporte gros ; battre plus faible rapporte peu.
+function computeEloUpdate(winnerElo, loserElo, k = 32) {
+  const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+  const delta = Math.round(k * (1 - expectedWinner));
+  return { winnerElo: winnerElo + delta, loserElo: loserElo - delta, delta };
+}
+
+function computeWrappedStats(history, year) {
+  const yearStr = String(year);
+  const filtered = history.filter(h => {
+    const d = h.savedAt || h.date;
+    return !!d && d.slice(0, 4) === yearStr;
+  });
+
+  const totalFilms = filtered.length;
+  const avgScore = totalFilms > 0
+    ? filtered.reduce((sum, h) => sum + (parseFloat(h.score) || 0), 0) / totalFilms
+    : 0;
+
+  function topEntry(counts) {
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    return entries.length > 0 ? { name: entries[0][0], count: entries[0][1] } : null;
+  }
+
+  const genreCounts = {};
+  filtered.forEach(h => {
+    if (h.genre) h.genre.split(',').forEach(g => { const t = g.trim(); if (t) genreCounts[t] = (genreCounts[t] || 0) + 1; });
+  });
+
+  const directorCounts = {};
+  filtered.forEach(h => { if (h.director) { const t = h.director.trim(); if (t) directorCounts[t] = (directorCounts[t] || 0) + 1; } });
+
+  const actorCounts = {};
+  filtered.forEach(h => {
+    if (h.actors) h.actors.split(',').forEach(a => { const t = a.trim(); if (t) actorCounts[t] = (actorCounts[t] || 0) + 1; });
+  });
+
+  const monthCounts = {};
+  filtered.forEach(h => {
+    const d = h.savedAt || h.date;
+    if (d) { const m = d.slice(0, 7); monthCounts[m] = (monthCounts[m] || 0) + 1; }
+  });
+  const topMonthRaw = topEntry(monthCounts);
+
+  const bestRated = filtered.length > 0
+    ? filtered.slice().sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0))[0]
+    : null;
+
+  const totalMinutes = filtered.reduce((sum, h) => {
+    const m = parseInt(h.runtime, 10);
+    return sum + (isNaN(m) ? 0 : m);
+  }, 0);
+
+  return {
+    year,
+    totalFilms,
+    avgScore,
+    topGenre: topEntry(genreCounts),
+    topDirector: topEntry(directorCounts),
+    topActor: topEntry(actorCounts),
+    topMonth: topMonthRaw, // { name: "2026-03", count } — le nom du mois est formaté à l'affichage, pas ici
+    bestRated,
+    totalMinutes,
+  };
+}
+
+function computeBadges(history, extras = {}) {
+  // Déclaré ICI (local, pas en haut du fichier) : même bug que
+  // CRITERIA_SHORT_LABELS et CONTEXT_TAG_ICONS rencontré précédemment — un
+  // `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution n'a pas atteint cette ligne, or `renderAll()` est appelée de
+  // façon précoce (03-foundation.js) avant même que 03b-pure-logic.js n'ait
+  // fini de s'exécuter.
+  const GENRE_BADGE_THRESHOLD = 5;
+  const totalMinutes = extras.totalMinutes || 0;
+  const streak = extras.streak || 0;
+  const genreSet = new Set();
+  const genreCounts = {};
+  history.forEach(h => {
+    if (h.genre) h.genre.split(',').forEach(g => {
+      const t = g.trim(); if (!t) return;
+      genreSet.add(t);
+      genreCounts[t] = (genreCounts[t] || 0) + 1;
+    });
+  });
+  const reviewCount = history.filter(h => h.review && h.review.trim().length > 0).length;
+
+  const defs = [
+    { id: 'films_10',  label: '10 films notés',        unlocked: history.length >= 10 },
+    { id: 'films_50',  label: '50 films notés',         unlocked: history.length >= 50 },
+    { id: 'films_100', label: '100 films notés',        unlocked: history.length >= 100 },
+    { id: 'genres_5',  label: '5 genres différents',    unlocked: genreSet.size >= 5 },
+    { id: 'genres_10', label: '10 genres différents',   unlocked: genreSet.size >= 10 },
+    { id: 'reviews_10',label: '10 critiques écrites',   unlocked: reviewCount >= 10 },
+    { id: 'streak_4',  label: '4 semaines de suite',    unlocked: streak >= 4 },
+    { id: 'marathon',  label: 'Marathon (24h de films)',unlocked: totalMinutes >= 24 * 60 },
+    { id: 'cinephile', label: 'Cinéphile (7j de films)',unlocked: totalMinutes >= 7 * 24 * 60 },
+  ];
+
+  // Un badge par genre RÉELLEMENT exploré (au moins un film), pas une liste
+  // figée de tous les genres TMDb possibles — évite d'afficher des dizaines
+  // de badges verrouillés pour des genres jamais regardés. Triés du plus au
+  // moins regardé, pour mettre en avant ce qui définit vraiment les goûts de
+  // l'utilisateur.
+  const genreBadges = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8) // les 8 genres les plus regardés seulement, pour ne pas surcharger la grille
+    .map(([genre, count]) => ({
+      id: 'genre_' + genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
+      label: `Fan de ${genre} (${Math.min(count, GENRE_BADGE_THRESHOLD)}/${GENRE_BADGE_THRESHOLD})`,
+      unlocked: count >= GENRE_BADGE_THRESHOLD,
+    }));
+
+  return defs.concat(genreBadges);
+}
+
+// ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    computeQuickScore,
+    computeWeightedScore,
+    computeShowAverageScore,
+    scoreToStars,
+    getStarStr,
+    historyItemKey,
+    watchlistItemKey,
+    tvShowItemKey,
+    mergeTombstoneLists,
+    mergeHistory,
+    mergeWatchlist,
+    mergeTvShows,
+    TOMBSTONE_MAX_AGE_MS,
+    getDesc,
+    DESCS,
+    DESCS_TV_OVERRIDES,
+    computeCriteriaAverages,
+    formatWatchTime,
+    getISOWeekKey,
+    computeWeekStreak,
+    computeBadges,
+    computeWrappedStats,
+    computeEloUpdate,
+    parseCsv,
+    mapLetterboxdCsv,
+    computeDailyCounts,
+    computeDecadeStats,
+    findOneYearAgoFilm,
+    normalizeHistoryItemV2,
+  };
+}
+
+// ═══════════════════════════════════════════
+//  CONTEXT TAGS
+// ═══════════════════════════════════════════
+document.querySelectorAll('.ctx-tag').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const tag = btn.dataset.tag;
+    if (activeContextTags.has(tag)) {
+      activeContextTags.delete(tag);
+      btn.classList.remove('active');
+    } else {
+      activeContextTags.add(tag);
+      btn.classList.add('active');
+    }
+    saveDraft();
+  });
+});
+
+// ═══════════════════════════════════════════
+//  TMDb SEARCH & VISUAL FEEDBACK
+// ═══════════════════════════════════════════
+const searchEl  = document.getElementById('movie-search');
+const suggestEl = document.getElementById('suggestions');
+const searchStatus = document.getElementById('search-status');
+const searchClearBtn = document.getElementById('search-clear-btn');
+let searchTimer;
+
+// Bouton d'effacement : visible dès qu'il y a du texte, évite d'avoir à
+// tout effacer au clavier pour relancer une recherche. Redéclenche
+// l'événement 'input' plutôt que de dupliquer sa logique (masquage des
+// suggestions, sauvegarde du brouillon) — une seule source de vérité.
+searchEl.addEventListener('input', () => {
+  searchClearBtn.style.display = searchEl.value ? 'flex' : 'none';
+});
+searchClearBtn.addEventListener('click', () => {
+  searchEl.value = '';
+  searchEl.dispatchEvent(new Event('input'));
+  searchEl.focus();
+});
+
+// Recherche une PERSONNE (réalisateur/acteur/etc.) correspondant au texte
+// tapé — partagée entre la recherche du formulaire de notation et celle de la
+// watchlist. Retourne null si rien de pertinent, plutôt que le premier
+// résultat TMDb quel qu'il soit (évite de proposer une correspondance
+// approximative sans rapport avec ce qui a été tapé).
+async function fetchPersonMatch(q) {
+  try {
+    const res = await fetch(`/api/search?personSearch=${encodeURIComponent(q)}`);
+    const data = await res.json();
+    const person = (data.results || [])[0];
+    if (!person) return null;
+    const qNorm = q.trim().toLowerCase();
+    const nameNorm = (person.name || '').toLowerCase();
+    return nameNorm.includes(qNorm) ? person : null;
+  } catch { return null; }
+}
+
+function buildPersonSuggestionEl(person) {
+  const photoUrl = tmdbImage(person.profile_path, 'w92');
+  const item = document.createElement('div');
+  item.className = 'suggestion-item suggestion-person';
+  const imgHtml = photoUrl
+    ? `<img class="suggestion-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(person.name)}" loading="lazy">`
+    : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
+  item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">🎬 ${escAttr(person.name)}</div><div class="suggestion-year">Voir sa filmographie</div></div>`;
+  item.addEventListener('click', () => {
+    suggestEl.style.display = 'none';
+    openPersonDetailSheet(person.id, person.name);
+  });
+  return item;
+}
+
+searchEl.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = searchEl.value.trim();
+  saveDraft();
+  if (q.length < 2) { 
+    suggestEl.style.display = 'none'; 
+    searchStatus.style.display = 'none';
+    return; 
+  }
+  
+  searchStatus.style.display = 'none';
+  suggestEl.style.display = 'block';
+  suggestEl.innerHTML = `
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+  `;
+  
+  searchTimer = setTimeout(() => fetchSuggestions(q), 280);
+});
+
+searchEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const q = searchEl.value.trim();
+    if (!q) return;
+    suggestEl.style.display = 'none';
+    searchStatus.style.display = 'none';
+    clearTimeout(searchTimer);
+    selectManual(q);
+  }
+});
+
+function selectManual(title) {
+  document.getElementById('movie-title').value  = title;
+  document.getElementById('movie-year').value   = '';
+  document.getElementById('movie-poster').value = '';
+  document.getElementById('movie-genre').value  = '';
+  document.getElementById('movie-runtime').value = '';
+  document.getElementById('movie-director').value = '';
+  document.getElementById('movie-actors').value  = '';
+  document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
+  document.getElementById('strip-ratings').style.display = 'none';
+
+  const strip = document.getElementById('film-strip');
+  strip.classList.add('visible');
+  document.getElementById('strip-title').textContent = title;
+  document.getElementById('strip-genre').innerHTML = '<span style="color:var(--text);font-size:0.75rem;">Film ajouté manuellement</span>';
+  document.getElementById('strip-poster').style.display = 'none';
+  saveDraft();
+}
+
+async function fetchSuggestions(q) {
+  try {
+    const [res, personMatch] = await Promise.all([
+      fetch(`/api/search?query=${encodeURIComponent(q)}`),
+      fetchPersonMatch(q),
+    ]);
+    // readApiJson lève si l'API a réellement échoué (statut non-200), au lieu
+    // de laisser passer une réponse d'erreur comme si c'était "0 résultat" —
+    // c'est ce qui rendait un vrai problème d'API totalement invisible.
+    const data = await readApiJson(res);
+    searchStatus.style.display = 'none';
+    if (!data.results?.length && !personMatch) { suggestEl.style.display = 'none'; return; }
+    suggestEl.innerHTML = '';
+    suggestEl.style.display = 'block';
+
+    // Le réalisateur/acteur trouvé (s'il y en a un) apparaît en premier — on
+    // tapait probablement un nom, pas un titre de film, dans ce cas.
+    if (personMatch) suggestEl.appendChild(buildPersonSuggestionEl(personMatch));
+
+    (data.results || []).slice(0, 6).forEach(m => {
+      const year = m.release_date?.slice(0, 4) || '????';
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      const imgHtml = m.poster_path
+        ? `<img class="suggestion-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        : `<div class="suggestion-poster-placeholder">${ICONS.clapper}</div>`;
+      item.innerHTML = `${imgHtml}<div class="suggestion-info"><div class="suggestion-title">${escAttr(m.title)}</div><div class="suggestion-year">${year}</div></div>`;
+      item.addEventListener('click', () => selectMovie(m, year));
+      suggestEl.appendChild(item);
+    });
+    const manualItem = document.createElement('div');
+    manualItem.className = 'suggestion-item suggestion-manual';
+    manualItem.innerHTML = `<div class="suggestion-poster-placeholder" style="font-size:1rem;">${ICONS.edit}</div><div class="suggestion-info"><div class="suggestion-title" style="color:var(--text-mid);">Utiliser "${q}" sans TMDb</div><div class="suggestion-year">Saisie manuelle</div></div>`;
+    manualItem.addEventListener('click', () => { suggestEl.style.display = 'none'; selectManual(q); });
+    suggestEl.appendChild(manualItem);
+  } catch (err) { 
+    searchStatus.style.display = 'none'; 
+    suggestEl.style.display = 'none'; 
+    showToast(describeApiFailure(err));
+  }
+}
+
+async function selectMovie(m, year) {
+  document.getElementById('movie-title').value  = m.title;
+  document.getElementById('movie-year').value   = year;
+  document.getElementById('movie-poster').value = tmdbImage(m.poster_path, 'w185');
+  document.getElementById('movie-tmdb-id').value = m.id;
+  searchEl.value = `${escAttr(m.title)} (${year})`;
+  suggestEl.style.display = 'none';
+  document.getElementById('strip-ratings').style.display = 'none';
+
+  searchStatus.style.display = 'block';
+  searchStatus.textContent = '⏳ Récupération des détails...';
+  isFetchingMovie = true;
+
+  try {
+    const res = await fetch(`/api/search?id=${m.id}`);
+    const data = await res.json();
+
+    const genreNames = data.genres?.map(g => g.name) || [];
+    const genres = genreNames.join(', ');
+    const runtime = data.runtime ? `${data.runtime} min` : '';
+    
+    let director = '';
+    let actors = ''; 
+    
+    if (data.credits && data.credits.crew) {
+      const dirObj = data.credits.crew.find(c => c.job === 'Director');
+      if (dirObj) director = dirObj.name;
+      if (data.credits.cast && data.credits.cast.length > 0) {
+        actors = data.credits.cast.slice(0, 3).map(a => a.name).join(', ');
+      }
+    } else if (data.director) {
+      director = data.director;
+    }
+
+    document.getElementById('movie-genre').value = genres;
+    document.getElementById('movie-runtime').value = runtime;
+    document.getElementById('movie-director').value = director;
+    document.getElementById('movie-actors').value = actors; 
+
+    const settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+    if (settings.genreWeightsEnabled !== false) {
+      suggestGenreWeights(genreNames);
+    }
+
+    document.getElementById('strip-genre').innerHTML = buildStripMeta({
+      genre: genres, runtime, year, director, actors
+    });
+
+    const score = data.vote_average;
+    const count = data.vote_count;
+    if (score && score > 0) {
+      document.getElementById('movie-tmdb-score').value = score.toFixed(1);
+      document.getElementById('strip-tmdb-score').textContent = score.toFixed(1) + '/10';
+      document.getElementById('strip-votes').textContent = count ? `${count.toLocaleString('fr-FR')} votes` : '';
+      document.getElementById('strip-ratings').style.display = 'flex';
+    }
+  } catch (err) {
+    document.getElementById('strip-genre').textContent = year || '';
+    showToast('Détails du film indisponibles, réessaie plus tard.');
+  } finally {
+    searchStatus.style.display = 'none';
+    isFetchingMovie = false;
+  }
+
+  const strip = document.getElementById('film-strip');
+  strip.classList.add('visible');
+  document.getElementById('strip-title').textContent = m.title;
+  if (m.poster_path) {
+    document.getElementById('strip-poster').src = tmdbImage(m.poster_path, 'w92');
+    document.getElementById('strip-poster').alt = `Affiche de ${escAttr(m.title)}`;
+    document.getElementById('strip-poster').style.display = 'block';
+  }
+  
+  saveDraft();
+}
+
+document.addEventListener('click', e => {
+  if (e.target !== searchEl) suggestEl.style.display = 'none';
+});
+
+// ═══════════════════════════════════════════
+//  HEART & DATES & REVIEW TEXT
+// ═══════════════════════════════════════════
+document.getElementById('heart-btn').addEventListener('click', () => {
+  if (navigator.vibrate) navigator.vibrate(50);
+  hapticPulse(document.getElementById('heart-btn'), 'medium');
+  isLiked = !isLiked;
+  document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
+  saveDraft();
+});
+
+document.getElementById('view-date').addEventListener('change', saveDraft);
+document.getElementById('review-text').addEventListener('input', saveDraft);
+
+// ═══════════════════════════════════════════
+//  MODE (Détaillé / Rapide)
+// ═══════════════════════════════════════════
+function setMode(mode) {
+  currentMode = mode;
+  document.body.classList.toggle('quick-mode', mode === 'quick');
+  
+  document.getElementById('tab-detail').classList.toggle('active', mode === 'detail');
+  document.getElementById('tab-quick').classList.toggle('active', mode === 'quick');
+  
+  calculateScore();
+  saveDraft();
+}
+
+// ═══════════════════════════════════════════
+//  QUICK STARS RATING
+// ═══════════════════════════════════════════
+document.getElementById('quick-stars-container').addEventListener('change', (e) => {
+    quickRating = parseFloat(e.target.value);
+    calculateScore();
+    updateQuickLabel();
+    saveDraft();
+});
+
+// Glisser le doigt/la souris sur les étoiles les remplit progressivement, au
+// lieu de devoir taper précisément sur chacune — plus fluide et satisfaisant,
+// surtout au tap initial où on peut directement glisser jusqu'à la bonne
+// valeur sans relâcher. S'appuie sur elementFromPoint (pas un calcul de
+// position manuel) : robuste face à la mise en page row-reverse et à toute
+// variation de tailles/espacements entre thèmes.
+(function initStarDrag() {
+  const container = document.getElementById('quick-stars-container');
+  if (!container) return;
+  let dragging = false;
+
+  function selectLabelAt(clientX, clientY) {
+    const el = document.elementFromPoint(clientX, clientY);
+    const label = el && el.closest('#quick-stars-container label');
+    if (!label || !label.htmlFor) return;
+    const radio = document.getElementById(label.htmlFor);
+    if (radio && !radio.checked) {
+      radio.checked = true;
+      radio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    e.stopPropagation();
+    dragging = true;
+    const t = e.touches[0];
+    selectLabelAt(t.clientX, t.clientY);
+  }, { passive: true });
+  container.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    e.stopPropagation();
+    const t = e.touches[0];
+    selectLabelAt(t.clientX, t.clientY);
+  }, { passive: true });
+  container.addEventListener('touchend', () => { dragging = false; });
+  container.addEventListener('touchcancel', () => { dragging = false; });
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  container.addEventListener('mousedown', (e) => { dragging = true; selectLabelAt(e.clientX, e.clientY); });
+  document.addEventListener('mousemove', (e) => { if (dragging) selectLabelAt(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', () => { dragging = false; });
+})();
+
+function updateQuickLabel() {
+  const label = document.getElementById('quick-rating-label');
+  if (!label) return;
+  const score = quickRating * 2;
+  const stars = getStarStr(Math.round((score / 2) * 2) / 2);
+  label.innerHTML = `<span>${stars}</span> — ${score.toFixed(1)}/10`;
+}
+
+// ═══════════════════════════════════════════
+//  WEIGHTS
+// ═══════════════════════════════════════════
+function toggleWeights() {
+  weightsOpen = !weightsOpen;
+  document.getElementById('weights-panel').classList.toggle('open', weightsOpen);
+  document.getElementById('weights-toggle').style.color = weightsOpen ? 'var(--orange)' : '';
+  document.getElementById('weights-toggle-chevron').style.transform = weightsOpen ? 'rotate(90deg)' : '';
+}
+
+function getWeights() {
+  const w = {};
+  CRITERIA.forEach(c => {
+    const v = parseFloat(document.getElementById(`w-${c}`).value);
+    w[c] = isNaN(v) || v < 0 ? 0 : v;
+  });
+  return w;
+}
+
+function resetWeights() {
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = 1; });
+  updateWeightBadges();
+  calculateScore();
+  document.getElementById('genre-weight-suggest').style.display = 'none';
+}
+
+function updateWeightBadges() {
+  const w = getWeights();
+  CRITERIA.forEach(c => {
+    document.getElementById(`wb-${c}`).textContent = `×${w[c]}`;
+  });
+}
+
+CRITERIA.forEach(c => {
+  const el = document.getElementById(`w-${c}`);
+  if (el) el.addEventListener('input', () => {
+    updateWeightBadges();
+    calculateScore();
+    document.getElementById('genre-weight-suggest').style.display = 'none'; // l'utilisateur personnalise -> on n'insiste plus
+  });
+});
+
+// ─── Pondérations suggérées selon le genre du film ──────────────────────────
+// Certains critères comptent naturellement plus selon le genre (l'ambiance
+// sonore pour un film d'horreur, le jeu d'acteur pour un drame...). On propose
+// un préréglage adapté, sans jamais écraser silencieusement une personnalisation :
+// - si les poids sont encore à leur valeur par défaut (×1 partout), on l'applique direct ;
+// - sinon, on affiche juste un bouton pour l'appliquer à la demande.
+const GENRE_WEIGHT_PRESETS = {
+  'Horreur':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1,    ambiance: 2,    rythme: 1.5,  affect: 1 },
+  'Musique':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1.25, ambiance: 2,    rythme: 1,    affect: 1 },
+  'Romance':         { scenario: 1,    realisation: 1,    photo: 1,    acteurs: 1.5,  ambiance: 1,    rythme: 0.75, affect: 2 },
+  'Documentaire':    { scenario: 1.5,  realisation: 1,    photo: 1,    acteurs: 0.5,  ambiance: 0.75, rythme: 1,    affect: 0.75 },
+  'Animation':       { scenario: 1.25, realisation: 1.25, photo: 1.5,  acteurs: 0.75, ambiance: 1,    rythme: 1,    affect: 1 },
+  'Science-Fiction': { scenario: 1.5,  realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1,    rythme: 1,    affect: 1 },
+  'Fantastique':     { scenario: 1.25, realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1.25, rythme: 1,    affect: 1 },
+  'Guerre':          { scenario: 1.25, realisation: 1.25, photo: 1,    acteurs: 1.25, ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Thriller':        { scenario: 1.25, realisation: 1.25, photo: 1,    acteurs: 1,    ambiance: 1.25, rythme: 1.5,  affect: 1 },
+  'Drame':           { scenario: 1.5,  realisation: 1,    photo: 1,    acteurs: 1.5,  ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Comédie':         { scenario: 1.25, realisation: 1,    photo: 0.75, acteurs: 1.5,  ambiance: 1,    rythme: 1,    affect: 1.5 },
+  'Action':          { scenario: 0.75, realisation: 1.25, photo: 1.5,  acteurs: 1,    ambiance: 1,    rythme: 1.5,  affect: 1 },
+};
+// Ordre de priorité si un film a plusieurs genres correspondants : les genres
+// les plus "définissants" d'abord (un film peut être à la fois Action et
+// Comédie, mais un genre comme Horreur ou Musique oriente plus fortement
+// l'appréciation qu'Action, souvent secondaire).
+const GENRE_PRIORITY = ['Horreur','Musique','Romance','Documentaire','Animation','Science-Fiction','Fantastique','Guerre','Thriller','Drame','Comédie','Action'];
+
+let pendingGenrePreset = null; // { name, weights } en attente si l'utilisateur a déjà personnalisé
+
+function weightsAreDefault() {
+  return CRITERIA.every(c => parseFloat(document.getElementById(`w-${c}`).value) === 1);
+}
+
+function applyWeightPreset(weights) {
+  CRITERIA.forEach(c => {
+    const el = document.getElementById(`w-${c}`);
+    if (el && weights[c] !== undefined) el.value = weights[c];
+  });
+  updateWeightBadges();
+  calculateScore();
+}
+
+function pickGenrePreset(genreNames) {
+  if (!genreNames || !genreNames.length) return null;
+  for (const g of GENRE_PRIORITY) {
+    if (genreNames.includes(g) && GENRE_WEIGHT_PRESETS[g]) {
+      return { name: g, weights: GENRE_WEIGHT_PRESETS[g] };
+    }
+  }
+  return null;
+}
+
+// Appelée après la sélection d'un film (une fois son genre connu depuis TMDb).
+function suggestGenreWeights(genreNames) {
+  const suggestBtn = document.getElementById('genre-weight-suggest');
+  const match = pickGenrePreset(genreNames);
+  if (!match) { suggestBtn.style.display = 'none'; pendingGenrePreset = null; return; }
+
+  if (weightsAreDefault()) {
+    applyWeightPreset(match.weights);
+    showToast(`Pondérations ajustées pour le genre "${match.name}" 🎯`);
+    suggestBtn.style.display = 'none';
+    pendingGenrePreset = null;
+  } else {
+    // L'utilisateur a déjà personnalisé : on ne touche à rien, mais on propose.
+    pendingGenrePreset = match;
+    suggestBtn.textContent = `🎯 Suggestion "${escAttr(match.name)}"`;
+    suggestBtn.style.display = 'inline-flex';
+  }
+}
+
+document.getElementById('genre-weight-suggest').addEventListener('click', () => {
+  if (!pendingGenrePreset) return;
+  applyWeightPreset(pendingGenrePreset.weights);
+  showToast(`Pondérations ajustées pour le genre "${pendingGenrePreset.name}" 🎯`);
+  document.getElementById('genre-weight-suggest').style.display = 'none';
+  pendingGenrePreset = null;
+});
+
+// ═══════════════════════════════════════════
+//  SCORE CALCULATION
+// ═══════════════════════════════════════════
+// Le calcul du score lui-même (computeQuickScore / computeWeightedScore /
+// scoreToStars / getStarStr) vit dans 03b-pure-logic.js, pour pouvoir être
+// testé automatiquement sans DOM. Cette fonction-ci reste la fine couche qui
+// lit les sliders et écrit le résultat à l'écran.
+// Anime le score vers sa nouvelle valeur à chaque ajustement, plutôt qu'un
+// changement de chiffre instantané. Contrairement à animateCountUp() (utilisée
+// une fois par affichage pour les KPI du dashboard), celle-ci part de la
+// valeur ACTUELLEMENT affichée (pas de 0) et s'annule/relance proprement si
+// une nouvelle valeur arrive avant la fin — indispensable ici car un
+// glissement de slider déclenche beaucoup de mises à jour rapprochées.
+function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
+  const startValue = parseFloat(el.textContent) || 0;
+  if (Math.abs(endValue - startValue) < 0.01) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    el.textContent = endValue.toFixed(decimals);
+    return;
+  }
+  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
+  const startTime = performance.now();
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 2); // ease-out quad : plus vif que l'ease-out cubic des KPI
+    el.textContent = (startValue + (endValue - startValue) * eased).toFixed(decimals);
+    if (progress < 1) {
+      el._scoreAnimId = requestAnimationFrame(step);
+    } else {
+      el.textContent = endValue.toFixed(decimals);
+      el._scoreAnimId = null;
+    }
+  }
+  el._scoreAnimId = requestAnimationFrame(step);
+}
+
+function calculateScore() {
+  let score;
+
+  if (currentMode === 'quick') {
+    score = computeQuickScore(quickRating);
+  } else {
+    const w = getWeights();
+    const criteriaValues = {};
+    CRITERIA.forEach(c => {
+      const val = parseFloat(document.getElementById(c).value);
+      criteriaValues[c] = val;
+      document.getElementById(`val-${c}`).textContent = val.toFixed(1);
+      const descEl = document.getElementById(`desc-${c}`);
+      descEl.textContent = getDesc(c, val, currentMediaType);
+      // Repli progressif : le texte descriptif ne s'affiche qu'une fois qu'on
+      // s'est écarté de la valeur neutre par défaut (5), pour ne pas noyer le
+      // formulaire sous 7 blocs de texte dès l'ouverture d'une fiche vierge.
+      descEl.classList.toggle('revealed', val !== 5);
+    });
+    score = computeWeightedScore(criteriaValues, w);
+  }
+
+  const scoreEl = document.getElementById('score-big');
+  const denomEl = document.querySelector('.score-denom');
+
+  animateValueTowards(scoreEl, score, 1, 200);
+  denomEl.textContent = '/10';
+  scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
+
+  const stars = scoreToStars(score);
+  document.getElementById('stars-display').textContent = getStarStr(stars);
+
+  return score;
+}
+
+function updateSliderPct(el) {
+  const val = parseFloat(el.value);
+  const min = parseFloat(el.min) || 0;
+  const max = parseFloat(el.max) || 10;
+  el.style.setProperty('--slider-pct', ((val - min) / (max - min)) * 100 + '%');
+}
+
+function updateAllSliders() {
+  CRITERIA.forEach(c => {
+    const el = document.getElementById(c);
+    if (el) updateSliderPct(el);
+  });
+}
+
+// Positionne le repère de moyenne perso sur chaque slider (voir CSS
+// .criterion-avg-marker). Calculé une fois depuis l'historique existant : la
+// moyenne "passée" ne change pas pendant qu'on note le film en cours, pas
+// besoin de la recalculer à chaque glissement de curseur.
+function renderCriteriaAverageMarkers() {
+  const avgs = computeCriteriaAverages(loadHistory(), CRITERIA);
+  CRITERIA.forEach(c => {
+    const marker = document.getElementById(`avg-marker-${c}`);
+    if (!marker) return;
+    const avg = avgs[c];
+    if (avg === null) {
+      marker.style.display = 'none';
+      return;
+    }
+    marker.style.left = `${(avg / 10) * 100}%`;
+    marker.title = `Ta moyenne habituelle sur ce critère : ${avg.toFixed(1)}`;
+    marker.style.display = 'block';
+  });
+}
+
+CRITERIA.forEach(c => {
+  document.getElementById(c).addEventListener('input', () => {
+    updateSliderPct(document.getElementById(c));
+    calculateScore();
+    saveDraft();
+    // Un input[type=range] avec un `step` ne déclenche 'input' qu'une fois la
+    // valeur quantifiée (donc déjà une fois par graduation de 0.5) : une petite
+    // vibration ici suffit à donner un vrai "cranté" tactile au glissement,
+    // sans logique supplémentaire de détection de palier.
+    if (navigator.vibrate) navigator.vibrate(8);
+    // Pulse sur le chiffre affiché (pas le curseur lui-même, pour ne pas
+    // interférer avec sa propre transform native pendant le glissement).
+    hapticPulse(document.getElementById(`val-${c}`), 'light');
+  });
+});
+
+// Boutons ± à côté de chaque slider : plus précis qu'un glissé du doigt pour
+// viser une valeur exacte sur mobile. Un seul gestionnaire délégué pour les
+// 14 boutons (7 critères × 2), via les attributs data-target/data-step.
+document.querySelectorAll('.criterion-step-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const slider = document.getElementById(btn.dataset.target);
+    const step = parseFloat(btn.dataset.step);
+    const min = parseFloat(slider.min);
+    const max = parseFloat(slider.max);
+    const next = Math.min(max, Math.max(min, parseFloat(slider.value) + step));
+    slider.value = next;
+    // Un événement 'input' synthétique réutilise exactement la même logique
+    // que le glissement manuel (recalcul du score, sauvegarde du brouillon,
+    // vibration), sans dupliquer ce code ici.
+    slider.dispatchEvent(new Event('input'));
+  });
+});
+
+// ═══════════════════════════════════════════
+//  NOUVELLE CRITIQUE (RESET)
+// ═══════════════════════════════════════════
+document.getElementById('new-btn').addEventListener('click', () => {
+  openModal('Nouvelle critique', 'Voulez-vous effacer le formulaire actuel pour commencer une nouvelle critique ?', () => {
+    localStorage.removeItem('lbx_draft');
+    resetForm();
+    showToast('Formulaire réinitialisé');
+  });
+});
+
+// ═══════════════════════════════════════════
+//  COPY TEXT
+// ═══════════════════════════════════════════
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const title    = document.getElementById('movie-title').value.trim() || searchEl.value.trim() || 'Film sans titre';
+  const year     = document.getElementById('movie-year').value;
+  const director = document.getElementById('movie-director').value;
+  const actors   = document.getElementById('movie-actors').value;
+  const dateVal  = document.getElementById('view-date').value;
+  const dateStr  = dateVal ? new Date(dateVal + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
+  const review   = document.getElementById('review-text').value.trim();
+  const score    = calculateScore(); 
+  const stars    = document.getElementById('stars-display').textContent;
+  const heartStr = isLiked ? ' ❤️' : '';
+
+  let text = `📽 ${title} ${year ? '('+year+') ' : ''}${heartStr}\n`;
+  if (director) text += `🎬 Un film de ${director}\n`;
+  if (actors) text += `🎭 Avec ${actors}\n`;
+  if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
+  if (activeContextTags.size > 0) text += `🏷 ${Array.from(activeContextTags).join(' · ')}\n`;
+  
+  text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
+
+  if (currentMode === 'detail') {
+    const vals = CRITERIA.reduce((acc, c) => {
+      acc[c] = parseFloat(document.getElementById(c).value).toFixed(1);
+      return acc;
+    }, {});
+    text += `\nScénario ${vals.scenario} · Réal ${vals.realisation} · Photo ${vals.photo} · Acteurs ${vals.acteurs} · Son ${vals.ambiance} · Affect ${vals.affect}\n`;
+  }
+
+  if (review) text += `\n${review}`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.innerHTML = `${ICONS.check} Copié !`;
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = `${ICONS.copy} Texte`; btn.classList.remove('copied'); }, 2000);
+    showToast('Critique copiée dans le presse-papier');
+  });
+});
+
+// ═══════════════════════════════════════════
+//  SAVE
+// ═══════════════════════════════════════════
+// Animation de validation façon "clap de cinéma" à chaque critique
+// enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
+// sans bloquer l'interface (pointer-events: none, se retire toute seule).
+function playSaveConfirmation() {
+  const overlay = document.createElement('div');
+  overlay.className = 'save-confirm-overlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.innerHTML = `
+    <div class="save-confirm-ticket">
+      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>
+      <div class="save-confirm-ticket-perf"></div>
+      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
+  setTimeout(() => overlay.remove(), 850);
+}
+
+document.getElementById('save-btn').addEventListener('click', () => {
+  if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  hapticPulse(document.getElementById('save-btn'), 'strong');
+
+  if (currentMediaType === 'tv') {
+    saveTvSeasonRating();
+    return;
+  }
+
+  const title = document.getElementById('movie-title').value.trim() || searchEl.value.trim();
+  if (!title) { showToast('Entrez un titre de film avant de sauvegarder.'); return; }
+
+  const history  = loadHistory();
+  const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
+  const score    = calculateScore();
+
+  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
+  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
+  // la validation — retire puis réapplique la classe (avec un reflow forcé
+  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
+  // suivante dans la même session, pas juste la toute première.
+  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
+  if (scoreMainEl) {
+    scoreMainEl.classList.remove('stamp-pulse');
+    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
+    scoreMainEl.classList.add('stamp-pulse');
+  }
+
+  const movie = {
+    title,
+    year:       document.getElementById('movie-year').value,
+    poster:     document.getElementById('movie-poster').value,
+    genre:      document.getElementById('movie-genre').value,
+    runtime:    document.getElementById('movie-runtime').value,
+    director:   document.getElementById('movie-director').value,
+    actors:     document.getElementById('movie-actors').value, 
+    tmdbScore:  document.getElementById('movie-tmdb-score').value || null,
+    tmdbId:     document.getElementById('movie-tmdb-id').value || null,
+    date:       document.getElementById('view-date').value,
+    liked:      isLiked,
+    contextTags: Array.from(activeContextTags),
+    score:      score.toFixed(1),
+    stars:      document.getElementById('stars-display').textContent,
+    mode:       currentMode,
+    review:     document.getElementById('review-text').value.trim(),
+    values: currentMode === 'detail'
+      ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
+      : { quick: quickRating },
+    savedAt: existing && existing.savedAt ? existing.savedAt : new Date().toISOString(),
+    updatedAt: new Date().toISOString() // sert à la fusion lors de la synchro cloud
+  };
+
+  if (existing) {
+    openModal(
+      'Film déjà noté',
+      `"${title}" est déjà dans votre historique avec ${existing.score}/10.\nVoulez-vous écraser cette note ?`,
+      () => {
+        const idx = history.findIndex(h => h.title.toLowerCase() === title.toLowerCase());
+        history.splice(idx, 1);
+        history.unshift(movie);
+        saveHistory(history);
+        localStorage.removeItem('lbx_draft');
+        resetForm();
+        window._justSavedHistoryTitle = title.toLowerCase();
+        renderAll();
+        showToast(`"${title}" mis à jour`);
+        playSaveConfirmation();
+      }
+    );
+  } else {
+    history.unshift(movie);
+    saveHistory(history);
+    localStorage.removeItem('lbx_draft'); 
+    resetForm();
+    window._justSavedHistoryTitle = title.toLowerCase();
+    renderAll();
+    showToast(`"${title}" enregistré`);
+    playSaveConfirmation();
+    const saveBtn = document.getElementById('save-btn');
+    const origSave = saveBtn.innerHTML;
+    saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
+    saveBtn.style.background = 'var(--green)';
+    saveBtn.style.color = '#0d1117';
+    setTimeout(() => { saveBtn.innerHTML = origSave; saveBtn.style.background = ''; saveBtn.style.color = ''; }, 1800);
+  }
+});
+
+function resetForm() {
+  searchEl.value = '';
+  setTodayDate(); // remet la date à aujourd'hui — sinon elle restait bloquée sur la dernière date utilisée
+  document.getElementById('movie-title').value     = '';
+  document.getElementById('movie-year').value      = '';
+  document.getElementById('movie-poster').value    = '';
+  document.getElementById('movie-genre').value     = '';
+  document.getElementById('movie-runtime').value   = '';
+  document.getElementById('movie-director').value  = '';
+  document.getElementById('movie-actors').value    = '';
+  document.getElementById('movie-tmdb-score').value = '';
+  document.getElementById('movie-tmdb-id').value = '';
+  document.getElementById('review-text').value     = '';
+  document.getElementById('strip-ratings').style.display = 'none';
+  document.getElementById('film-strip').classList.remove('visible');
+  
+  isLiked = false;
+  document.getElementById('heart-btn').classList.remove('active');
+  document.getElementById('heart-btn').setAttribute('aria-pressed', 'false');
+  setTodayDate();
+  
+  activeContextTags.clear();
+  document.querySelectorAll('.ctx-tag').forEach(b => b.classList.remove('active'));
+
+  CRITERIA.forEach(c => { document.getElementById(c).value = 5; });
+  quickRating = 2.5;
+  const defaultRadio = document.getElementById('s5'); 
+  if(defaultRadio) defaultRadio.checked = true;
+  
+  setMode('detail'); 
+  updateAllSliders();
+  renderCriteriaAverageMarkers();
+  updateQuickLabel();
+}
+
+// ═══════════════════════════════════════════
+//  LOAD MOVIE
+// ═══════════════════════════════════════════
+window.loadItem = function(idx) {
+  const history = loadHistory(); const item = history[idx]; if (!item) return;
+  document.getElementById('movie-title').value  = item.title;
+  document.getElementById('movie-year').value   = item.year || '';
+  document.getElementById('movie-poster').value = item.poster || '';
+  document.getElementById('movie-genre').value  = item.genre  || '';
+  document.getElementById('movie-runtime').value = item.runtime || '';
+  document.getElementById('movie-director').value = item.director || '';
+  document.getElementById('movie-actors').value   = item.actors || ''; 
+  document.getElementById('movie-tmdb-id').value  = item.tmdbId || '';
+  document.getElementById('movie-tmdb-score').value = item.tmdbScore || '';
+  
+  searchEl.value = item.title;
+  document.getElementById('view-date').value     = item.date  || '';
+  document.getElementById('review-text').value   = item.review || '';
+  isLiked = item.liked || false;
+  document.getElementById('heart-btn').classList.toggle('active', isLiked);
+  document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
+
+  activeContextTags = new Set(item.contextTags || []);
+  document.querySelectorAll('.ctx-tag').forEach(b => {
+    if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+
+  const strip = document.getElementById('film-strip');
+  strip.classList.add('visible');
+  document.getElementById('strip-title').textContent = item.title;
+  
+  document.getElementById('strip-genre').innerHTML = buildStripMeta({
+    genre: item.genre, runtime: item.runtime, year: item.year,
+    director: item.director, actors: item.actors
+  });
+
+  if (item.tmdbScore) {
+    document.getElementById('strip-tmdb-score').textContent = item.tmdbScore + '/10';
+  } else {
+    document.getElementById('strip-tmdb-score').textContent = '—';
+  }
+
+  if (item.poster) {
+    document.getElementById('strip-poster').src = item.poster;
+    document.getElementById('strip-poster').alt = item.title ? `Affiche de ${escAttr(item.title)}` : '';
+    document.getElementById('strip-poster').style.display = 'block';
+  }
+
+  if (item.mode === 'quick' && item.values?.quick !== undefined) {
+    setMode('quick');
+    quickRating = parseFloat(item.values.quick);
+    const radioId = 's' + (quickRating * 2); 
+    const radioEl = document.getElementById(radioId);
+    if(radioEl) radioEl.checked = true; 
+  } else {
+    setMode('detail');
+    CRITERIA.forEach(c => {
+      document.getElementById(c).value = item.values && item.values[c] !== undefined ? item.values[c] : 5;
+    });
+  }
+
+  calculateScore();
+  renderCriteriaAverageMarkers();
+  saveDraft(); 
+  
+  if (window.innerWidth <= 860) switchMobileNav('rating');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ═══════════════════════════════════════════
+//  MODE FOCUS (un critère à la fois)
+// ═══════════════════════════════════════════
+// Alternative à la liste empilée : n'affiche qu'un critère à la fois, avec
+// navigation dédiée (boutons ‹ › ou swipe). Le score, les descriptions, le
+// repère de moyenne perso et la piste colorée continuent de fonctionner
+// normalement — seule la mise en page (quel bloc est visible) change.
+const FOCUS_MODE_KEY = 'lbx_focus_mode';
+let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) === 'true';
+let focusIndex = 0;
+
+const criteriaListEl = document.getElementById('criteria-list');
+const focusModeToggle = document.getElementById('focus-mode-toggle');
+const focusNavEl = document.getElementById('focus-nav');
+const focusPrevBtn = document.getElementById('focus-prev-btn');
+const focusNextBtn = document.getElementById('focus-next-btn');
+const focusProgressEl = document.getElementById('focus-progress');
+
+function renderFocusStep() {
+  CRITERIA.forEach((c, i) => {
+    const block = document.getElementById(c).closest('.criterion-block');
+    if (block) block.classList.toggle('focus-active', i === focusIndex);
+  });
+  focusProgressEl.textContent = `${focusIndex + 1} / ${CRITERIA.length}`;
+  focusPrevBtn.disabled = focusIndex === 0;
+  focusNextBtn.disabled = focusIndex === CRITERIA.length - 1;
+}
+
+function applyFocusMode() {
+  criteriaListEl.classList.toggle('focus-mode', focusModeOn);
+  focusNavEl.style.display = focusModeOn ? 'flex' : 'none';
+  focusModeToggle.classList.toggle('active', focusModeOn);
+  focusModeToggle.setAttribute('aria-pressed', String(focusModeOn));
+  if (focusModeOn) renderFocusStep();
+}
+
+function goToFocusStep(newIndex) {
+  if (newIndex < 0 || newIndex >= CRITERIA.length || newIndex === focusIndex) return;
+  focusIndex = newIndex;
+  renderFocusStep();
+  if (navigator.vibrate) navigator.vibrate(10);
+  hapticPulse(document.getElementById('focus-progress'), 'light');
+}
+
+focusModeToggle.addEventListener('click', () => {
+  focusModeOn = !focusModeOn;
+  localStorage.setItem(FOCUS_MODE_KEY, String(focusModeOn));
+  focusIndex = 0;
+  applyFocusMode();
+});
+
+focusPrevBtn.addEventListener('click', () => goToFocusStep(focusIndex - 1));
+focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
+
+// Swipe gauche/droite pour naviguer entre critères, actif seulement en mode
+// focus. stopPropagation() empêche ce geste de déclencher AUSSI le swipe
+// global de changement d'onglet mobile (voir 01-navigation.js).
+(function initFocusSwipe() {
+  const SWIPE_MIN_DISTANCE = 40;
+  const SWIPE_ANGLE_RATIO = 1.3;
+  let startX = 0, startY = 0, tracking = false;
+
+  criteriaListEl.addEventListener('touchstart', e => {
+    if (!focusModeOn) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  criteriaListEl.addEventListener('touchend', e => {
+    if (!tracking || !focusModeOn) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return;
+    e.stopPropagation();
+    if (dx < 0) goToFocusStep(focusIndex + 1); // gauche -> critère suivant
+    else goToFocusStep(focusIndex - 1);         // droite -> critère précédent
+  });
+})();
+
+applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
+
+// ═══════════════════════════════════════════
+//  HISTORIQUE — liste, recherche, tri, filtre par genre
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js (1698 lignes, 6
+// responsabilités mêlées) — ce fichier ne couvre que le rendu de la
+// LISTE elle-même : recherche, tri, filtre par genre, l'indice de
+// glissement au premier chargement. Les actions (feuille d'action,
+// toast) vivent dans 06b-history-actions.js ; les statistiques du
+// Profil et les cartes à partager dans 06c/06d.
+
+function renderTagLabel(tagText) {
+  const CONTEXT_TAG_ICONS = {
+    '🍿': ICONS.popcorn,
+    '🔄': ICONS.refresh,
+    '📝': ICONS.edit,
+    '🛋️': ICONS.sofa,
+    '🛋': ICONS.sofa,
+  };
+  const [emoji, ...rest] = tagText.split(' ');
+  const icon = CONTEXT_TAG_ICONS[emoji];
+  return icon ? `${icon} ${rest.join(' ')}` : tagText;
+}
+
+// Ludex 2.0 : la composition "entrée vedette + liste groupée par mois" est
+// spécifique au thème par défaut (voir "Vers Ludex 2.0" §01 — les 6 autres
+// thèmes gardent leur liste de cartes intacte). isDefaultComposition() vit
+// désormais dans 03-foundation.js (partagée avec la watchlist).
+
+const MONTH_LABELS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+// item.date / item.savedAt sont des chaînes ISO (YYYY-MM-DD...) — on prend
+// les 7 premiers caractères comme clé de regroupement (année-mois), sans
+// dépendre d'un format plus permissif que ce que loadHistory() garantit déjà.
+function monthKeyOf(item) {
+  const raw = item.date || item.savedAt || '';
+  return raw.slice(0, 7); // "YYYY-MM"
+}
+function monthLabelOf(key) {
+  const [y, m] = key.split('-');
+  const idx = parseInt(m, 10) - 1;
+  if (!y || idx < 0 || idx > 11) return 'Date inconnue';
+  return `${MONTH_LABELS_FR[idx]} ${y}`;
+}
+
+// Entrée vedette : le film le plus récemment noté, en grand, au-dessus de la
+// liste — alimentée par la même donnée que la liste (aucun calcul dupliqué).
+// N'apparaît qu'en tri chronologique (sortOrder === 'date'), seul contexte où
+// "le plus récent" a un sens pour l'utilisateur.
+function renderHistoryHero(sorted) {
+  const hero = document.getElementById('history-hero');
+  if (!hero) return;
+  if (!isDefaultComposition() || sortOrder !== 'date' || sorted.length === 0) {
+    hero.innerHTML = '';
+    return;
+  }
+  const item = sorted[0];
+  const imgHtml = item.poster
+    ? `<img class="hero-entry-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+    : `<div class="hero-entry-poster"></div>`;
+  hero.innerHTML = `
+    <div class="hero-entry">
+      ${imgHtml}
+      <div class="hero-entry-body">
+        <div class="hero-entry-eyebrow">Dernier film noté</div>
+        <div class="hero-entry-title">${escAttr(item.title)}</div>
+        <div class="hero-entry-score">${item.score}<small>/10</small></div>
+      </div>
+    </div>`;
+}
+
+let histSearchTimer;
+// Dispatche vers le bon rendu selon la bascule Films/Séries — un seul
+// point d'entrée pour les 3 déclencheurs (recherche, filtres de tri,
+// bascule elle-même) plutôt que de dupliquer la condition partout.
+function renderActiveHistoryView() {
+  if (historyMediaFilter === 'tv') { if (typeof renderTvHistory === 'function') renderTvHistory(); }
+  else renderHistory();
+}
+const historySearchEl = document.getElementById('history-search');
+const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+historySearchEl.addEventListener('input', (e) => {
+  historySearchQuery = e.target.value.toLowerCase();
+  historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
+  clearTimeout(histSearchTimer);
+  histSearchTimer = setTimeout(renderActiveHistoryView, 150);
+});
+historySearchClearBtn.addEventListener('click', () => {
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  historySearchEl.focus();
+});
+
+// ═══════════════════════════════════════════
+//  RENDER HISTORY / DASHBOARD / STATS
+// ═══════════════════════════════════════════
+function getGenres(history) {
+  const set = new Set();
+  history.forEach(item => {
+    if (item.genre) {
+      item.genre.split(',').forEach(g => { const t = g.trim(); if (t) set.add(t); });
+    }
+  });
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+function renderGenreChips(items, onFilterChange = renderHistory) {
+  const genres = getGenres(items);
+  const row    = document.getElementById('genre-fold');
+  const chips  = document.getElementById('genre-chips');
+  const currentLabel = document.getElementById('genre-fold-current');
+
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  // Le genre actif reste lisible plié : c'est ce qui rend le pliage acceptable
+  // (l'état du filtre n'est jamais caché, seule la liste des options l'est).
+  if (currentLabel) currentLabel.textContent = activeGenre || 'Tous';
+  chips.innerHTML = '';
+
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (activeGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { activeGenre = null; activeScoreFilter = null; renderGenreChips(items, onFilterChange); onFilterChange(); });
+  chips.appendChild(allChip);
+
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (activeGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => {
+      activeGenre = (activeGenre === g) ? null : g;
+      renderGenreChips(items, onFilterChange);
+      onFilterChange();
+    });
+    chips.appendChild(chip);
+  });
+}
+
+// Tranches de note partagées entre films et séries (histogramme, filtre par
+// clic sur une barre) — extrait ici pour ne pas dupliquer cette table.
+const SCORE_RANGES = {
+  '50': [9,10], '45': [8.5,9], '40': [7.5,8.5], '35': [6.5,7.5], '30': [5.5,6.5],
+  '25': [4.5,5.5], '20': [3.5,4.5], '15': [2.5,3.5], '10': [1.5,2.5], '05': [0,1.5]
+};
+function isScoreInActiveRange(score) {
+  if (activeScoreFilter === null) return true;
+  const [lo, hi] = SCORE_RANGES[activeScoreFilter] || [0, 10];
+  const s = parseFloat(score);
+  return s >= lo && (activeScoreFilter === '50' ? s <= hi : s < hi);
+}
+
+function getSorted(history) {
+  let h = history;
+
+  if (activeGenre) {
+    h = h.filter(item => item.genre && item.genre.split(',').map(g => g.trim()).includes(activeGenre));
+  }
+
+  if (activeScoreFilter !== null) {
+    h = h.filter(item => isScoreInActiveRange(item.score));
+  }
+
+  if (historySearchQuery) {
+    // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
+    // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
+    // année/décennie sans UI supplémentaire — combinable avec les puces de
+    // genre et le filtre de note comme le reste.
+    const isYearQuery = /^\d{3,4}$/.test(historySearchQuery.trim());
+    h = h.filter(item => {
+      const titleMatch = item.title && item.title.toLowerCase().includes(historySearchQuery);
+      const dirMatch = item.director && item.director.toLowerCase().includes(historySearchQuery);
+      const actMatch = item.actors && item.actors.toLowerCase().includes(historySearchQuery);
+      const yearMatch = isYearQuery && item.year && String(item.year).startsWith(historySearchQuery.trim());
+      return titleMatch || dirMatch || actMatch || yearMatch;
+    });
+  }
+
+  if (sortOrder === 'date') {
+    return [...h].sort((a, b) => {
+      const dateA = a.date || a.savedAt || "";
+      const dateB = b.date || b.savedAt || "";
+      return dateB.localeCompare(dateA); 
+    });
+  }
+
+  if (sortOrder === 'score-desc') return [...h].sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
+  if (sortOrder === 'score-asc')  return [...h].sort((a, b) => parseFloat(a.score) - parseFloat(b.score));
+  if (sortOrder === 'title')      return [...h].sort((a, b) => a.title.localeCompare(b.title));
+  
+  return h; 
+}
+
+function renderHistory() {
+  // Capture tout geste "armé" AVANT de reconstruire le DOM (voir
+  // captureArmedHistoryState/reapplyArmedHistoryState dans initHistoryGestures) —
+  // sinon l'état visuel armé disparaîtrait silencieusement sur le nouvel
+  // élément si un re-rendu (synchro en arrière-plan, tirer-pour-rafraîchir,
+  // une autre suppression confirmée en parallèle...) s'intercale pendant que
+  // l'utilisateur attend de confirmer un swipe.
+  const capturedArmedState = window.captureArmedHistoryState ? window.captureArmedHistoryState() : null;
+
+  const history   = loadHistory();
+  const sorted    = getSorted(history);
+  const container = document.getElementById('history-list');
+
+  const badge = document.getElementById('hist-count-badge');
+  const showCount = loadTvShows().length;
+  const tvFragment = ` · ${showCount} série${showCount > 1 ? 's' : ''}`;
+  if (activeGenre || historySearchQuery || activeScoreFilter) {
+    badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
+    badge.style.color = 'var(--orange)';
+  } else {
+    badge.textContent = history.length + ' film' + (history.length > 1 ? 's' : '') + tvFragment;
+    badge.style.color = '';
+  }
+
+  renderGenreChips(history);
+  document.getElementById('filter-row').style.display = history.length === 0 ? 'none' : '';
+
+  if (history.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    window._justSavedHistoryTitle = null;
+    return;
+  }
+
+  if (sorted.length === 0) {
+    document.getElementById('history-hero').innerHTML = '';
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
+    window._justSavedHistoryTitle = null;
+    return;
+  }
+
+  renderHistoryHero(sorted);
+
+  const groupByMonth = isDefaultComposition() && sortOrder === 'date';
+  let lastMonthKey = null;
+  // Cascade d'entrée réservée au tout premier affichage de l'onglet Historique
+  // dans cette session (pas à chaque changement de filtre/tri, qui redessine
+  // aussi la liste — même principe déjà appliqué à hist-item-entering
+  // juste en dessous, pour ne jamais rejouer une animation sur toute une
+  // longue liste à cause d'une simple interaction de filtrage).
+  // Cascade d'entrée réservée au tout premier affichage RÉEL de l'onglet
+  // Historique (pas un rendu déclenché en arrière-plan par renderAll() au
+  // démarrage pendant qu'un autre onglet est affiché — l'animation serait
+  // consommée silencieusement sans jamais être vue). Même principe que
+  // renderStats()/statsDirty pour Profil, voir 06c-profile-stats.js.
+  const historyViewVisible = document.getElementById('view-history')?.classList.contains('active');
+  const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
+  if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
+
+  container.innerHTML = '';
+  sorted.forEach((item, i) => {
+    const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
+
+    if (groupByMonth) {
+      const key = monthKeyOf(item);
+      if (key !== lastMonthKey) {
+        const sep = document.createElement('div');
+        sep.className = 'hist-month-sep';
+        sep.textContent = monthLabelOf(key);
+        if (cascadeEntrance) sep.classList.add('hist-cascade-in');
+        container.appendChild(sep);
+        lastMonthKey = key;
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    div.dataset.idx = realIdx;
+    div.dataset.savedAt = item.savedAt || '';
+    div.dataset.titleKey = item.title.toLowerCase();
+    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
+    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
+    // l'animation à chaque re-rendu (changement de filtre, etc.).
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    } else if (cascadeEntrance) {
+      // Délai croissant plafonné : au-delà d'une vingtaine de lignes, les
+      // faire toutes attendre leur tour rendrait l'affichage perceptiblement
+      // lent à se stabiliser — les suivantes entrent toutes au même instant,
+      // dernier de la cascade.
+      div.classList.add('hist-cascade-in');
+      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
+    }
+
+    const scoreNum = parseFloat(item.score);
+    let scoreColor = 'var(--red)';
+    if(scoreNum >= 7.5) scoreColor = 'var(--green)';
+    else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
+
+    const imgHtml = item.poster
+      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
+      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
+
+    const tmdbHtml = item.tmdbScore
+      ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
+      : '';
+
+    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
+    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
+    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
+    let metaHTML = '';
+    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
+    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
+    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
+    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
+
+    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
+    // c'était la dernière source de hauteurs inégales entre cartes — un film
+    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
+    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
+
+    let reviewHTML = '';
+    if (item.review) {
+      reviewHTML = `
+        <div class="hist-review" onclick="this.classList.toggle('expanded')">
+          <div class="hist-review-content">"${escAttr(item.review)}"</div>
+          <span class="hist-review-toggle"></span>
+        </div>
+      `;
+    }
+
+    div.innerHTML = `
+      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
+      <div class="hist-item-content">
+        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${imgHtml}
+          <div class="hist-body">
+            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+            <div class="hist-meta">${metaHTML}</div>
+            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
+            <div class="hist-stars">${item.stars || ''}<span class="hist-score"></span></div>
+            ${reviewHTML}
+          </div>
+        </div>
+        <div class="hist-actions">
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
+        </div>
+      </div>`;
+    container.appendChild(div);
+    applyPosterAccent(item.poster, div);
+  });
+  window._justSavedHistoryTitle = null;
+  if (window.reapplyArmedHistoryState) window.reapplyArmedHistoryState(capturedArmedState);
+}
+
+// ═══════════════════════════════════════════
+//  ACTIONS RAPIDES (appui long sur un film de l'historique)
+// ═══════════════════════════════════════════
+
+// Reconstruit le même texte partageable que le bouton "Copier" du formulaire,
+// mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
+// dans le formulaire d'abord). Garde les deux textes strictement identiques.
+document.getElementById('filter-row').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  sortOrder = btn.dataset.sort;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderActiveHistoryView();
+});
+
+// ── Découvrabilité du swipe ──
+// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
+// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
+// l'historique (avec au moins un film), la première carte fait un petit
+// aperçu automatique — elle glisse brièvement, révélant l'action cachée
+// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
+const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
+function maybePlaySwipeHint() {
+  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
+  const firstItem = document.querySelector('.hist-item');
+  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
+  const content = firstItem.querySelector('.hist-item-content');
+  if (!content) return;
+  localStorage.setItem(SWIPE_HINT_KEY, '1');
+
+  // Respecte la préférence de réduction des animations
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  setTimeout(() => {
+    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
+    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
+    content.style.transform = 'translateX(-56px)';
+    setTimeout(() => {
+      content.style.transform = '';
+      setTimeout(() => {
+        firstItem.classList.remove('hist-swipe-left');
+        content.style.transition = '';
+      }, 450);
+    }, 900);
+  }, 600);
+}
+// ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
+
+// ═══════════════════════════════════════════
+//  HISTORIQUE — actions rapides (toast, feuille d'action, appui long)
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre les
+// actions déclenchées DEPUIS une carte d'historique (toast avec
+// annulation, feuille d'action à l'appui long, copier le détail,
+// aimer/ne plus aimer). Le rendu de la liste elle-même vit dans
+// 06a-history-list.js.
+
+let toastTimer;
+let deletedItemCache = null; 
+let deletedItemIndex = null;
+
+function showToast(msg, withUndo = false, undoFnName = 'undoDelete') {
+  const t = document.getElementById('toast');
+
+  // Construction DOM sûre (textContent) plutôt qu'innerHTML : les messages
+  // contiennent souvent des titres de films (données externes TMDb/imports) —
+  // corriger ici, au puits, sécurise TOUS les appels d'un coup, sans devoir
+  // penser à échapper à chaque site d'appel.
+  t.textContent = '';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
+  if (withUndo) {
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo-btn';
+    btn.textContent = 'Annuler';
+    btn.addEventListener('click', () => { if (typeof window[undoFnName] === 'function') window[undoFnName](); });
+    t.appendChild(btn);
+  }
+
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(() => { 
+      t.classList.remove('show');
+      deletedItemCache = null; 
+  }, withUndo ? 4500 : 2800);
+}
+
+window.deleteItem = function(idx, btnEl) {
+  const history = loadHistory();
+  deletedItemCache = history[idx]; 
+  deletedItemIndex = idx;
+  
+  if (btnEl) {
+    const cardToAnimate = btnEl.closest('.hist-item');
+    cardToAnimate.classList.add('deleting');
+  }
+
+  setTimeout(() => {
+    history.splice(idx, 1);
+    saveHistory(history);
+    if (deletedItemCache?.title) {
+      recordTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+    }
+    renderAll();
+    showToast(`Film supprimé.`, true);
+  }, 300);
+};
+
+window.undoDelete = function() {
+  if (!deletedItemCache) return;
+  const history = loadHistory();
+  history.splice(deletedItemIndex, 0, deletedItemCache); 
+  saveHistory(history);
+  if (deletedItemCache?.title) {
+    removeTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+  }
+  renderAll();
+  showToast(`Suppression annulée.`);
+  deletedItemCache = null;
+};
+
+// ═══════════════════════════════════════════
+//  RECHERCHE HISTORIQUE
+// ═══════════════════════════════════════════
+function buildCopyTextForItem(item) {
+  const heartStr = item.liked ? ' ❤️' : '';
+  const dateStr = item.date
+    ? new Date(item.date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  const score = parseFloat(item.score) || 0;
+  const stars = getStarStr(scoreToStars(score));
+
+  let text = `📽 ${escAttr(item.title)} ${item.year ? '(' + item.year + ') ' : ''}${heartStr}\n`;
+  if (item.director) text += `🎬 Un film de ${item.director}\n`;
+  if (item.actors) text += `🎭 Avec ${item.actors}\n`;
+  if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
+  if (item.contextTags && item.contextTags.length > 0) text += `🏷 ${item.contextTags.join(' · ')}\n`;
+
+  text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
+
+  if (item.mode === 'detail' && item.values) {
+    const v = item.values;
+    const f = (x) => (parseFloat(x) || 0).toFixed(1);
+    text += `\nScénario ${f(v.scenario)} · Réal ${f(v.realisation)} · Photo ${f(v.photo)} · Acteurs ${f(v.acteurs)} · Son ${f(v.ambiance)} · Affect ${f(v.affect)}\n`;
+  }
+
+  if (item.review) text += `\n${escAttr(item.review)}`;
+  return text;
+}
+
+window.toggleLikedForItem = function(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+  item.liked = !item.liked;
+  item.updatedAt = new Date().toISOString();
+  saveHistory(history);
+  renderAll();
+  showToast(item.liked ? `"${item.title}" ajouté à tes coups de cœur ❤️` : `"${item.title}" retiré de tes coups de cœur`);
+};
+
+const actionSheetEl = document.getElementById('action-sheet');
+const actionSheetTitleEl = document.getElementById('action-sheet-title');
+const actionSheetListEl = document.getElementById('action-sheet-list');
+const actionSheetCancelBtn = document.getElementById('action-sheet-cancel');
+
+function openActionSheetForItem(idx) {
+  const history = loadHistory();
+  const item = history[idx];
+  if (!item) return;
+
+  actionSheetTitleEl.textContent = item.title;
+
+  const actions = [
+    { label: 'Modifier', icon: ICONS.edit, onClick: () => loadItem(idx) },
+    {
+      label: item.liked ? 'Retirer des coups de cœur' : 'Ajouter aux coups de cœur',
+      icon: ICONS.heart,
+      onClick: () => toggleLikedForItem(idx),
+    },
+    {
+      label: 'Copier le texte',
+      icon: ICONS.copy,
+      onClick: () => {
+        navigator.clipboard.writeText(buildCopyTextForItem(item)).then(() => {
+          showToast('Critique copiée dans le presse-papier');
+        });
+      },
+    },
+    {
+      label: 'Supprimer',
+      icon: ICONS.trash,
+      danger: true,
+      onClick: () => {
+        const cardEl = document.querySelector(`.hist-item[data-idx="${idx}"]`);
+        deleteItem(idx, cardEl ? cardEl.querySelector('.hist-action-btn.del') : null);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => {
+      closeActionSheet();
+      onClick();
+    });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+  actionSheetListEl.querySelector('.action-sheet-item')?.focus();
+}
+
+function closeActionSheet() {
+  closeModal(actionSheetEl);
+}
+
+actionSheetCancelBtn.addEventListener('click', closeActionSheet);
+actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl) closeActionSheet(); });
+
+// Détection de l'appui long (mobile) sur un film de l'historique. Délégué sur
+// le conteneur (pas un listener par carte) : fonctionne aussi pour les films
+// ajoutés après coup, sans re-câblage. Annulé si le doigt bouge trop (= scroll)
+// ou si l'appui vise déjà un bouton (édition/suppression directe).
+(function initHistoryGestures() {
+  const LONG_PRESS_MS = 500;
+  const MOVE_CANCEL_PX = 12; // marge avant de trancher swipe/scroll — le ratio généreux (0.5, voir plus bas) fait maintenant le plus gros du travail, donc ce seuil peut redescendre pour un geste plus réactif dès le départ
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let pressTimer = null;
+  let startX = 0, startY = 0;
+  let pressedItem = null;
+  let pressedContent = null;
+  let longPressJustFired = false; // évite qu'un tap (click) ne se déclenche juste après un appui long déjà traité
+  let wasSwipe = false; // idem, juste après un swipe
+  let swipeMode = null; // null = pas encore décidé, 'swipe' = glissement horizontal engagé, 'scroll' = mouvement vertical (on laisse faire nativement)
+  let dx = 0;
+  // Un swipe qui atteint le seuil n'exécute plus l'action tout de suite : il
+  // "arme" l'item (piste révélée, en attente d'un tap de confirmation sur
+  // l'indice) plutôt que de supprimer/modifier immédiatement — évite les
+  // suppressions accidentelles lors d'un simple scroll un peu appuyé.
+  let armedItem = null;
+  let armedDirection = null; // 'left' (supprimer) ou 'right' (modifier)
+
+  const container = document.getElementById('history-list');
+  if (!container) return;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.hist-item-content');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
+    armedItem = null;
+    armedDirection = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const item = armedItem;
+    const dir = armedDirection;
+    const content = item.querySelector('.hist-item-content');
+    // Capture une clé STABLE (pas juste l'index brut) : entre ce tap de
+    // confirmation et l'exécution réelle (~500ms plus tard, deux délais
+    // d'animation cumulés), une AUTRE suppression/modification confirmée en
+    // parallèle peut décaler tous les index suivants — un index figé ici
+    // deviendrait alors celui d'un AUTRE film au moment de l'exécuter. D'où
+    // le bug observé : des cartes qui semblaient "figées" en plein envol,
+    // l'action retardée s'appliquant au mauvais film (ou à un index qui
+    // n'existait plus).
+    const savedAt = item.dataset.savedAt;
+    const titleKey = item.dataset.titleKey;
+    function resolveCurrentIdx() {
+      const freshHistory = loadHistory();
+      const found = freshHistory.findIndex(h => h.savedAt === savedAt && h.title.toLowerCase() === titleKey);
+      return found !== -1 ? found : parseInt(item.dataset.idx, 10); // repli sur l'ancien index si jamais introuvable
+    }
+    armedItem = null;
+    armedDirection = null;
+    // 240ms = --dur-base (styles.css :root), doit rester synchronisé avec la
+    // transition de sortie ci-dessous (même correctif que watchlist et la
+    // fiche film : l'ancien délai de 200ms coupait l'animation 40ms trop tôt).
+    const EXIT_DUR_MS = 240;
+    if (dir === 'left') {
+      item.classList.add('hist-swipe-out-left');
+      content.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => deleteItem(resolveCurrentIdx()), EXIT_DUR_MS); // pas de btnEl : évite de cumuler avec l'animation .deleting existante
+    } else {
+      item.classList.add('hist-swipe-out-right');
+      content.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(item, 'strong');
+      setTimeout(() => loadItem(resolveCurrentIdx()), EXIT_DUR_MS);
+    }
+  }
+
+  function resetGesture(e) {
+    if (e && pressedItem) e.stopPropagation();
+    clearTimeout(pressTimer);
+    if (pressedItem) pressedItem.classList.remove('hist-dragging'); // réactive la transition pour l'animation de relâchement
+    pressTimer = null;
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  // Remet aussi le VISUEL à zéro (pas juste le suivi interne) — utilisé pour
+  // touchcancel, qui peut se déclencher sur un vrai téléphone (notification,
+  // appel entrant, le système qui interrompt le geste en cours) sans jamais
+  // passer par resolveGesture(). Sans ce nettoyage visuel, le film glissé au
+  // moment de l'interruption restait visuellement coincé à mi-chemin — décalé,
+  // sans indice Supprimer/Modifier visible — et le restait indéfiniment,
+  // jusqu'à ce qu'on retouche cet item précis. D'où le bug remonté :
+  // "après avoir déjà swipé un autre film juste avant".
+  function cancelGestureFully(e) {
+    if (pressedItem) {
+      if (pressedContent) {
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = '';
+      }
+      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+    }
+    resetGesture(e);
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
+    // NOTE : ne PAS annuler ici un item armé — un simple tap déclenche
+    // touchstart AVANT click, et annuler dès le toucher tuait l'état armé
+    // avant que le clic de confirmation n'arrive (le tap "Supprimer" ouvrait
+    // alors la fiche du film). L'annulation pour cause de nouveau geste se
+    // fait plus bas, au moment où un VRAI glissement démarre (swipeMode).
+    pressedItem = item;
+    pressedContent = item.querySelector('.hist-item-content');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+    pressTimer = setTimeout(() => {
+      if (!pressedItem || swipeMode === 'swipe') return; // déjà en train de glisser : pas d'appui long
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(pressedItem, 'medium');
+      openActionSheetForItem(parseInt(pressedItem.dataset.idx, 10));
+      longPressJustFired = true;
+      setTimeout(() => { longPressJustFired = false; }, 300);
+      resetGesture();
+    }, LONG_PRESS_MS);
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const curX = e.touches[0].clientX;
+    const curY = e.touches[0].clientY;
+    const rawDx = curX - startX;
+    const rawDy = curY - startY;
+
+    // Décide UNE FOIS, dès qu'il y a assez de mouvement, si c'est un swipe
+    // horizontal (glissement de la carte) ou un scroll vertical (on laisse
+    // faire nativement, on ne touche à rien).
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
+        // C'est ICI (nouveau glissement réellement engagé) qu'on nettoie un
+        // éventuel état armé du même film — assez tôt pour éviter les deux
+        // états contradictoires (le bug historique du re-swipe), assez tard
+        // pour ne pas tuer le tap de confirmation (qui ne passe jamais ici).
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          // Désactive la transition CSS pendant le glissement actif (classe
+          // prévue mais jamais posée jusqu'ici) : sans ça, chaque mise à jour
+          // de translateX() au fil du doigt s'anime sur 240ms au lieu d'être
+          // instantanée — un léger effet "élastique" qui traîne derrière le
+          // doigt plutôt qu'un suivi 1:1 franc.
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  }, { passive: true });
+
+  function resolveGesture(e) {
+    if (!pressedItem) return;
+    if (e) e.stopPropagation();
+    clearTimeout(pressTimer);
+
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed(); // un seul item armé à la fois
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        armedDirection = 'left';
+        hapticPulse(pressedItem, 'medium');
+      } else if (dx >= SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(120px)';
+        pressedItem.classList.add('hist-swipe-armed-right');
+        armedItem = pressedItem;
+        armedDirection = 'right';
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+      }
+      wasSwipe = true;
+      setTimeout(() => { wasSwipe = false; }, 300);
+    }
+    resetGesture();
+  }
+
+  container.addEventListener('touchend', resolveGesture);
+
+  container.addEventListener('touchcancel', cancelGestureFully);
+
+  // Souris (pratique pour tester sur desktop / vercel dev) : même logique que
+  // le tactile, juste déclenchée par mousedown/mousemove/mouseup.
+  let mouseActive = false;
+  container.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    mouseActive = true;
+    pressedItem = item;
+    pressedContent = item.querySelector('.hist-item-content');
+    startX = e.clientX;
+    startY = e.clientY;
+    swipeMode = null;
+    dx = 0;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!mouseActive || !pressedItem) return;
+    const rawDx = e.clientX - startX;
+    const rawDy = e.clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
+        // Même correctif que le tactile : nettoyer un état armé au démarrage
+        // d'un VRAI glissement, jamais au simple clic (voir touchstart).
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging'); // voir le commentaire côté tactile
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!mouseActive) return;
+    mouseActive = false;
+    resolveGesture();
+  });
+
+  // Tap (court) sur un film : ouvre sa fiche détaillée. L'appui long (menu
+  // d'actions) et le swipe (supprimer/modifier) ont priorité — s'ils viennent
+  // de se déclencher, on ignore ce tap.
+  container.addEventListener('click', (e) => {
+    // Confirmation/annulation d'un item armé (swipe qui a atteint son seuil) :
+    // prioritaire sur tout le reste, y compris le garde-fou "wasSwipe" — sinon
+    // on ne pourrait jamais confirmer juste après avoir swipé.
+    if (armedItem) {
+      const hint = e.target.closest('.hist-swipe-hint');
+      const clickedItem = e.target.closest('.hist-item');
+      if (hint && clickedItem === armedItem) {
+        confirmArmed();
+        return;
+      }
+      const wasArmedItself = clickedItem === armedItem;
+      cancelArmed();
+      if (wasArmedItself) return; // juste annulé : ne rien faire de plus avec ce tap
+      // sinon : le tap visait autre chose (un autre film, le CTA...), on continue normalement
+    }
+
+    if (e.target.closest('#empty-state-history-cta')) {
+      if (window.innerWidth <= 860) switchMobileNav('rating');
+      const searchInput = document.getElementById('movie-search');
+      if (searchInput) searchInput.focus();
+      return;
+    }
+    if (longPressJustFired || wasSwipe) return;
+    const item = e.target.closest('.hist-item');
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const history = loadHistory();
+    const movieItem = history[idx];
+    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
+  });
+
+  // Activation clavier (Entrée/Espace) de .hist-item-open : role="button" +
+  // tabindex="0" rendent l'élément focusable et l'annoncent comme un bouton
+  // aux lecteurs d'écran, mais NE déclenchent PAS d'activation clavier tout
+  // seuls (contrairement à un vrai <button>) — sans ce gestionnaire, il était
+  // impossible d'ouvrir une fiche film au clavier depuis l'historique.
+  container.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const opener = e.target.closest('.hist-item-open');
+    if (!opener) return;
+    e.preventDefault(); // Espace ne doit pas aussi faire défiler la page
+    const item = opener.closest('.hist-item');
+    if (!item) return;
+    const idx = parseInt(item.dataset.idx, 10);
+    const movieItem = loadHistory()[idx];
+    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
+  });
+
+  // Filet de sécurité : un tap n'importe où EN DEHORS de la liste (changer
+  // d'onglet, ouvrir les réglages...) annule aussi un item resté armé.
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+
+  // Exposé pour renderHistory() : un re-rendu (déclenché par une synchro en
+  // arrière-plan, un tirer-pour-rafraîchir, une autre suppression confirmée
+  // en parallèle...) reconstruit tout le DOM de la liste. Sans rien faire de
+  // plus, l'état "armé" (piste révélée, en attente d'un tap de confirmation)
+  // disparaîtrait silencieusement sur le nouvel élément reconstruit — le
+  // prochain tap de l'utilisateur sur l'indice ne ferait alors plus rien,
+  // puisque ni la classe visuelle ni la variable JS ne s'y attendent plus.
+  // Solution en deux temps : capturer l'état AVANT de vider le DOM (clé
+  // stable, pas un index qui pourrait avoir changé), puis le réappliquer
+  // sur le NOUVEL élément correspondant après la reconstruction.
+  window.captureArmedHistoryState = function() {
+    // Cas 1 : un item est déjà ARMÉ (piste révélée, en attente de confirmation).
+    if (armedItem) {
+      const captured = {
+        kind: 'armed',
+        savedAt: armedItem.dataset.savedAt,
+        titleKey: armedItem.dataset.titleKey,
+        direction: armedDirection,
+      };
+      resetGesture();
+      armedItem = null;
+      armedDirection = null;
+      return captured;
+    }
+    // Cas 2 : un glissement est EN COURS (doigt toujours posé, pas encore
+    // armé) — c'est le cas qui manquait encore : un re-rendu à ce moment-là
+    // laissait pressedItem/pressedContent pointer vers un élément détaché,
+    // donc le reste du geste (touchmove/touchend) ne mettait plus rien à
+    // jour de VISIBLE, exactement le bug "le swipe est détecté mais reste
+    // vide" remonté par l'utilisateur.
+    if (pressedItem) {
+      const captured = {
+        kind: 'dragging',
+        savedAt: pressedItem.dataset.savedAt,
+        titleKey: pressedItem.dataset.titleKey,
+        dx, swipeMode,
+      };
+      return captured; // ne réinitialise PAS ici : le doigt est encore posé, le geste continue
+    }
+    return null;
+  };
+
+  window.reapplyArmedHistoryState = function(captured) {
+    if (!captured) return;
+    const container = document.getElementById('history-list');
+    const newItem = container?.querySelector(
+      `.hist-item[data-saved-at="${CSS.escape(captured.savedAt)}"][data-title-key="${CSS.escape(captured.titleKey)}"]`
+    );
+    if (!newItem) return; // le film a été supprimé entre-temps par ailleurs : rien à réappliquer
+    const content = newItem.querySelector('.hist-item-content');
+
+    if (captured.kind === 'armed') {
+      const cls = captured.direction === 'left' ? 'hist-swipe-armed-left' : 'hist-swipe-armed-right';
+      const swipeCls = captured.direction === 'left' ? 'hist-swipe-left' : 'hist-swipe-right';
+      newItem.classList.add(cls, swipeCls);
+      if (content) content.style.transform = `translateX(${captured.direction === 'left' ? -120 : 120}px)`;
+      armedItem = newItem;
+      armedDirection = captured.direction;
+    } else if (captured.kind === 'dragging') {
+      // Rebranche pressedItem/pressedContent sur le NOUVEL élément (le geste
+      // continue dessus dès le prochain touchmove/touchend), et redonne
+      // immédiatement le même rendu visuel qu'avant le re-rendu.
+      pressedItem = newItem;
+      pressedContent = content;
+      dx = captured.dx;
+      swipeMode = captured.swipeMode;
+      if (content) content.style.transform = `translateX(${dx}px)`;
+      newItem.classList.toggle('hist-swipe-left', dx < -10);
+      newItem.classList.toggle('hist-swipe-right', dx > 10);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════════
+//  PROFIL — statistiques et tableau de bord
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre le
+// calcul et le rendu des statistiques du Profil (radar, timeline,
+// distribution des notes, badges, heatmap, décennies, classiques à
+// explorer) ainsi que renderAll()/renderProfileIfDirty(), les points
+// d'entrée appelés après chaque changement de données. Le dessin des
+// cartes à partager (canvas) vit séparément dans
+// 06d-profile-share-cards.js.
+
+function createRadarSVG(averages, mediaType = 'movie') {
+  if (averages.every(a => a === 0)) return null;
+
+  // Libellés courts pour l'affichage du radar (doit couvrir toutes les clés de
+  // CRITERIA). Déclaré ICI (local à la fonction) et non en haut du fichier :
+  // un `const` top-level serait dans sa "zone morte temporelle" tant que
+  // l'exécution du script n'a pas atteint cette ligne — or `renderAll()` est
+  // appelée une première fois de façon précoce (voir 03-foundation.js), avant
+  // que 06-history.js n'ait fini de s'exécuter, ce qui provoquait un plantage
+  // total de l'app au chargement pour tout utilisateur ayant déjà un historique.
+  const CRITERIA_SHORT_LABELS = mediaType === 'tv'
+    ? { scenario: 'Scén.', realisation: 'Réal.', photo: 'Final', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Cohér.', affect: 'Affect' }
+    : { scenario: 'Scén.', realisation: 'Réal.', photo: 'Photo', acteurs: 'Casting', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect' };
+
+  const s = 220, c = s/2, r = 72;
+  // Nombre d'axes = nombre de critères actuels (CRITERIA) : ne plus jamais figer
+  // ce nombre en dur, sinon l'ajout d'un critère (ex: "Rythme") désaligne le
+  // graphique ou perd un axe silencieusement.
+  // NB : s (220) est volontairement plus grand que 2×r (144) — la différence
+  // (38px de chaque côté) est la marge réservée aux libellés des axes.
+  // Avant, s=180 et r=0.42×s=76 plaçaient l'ancre du texte PILE sur le bord du
+  // viewBox (aucune marge), ce qui faisait déborder "Réal." et "Photo" (le
+  // texte s'étend depuis son ancre, pas autour) hors du cadre visible.
+  const angleStep = 360 / CRITERIA.length;
+  const angles = CRITERIA.map((_, i) => (i * angleStep - 90) * Math.PI / 180);
+  const labels = CRITERIA.map(critKey => CRITERIA_SHORT_LABELS[critKey] || critKey);
+
+  let svg = `<svg viewBox="0 0 ${s} ${s}" width="100%" height="100%" style="max-width:250px; overflow:visible;">`;
+  
+  [10, 6.66, 3.33].forEach(lvl => {
+    const pts = angles.map(a => `${c + (lvl/10)*r*Math.cos(a)},${c + (lvl/10)*r*Math.sin(a)}`).join(' ');
+    svg += `<polygon points="${pts}" fill="none" class="svg-grid" />`;
+  });
+
+  angles.forEach((a, i) => {
+    svg += `<line x1="${c}" y1="${c}" x2="${c + r*Math.cos(a)}" y2="${c + r*Math.sin(a)}" class="svg-axis" />`;
+    const lx = c + (r + 14) * Math.cos(a), ly = c + (r + 8) * Math.sin(a);
+    const anch = lx < c - 10 ? 'end' : (lx > c + 10 ? 'start' : 'middle');
+    svg += `<text x="${lx}" y="${ly}" class="svg-text" text-anchor="${anch}" dominant-baseline="middle">${labels[i]}</text>`;
+  });
+
+  const dataPts = angles.map((a, i) => `${c + (averages[i]/10)*r*Math.cos(a)},${c + (averages[i]/10)*r*Math.sin(a)}`).join(' ');
+  // Anime la forme depuis le centre (effet "scan") plutôt que de l'afficher
+  // d'un coup — transform-origin fixé sur le centre exact du cercle (c,c).
+  svg += `<polygon points="${dataPts}" fill="var(--orange)" fill-opacity="0.3" stroke="var(--orange)" stroke-width="2" class="radar-fill-anim" style="transform-origin:${c}px ${c}px;" />`;
+  
+  angles.forEach((a, i) => {
+    svg += `<circle cx="${c + (averages[i]/10)*r*Math.cos(a)}" cy="${c + (averages[i]/10)*r*Math.sin(a)}" r="3" fill="var(--blue)" class="radar-dot-anim" style="animation-delay:${0.5 + i*0.05}s" />`;
+  });
+
+  svg += `</svg>`;
+  return svg;
+}
+
+function createTimelineSVG(history) {
+  const months = {};
+  const now = new Date();
+  for(let i=5; i>=0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`] = { c: 0 };
+  }
+  history.forEach(h => {
+    if(h.date) { const k = h.date.substring(0,7); if(months[k]) months[k].c++; }
+  });
+
+  const keys = Object.keys(months).sort();
+  const maxC = Math.max(...keys.map(k => months[k].c), 1);
+  const w = 300, h = 100, pad = 20, barW = (w - pad*2)/6 - 10;
+
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible;">`;
+  keys.forEach((k, i) => {
+    const count = months[k].c;
+    const barH = (count / maxC) * (h - pad - 10);
+    const x = pad + i*(barW + 10), y = h - pad - barH;
+    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="var(--border-hi)" rx="2" style="transition:height 0.5s ease, y 0.5s ease" />`;
+    if(count > 0) svg += `<text x="${x + barW/2}" y="${y - 4}" class="svg-text-mono" text-anchor="middle">${count}</text>`;
+    const mLab = new Date(k+'-01').toLocaleDateString('fr-FR', {month:'short'}).substring(0,3);
+    svg += `<text x="${x + barW/2}" y="${h - 5}" class="svg-text" fill="var(--text-mid)" text-anchor="middle">${mLab}</text>`;
+  });
+  svg += `</svg>`;
+  return svg;
+}
+
+// Anime un chiffre de 0 (ou de sa valeur affichée actuelle) jusqu'à sa valeur
+// finale, avec un ralentissement en fin de course (ease-out) pour un rendu
+// plus "premium" qu'un simple changement instantané. Respecte la préférence
+// système "réduire les animations" : dans ce cas, affiche direct la valeur finale.
+function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const format = (v) => decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
+
+  if (reduceMotion) {
+    el.textContent = format(endValue);
+    return;
+  }
+
+  const startValue = 0;
+  const startTime = performance.now();
+
+  function step(now) {
+    const progress = Math.min((now - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = format(startValue + (endValue - startValue) * eased);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = format(endValue);
+  }
+  requestAnimationFrame(step);
+}
+
+// Le radar ne se dessine (animation) que lorsqu'il entre réellement dans le
+// viewport — divulgation progressive : pas d'effet gâché hors écran, et un
+// petit "moment" à découvrir en scrollant jusqu'à lui plutôt qu'un dessin
+// déjà terminé avant même de le voir. Un seul observer, mis en place une fois
+// (le conteneur lui-même persiste ; seul son contenu est remplacé à chaque
+// rendu — la classe .in-view s'applique alors dynamiquement au nouveau SVG).
+(function initRadarScrollReveal() {
+  const container = document.getElementById('radar-chart-container');
+  if (!container || !window.IntersectionObserver) return;
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) container.classList.add('in-view');
+    });
+  }, { threshold: 0.3 });
+  observer.observe(container);
+})();
+
+function renderStats() {
+  const history = loadHistory();
+  animateCountUp(document.getElementById('kpi-total'), history.length);
+  
+  if (history.length === 0) {
+    document.getElementById('kpi-avg').textContent = '-'; 
+    document.getElementById('kpi-year').textContent = '0';
+    document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
+    document.getElementById('radar-empty').style.display = 'block';
+    document.getElementById('timeline-chart-container').innerHTML = '';
+    document.getElementById('top-directors-list').innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' });
+    buildHistogram({});
+    resetProfileExtras();
+    return;
+  }
+
+  const avg = history.reduce((sum, h) => sum + parseFloat(h.score), 0) / history.length;
+  animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
+
+  const currentYear = new Date().getFullYear().toString();
+  const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
+  animateCountUp(document.getElementById('kpi-year'), yearCount);
+
+  // Réutilise la même fonction que le repère de moyenne perso sur les sliders
+  // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
+  // Gère nativement le cas d'un ancien film sans valeur pour un critère ajouté
+  // après coup (ex: "Rythme") : ne compte ni dans la somme ni dans le diviseur
+  // de CE critère précis pour cette entrée, plutôt que de fausser la moyenne.
+  const avgsByCriterion = computeCriteriaAverages(history, CRITERIA);
+  const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
+  const radarSvg = createRadarSVG(avgs);
+  if (radarSvg) { 
+    document.getElementById('radar-chart-container').innerHTML = radarSvg; 
+    document.getElementById('radar-chart-container').style.minHeight = '160px';
+    document.getElementById('radar-empty').style.display = 'none'; 
+  } else { 
+    document.getElementById('radar-chart-container').innerHTML = ''; 
+    document.getElementById('radar-chart-container').style.minHeight = '0';
+    document.getElementById('radar-empty').style.display = 'block'; 
+  }
+
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history.concat(typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : []));
+
+  const dirs = {};
+  history.forEach(h => {
+    if(h.director) { 
+      h.director.split(',').forEach(d => {
+        const t = d.trim(); if(!t) return;
+        if(!dirs[t]) dirs[t] = { count:0, sum:0 }; 
+        dirs[t].count++; dirs[t].sum+=parseFloat(h.score);
+      });
+    }
+  });
+  const topD = Object.entries(dirs).map(([name,d]) => ({name, count:d.count, avg:d.sum/d.count})).filter(d=>d.count>1).sort((a,b)=>b.count-a.count || b.avg-a.avg).slice(0,4);
+  const dirCont = document.getElementById('top-directors-list');
+  if(topD.length > 0) {
+    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(d.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(d.name)}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
+  } else { 
+    dirCont.innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' }); 
+  }
+
+  const dist = { '50':0, '45':0, '40':0, '35':0, '30':0, '25':0, '20':0, '15':0, '10':0, '05':0 };
+  history.forEach(item => {
+    const stars = Math.round((parseFloat(item.score) / 2) * 2) / 2;
+    const key   = Math.round(stars * 10).toString().padStart(2,'0');
+    if (dist[key] !== undefined) dist[key]++;
+  });
+  buildHistogram(dist);
+  renderProfileExtras(history);
+  renderProfileDiscoveryCards();
+}
+
+// ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
+function resetProfileExtras() {
+  document.getElementById('profile-member-since').textContent = '—';
+  document.getElementById('profile-watch-time').textContent = '—';
+  document.getElementById('profile-fav-actor').textContent = '—';
+  document.getElementById('profile-streak').textContent = 'Pas de série en cours';
+  renderBadges(computeBadges([], {}));
+  drawProfileShareCard(null);
+  // Rien à télécharger tant que la carte est verrouillée — désactivé plutôt
+  // que de laisser un bouton actif sans effet utile derrière lui.
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) { shareBtn.disabled = true; shareBtn.title = 'Note quelques films pour débloquer ta carte'; }
+  // Une rétrospective "0 film noté" n'aurait aucun sens — la carte d'entrée
+  // ne s'affiche que s'il y a au moins un film à raconter.
+  const wrappedCard = document.getElementById('wrapped-entry-card');
+  if (wrappedCard) wrappedCard.style.display = 'none';
+}
+
+function renderProfileExtras(history) {
+  // Défensif : un appel sans argument (bug d'un appelant) ne doit plus faire
+  // planter tout le reste du rendu du profil — juste rester sur les valeurs
+  // par défaut, comme un historique vide.
+  history = history || [];
+  // Une rétrospective "0 film noté" n'aurait aucun sens : la carte ne
+  // s'affiche que s'il y a au moins un film — mais elle doit pouvoir
+  // réapparaître si l'historique passe de vide à rempli dans la même session.
+  const wrappedCard = document.getElementById('wrapped-entry-card');
+  if (wrappedCard) wrappedCard.style.display = history.length > 0 ? '' : 'none';
+  const shareBtn = document.getElementById('profile-share-btn');
+  if (shareBtn) {
+    shareBtn.disabled = history.length === 0;
+    shareBtn.title = history.length === 0 ? 'Note quelques films pour débloquer ta carte' : '';
+  }
+  // Membre depuis : date la plus ancienne connue (savedAt, ou date à défaut).
+  const dates = history
+    .map(h => h.savedAt || h.date)
+    .filter(Boolean)
+    .map(d => new Date(d))
+    .filter(d => !isNaN(d));
+  let memberSinceStr = '—';
+  if (dates.length > 0) {
+    const earliest = new Date(Math.min(...dates.map(d => d.getTime())));
+    memberSinceStr = earliest.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  document.getElementById('profile-member-since').textContent = memberSinceStr;
+
+  // Temps total visionné : somme des durées (le champ runtime est stocké en
+  // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
+  // numérique, donc ça fonctionne aussi bien avec juste "142").
+  const totalMinutes = history.reduce((sum, h) => {
+    const mins = parseInt(h.runtime, 10);
+    return sum + (isNaN(mins) ? 0 : mins);
+  }, 0);
+  document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
+
+  // Acteur favori : même principe que le top réalisateurs (compte + note
+  // moyenne), mais un seul nom affiché ici.
+  const actorStats = {};
+  history.forEach(h => {
+    if (h.actors) {
+      h.actors.split(',').forEach(a => {
+        const t = a.trim(); if (!t) return;
+        if (!actorStats[t]) actorStats[t] = { count: 0, sum: 0 };
+        actorStats[t].count++; actorStats[t].sum += parseFloat(h.score) || 0;
+      });
+    }
+  });
+  const topActors = Object.entries(actorStats)
+    .map(([name, d]) => ({ name, count: d.count, avg: d.sum / d.count }))
+    .sort((a, b) => b.count - a.count || b.avg - a.avg);
+  document.getElementById('profile-fav-actor').textContent =
+    topActors.length > 0 ? `${topActors[0].name} (${topActors[0].count} film${topActors[0].count > 1 ? 's' : ''})` : '—';
+
+  // Série en cours (streak) : semaines ISO consécutives avec au moins un film.
+  const streak = computeWeekStreak(history);
+  document.getElementById('profile-streak').textContent =
+    streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
+
+  const badges = computeBadges(history, { totalMinutes, streak });
+  renderBadges(badges);
+
+  // Genre favori (pour la carte de profil) : même logique que le top
+  // réalisateurs/acteur favori, sur le champ genre.
+  const genreCounts = {};
+  history.forEach(h => { if (h.genre) h.genre.split(',').forEach(g => { const t = g.trim(); if (t) genreCounts[t] = (genreCounts[t] || 0) + 1; }); });
+  const topGenre = Object.entries(genreCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+
+  // Moyennes par critère (mode détaillé) : pour le mini-radar de la carte de
+  // profil. null si l'utilisateur n'a jamais utilisé le mode détaillé.
+  const criteriaAverages = computeCriteriaAverages(history, CRITERIA);
+  const hasCriteriaData = Object.values(criteriaAverages).some(v => v !== null);
+
+  drawProfileShareCard({
+    history, totalMinutes, memberSinceStr,
+    topActor: topActors[0]?.name,
+    topGenre,
+    criteriaAverages: hasCriteriaData ? criteriaAverages : null,
+    badges,
+  });
+}
+
+function renderBadges(badges) {
+  const grid = document.getElementById('badges-grid');
+  if (!grid) return;
+  // Compteur dans l'en-tête plié : l'info essentielle (progression) reste
+  // visible sans déplier, le détail ne prend plus tout cet espace du profil.
+  const countEl = document.getElementById('badges-count');
+  if (countEl) {
+    const unlocked = badges.filter(b => b.unlocked).length;
+    countEl.textContent = `${unlocked}/${badges.length}`;
+  }
+  grid.innerHTML = badges.map(b => `
+    <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
+      <div class="badge-icon">${ICONS.star}</div>
+      <div class="badge-label">${b.label}</div>
+    </div>
+  `).join('');
+}
+
+// Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs
+// et la police du thème actif (lues via getComputedStyle), pour que l'image
+// exportée corresponde à l'identité visuelle choisie plutôt qu'un rendu
+// générique. Pas de librairie externe — dessin manuel, comme pour
+// l'extraction de couleur dominante (00c-poster-color.js).
+// Dessine un petit radar (moyennes par critère) sur le canvas — même principe
+// que createRadarSVG (06-history.js) mais en dessin canvas natif, pas du SVG.
+function buildHistogram(dist) {
+  const container = document.getElementById('histogram');
+  container.innerHTML = '';
+  const maxVal = Math.max(...Object.values(dist), 0);
+  if (maxVal === 0) {
+    container.innerHTML = renderEmptyState({ message: 'Note quelques films pour voir apparaître leur répartition ici.' });
+    return;
+  }
+  const order = [50, 45, 40, 35, 30, 25, 20, 15, 10, '05'];
+  const labels = {
+    50: '★★★★★', 45: '★★★★½', 40: '★★★★', 35: '★★★½', 30: '★★★',
+    25: '★★½',   20: '★★',    15: '★½',    10: '★',    '05': '½'
+  };
+  order.forEach(key => {
+    const count   = dist[key] || 0;
+    const pct     = (count / maxVal) * 100;
+    const row     = document.createElement('div');
+    const isActive = activeScoreFilter === String(key);
+    row.className = 'histo-row' + (isActive ? ' active' : '');
+    row.title = count > 0 ? `Filtrer par ${labels[key]}` : '';
+    row.innerHTML = `
+      <span class="histo-label">${labels[key]}</span>
+      <div class="histo-track"><div class="histo-bar" style="width:${pct}%"></div></div>
+      <span class="histo-count">${count}</span>`;
+    if (count > 0) {
+      row.addEventListener('click', () => {
+        if (activeScoreFilter === String(key)) {
+          activeScoreFilter = null;
+        } else {
+          activeScoreFilter = String(key);
+          activeGenre = null; 
+        }
+        renderAll();
+        document.querySelector('.history-scroller')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    container.appendChild(row);
+  });
+}
+
+let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
+
+// Dispatche vers le bon rendu de stats selon la bascule Films/Séries —
+// même principe que renderActiveHistoryView, pour que renderTvStats()
+// bénéficie aussi de l'optimisation "ne recalculer que si Profil est
+// visible" plutôt que de la contourner silencieusement.
+function renderActiveStatsView() {
+  if (statsMediaFilter === 'tv') { if (typeof renderTvStats === 'function') renderTvStats(); }
+  else renderStats();
+}
+
+function renderAll() {
+  // renderStats() reconstruit pas mal de choses (SVG radar/timeline, heatmap
+  // ~365 cellules, badges, décennies, classement des duels) — un vrai coût,
+  // payé jusqu'ici à CHAQUE sauvegarde/suppression/import, même quand l'onglet
+  // Profil n'est pas à l'écran (souvent le cas : on reste sur Noter ou
+  // Historique). On ne le calcule que si Profil est réellement visible ;
+  // sinon on le marque "à jour ultérieurement" — rattrapé par
+  // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
+  // 01-navigation.js). renderHistory() reste inconditionnel : c'est
+  // généralement la vue qu'on regarde au moment de l'appel.
+  const profileView = document.getElementById('view-profile');
+  if (profileView && profileView.classList.contains('active')) {
+    renderActiveStatsView();
+    statsDirty = false;
+  } else {
+    statsDirty = true;
+  }
+  renderActiveHistoryView();
+}
+
+// Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
+// qui avait été sauté pendant que l'onglet était masqué.
+function renderProfileIfDirty() {
+  if (statsDirty) { renderActiveStatsView(); statsDirty = false; }
+}
+
+// ═══════════════════════════════════════════
+//  SORT FILTERS
+// ═══════════════════════════════════════════
+function renderYearAgoCard(history) {
+  const card = document.getElementById('year-ago-card');
+  const body = document.getElementById('year-ago-body');
+  if (!card || !body) return;
+  const found = findOneYearAgoFilm(history, new Date());
+  if (!found) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const { item } = found;
+  const posterHtml = item.poster
+    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
+  body.innerHTML = `
+    ${posterHtml}
+    <div>
+      <div class="year-ago-title">${escAttr(item.title)}</div>
+      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
+      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
+    </div>
+  `;
+}
+
+function renderHeatmap(history) {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+  const counts = computeDailyCounts(history);
+
+  // 53 colonnes de semaines, en remontant depuis aujourd'hui jusqu'à ~1 an.
+  // On démarre au lundi de la semaine d'il y a 52 semaines pour des colonnes alignées.
+  const today = new Date(); today.setHours(12, 0, 0, 0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - 364);
+  const dayOfWeek = (start.getDay() + 6) % 7; // lundi=0
+  start.setDate(start.getDate() - dayOfWeek);
+
+  let html = '';
+  const cur = new Date(start);
+  while (cur <= today) {
+    const key = cur.toISOString().slice(0, 10);
+    const n = counts[key] || 0;
+    const lvl = n === 0 ? 'l0' : n === 1 ? 'l1' : n === 2 ? 'l2' : 'l3';
+    html += `<div class="heatmap-cell ${lvl}" title="${key}${n > 0 ? ` — ${n} film${n > 1 ? 's' : ''}` : ''}"></div>`;
+    cur.setDate(cur.getDate() + 1);
+  }
+  grid.innerHTML = html;
+  // Amène la vue sur la fin (les semaines récentes), pas le début d'il y a un an
+  const scroll = grid.parentElement;
+  if (scroll) scroll.scrollLeft = scroll.scrollWidth;
+}
+
+function renderDecades(history) {
+  const card = document.getElementById('decades-card');
+  const list = document.getElementById('decades-list');
+  if (!card || !list) return;
+  const stats = computeDecadeStats(history);
+  if (stats.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = '';
+  const max = stats[0].count;
+  list.innerHTML = stats.slice(0, 6).map(d => `
+    <div class="decade-row">
+      <span class="decade-label">${d.decade}s</span>
+      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
+      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
+    </div>
+  `).join('');
+}
+
+// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
+// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
+// portaient le même nom à un moment, et la seconde écrasait silencieusement
+// la première par hissage — cassant toute la carte "Ton profil" (Membre
+// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
+function renderProfileDiscoveryCards() {
+  const history = loadHistory();
+  renderYearAgoCard(history);
+  renderHeatmap(history);
+  renderDecades(history);
+}
+
+// ═══════════════════════════════════════════
+//  PROFIL — cartes à partager (dessin sur <canvas>)
+// ═══════════════════════════════════════════
+// Issu du découpage de l'ancien 06-history.js — ce fichier couvre le
+// dessin sur <canvas> des images à télécharger/partager : la carte de
+// profil ("Mon profil cinéphile") et la rétrospective annuelle
+// ("Wrapped"). Les données qu'elles affichent sont calculées dans
+// 06c-profile-stats.js.
+
+function drawMiniRadarOnCanvas(ctx, cx, cy, radius, criteriaAverages, color, gridColor) {
+  const keys = CRITERIA;
+  const angleStep = (Math.PI * 2) / keys.length;
+
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  keys.forEach((k, i) => {
+    const angle = i * angleStep - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  ctx.beginPath();
+  keys.forEach((k, i) => {
+    const val = criteriaAverages[k] || 0;
+    const r = (val / 10) * radius;
+    const angle = i * angleStep - Math.PI / 2;
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// Bande de perforations façon pellicule de film — juste décoratif, en haut et
+// en bas de la carte, pour ancrer visuellement le thème "cinéma".
+function drawFilmStripBand(ctx, y, w, color) {
+  const holeW = 10, holeH = 6, gap = 8;
+  ctx.fillStyle = color;
+  for (let x = gap; x < w - gap; x += holeW + gap) {
+    ctx.fillRect(x, y, holeW, holeH);
+  }
+}
+
+function drawProfileShareCard(data) {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return; // certains environnements restrictifs renvoient null plutôt que de lever une erreur
+  const w = canvas.width, h = canvas.height;
+
+  const styles = getComputedStyle(document.documentElement);
+  const bg = styles.getPropertyValue('--surface').trim() || '#1f2935';
+  const bg2 = styles.getPropertyValue('--bg').trim() || '#14181c';
+  const textHi = styles.getPropertyValue('--text-hi').trim() || '#fff';
+  const textMid = styles.getPropertyValue('--text-mid').trim() || '#9ab';
+  const accent = styles.getPropertyValue('--orange').trim() || '#ff8000';
+  const gold = styles.getPropertyValue('--gold').trim() || accent;
+  const border = styles.getPropertyValue('--border').trim() || '#333';
+  const fontHeading = (styles.getPropertyValue('--font-heading').trim() || 'sans-serif').split(',')[0].replace(/['"]/g, '');
+
+  ctx.clearRect(0, 0, w, h);
+  // Fond en léger dégradé (pas un simple aplat) pour donner un peu de profondeur.
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, bg);
+  grad.addColorStop(1, bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, w - 4, h - 4);
+
+  drawFilmStripBand(ctx, 10, w, accent);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accent;
+  ctx.font = `900 26px "${fontHeading}", sans-serif`;
+  ctx.fillText('LUDEX', w / 2, 52);
+  ctx.fillStyle = textMid;
+  ctx.font = `12px "${fontHeading}", sans-serif`;
+  ctx.fillText('MON PROFIL CINÉPHILE', w / 2, 72);
+
+  if (!data || !data.history || data.history.length === 0) {
+    ctx.fillStyle = textMid;
+    ctx.font = '15px sans-serif';
+    ctx.fillText('Note quelques films pour', w / 2, h / 2 - 8);
+    ctx.fillText('débloquer ta carte de profil', w / 2, h / 2 + 16);
+    drawFilmStripBand(ctx, h - 16, w, accent);
+    return;
+  }
+
+  const { history, totalMinutes, memberSinceStr, topActor, topGenre, criteriaAverages, badges } = data;
+  const avg = history.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0) / history.length;
+
+  // Chiffre "héros" : le nombre de films, en très grand, façon Wrapped.
+  ctx.fillStyle = textHi;
+  ctx.font = `900 68px "${fontHeading}", sans-serif`;
+  ctx.fillText(String(history.length), w / 2, 148);
+  ctx.fillStyle = textMid;
+  ctx.font = `bold 12px "${fontHeading}", sans-serif`;
+  ctx.fillText('FILMS NOTÉS', w / 2, 168);
+
+  // Note moyenne, mise en avant juste en dessous.
+  ctx.fillStyle = gold;
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText(`★ ${avg.toFixed(1)}/10 de moyenne`, w / 2, 196);
+
+  // Mini-radar (mode détaillé utilisé) ou, à défaut, un genre/acteur mis en avant.
+  if (criteriaAverages) {
+    drawMiniRadarOnCanvas(ctx, w / 2, 275, 65, criteriaAverages, accent, border);
+  } else {
+    ctx.fillStyle = textMid;
+    ctx.font = '13px sans-serif';
+    ctx.fillText('Utilise le mode Détaillé pour', w / 2, 260);
+    ctx.fillText('débloquer ton profil de goûts (radar)', w / 2, 280);
+  }
+
+  // Genre et acteur favoris, côte à côte.
+  ctx.font = '11px sans-serif';
+  ctx.fillStyle = textMid;
+  ctx.fillText('GENRE FAVORI', w * 0.28, 345);
+  ctx.fillText('ACTEUR FAVORI', w * 0.72, 345);
+  ctx.fillStyle = textHi;
+  ctx.font = 'bold 14px sans-serif';
+  ctx.fillText(topGenre || '—', w * 0.28, 365);
+  ctx.fillText(topActor || '—', w * 0.72, 365);
+
+  // Badges débloqués : jusqu'à 6 pastilles, pleines si débloquées.
+  const unlocked = (badges || []).filter(b => b.unlocked).slice(0, 6);
+  const badgeY = 400;
+  const badgeR = 14;
+  const totalBadgeWidth = unlocked.length * (badgeR * 2 + 10) - 10;
+  let bx = w / 2 - totalBadgeWidth / 2 + badgeR;
+  unlocked.forEach(() => {
+    ctx.beginPath();
+    ctx.arc(bx, badgeY, badgeR, 0, Math.PI * 2);
+    ctx.fillStyle = gold;
+    ctx.fill();
+    bx += badgeR * 2 + 10;
+  });
+  if (unlocked.length > 0) {
+    ctx.fillStyle = textMid;
+    ctx.font = '10px sans-serif';
+    ctx.fillText(`${unlocked.length} badge${unlocked.length > 1 ? 's' : ''} débloqué${unlocked.length > 1 ? 's' : ''}`, w / 2, badgeY + 32);
+  }
+
+  // Pied de carte : membre depuis + temps visionné.
+  ctx.fillStyle = textMid;
+  ctx.font = '11px sans-serif';
+  ctx.fillText(`Membre depuis ${memberSinceStr || '—'} · ${formatWatchTime(totalMinutes)} de films`, w / 2, h - 26);
+
+  drawFilmStripBand(ctx, h - 16, w, accent);
+}
+
+document.getElementById('profile-share-btn').addEventListener('click', () => {
+  const canvas = document.getElementById('profile-share-canvas');
+  if (!canvas || !canvas.getContext || !canvas.getContext('2d')) {
+    showToast("Ton navigateur ne permet pas de générer cette image.");
+    return;
+  }
+  const link = document.createElement('a');
+  link.download = 'ludex-profil.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('Image téléchargée.');
+});
+
+// ═══════════════════════════════════════════
+//  RÉTROSPECTIVE ANNUELLE ("WRAPPED")
+// ═══════════════════════════════════════════
+const MOIS_FR = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function formatMonthLabel(monthKey) {
+  // monthKey au format "2026-03"
+  const [y, m] = monthKey.split('-');
+  return `${MOIS_FR[parseInt(m, 10) - 1]} ${y}`;
+}
+
+// Année à retenir par défaut : la plus récente qui a des films notés (pas
+// forcément l'année civile en cours, si l'utilisateur vient de commencer ou
+// n'a rien noté depuis un moment).
+function getWrappedDefaultYear(history) {
+  const years = history
+    .map(h => { const d = h.savedAt || h.date; return d ? parseInt(d.slice(0, 4), 10) : null; })
+    .filter(Boolean);
+  return years.length > 0 ? Math.max(...years) : new Date().getFullYear();
+}
+
+function buildWrappedSlides(stats) {
+  const slides = [];
+
+  slides.push(`
+    <div class="wrapped-slide-eyebrow">Ton année ${stats.year}</div>
+    <div class="wrapped-slide-big">${stats.totalFilms}</div>
+    <div class="wrapped-slide-label">film${stats.totalFilms > 1 ? 's' : ''} noté${stats.totalFilms > 1 ? 's' : ''}</div>
+    <div class="wrapped-slide-detail">Voyons ce que ${stats.totalFilms > 1 ? 'ces films disent' : 'ce film dit'} de ton année cinéma...</div>
+  `);
+
+  if (stats.topGenre || stats.topDirector) {
+    slides.push(`
+      <div class="wrapped-slide-eyebrow">Tes habitudes</div>
+      ${stats.topGenre ? `<div class="wrapped-slide-label">🎭 Genre favori : ${escAttr(stats.topGenre.name)}</div><div class="wrapped-slide-detail">${stats.topGenre.count} film${stats.topGenre.count > 1 ? 's' : ''}</div>` : ''}
+      ${stats.topDirector ? `<div class="wrapped-slide-label" style="margin-top:22px;">🎬 Réalisateur favori : ${escAttr(stats.topDirector.name)}</div><div class="wrapped-slide-detail">${stats.topDirector.count} film${stats.topDirector.count > 1 ? 's' : ''}</div>` : ''}
+    `);
+  }
+
+  if (stats.topMonth || stats.bestRated) {
+    slides.push(`
+      <div class="wrapped-slide-eyebrow">Les temps forts</div>
+      ${stats.topMonth ? `<div class="wrapped-slide-label">📅 Mois le plus actif</div><div class="wrapped-slide-detail">${formatMonthLabel(stats.topMonth.name)} — ${stats.topMonth.count} film${stats.topMonth.count > 1 ? 's' : ''}</div>` : ''}
+      ${stats.bestRated ? `<div class="wrapped-slide-label" style="margin-top:22px;">⭐ Ton coup de cœur</div><div class="wrapped-slide-detail">${escAttr(stats.bestRated.title)} — ${stats.bestRated.score}/10</div>` : ''}
+    `);
+  }
+
+  slides.push(`
+    <div class="wrapped-slide-eyebrow">Le récap'</div>
+    <div class="wrapped-slide-big" style="font-size:2.2rem;">${stats.avgScore.toFixed(1)}<span style="font-size:1.2rem;color:var(--text-mid);">/10</span></div>
+    <div class="wrapped-slide-label">note moyenne de l'année</div>
+    <div class="wrapped-slide-detail">${formatWatchTime(stats.totalMinutes)} passées devant l'écran</div>
+  `);
+
+  slides.push(`
+    <div class="wrapped-slide-eyebrow">À partager</div>
+    <div class="wrapped-share-canvas-wrap"><canvas id="wrapped-share-canvas" width="360" height="480"></canvas></div>
+    <button type="button" class="wrapped-share-btn" id="wrapped-share-download-btn">Télécharger l'image</button>
+  `);
+
+  return slides;
+}
+
+function drawWrappedShareCard(stats) {
+  const canvas = document.getElementById('wrapped-share-canvas');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width, h = canvas.height;
+
+  const styles = getComputedStyle(document.documentElement);
+  const bg = styles.getPropertyValue('--surface').trim() || '#1f2935';
+  const bg2 = styles.getPropertyValue('--bg').trim() || '#14181c';
+  const textHi = styles.getPropertyValue('--text-hi').trim() || '#fff';
+  const textMid = styles.getPropertyValue('--text-mid').trim() || '#9ab';
+  const accent = styles.getPropertyValue('--orange').trim() || '#ff8000';
+  const fontHeading = (styles.getPropertyValue('--font-heading').trim() || 'sans-serif').split(',')[0].replace(/['"]/g, '');
+
+  ctx.clearRect(0, 0, w, h);
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, bg);
+  grad.addColorStop(1, bg2);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, w - 4, h - 4);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = accent;
+  ctx.font = `900 24px "${fontHeading}", sans-serif`;
+  ctx.fillText(`LUDEX WRAPPED ${stats.year}`, w / 2, 55);
+
+  ctx.fillStyle = textHi;
+  ctx.font = `900 80px "${fontHeading}", sans-serif`;
+  ctx.fillText(String(stats.totalFilms), w / 2, 175);
+  ctx.fillStyle = textMid;
+  ctx.font = `bold 13px "${fontHeading}", sans-serif`;
+  ctx.fillText(`FILM${stats.totalFilms > 1 ? 'S' : ''} EN ${stats.year}`, w / 2, 198);
+
+  const rows = [
+    ['Note moyenne', `${stats.avgScore.toFixed(1)}/10`],
+    ['Genre favori', stats.topGenre?.name || '—'],
+    ['Réalisateur favori', stats.topDirector?.name || '—'],
+    ['Coup de cœur', stats.bestRated?.title || '—'],
+    ['Temps visionné', formatWatchTime(stats.totalMinutes)],
+  ];
+  let y = 250;
+  rows.forEach(([label, val]) => {
+    ctx.textAlign = 'left';
+    ctx.fillStyle = textMid;
+    ctx.font = '11px sans-serif';
+    ctx.fillText(label.toUpperCase(), 30, y);
+    ctx.fillStyle = textHi;
+    ctx.font = 'bold 18px sans-serif';
+    ctx.fillText(val, 30, y + 22);
+    y += 46;
+  });
+}
+
+(function initWrappedModal() {
+  const modal = document.getElementById('wrapped-modal');
+  const entryCard = document.getElementById('wrapped-entry-card');
+  const closeBtn = document.getElementById('wrapped-close-btn');
+  const slidesEl = document.getElementById('wrapped-slides');
+  const dotsEl = document.getElementById('wrapped-dots');
+  const prevBtn = document.getElementById('wrapped-prev-btn');
+  const nextBtn = document.getElementById('wrapped-next-btn');
+  if (!modal || !entryCard) return;
+
+  let slides = [];
+  let current = 0;
+
+  function renderCurrentSlide() {
+    slidesEl.innerHTML = slides.map((html, i) =>
+      `<div class="wrapped-slide${i === current ? ' active' : ''}${i < current ? ' leaving-left' : ''}">${html}</div>`
+    ).join('');
+    dotsEl.innerHTML = slides.map((_, i) => `<span class="onboarding-dot${i === current ? ' active' : ''}"></span>`).join('');
+    prevBtn.style.visibility = current === 0 ? 'hidden' : 'visible';
+    nextBtn.textContent = current === slides.length - 1 ? 'Fermer' : 'Suivant';
+
+    if (current === slides.length - 1) {
+      const shareBtn = document.getElementById('wrapped-share-download-btn');
+      drawWrappedShareCard(window._currentWrappedStats);
+      shareBtn?.addEventListener('click', () => {
+        const canvas = document.getElementById('wrapped-share-canvas');
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = `ludex-wrapped-${window._currentWrappedStats.year}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Image téléchargée.');
+      });
+    }
+  }
+
+  entryCard.addEventListener('click', () => {
+    const history = loadHistory();
+    const year = getWrappedDefaultYear(history);
+    const stats = computeWrappedStats(history, year);
+    window._currentWrappedStats = stats;
+    slides = buildWrappedSlides(stats);
+    current = 0;
+    renderCurrentSlide();
+    lastFocusedBeforeModal = document.activeElement;
+    modal.classList.add('open');
+    closeBtn.focus();
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (current === slides.length - 1) { closeModal(modal); return; }
+    current++;
+    renderCurrentSlide();
+  });
+  prevBtn.addEventListener('click', () => {
+    if (current === 0) return;
+    current--;
+    renderCurrentSlide();
+  });
+  closeBtn.addEventListener('click', () => closeModal(modal));
+})();
+
+// ═══════════════════════════════════════════
+//  EXPORT / IMPORT
+// ═══════════════════════════════════════════
+const LAST_EXPORT_KEY = 'lbx_last_export_at';
+
+document.getElementById('export-btn').addEventListener('click', () => {
+  const history = loadHistory();
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (!history.length && !tvShows.length) { showToast('Rien à exporter.'); return; }
+  const payload = { history, tvShows };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = `ludex-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
+  const banner = document.getElementById('backup-reminder');
+  if (banner) banner.remove();
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  showToast(`${parts.join(' · ')} exporté${(history.length + tvShows.length) > 1 ? 's' : ''}`);
+});
+
+document.getElementById('import-trigger').addEventListener('click', () => {
+  document.getElementById('import-file').click();
+});
+
+function importLudexJson(text) {
+  const data = JSON.parse(text);
+  let history, tvShows;
+  if (Array.isArray(data)) {
+    // Ancienne sauvegarde (avant l'ajout du support séries) : un simple
+    // tableau de films, sans enveloppe — toujours acceptée telle quelle.
+    history = data;
+    tvShows = [];
+  } else if (data && typeof data === 'object' && (Array.isArray(data.history) || Array.isArray(data.tvShows))) {
+    history = Array.isArray(data.history) ? data.history : [];
+    tvShows = Array.isArray(data.tvShows) ? data.tvShows : [];
+  } else {
+    throw new Error('Format invalide');
+  }
+
+  const parts = [];
+  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
+  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
+  if (parts.length === 0) { showToast('Sauvegarde vide, rien à importer.'); return; }
+
+  openModal(
+    "Importer la sauvegarde",
+    `Importer ${parts.join(' et ')} ? Cela fusionnera avec vos données actuelles (les doublons seront ignorés).`,
+    () => {
+      let addedFilms = 0, addedShows = 0, addedSeasons = 0;
+
+      if (history.length) {
+        const existing = loadHistory();
+        const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+        // Normalisation au passage : une vieille sauvegarde réimportée porte
+        // l'ancienne forme du schéma — même fonction que la migration v2.
+        const toAdd = history.filter(d => !existingKeys.has((String(d.title ?? '') + '|' + (d.year||'')).toLowerCase())).map(normalizeHistoryItemV2);
+        addedFilms = toAdd.length;
+        saveHistory([...toAdd, ...existing]);
+      }
+
+      if (tvShows.length && typeof loadTvShows === 'function') {
+        const existingShows = loadTvShows();
+        tvShows.forEach(importedShow => {
+          let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
+          if (!localShow) {
+            localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
+            existingShows.push(localShow);
+            addedShows++;
+          }
+          // Par saison : n'ajoute que celles absentes localement — même
+          // philosophie "doublons ignorés" que les films, plutôt que
+          // d'inventer une règle de fusion (plus regardée / plus récente)
+          // qui n'a pas d'équivalent côté films.
+          Object.entries(importedShow.seasons || {}).forEach(([key, season]) => {
+            if (!localShow.seasons[key]) {
+              localShow.seasons[key] = season;
+              addedSeasons++;
+            }
+          });
+        });
+        saveTvShows(existingShows);
+      }
+
+      renderAll();
+      if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+
+      const resultParts = [];
+      if (addedFilms) resultParts.push(`${addedFilms} film${addedFilms > 1 ? 's' : ''}`);
+      if (addedShows) resultParts.push(`${addedShows} série${addedShows > 1 ? 's' : ''}`);
+      if (addedSeasons > addedShows) resultParts.push(`${addedSeasons} saison${addedSeasons > 1 ? 's' : ''} au total`);
+      showToast(resultParts.length ? `${resultParts.join(' · ')} importé${(addedFilms + addedSeasons) > 1 ? 's' : ''}` : 'Rien de nouveau à importer (déjà présent)');
+    }
+  );
+}
+
+// Import Letterboxd : accepte diary.csv, ratings.csv ou watched.csv de
+// l'export officiel Letterboxd (Réglages -> Import & Export). Le parsing et
+// le mapping (note /5 -> /10, colonnes détectées par l'en-tête) sont des
+// fonctions pures testées dans tests/letterboxd-import.test.js.
+function importLetterboxdCsv(text) {
+  const rows = parseCsv(text);
+  const { items, kind } = mapLetterboxdCsv(rows);
+  if (!kind) { showToast('CSV non reconnu — attendu : un export Letterboxd (diary, ratings ou watched).'); return; }
+  if (items.length === 0) { showToast('Aucun film trouvé dans ce fichier.'); return; }
+
+  const existing = loadHistory();
+  const existingKeys = new Set(existing.map(h => (h.title + '|' + (h.year||'')).toLowerCase()));
+  const toAdd = items.filter(d => !existingKeys.has((d.title + '|' + (d.year||'')).toLowerCase()));
+  const dupes = items.length - toAdd.length;
+
+  const kindLabel = { diary: 'journal', ratings: 'notes', watched: 'films vus' }[kind];
+  openModal(
+    'Import Letterboxd',
+    `Fichier ${kindLabel} détecté : ${items.length} film${items.length > 1 ? 's' : ''}, dont ${toAdd.length} nouveau${toAdd.length > 1 ? 'x' : ''}${dupes > 0 ? ` (${dupes} déjà présent${dupes > 1 ? 's' : ''}, ignorés)` : ''}. Importer ?`,
+    () => {
+      const merged = [...toAdd, ...loadHistory()];
+      saveHistory(merged);
+      renderAll();
+      showToast(`${toAdd.length} film${toAdd.length > 1 ? 's' : ''} importé${toAdd.length > 1 ? 's' : ''} depuis Letterboxd 🎬`);
+    }
+  );
+}
+
+document.getElementById('import-file').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const text = ev.target.result;
+    try {
+      // Détection automatique du format : un JSON valide commence par [ ou {,
+      // sinon on tente le chemin CSV Letterboxd. Le nom du fichier n'est pas
+      // fiable (téléchargements renommés), le contenu l'est.
+      const trimmed = text.trimStart();
+      if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+        importLudexJson(text);
+      } else {
+        importLetterboxdCsv(text);
+      }
+    } catch {
+      showToast('Fichier non reconnu (attendu : sauvegarde Ludex .json ou export Letterboxd .csv).');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+});
+
+// ── Rappel de sauvegarde ──
+// localStorage peut être effacé par le navigateur (nettoyage de stockage,
+// réinstallation...). Si la dernière sauvegarde date de plus de 30 jours (ou
+// n'a jamais eu lieu) et qu'il y a au moins 10 films en jeu, une bannière
+// discrète le rappelle — fermable, et re-proposée au plus tous les 7 jours.
+const BACKUP_SNOOZE_KEY = 'lbx_backup_snoozed_at';
+function maybeShowBackupReminder() {
+  const history = loadHistory();
+  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  if (history.length + tvShows.length < 10) return;
+
+  const lastExport = localStorage.getItem(LAST_EXPORT_KEY);
+  const days = lastExport ? (Date.now() - new Date(lastExport).getTime()) / 86400000 : Infinity;
+  if (days < 30) return;
+
+  const snoozed = localStorage.getItem(BACKUP_SNOOZE_KEY);
+  if (snoozed && (Date.now() - new Date(snoozed).getTime()) / 86400000 < 7) return;
+
+  const banner = document.createElement('div');
+  banner.id = 'backup-reminder';
+  banner.className = 'backup-reminder';
+  banner.innerHTML = `
+    <span class="backup-reminder-text">${lastExport ? 'Dernière sauvegarde il y a plus de 30 jours.' : `${history.length + tvShows.length} élément${(history.length + tvShows.length) > 1 ? 's' : ''} noté${(history.length + tvShows.length) > 1 ? 's' : ''}, aucune sauvegarde.`}</span>
+    <button type="button" class="backup-reminder-btn" id="backup-reminder-export">Exporter</button>
+    <button type="button" class="backup-reminder-close" id="backup-reminder-close" aria-label="Plus tard">✕</button>
+  `;
+  document.body.appendChild(banner);
+  document.getElementById('backup-reminder-export').addEventListener('click', () => {
+    document.getElementById('export-btn').click();
+  });
+  document.getElementById('backup-reminder-close').addEventListener('click', () => {
+    localStorage.setItem(BACKUP_SNOOZE_KEY, new Date().toISOString());
+    banner.remove();
+  });
+}
+// Différé pour ne pas gêner le premier rendu (et laisser l'onboarding passer devant)
+setTimeout(maybeShowBackupReminder, 2500);
+
+// ═══════════════════════════════════════════
+//  WATCHLIST & DYNAMIC RECOMMENDATIONS
+// ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+//  WATCHLISTS MULTIPLES
+// ═══════════════════════════════════════════
+// Plusieurs listes nommées ("À voir", "Halloween", "Suggestions de Marie"...)
+// plutôt qu'une seule. loadWatchlist()/saveWatchlist() ciblent toujours
+// implicitement la liste ACTIVE — tout le code existant (rendu, swipe,
+// synchro cloud, Découvrir) continue de fonctionner sans modification, sans
+// savoir qu'il y a désormais plusieurs listes possibles.
+const WATCHLISTS_META_KEY = 'lbx_watchlists_meta';
+const ACTIVE_WATCHLIST_KEY = 'lbx_active_watchlist_id';
+const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique), migrée au premier chargement
+
+function loadWatchlistsMeta() {
+  try { return JSON.parse(localStorage.getItem(WATCHLISTS_META_KEY)) || []; } catch { return []; }
+}
+function saveWatchlistsMeta(meta) {
+  localStorage.setItem(WATCHLISTS_META_KEY, JSON.stringify(meta));
+}
+function watchlistStorageKey(id) { return `lbx_watchlist_${id}`; }
+function watchlistTombstonesKey(id) { return `lbx_watchlist_tombstones_${id}`; }
+const WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_watchlist_list_tombstones'; // listes ENTIÈRES supprimées (pas juste des items)
+const LEGACY_WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones'; // ancienne clé (liste unique), migrée avec le reste
+
+// Migration ponctuelle : si l'ancienne clé unique existe et qu'aucune liste
+// nommée n'a encore été créée, on la transforme en une première liste "À voir"
+// — aucune perte de données pour les utilisateurs déjà en place.
+(function migrateLegacyWatchlist() {
+  if (loadWatchlistsMeta().length > 0) return; // déjà migré
+  let legacyItems = [];
+  try { legacyItems = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_KEY)) || []; } catch {}
+  let legacyTombstones = [];
+  try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+  const defaultId = 'default';
+  saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }]);
+  localStorage.setItem(watchlistStorageKey(defaultId), JSON.stringify(legacyItems));
+  localStorage.setItem(watchlistTombstonesKey(defaultId), JSON.stringify(legacyTombstones));
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, defaultId);
+})();
+
+function getActiveWatchlistId() {
+  let id = localStorage.getItem(ACTIVE_WATCHLIST_KEY);
+  const meta = loadWatchlistsMeta();
+  if (!id || !meta.find(l => l.id === id)) {
+    id = meta[0]?.id || 'default';
+    localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+  }
+  return id;
+}
+function setActiveWatchlistId(id) {
+  localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+}
+
+function createWatchlistList(name) {
+  const meta = loadWatchlistsMeta();
+  const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  meta.push({ id, name: name.trim() || 'Nouvelle liste' });
+  saveWatchlistsMeta(meta);
+  localStorage.setItem(watchlistStorageKey(id), JSON.stringify([]));
+  return id;
+}
+function renameWatchlistList(id, newName) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (entry) { entry.name = newName.trim() || entry.name; saveWatchlistsMeta(meta); }
+}
+function deleteWatchlistList(id) {
+  let meta = loadWatchlistsMeta();
+  if (meta.length <= 1) return false; // toujours garder au moins une liste
+  meta = meta.filter(l => l.id !== id);
+  saveWatchlistsMeta(meta);
+  localStorage.removeItem(watchlistStorageKey(id));
+  localStorage.removeItem(watchlistTombstonesKey(id));
+  recordTombstone(WATCHLIST_LIST_TOMBSTONES_KEY, id); // pour que la suppression de la LISTE elle-même se propage via la synchro
+  if (getActiveWatchlistId() === id) setActiveWatchlistId(meta[0].id);
+  return true;
+}
+
+function loadWatchlist(listId) {
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId()))) || []; } catch { return []; }
+}
+function saveWatchlist(list, listId) {
+  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
+}
+
+
+// Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
+// "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
+// que les boutons ✕/⭐ — juste un chemin de déclenchement en plus, pas de
+// nouvelle logique). stopPropagation() évite que ce geste horizontal ne
+// déclenche AUSSI le swipe global de changement d'onglet.
+function attachWatchlistSwipeHandlers(cardEl, idx) {
+  // Ludex 2.0 : en grille d'affiches (thème par défaut), le swipe horizontal
+  // sur une cellule étroite n'a plus vraiment de sens visuellement — les
+  // actions (noter / retirer) restent disponibles via les boutons toujours
+  // visibles en overlay (voir styles.css, .wl-actions en mode grille).
+  if (isDefaultComposition()) return;
+
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+  const contentEl = cardEl.querySelector('.wl-card-content');
+  let startX = 0, startY = 0, dx = 0, dragging = false, wasSwipe = false;
+
+  function onStart(x, y) {
+    startX = x; startY = y; dx = 0; dragging = true; wasSwipe = false;
+    cardEl.classList.add('wl-dragging');
+  }
+  function onMove(x, y) {
+    if (!dragging) return;
+    const rawDx = x - startX;
+    const dy = y - startY;
+    if (Math.abs(dy) > Math.abs(rawDx) * 1.2) return; // trop vertical : probablement un scroll, pas un swipe
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    if (Math.abs(dx) > 8) wasSwipe = true;
+    contentEl.style.transform = `translateX(${dx}px)`;
+    cardEl.classList.toggle('wl-swipe-left', dx < -10);
+    cardEl.classList.toggle('wl-swipe-right', dx > 10);
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('wl-dragging');
+
+    // 240ms = --dur-base (styles.css :root) : doit rester synchronisé avec la
+    // durée de la transition d'opacité/translation ci-dessus. L'ancien délai
+    // (200ms) coupait l'animation de sortie 40ms avant sa fin réelle.
+    const EXIT_DUR_MS = 240;
+    if (dx <= -SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-left');
+      contentEl.style.transform = 'translateX(-110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
+      setTimeout(() => removeWatchlist(idx), EXIT_DUR_MS);
+    } else if (dx >= SWIPE_THRESHOLD) {
+      cardEl.classList.add('wl-swipe-out-right');
+      contentEl.style.transform = 'translateX(110%)';
+      if (navigator.vibrate) navigator.vibrate(20);
+      hapticPulse(cardEl, 'strong');
+      setTimeout(() => watchlistToForm(idx), EXIT_DUR_MS);
+    } else {
+      contentEl.style.transform = '';
+      cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');
+    }
+    // Empêche le tap-pour-ouvrir-la-fiche de se déclencher juste après un
+    // swipe avorté (retour à zéro) — seul un vrai tap sans mouvement l'ouvre.
+    if (wasSwipe) {
+      setTimeout(() => { wasSwipe = false; }, 50);
+    }
+  }
+
+  cardEl.addEventListener('touchstart', e => {
+    e.stopPropagation();
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchmove', e => {
+    e.stopPropagation();
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  cardEl.addEventListener('touchend', e => {
+    e.stopPropagation();
+    onEnd();
+  });
+  cardEl.addEventListener('touchcancel', onEnd);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  cardEl.addEventListener('mousedown', e => {
+    onStart(e.clientX, e.clientY);
+    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
+    const upHandler = () => {
+      onEnd();
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+
+  // Empêche le tap-pour-détail de s'ouvrir juste après un swipe (voir le
+  // listener délégué de watchlist-list plus bas).
+  cardEl.addEventListener('click', e => {
+    if (wasSwipe) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+
+function renderWatchlist() {
+  const list = loadWatchlist();
+  const container = document.getElementById('watchlist-list');
+  const badge = document.getElementById('watchlist-count-badge');
+  badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
+    window._justSavedWatchlistTitle = null;
+    return;
+  }
+
+  container.innerHTML = '';
+  list.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'wl-card';
+    div.id = `wl-item-${i}`;
+    if (window._justSavedWatchlistTitle && item.title.toLowerCase() === window._justSavedWatchlistTitle) {
+      div.classList.add('wl-card-entering');
+    }
+
+    const posterHtml = item.poster
+      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      : `<div class="wl-poster">${ICONS.clapper}</div>`;
+
+    div.innerHTML = `
+      <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
+      <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
+      <div class="wl-card-content">
+        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${posterHtml}
+          <div class="wl-body">
+            <div class="wl-title">${escAttr(item.title)}</div>
+            <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
+            <div class="wl-providers" id="wl-providers-${i}">
+              <span class="wl-provider-loading">⏳ Chargement streaming...</span>
+            </div>
+          </div>
+        </div>
+        <div class="wl-actions">
+          <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(item.title)}, vu">${ICONS.star}</button>
+          <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+        </div>
+      </div>`;
+
+    container.appendChild(div);
+    applyPosterAccent(item.poster, div);
+    attachWatchlistSwipeHandlers(div, i);
+
+    if (item.tmdbId) {
+      fetchProviders(item.tmdbId, i);
+    } else {
+      const pd = document.getElementById(`wl-providers-${i}`);
+      if (pd) pd.innerHTML = '';
+    }
+  });
+  window._justSavedWatchlistTitle = null;
+}
+
+// Normalise un nom de plateforme pour comparaison souple (ex: "Apple TV+" et
+// "apple tv" doivent se reconnaître comme la même chose malgré la casse et le
+// "+"/"Plus"), plutôt que d'exiger une correspondance exacte fragile face aux
+// variations de nommage entre ce qu'on propose dans les réglages et ce que
+// TMDb renvoie réellement.
+function normalizeProviderName(name) {
+  return (name || '').toLowerCase().replace(/\+/g, ' plus').replace(/\s+/g, ' ').trim();
+}
+
+async function fetchProviders(tmdbId, idx) {
+  const el = document.getElementById(`wl-providers-${idx}`);
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE`);
+    const data = await res.json();
+
+    const providerRoot = data['watch/providers']?.results?.BE
+                      || data.providers?.results?.BE
+                      || data.watchProviders?.BE
+                      || null;
+
+    if (!providerRoot) {
+      el.innerHTML = '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+      return;
+    }
+
+    // Si l'utilisateur a précisé les plateformes qu'il possède (réglages), on
+    // ne garde que celles-là — sinon (rien coché), on affiche tout, comme
+    // avant l'ajout de cette fonctionnalité.
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
+
+    const allFlat = providerRoot.flatrate || [];
+    const allRent = providerRoot.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
+    if (flat.length > 0) {
+      html += `<span class="wl-provider-tag flatrate">Inclus</span>`;
+      flat.slice(0, 5).forEach(p => {
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+      });
+    }
+    if (rentOnly.length > 0) {
+      html += `<span class="wl-provider-tag rent">Location</span>`;
+      rentOnly.slice(0, 4).forEach(p => {
+        html += `<img class="wl-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+      });
+    }
+
+    if (!html) {
+      // Distingue "vraiment nulle part en streaming" de "disponible, mais pas
+      // sur TES plateformes" — les deux messages n'ont pas la même utilité.
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      el.innerHTML = availableElsewhere
+        ? '<span class="wl-no-streaming">Disponible, mais pas sur tes plateformes 📵</span>'
+        : '<span class="wl-no-streaming">Non disponible en streaming 🇧🇪</span>';
+    } else {
+      el.innerHTML = html;
+    }
+  } catch {
+    if (el) el.innerHTML = '<span class="wl-no-streaming">Providers indisponibles</span>';
+  }
+}
+
+async function addToWatchlistFromTMDb(movie, year) {
+  // Ne fait plus l'ajout directement : demande d'abord dans quelle liste,
+  // avec la possibilité d'en créer une nouvelle à la volée.
+  openWatchlistPicker(movie, year);
+}
+
+async function addToSpecificWatchlist(movie, year, listId) {
+  const list = loadWatchlist(listId);
+  const key = (movie.title + '|' + year).toLowerCase();
+  if (list.find(i => (i.title + '|' + (i.year||'')).toLowerCase() === key)) {
+    showToast('Déjà dans cette liste.');
+    return;
+  }
+
+  let genre = '';
+  try {
+    const res = await fetch(`/api/search?id=${movie.id}`);
+    const data = await res.json();
+    genre = data.genres?.map(g => g.name).join(', ') || '';
+  } catch {}
+
+  list.unshift({
+    title: movie.title,
+    year,
+    poster: tmdbImage(movie.poster_path, 'w185'),
+    genre,
+    tmdbId: movie.id,
+    addedAt: new Date().toISOString()
+  });
+  saveWatchlist(list, listId);
+  if (listId === getActiveWatchlistId()) {
+    window._justSavedWatchlistTitle = movie.title.toLowerCase();
+    renderWatchlist();
+  }
+  const listName = loadWatchlistsMeta().find(l => l.id === listId)?.name || 'la liste';
+  showToast(`"${movie.title}" ajouté à "${listName}" 🎯`);
+}
+
+function openWatchlistPicker(movie, year) {
+  const modal = document.getElementById('wl-picker-modal');
+  const listEl = document.getElementById('wl-picker-list');
+  const newRow = document.getElementById('wl-picker-new-row');
+  const newForm = document.getElementById('wl-picker-new-form');
+  const newBtn = document.getElementById('wl-picker-new-btn');
+  const newInput = document.getElementById('wl-picker-new-input');
+  const newConfirm = document.getElementById('wl-picker-new-confirm');
+  const cancelBtn = document.getElementById('wl-picker-cancel-btn');
+  if (!modal || !listEl) return;
+
+  // Repart d'un état propre à chaque ouverture (le formulaire "nouvelle liste"
+  // ne doit pas rester déplié d'une fois à l'autre).
+  newForm.style.display = 'none';
+  newBtn.style.display = 'flex';
+  newInput.value = '';
+
+  const meta = loadWatchlistsMeta();
+  listEl.innerHTML = meta.map(l => {
+    const count = loadWatchlist(l.id).length;
+    return `<button type="button" class="wl-picker-item" data-list-id="${l.id}"><span>${escAttr(l.name)}</span><span class="wl-picker-item-count">${count} film${count > 1 ? 's' : ''}</span></button>`;
+  }).join('');
+
+  function pickList(listId) {
+    addToSpecificWatchlist(movie, year, listId);
+    closeModal(modal);
+  }
+
+  listEl.querySelectorAll('.wl-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => pickList(btn.dataset.listId));
+  });
+
+  newBtn.onclick = () => {
+    newBtn.style.display = 'none';
+    newForm.style.display = 'flex';
+    newInput.focus();
+  };
+  newConfirm.onclick = () => {
+    const name = newInput.value.trim();
+    if (!name) { newInput.focus(); return; }
+    const id = createWatchlistList(name);
+    pickList(id);
+  };
+  newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
+  cancelBtn.onclick = () => closeModal(modal);
+
+  lastFocusedBeforeModal = document.activeElement;
+  modal.classList.add('open');
+  (meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn)?.focus();
+}
+
+let deletedWlItemCache = null;
+let deletedWlItemIndex = null;
+let deletedWlListId = null;
+
+window.removeWatchlist = function(idx) {
+  const list = loadWatchlist();
+  const item = list[idx];
+  const title = item?.title;
+  deletedWlItemCache = item || null;
+  deletedWlItemIndex = idx;
+  deletedWlListId = getActiveWatchlistId(); // au cas où l'utilisateur changerait de liste avant d'annuler
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  if (item) recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
+  renderWatchlist();
+  if (title) showToast(`"${title}" retiré`, true, 'undoWatchlistDelete');
+};
+
+window.undoWatchlistDelete = function() {
+  if (!deletedWlItemCache || !deletedWlListId) return;
+  // Réinsère dans la liste d'ORIGINE (pas forcément celle active maintenant,
+  // si l'utilisateur a changé de liste pendant la fenêtre d'annulation).
+  const key = watchlistStorageKey(deletedWlListId);
+  let list = [];
+  try { list = JSON.parse(localStorage.getItem(key)) || []; } catch {}
+  list.splice(Math.min(deletedWlItemIndex, list.length), 0, deletedWlItemCache);
+  localStorage.setItem(key, JSON.stringify(list));
+  removeTombstone(watchlistTombstonesKey(deletedWlListId), watchlistItemKey(deletedWlItemCache));
+  if (getActiveWatchlistId() === deletedWlListId) renderWatchlist();
+  showToast('Retrait annulé.');
+  deletedWlItemCache = null;
+};
+
+window.watchlistToForm = function(idx) {
+  const list = loadWatchlist();
+  const item = list[idx];
+  if (!item) return;
+  searchEl.value = item.title;
+  searchEl.dispatchEvent(new Event('input'));
+  list.splice(idx, 1);
+  saveWatchlist(list);
+  recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
+  renderWatchlist();
+  
+  if (window.innerWidth <= 860) switchMobileNav('rating');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`Recherche lancée pour "${item.title}"`);
+};
+
+const wlInput = document.getElementById('watchlist-input');
+const wlSuggestEl = document.getElementById('wl-suggestions');
+let wlSearchTimer;
+
+wlInput.addEventListener('input', () => {
+  clearTimeout(wlSearchTimer);
+  const q = wlInput.value.trim();
+  if (q.length < 2) { wlSuggestEl.style.display = 'none'; return; }
+  
+  wlSearchTimer = setTimeout(async () => {
+    try {
+      const [res, personMatch] = await Promise.all([
+        fetch(`/api/search?query=${encodeURIComponent(q)}`),
+        fetchPersonMatch(q),
+      ]);
+      // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+      // réponse d'erreur passer pour "0 résultat" (voir 03-foundation.js).
+      const data = await readApiJson(res);
+      if (!data.results?.length && !personMatch) { wlSuggestEl.style.display = 'none'; return; }
+      wlSuggestEl.innerHTML = '';
+      wlSuggestEl.style.display = 'block';
+
+      if (personMatch) {
+        const photoUrl = tmdbImage(personMatch.profile_path, 'w92');
+        const personEl = document.createElement('div');
+        personEl.className = 'wl-suggest-item';
+        personEl.innerHTML = `
+          ${photoUrl
+            ? `<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(personMatch.name)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">🎬 ${escAttr(personMatch.name)}</div>
+            <div class="wl-suggest-year">Voir sa filmographie</div>
+          </div>`;
+        personEl.addEventListener('click', () => {
+          wlSuggestEl.style.display = 'none';
+          openPersonDetailSheet(personMatch.id, personMatch.name);
+        });
+        wlSuggestEl.appendChild(personEl);
+      }
+
+      data.results.slice(0, 5).forEach(m => {
+        const year = m.release_date?.slice(0, 4) || '';
+        const el = document.createElement('div');
+        el.className = 'wl-suggest-item';
+        el.innerHTML = `
+          ${m.poster_path
+            ? `<img class="wl-suggest-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">${escAttr(m.title)}</div>
+            <div class="wl-suggest-year">${year}</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          wlSuggestEl.style.display = 'none';
+          wlInput.value = '';
+          addToWatchlistFromTMDb(m, year);
+        });
+        wlSuggestEl.appendChild(el);
+      });
+    } catch (err) {
+      wlSuggestEl.style.display = 'none';
+      showToast(describeApiFailure(err));
+    }
+  }, 280);
+});
+
+document.addEventListener('click', e => {
+  if (!wlInput.contains(e.target) && !wlSuggestEl.contains(e.target)) {
+    wlSuggestEl.style.display = 'none';
+  }
+});
+
+document.getElementById('watchlist-add-btn').addEventListener('click', () => {
+  const val = wlInput.value.trim();
+  if (!val) return;
+  wlSuggestEl.style.display = 'none';
+  const list = loadWatchlist();
+  const key = val.toLowerCase();
+  if (list.find(i => i.title.toLowerCase() === key)) { showToast('Déjà dans la liste.'); wlInput.value = ''; return; }
+  list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
+  saveWatchlist(list);
+  window._justSavedWatchlistTitle = val.toLowerCase();
+  renderWatchlist();
+  showToast(`"${val}" ajouté à la liste 🎯`);
+  wlInput.value = '';
+});
+
+wlInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { wlSuggestEl.style.display = 'none'; }
+});
+
+// Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
+document.getElementById('watchlist-list').addEventListener('click', e => {
+  if (e.target.closest('#empty-state-watchlist-cta')) {
+    if (window.innerWidth <= 860) switchMobileNav('discover');
+    else switchRightTab('discover');
+    return;
+  }
+  const card = e.target.closest('.wl-card');
+  if (!card || e.target.closest('.wl-btn')) return;
+  const idx = parseInt(card.id.replace('wl-item-', ''), 10);
+  const list = loadWatchlist();
+  const item = list[idx];
+  if (item) openMovieDetailSheet(item.tmdbId);
+});
+
+// ─── Sélecteur de listes (onglets) ───────────────────────────────────────────
+function renderWatchlistTabs() {
+  const meta = loadWatchlistsMeta();
+  const activeId = getActiveWatchlistId();
+  const activeMeta = meta.find(l => l.id === activeId) || meta[0];
+  const nameEl = document.getElementById('watchlist-active-name');
+  if (nameEl) nameEl.textContent = activeMeta ? activeMeta.name : 'À voir';
+
+  const row = document.getElementById('wl-lists-row');
+  if (!row) return;
+  row.innerHTML = meta.map(l =>
+    `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${escAttr(l.name)}</button>`
+  ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
+}
+
+function openWlListManageMenu(id) {
+  const meta = loadWatchlistsMeta();
+  const entry = meta.find(l => l.id === id);
+  if (!entry) return;
+
+  actionSheetTitleEl.textContent = entry.name;
+  const actions = [
+    { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id) },
+    {
+      label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
+      onClick: () => {
+        if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
+        openModal('Supprimer la liste', `Supprimer "${escAttr(entry.name)}" et tous ses films ? Cette action est définitive.`, () => {
+          deleteWatchlistList(id);
+          renderWatchlistTabs();
+          renderWatchlist();
+          showToast('Liste supprimée.');
+        }, true);
+      },
+    },
+  ];
+
+  actionSheetListEl.innerHTML = '';
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => { closeActionSheet(); onClick(); });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  lastFocusedBeforeModal = document.activeElement;
+  actionSheetEl.classList.add('open');
+}
+
+let wlModalMode = 'create';
+let wlModalTargetId = null;
+
+function openWlListModal(mode, targetId = null) {
+  wlModalMode = mode;
+  wlModalTargetId = targetId;
+  document.getElementById('wl-list-modal-title').textContent = mode === 'create' ? 'Nouvelle liste' : 'Renommer la liste';
+  document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
+  const input = document.getElementById('wl-list-name-input');
+  input.value = mode === 'rename' ? (loadWatchlistsMeta().find(l => l.id === targetId)?.name || '') : '';
+  lastFocusedBeforeModal = document.activeElement;
+  document.getElementById('wl-list-modal').classList.add('open');
+  setTimeout(() => input.focus(), 50);
+}
+
+document.getElementById('wl-lists-row').addEventListener('click', (e) => {
+  if (e.target.closest('#wl-list-add-btn')) { openWlListModal('create'); return; }
+  const pill = e.target.closest('.wl-list-pill');
+  if (!pill) return;
+  const id = pill.dataset.id;
+  if (id === getActiveWatchlistId()) {
+    openWlListManageMenu(id); // déjà active : un tap dessus propose de la gérer
+  } else {
+    setActiveWatchlistId(id);
+    renderWatchlistTabs();
+    renderWatchlist();
+  }
+});
+
+document.getElementById('wl-list-modal-confirm').addEventListener('click', () => {
+  const name = document.getElementById('wl-list-name-input').value.trim();
+  if (!name) { showToast('Donne un nom à la liste.'); return; }
+  if (wlModalMode === 'create') {
+    const id = createWatchlistList(name);
+    setActiveWatchlistId(id);
+    showToast(`Liste "${name}" créée.`);
+  } else {
+    renameWatchlistList(wlModalTargetId, name);
+    showToast('Liste renommée.');
+  }
+  closeModal(document.getElementById('wl-list-modal'));
+  renderWatchlistTabs();
+  renderWatchlist();
+});
+document.getElementById('wl-list-modal-cancel').addEventListener('click', () => {
+  closeModal(document.getElementById('wl-list-modal'));
+});
+
+renderWatchlistTabs();
+renderWatchlist();
+
+// ═══════════════════════════════════════════
+//  MODAL DE CONFIRMATION
+// ═══════════════════════════════════════════
+
+// Mémorise l'élément qui avait le focus avant l'ouverture d'une modale, pour lui
+// rendre le focus à la fermeture (bonne pratique d'accessibilité au clavier).
+let lastFocusedBeforeModal = null;
+
+function getFocusableElements(container) {
+  return Array.from(
+    container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  ).filter(el => !el.disabled && el.offsetParent !== null);
+}
+
+// Piège le focus (Tab / Shift+Tab) à l'intérieur d'une modale ouverte, pour ne
+// pas laisser un utilisateur au clavier "sortir" vers le contenu masqué derrière.
+function trapFocus(e) {
+  const openModalEl = document.querySelector('.modal-overlay.open');
+  if (!openModalEl || e.key !== 'Tab') return;
+  const focusable = getFocusableElements(openModalEl);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function closeModal(modalEl) {
+  modalEl.classList.remove('open');
+  if (modalEl.id === 'modal') pendingAction = null;
+  if (lastFocusedBeforeModal) {
+    lastFocusedBeforeModal.focus();
+    lastFocusedBeforeModal = null;
+  }
+}
+
+function openModal(title, body, onConfirm, danger = false) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent  = body;
+  const confirmBtn = document.getElementById('modal-confirm');
+  confirmBtn.className = 'modal-btn ' + (danger ? 'danger' : 'primary');
+  confirmBtn.textContent = danger ? 'Supprimer' : 'Confirmer';
+  pendingAction = onConfirm;
+  lastFocusedBeforeModal = document.activeElement;
+  document.getElementById('modal').classList.add('open');
+  // Focus sur "Annuler" par défaut : plus sûr pour une action destructive
+  // (Entrée pressée par réflexe n'active pas la suppression).
+  document.getElementById('modal-cancel').focus();
+}
+
+document.getElementById('modal-confirm').addEventListener('click', () => {
+  if (pendingAction) { pendingAction(); pendingAction = null; }
+  closeModal(document.getElementById('modal'));
+});
+document.getElementById('modal-cancel').addEventListener('click', () => {
+  closeModal(document.getElementById('modal'));
+});
+
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeModal(modal);
+  });
+});
+
+// Échap ferme la modale actuellement ouverte, où que soit le focus.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const openModalEl = document.querySelector('.modal-overlay.open');
+    if (openModalEl) closeModal(openModalEl);
+  } else if (e.key === 'Tab') {
+    trapFocus(e);
+  }
+});
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+updateWeightBadges();
+calculateScore();
+updateAllSliders();
+renderCriteriaAverageMarkers();
+
+// ─── Écran de démarrage (splash) ─────────────────────────────────────────────
+// Masqué une fois l'app initialisée, avec une durée minimale d'affichage pour
+// que ce soit perçu comme un vrai temps de chargement plutôt qu'un flash
+// imperceptible (notamment quand tout est déjà en cache et charge quasi
+// instantanément).
+(function hideSplash() {
+  const splash = document.getElementById('app-splash');
+  if (!splash) return;
+  const MIN_DISPLAY_MS = 1200;
+  const elapsed = performance.now();
+  const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+  setTimeout(() => {
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500); // laisse le temps au fondu de finir avant de retirer le nœud
+  }, remaining);
+})();
+
+// ═══════════════════════════════════════════
+//  ACCUEIL POUR UN NOUVEL UTILISATEUR
+// ═══════════════════════════════════════════
+// Affiché uniquement à un VRAI nouvel utilisateur (historique et watchlists
+// vides) — quelqu'un qui a déjà des données (import, synchro restaurée...)
+// n'a pas besoin qu'on lui explique l'app depuis le début.
+(function initOnboarding() {
+  const ONBOARDING_SEEN_KEY = 'lbx_onboarding_seen';
+  if (localStorage.getItem(ONBOARDING_SEEN_KEY)) return;
+
+  const hasHistory = loadHistory().length > 0;
+  const hasWatchlistItems = loadWatchlistsMeta().some(meta => {
+    try { return (JSON.parse(localStorage.getItem(`lbx_watchlist_${meta.id}`)) || []).length > 0; } catch { return false; }
+  });
+  if (hasHistory || hasWatchlistItems) {
+    localStorage.setItem(ONBOARDING_SEEN_KEY, '1'); // a déjà des données, pas besoin de cet accueil
+    return;
+  }
+
+  const modal = document.getElementById('onboarding-modal');
+  if (!modal) return;
+  const slides = Array.from(modal.querySelectorAll('.onboarding-slide'));
+  const dots = Array.from(modal.querySelectorAll('.onboarding-dot'));
+  const nextBtn = document.getElementById('onboarding-next-btn');
+  const skipBtn = document.getElementById('onboarding-skip-btn');
+  let current = 0;
+
+  function showSlide(idx) {
+    slides.forEach((s, i) => {
+      s.classList.toggle('active', i === idx);
+      s.classList.toggle('leaving-left', i < idx);
+    });
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    nextBtn.textContent = idx === slides.length - 1 ? 'Commencer' : 'Suivant';
+  }
+
+  function dismiss() {
+    localStorage.setItem(ONBOARDING_SEEN_KEY, '1');
+    closeModal(modal);
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (current === slides.length - 1) { dismiss(); return; }
+    current++;
+    showSlide(current);
+  });
+  skipBtn.addEventListener('click', dismiss);
+
+  // Après la disparition de l'écran de démarrage (1200ms + marge), pas avant.
+  setTimeout(() => {
+    lastFocusedBeforeModal = document.activeElement;
+    modal.classList.add('open');
+    nextBtn.focus();
+  }, 1400);
+})();
+
+// ═══════════════════════════════════════════
+//  SYNCHRONISATION CLOUD (Supabase, via /api/sync)
+// ═══════════════════════════════════════════
+//
+// Principe : un "code de synchronisation" choisi par l'utilisateur (pas de vrai
+// compte) identifie ses données côté serveur. Le même code utilisé sur un autre
+// appareil permet de récupérer historique + TOUTES les watchlists + réglages.
+//
+// FUSION (et non écrasement) : à chaque synchronisation (push ou pull), les
+// données locales et celles du cloud sont FUSIONNÉES plutôt que remplacées :
+// - Historique : par titre. Si un film a été noté sur les deux appareils, on
+//   garde la version la plus récente (`updatedAt`). Si un film n'existe que
+//   d'un côté, il est conservé (union).
+// - Watchlists : chaque LISTE (id + nom) est fusionnée par id (union), puis le
+//   CONTENU de chaque liste est fusionné par tmdbId (ou titre), comme avant.
+// - Suppressions : chaque suppression (film d'historique, film d'une
+//   watchlist, OU une watchlist entière) laisse une "tombstone" (trace
+//   horodatée) synchronisée elle aussi, pour qu'une suppression sur un
+//   appareil ne soit pas annulée par une synchro depuis un autre appareil qui
+//   avait encore l'ancienne version.
+//
+// - Sauvegarde (push) : fusionne avec le cloud puis pousse le résultat, en
+//   automatique en arrière-plan toutes les 45s si un changement local est
+//   détecté, + un bouton manuel pour forcer.
+// - Restauration (pull) : fusionne le cloud dans les données locales. N'écrase
+//   plus rien de destructeur (grâce à la fusion), donc pas besoin de modale de
+//   confirmation bloquante.
+
+const SYNC_CODE_KEY = 'lbx_sync_code';
+const SYNC_LAST_HASH_KEY = 'lbx_sync_last_hash';
+const SYNC_LAST_TIME_KEY = 'lbx_sync_last_time';
+const HISTORY_TOMBSTONES_KEY = 'lbx_history_tombstones';
+const TV_SHOW_TOMBSTONES_KEY = 'lbx_tv_show_tombstones';
+const TV_SEASON_TOMBSTONES_KEY = 'lbx_tv_season_tombstones';
+// TOMBSTONE_MAX_AGE_MS est défini dans 03b-pure-logic.js (utilisé par mergeTombstoneLists)
+// watchlistTombstonesKey(id) et WATCHLIST_LIST_TOMBSTONES_KEY sont définis dans 08-watchlist.js
+
+const syncCodeInput = document.getElementById('setting-sync-code');
+const syncSaveBtn = document.getElementById('sync-save-btn');
+const syncRestoreBtn = document.getElementById('sync-restore-btn');
+const syncStatusEl = document.getElementById('sync-status');
+
+function getSyncCode() {
+  return (localStorage.getItem(SYNC_CODE_KEY) || '').trim();
+}
+
+function setSyncCode(code) {
+  localStorage.setItem(SYNC_CODE_KEY, code.trim());
+}
+
+function setSyncStatus(msg, isError = false) {
+  syncStatusEl.textContent = msg;
+  syncStatusEl.style.color = isError ? '#ff4040' : 'var(--text-mid)';
+}
+
+function formatDateTime(iso) {
+  return new Date(iso).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+// ─── Tombstones (traces de suppression) ─────────────────────────────────────
+
+function loadTombstones(storageKey) {
+  try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
+}
+
+function saveTombstones(storageKey, list) {
+  localStorage.setItem(storageKey, JSON.stringify(list));
+}
+
+function recordTombstone(storageKey, key) {
+  const list = loadTombstones(storageKey);
+  const now = new Date().toISOString();
+  const idx = list.findIndex(t => t.key === key);
+  if (idx >= 0) list[idx].deletedAt = now;
+  else list.push({ key, deletedAt: now });
+  saveTombstones(storageKey, list);
+}
+
+function removeTombstone(storageKey, key) {
+  saveTombstones(storageKey, loadTombstones(storageKey).filter(t => t.key !== key));
+}
+
+// mergeTombstoneLists, historyItemKey, watchlistItemKey, mergeHistory et
+// mergeWatchlist vivent maintenant dans 03b-pure-logic.js (logique pure,
+// testable automatiquement sans DOM — voir tests/merge-logic.test.js).
+
+// ─── Cœur de la synchro : fusionne l'état local avec un payload cloud ───────
+// Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être
+// ré-uploadé si besoin (c'est ce que fait pushToCloud).
+function mergeWithRemote(remotePayload) {
+  const localHistory = loadHistory();
+  const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
+  const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
+  const remoteHistTomb = Array.isArray(remotePayload?.historyTombstones) ? remotePayload.historyTombstones : [];
+  const mergedHistTomb = mergeTombstoneLists(localHistTomb, remoteHistTomb);
+  const mergedHistory = mergeHistory(localHistory, remoteHistory, mergedHistTomb);
+  saveHistory(mergedHistory);
+  saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
+
+  // ─── Séries suivies ────────────────────────────────────────────────────
+  const localTvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  const remoteTvShows = Array.isArray(remotePayload?.tvShows) ? remotePayload.tvShows : [];
+  const localShowTomb = loadTombstones(TV_SHOW_TOMBSTONES_KEY);
+  const remoteShowTomb = Array.isArray(remotePayload?.tvShowTombstones) ? remotePayload.tvShowTombstones : [];
+  const mergedShowTomb = mergeTombstoneLists(localShowTomb, remoteShowTomb);
+  const localSeasonTomb = loadTombstones(TV_SEASON_TOMBSTONES_KEY);
+  const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
+  const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
+  const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
+  if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows);
+  saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
+  saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
+
+  // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
+  const localMeta = loadWatchlistsMeta();
+  const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
+  const localListTomb = loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY);
+  const remoteListTomb = Array.isArray(remotePayload?.watchlistListTombstones) ? remotePayload.watchlistListTombstones : [];
+  const mergedListTomb = mergeTombstoneLists(localListTomb, remoteListTomb);
+  saveTombstones(WATCHLIST_LIST_TOMBSTONES_KEY, mergedListTomb);
+  const deletedListIds = new Set(mergedListTomb.map(t => t.key));
+
+  // Union par id (le nom local l'emporte en cas de conflit sur le même id),
+  // en excluant les listes supprimées sur l'un ou l'autre appareil.
+  const metaById = {};
+  remoteMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  localMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
+  let mergedMeta = Object.values(metaById).filter(l => !deletedListIds.has(l.id));
+  if (mergedMeta.length === 0) mergedMeta = [{ id: 'default', name: 'À voir' }]; // garde-fou : jamais 0 liste
+
+  const activeId = getActiveWatchlistId(); // lu avant de sauvegarder la meta, au cas où la liste active aurait été supprimée ailleurs
+  saveWatchlistsMeta(mergedMeta);
+  if (!mergedMeta.find(l => l.id === activeId)) setActiveWatchlistId(mergedMeta[0].id);
+
+  const remoteWatchlists = remotePayload?.watchlists && typeof remotePayload.watchlists === 'object' ? remotePayload.watchlists : {};
+  const remoteWlTombs = remotePayload?.watchlistTombstones && typeof remotePayload.watchlistTombstones === 'object' ? remotePayload.watchlistTombstones : {};
+
+  const mergedWatchlists = {};
+  const mergedWlTombs = {};
+  mergedMeta.forEach(({ id }) => {
+    let localItems = [];
+    try { localItems = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch {}
+    const remoteItems = Array.isArray(remoteWatchlists[id]) ? remoteWatchlists[id] : [];
+    const localItemTomb = loadTombstones(watchlistTombstonesKey(id));
+    const remoteItemTomb = Array.isArray(remoteWlTombs[id]) ? remoteWlTombs[id] : [];
+    const mergedItemTomb = mergeTombstoneLists(localItemTomb, remoteItemTomb);
+    const mergedItems = mergeWatchlist(localItems, remoteItems, mergedItemTomb);
+
+    localStorage.setItem(watchlistStorageKey(id), JSON.stringify(mergedItems));
+    saveTombstones(watchlistTombstonesKey(id), mergedItemTomb);
+    mergedWatchlists[id] = mergedItems;
+    mergedWlTombs[id] = mergedItemTomb;
+  });
+
+  // Réglages : pas vraiment "fusionnables" (un thème ou une préférence n'est pas
+  // un tableau), on garde ceux du cloud seulement s'ils sont fournis et qu'on
+  // n'en a pas localement, pour ne pas écraser un choix local sans raison.
+  const localSettings = JSON.parse(localStorage.getItem('lbx_settings') || 'null');
+  const settings = localSettings || remotePayload?.settings || null;
+  if (remotePayload?.settings && !localSettings) {
+    localStorage.setItem('lbx_settings', JSON.stringify(remotePayload.settings));
+  }
+  applySettings(settings || {});
+
+  renderAll();
+  if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
+  renderWatchlist();
+  if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+
+  return {
+    history: mergedHistory,
+    historyTombstones: mergedHistTomb,
+    tvShows: mergedTvShows,
+    tvShowTombstones: mergedShowTomb,
+    tvSeasonTombstones: mergedSeasonTomb,
+    watchlistsMeta: mergedMeta,
+    watchlists: mergedWatchlists,
+    watchlistTombstones: mergedWlTombs,
+    watchlistListTombstones: mergedListTomb,
+    settings,
+  };
+}
+
+// Hash simple (non cryptographique), juste pour détecter un changement de contenu
+// sans avoir à ré-uploader à chaque tick si rien n'a bougé localement.
+function hashPayload(payload) {
+  const str = JSON.stringify(payload);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) | 0;
+  }
+  return String(hash);
+}
+
+function currentLocalSnapshot() {
+  const meta = loadWatchlistsMeta();
+  const watchlists = {};
+  const watchlistTombstones = {};
+  meta.forEach(({ id }) => {
+    try { watchlists[id] = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch { watchlists[id] = []; }
+    watchlistTombstones[id] = loadTombstones(watchlistTombstonesKey(id));
+  });
+  return {
+    history: loadHistory(),
+    historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
+    tvShows: typeof loadTvShows === 'function' ? loadTvShows() : [],
+    tvShowTombstones: loadTombstones(TV_SHOW_TOMBSTONES_KEY),
+    tvSeasonTombstones: loadTombstones(TV_SEASON_TOMBSTONES_KEY),
+    watchlistsMeta: meta,
+    watchlists,
+    watchlistTombstones,
+    watchlistListTombstones: loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY),
+  };
+}
+
+async function fetchCloudPayload(code) {
+  const res = await fetch(`/api/sync?code=${encodeURIComponent(code)}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'bad status');
+  return data.found ? data.payload : null;
+}
+
+
+// Distingue la VRAIE cause d'un échec de synchro, pour ne plus systématiquement
+// blâmer "ta connexion" quand le problème est ailleurs :
+// - navigator.onLine === false -> coupure réseau réelle, chez l'utilisateur
+// - erreur avec un message venant du serveur (ex: limite de requêtes, service
+//   mal configuré) -> on l'affiche telle quelle, c'est la cause exacte
+// - échec générique (fetch a levé une TypeError, service injoignable) -> ni
+//   confirmé réseau ni message serveur, formulation neutre
+function describeSyncFailure(err) {
+  if (!navigator.onLine) return 'Tu es hors ligne — la synchronisation reprendra à la reconnexion.';
+  const msg = err && err.message ? err.message : '';
+  const isGenericFetchFailure = !msg || msg === 'bad status' || /^bad status \d+$/.test(msg) || /Failed to fetch|NetworkError/i.test(msg);
+  if (!isGenericFetchFailure) return msg; // message précis renvoyé par l'API
+  return 'Impossible de joindre le service de synchronisation. Réessaie dans un instant.';
+}
+
+// Sauvegarde : récupère le cloud, fusionne avec le local, sauvegarde le résultat
+// localement, puis pousse la version fusionnée vers le cloud.
+async function pushToCloud(silent = false) {
+  const code = getSyncCode();
+  if (!code) {
+    if (!silent) setSyncStatus('Renseigne un code de synchronisation avant de sauvegarder.', true);
+    return false;
+  }
+  if (!silent) setSyncStatus('Synchronisation en cours…');
+  try {
+    const remotePayload = await fetchCloudPayload(code);
+    const merged = mergeWithRemote(remotePayload);
+
+    const res = await fetch(`/api/sync?code=${encodeURIComponent(code)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged),
+    });
+    if (!res.ok) {
+      // Lit le VRAI message renvoyé par l'API (ex: limite de requêtes, mauvaise
+      // configuration serveur) plutôt que de le jeter — c'était la cause du
+      // message trompeur "vérifie ta connexion" alors que le problème était
+      // côté service, pas côté réseau de l'utilisateur.
+      let apiError = '';
+      try { apiError = (await res.json()).error || ''; } catch { /* réponse non-JSON, tant pis */ }
+      throw new Error(apiError || `bad status ${res.status}`);
+    }
+
+    const now = new Date().toISOString();
+    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    localStorage.setItem(SYNC_LAST_TIME_KEY, now);
+    if (!silent) setSyncStatus(`Synchronisé ✓ (${formatDateTime(now)})`);
+    return true;
+  } catch (err) {
+    if (!silent) setSyncStatus(describeSyncFailure(err), true);
+    return false;
+  }
+}
+
+// Restauration : fusionne le cloud dans le local, SANS repousser vers le cloud.
+// Non destructeur grâce à la fusion (un film local non encore synchronisé n'est
+// jamais perdu), donc pas besoin de modale de confirmation bloquante.
+async function pullFromCloud() {
+  const code = getSyncCode();
+  if (!code) {
+    setSyncStatus('Renseigne un code de synchronisation avant de restaurer.', true);
+    return;
+  }
+  setSyncStatus('Récupération depuis le cloud…');
+  try {
+    const remotePayload = await fetchCloudPayload(code);
+    if (!remotePayload) {
+      setSyncStatus('Aucune sauvegarde trouvée pour ce code.', true);
+      return;
+    }
+    mergeWithRemote(remotePayload);
+    const now = new Date().toISOString();
+    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    localStorage.setItem(SYNC_LAST_TIME_KEY, now);
+    setSyncStatus(`Synchronisé depuis le cloud ✓ (${formatDateTime(now)})`);
+    showToast('Données synchronisées depuis le cloud.');
+  } catch (err) {
+    setSyncStatus(describeSyncFailure(err), true);
+  }
+}
+
+// Pré-remplit le champ code + affiche le statut à chaque ouverture de la modale réglages
+document.getElementById('settings-btn').addEventListener('click', () => {
+  syncCodeInput.value = getSyncCode();
+  const lastTime = localStorage.getItem(SYNC_LAST_TIME_KEY);
+  setSyncStatus(lastTime ? `Dernière synchronisation : ${formatDateTime(lastTime)}` : '');
+});
+
+syncCodeInput.addEventListener('change', () => setSyncCode(syncCodeInput.value));
+
+syncSaveBtn.addEventListener('click', () => {
+  setSyncCode(syncCodeInput.value);
+  pushToCloud(false);
+});
+
+syncRestoreBtn.addEventListener('click', () => {
+  setSyncCode(syncCodeInput.value);
+  pullFromCloud();
+});
+
+// Auto-synchronisation silencieuse : toutes les 45s, si un code est renseigné et
+// que les données locales ont changé depuis la dernière synchro, on fusionne et
+// on pousse vers le cloud. Pas besoin d'y penser après chaque note ou ajout à
+// la watchlist — et comme c'est une fusion, ça ne perd jamais rien.
+setInterval(() => {
+  const code = getSyncCode();
+  if (!code) return;
+  const currentHash = hashPayload(currentLocalSnapshot());
+  if (currentHash !== localStorage.getItem(SYNC_LAST_HASH_KEY)) {
+    pushToCloud(true);
+  }
+}, 45000);
+
+// ═══════════════════════════════════════════
+//  DÉCOUVRIR : suggestions façon "swipe" (glisser à droite = watchlist, à gauche = passer)
+// ═══════════════════════════════════════════
+//
+// Remplace l'ancien carrousel horizontal : au lieu de montrer 10 petites
+// affiches à la fois, on présente une suggestion à la fois, en grand, avec
+// un geste de swipe (comme Tinder) pour l'ajouter à la watchlist ou la passer.
+//
+// Les films "passés" sont mémorisés localement (lbx_discover_passed) pour ne
+// plus les reproposer. Cette liste n'est pour l'instant PAS synchronisée dans
+// le cloud (contrairement à l'historique/watchlist) : un film passé sur un
+// appareil peut donc réapparaître sur un autre. C'est un choix délibéré pour
+// garder cette fonctionnalité simple ; à revoir si besoin plus tard.
+
+const DISCOVER_PASSED_KEY = 'lbx_discover_passed';
+const DISCOVER_PASSED_MAX = 500; // évite que la liste grossisse indéfiniment
+const DISCOVER_SWIPE_THRESHOLD = 100; // px
+
+function loadDiscoverPassed() {
+  try { return JSON.parse(localStorage.getItem(DISCOVER_PASSED_KEY)) || []; } catch { return []; }
+}
+function markDiscoverPassed(tmdbId) {
+  const list = loadDiscoverPassed();
+  const idStr = String(tmdbId);
+  if (!list.includes(idStr)) list.push(idStr);
+  localStorage.setItem(DISCOVER_PASSED_KEY, JSON.stringify(list.slice(-DISCOVER_PASSED_MAX)));
+}
+
+// Films déjà utilisés récemment comme BASE de recommandation (pas les
+// suggestions elles-mêmes, les films de l'historique dont on est parti) —
+// permet de tourner à travers l'historique plutôt que retomber sur les mêmes
+// 2-3 films à chaque rechargement, pour des suggestions qui se diversifient
+// au fur et à mesure que l'historique s'enrichit.
+const DISCOVER_BASIS_USED_KEY = 'lbx_discover_basis_used';
+function loadBasisUsed() {
+  try { return JSON.parse(localStorage.getItem(DISCOVER_BASIS_USED_KEY)) || []; } catch { return []; }
+}
+function markBasisUsed(tmdbIds) {
+  const used = loadBasisUsed();
+  used.push(...tmdbIds.map(String));
+  localStorage.setItem(DISCOVER_BASIS_USED_KEY, JSON.stringify(used.slice(-30)));
+}
+
+// Choisit `count` films de l'historique pour servir de base aux
+// recommandations : privilégie les films PAS récemment utilisés (rotation),
+// et répartit sur des genres différents quand c'est possible plutôt que de
+// piocher au hasard dans tout le pool (qui sur-représenterait le genre le
+// plus souvent noté). Basé sur TOUS les films vus, pas seulement les mieux
+// notés — même un film moyen renseigne sur les goûts (genre, casting...).
+function pickDiverseBasisFilms(pool, count) {
+  const used = new Set(loadBasisUsed());
+  const fresh = pool.filter(f => !used.has(String(f.tmdbId)));
+  const candidates = fresh.length >= count ? fresh : pool; // pas assez de films "frais" : retombe sur tout le pool
+
+  const byGenre = {};
+  candidates.forEach(f => {
+    const primaryGenre = (f.genre || '').split(',')[0].trim() || 'Autre';
+    (byGenre[primaryGenre] = byGenre[primaryGenre] || []).push(f);
+  });
+
+  const genres = Object.keys(byGenre).sort(() => 0.5 - Math.random());
+  const picked = [];
+  for (const g of genres) {
+    if (picked.length >= count) break;
+    const arr = byGenre[g];
+    picked.push(arr[Math.floor(Math.random() * arr.length)]);
+  }
+  // Moins de genres distincts que `count` : complète au hasard dans le reste.
+  const remaining = candidates.filter(f => !picked.includes(f));
+  while (picked.length < count && remaining.length > 0) {
+    const idx = Math.floor(Math.random() * remaining.length);
+    picked.push(remaining.splice(idx, 1)[0]);
+  }
+  return picked;
+}
+
+let discoverQueue = [];
+let discoverLoaded = false;
+let discoverLoadFailed = false; // évite de re-fetch à chaque fois qu'on rouvre l'onglet
+
+// ═══════════════════════════════════════════
+//  FILM DU JOUR
+// ═══════════════════════════════════════════
+// Un film choisi aléatoirement mais STABLE toute la journée (même choix du
+// matin au soir, change le lendemain) — présenté simplement avec le
+// synopsis, le réalisateur et la note TMDb (voir renderRevealedFilm).
+const FILM_DU_JOUR_KEY = 'lbx_film_du_jour';
+
+async function loadFilmDuJour() {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(FILM_DU_JOUR_KEY) || 'null'); } catch {}
+
+  if (cached && cached.date === todayKey && cached.movie) {
+    renderGuessGame(cached.movie, cached.isWeekly);
+    return;
+  }
+
+  try {
+    const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+    // Le mercredi (jour de sortie ciné en France), le Film du Jour devient
+    // "Sortie de la semaine" : de vraies sorties en salle de la semaine,
+    // pas des tendances mondiales. Les autres jours, tirage élargi sur toute
+    // la base TMDb suffisamment connue (voir api/search.js) — plus les
+    // ~20 films "tendances" d'avant, qui revenaient sans cesse et
+    // penchaient trop vers les sorties très récentes.
+    const isWednesday = new Date().getDay() === 3;
+    const endpoint = isWednesday
+      ? `/api/search?weeklyRelease=${daysSinceEpoch}`
+      : `/api/search?dailyPick=${daysSinceEpoch}`;
+
+    const res = await fetch(endpoint);
+    const data = await res.json();
+    const pick = data.result;
+    if (!pick) return;
+
+    const detailRes = await fetch(`/api/search?id=${pick.id}`);
+    const details = await detailRes.json();
+    if (!details || !details.title) return;
+
+    localStorage.setItem(FILM_DU_JOUR_KEY, JSON.stringify({ date: todayKey, movie: details, isWeekly: isWednesday }));
+    renderGuessGame(details, isWednesday);
+  } catch (e) {
+    console.warn('Impossible de charger le film du jour', e);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  CE JOUR-LÀ (anniversaires de sortie)
+// ═══════════════════════════════════════════
+// Anniversaires RONDS (10/20/30/40/50 ans) plutôt que toutes les années —
+// TMDb ne permet pas de filtrer "sorti un 7 août, toutes années confondues"
+// en un seul appel (voir api/search.js). Certains jours n'auront aucun
+// anniversaire rond avec une sortie notable : la section se masque
+// entièrement plutôt que d'afficher un encart vide (même esprit que le
+// Quiz/Duel quand rien n'est disponible).
+const ON_THIS_DAY_KEY = 'lbx_on_this_day';
+
+async function loadOnThisDay() {
+  const wrap = document.getElementById('on-this-day-wrap');
+  const strip = document.getElementById('on-this-day-strip');
+  if (!wrap || !strip) return;
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(ON_THIS_DAY_KEY) || 'null'); } catch {}
+
+  let anniversaries;
+  if (cached && cached.date === todayKey) {
+    anniversaries = cached.anniversaries;
+  } else {
+    try {
+      const res = await fetch('/api/search?onThisDay=1');
+      const data = await res.json();
+      anniversaries = data.anniversaries || [];
+      localStorage.setItem(ON_THIS_DAY_KEY, JSON.stringify({ date: todayKey, anniversaries }));
+    } catch (e) {
+      console.warn('Impossible de charger "Ce jour-là"', e);
+      return;
+    }
+  }
+
+  if (anniversaries.length === 0) return; // section reste masquée (display:none par défaut)
+
+  strip.innerHTML = anniversaries.flatMap(a =>
+    a.films.map(f => `
+      <div class="on-this-day-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="on-this-day-poster" src="${tmdbImage(f.poster_path, 'w200')}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">
+        <div class="on-this-day-badge">Il y a ${a.yearsAgo} ans</div>
+        <div class="on-this-day-title">${escAttr(f.title)}</div>
+      </div>
+    `)
+  ).join('');
+
+  strip.querySelectorAll('.on-this-day-item').forEach(item => {
+    item.addEventListener('click', () => openMovieDetailSheet(item.dataset.movieId));
+    item.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMovieDetailSheet(item.dataset.movieId);
+    });
+  });
+
+  wrap.style.display = 'block';
+}
+
+// Bascule le titre de la section entre "Film du jour" et "Sortie de la
+// semaine" — manquait entièrement (la fonction était appelée mais jamais
+// définie, ce qui plantait silencieusement tout chargement depuis le cache,
+// c'est-à-dire presque tous les chargements sauf le tout premier de la
+// journée/semaine).
+function setFilmDuJourTitle(isWeekly) {
+  // Cible le span de TEXTE dedie (#fdj-title-text), pas #fdj-title lui-meme
+  // — celui-ci contient AUSSI le badge de serie (#guess-streak-badge) comme
+  // enfant ; y ecrire du textContent directement l'effacait entierement a
+  // chaque appel (vrai bug trouve en testant : le badge disparaissait des
+  // qu'une victoire/defaite mettait a jour le titre).
+  const titleEl = document.getElementById('fdj-title-text');
+  if (titleEl) titleEl.textContent = isWeekly ? 'Sortie de la semaine' : 'Film du jour';
+}
+
+// Réglages : force un rechargement du Film du jour — utile si la section
+// n'a pas pu se charger correctement (panne réseau ponctuelle...). Le
+// tirage du film, lui, reste le même de la journée par conception : voir
+// le commentaire sur isWednesday plus haut.
+document.getElementById('clear-fdj-cache-btn')?.addEventListener('click', () => {
+  localStorage.removeItem(FILM_DU_JOUR_KEY);
+  loadFilmDuJour();
+  showToast('Film du jour actualisé.');
+});
+
+async function fetchFilmDuJourProviders(tmdbId) {
+  const el = document.getElementById('fdj-providers');
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE`);
+    const data = await res.json();
+    const providerRoot = data['watch/providers']?.results?.BE
+                      || data.providers?.results?.BE
+                      || data.watchProviders?.BE
+                      || null;
+
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
+
+    const allFlat = providerRoot?.flatrate || [];
+    const allRent = providerRoot?.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
+    [...flat, ...rentOnly].slice(0, 6).forEach(p => {
+      html += `<img class="fdj-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" title="${p.provider_name}" alt="${escAttr(p.provider_name)}" loading="lazy">`;
+    });
+
+    if (!html) {
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      el.innerHTML = `<span class="fdj-no-streaming">${availableElsewhere ? 'Disponible, mais pas sur tes plateformes' : 'Non disponible en streaming 🇧🇪'}</span>`;
+    } else {
+      el.innerHTML = html;
+    }
+  } catch {
+    el.innerHTML = '<span class="fdj-no-streaming">Plateformes indisponibles</span>';
+  }
+}
+
+// ═══════════════════════════════════════════
+//  DEVINE LE FILM DU JOUR (mini-jeu, affiche floutée)
+// ═══════════════════════════════════════════
+// Réutilise le film et l'affiche déjà récupérés pour le Film du Jour — aucun
+// nouvel appel réseau. Le flou se réduit à chaque essai raté (esprit
+// "Framed") ; deux indices textuels tombent à des paliers fixes pour rester
+// jouable même sans rien reconnaître visuellement. Convention identique au
+// Quiz/Duel du jour : un essai par jour, série (streak) suivie séparément.
+const GUESS_GAME_KEY = 'lbx_guess_game';
+const GUESS_STREAK_KEY = 'lbx_guess_streak';
+const GUESS_LAST_PLAYED_KEY = 'lbx_guess_last_played'; // date de la derniere partie JOUEE (gagnee ou perdue), pour la continuite de la serie
+const GUESS_MAX_ATTEMPTS = 5;
+// Ferme les suggestions de titre au clic en dehors — un seul écouteur pour
+// toute la durée de vie de la page (pas un par rendu du formulaire, qui se
+// reconstruit à chaque tentative ratée : ça aurait empilé un écouteur par
+// essai sans jamais les retirer). Recherche l'élément en direct au moment
+// du clic plutôt que de capturer une référence, qui deviendrait obsolète
+// dès le prochain rendu.
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.guess-input-wrap')) return;
+  const guessSuggestEl = document.getElementById('guess-suggestions');
+  if (guessSuggestEl) guessSuggestEl.style.display = 'none';
+});
+// Un cran de flou par essai (index 0 = avant le premier essai) ; le dernier
+// palier (après le 5e essai raté) est à 0 : l'affiche se révèle entièrement
+// que la partie soit gagnée ou perdue, jamais de flou résiduel frustrant.
+const GUESS_BLUR_LEVELS = [22, 16, 12, 8, 4, 0];
+
+function normalizeGuessText(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // retire les accents
+    .replace(/[^a-z0-9\s]/g, '') // ponctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function loadGuessGameState(movieId, todayKey) {
+  let state = null;
+  try { state = JSON.parse(localStorage.getItem(GUESS_GAME_KEY) || 'null'); } catch {}
+  if (state && state.date === todayKey && state.movieId === movieId) return state;
+  return { date: todayKey, movieId, attempts: 0, done: false, won: null };
+}
+
+function saveGuessGameState(state) {
+  localStorage.setItem(GUESS_GAME_KEY, JSON.stringify(state));
+}
+
+function renderGuessStreakBadge() {
+  const badge = document.getElementById('guess-streak-badge');
+  if (!badge) return;
+  const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
+  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
+}
+
+// Suggestions de titres pendant la devinette — même recherche TMDb que le
+// formulaire de notation et la watchlist (fetchSuggestions dans
+// 04-search.js), mais SANS affiche ni bouton "saisie manuelle" : juste
+// titre + année en texte. Montrer l'affiche du bon film dans la liste
+// spoilerait instantanément le jeu, d'où cette version simplifiée dédiée.
+async function fetchGuessSuggestions(q, inputEl, suggestEl) {
+  try {
+    const res = await fetch(`/api/search?query=${encodeURIComponent(q)}`);
+    const data = await readApiJson(res);
+    const results = (data.results || []).slice(0, 6);
+    if (!results.length) { suggestEl.style.display = 'none'; return; }
+    suggestEl.innerHTML = '';
+    suggestEl.style.display = 'block';
+    results.forEach(r => {
+      const year = r.release_date?.slice(0, 4) || '????';
+      const item = document.createElement('div');
+      item.className = 'guess-suggestion-item';
+      item.setAttribute('role', 'option');
+      item.innerHTML = `<span class="guess-suggestion-title">${escAttr(r.title)}</span><span class="guess-suggestion-year">${year}</span>`;
+      item.addEventListener('click', () => {
+        inputEl.value = r.title;
+        suggestEl.style.display = 'none';
+        inputEl.focus();
+      });
+      suggestEl.appendChild(item);
+    });
+  } catch {
+    suggestEl.style.display = 'none'; // pas grave : la saisie libre + Valider marche toujours sans suggestion
+  }
+}
+
+function renderGuessGame(m, isWeekly) {
+  const wrap = document.getElementById('fdj-wrap');
+  const card = document.getElementById('fdj-card');
+  if (!wrap || !card) return;
+  wrap.style.display = 'block';
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const posterUrl = tmdbImage(m.poster_path, 'w300');
+  const year = m.release_date ? m.release_date.slice(0, 4) : '';
+
+  // Sans affiche, deviner n'a aucun sens — passe directement à la fiche
+  // révélée (comme l'ancien "Film du jour" seul, avant la fusion des deux
+  // sections qui montraient jusqu'ici le MÊME film en double). Même chemin
+  // si la devinette est désactivée dans Réglages (voir 00e-feature-flags.js)
+  // — l'état de la partie en cours (essais, série) n'est jamais touché,
+  // juste jamais montré tant que la bascule reste désactivée.
+  const guessEnabled = typeof loadFeatureFlags === 'function' ? loadFeatureFlags().guessGame : true;
+  if (!m.poster_path || !guessEnabled) {
+    setFilmDuJourTitle(isWeekly);
+    renderRevealedFilm(m, posterUrl, year, null);
+    return;
+  }
+
+  const state = loadGuessGameState(m.id, todayKey);
+
+  if (state.done) {
+    setFilmDuJourTitle(isWeekly);
+    renderRevealedFilm(m, posterUrl, year, state);
+    return;
+  }
+
+  // ── Phase "à deviner" : titre dédié, tant que ce n'est pas résolu ──
+  const titleEl = document.getElementById('fdj-title-text');
+  if (titleEl) titleEl.textContent = 'Devine le Film du Jour';
+  renderGuessStreakBadge();
+
+  const blur = GUESS_BLUR_LEVELS[Math.min(state.attempts, GUESS_BLUR_LEVELS.length - 1)];
+  // Un nouvel indice par essai raté.
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const cast = m.credits?.cast || [];
+  const hints = [];
+  if (state.attempts >= 1 && year) hints.push(`Sorti en ${year}`);
+  if (state.attempts >= 2 && director) hints.push(`Réalisé par ${director}`);
+  if (state.attempts >= 3 && cast[0]) hints.push(`Avec ${cast[0].name}`);
+  if (state.attempts >= 4 && cast[1]) hints.push(`Et aussi ${cast[1].name}`);
+
+  card.classList.add('fdj-guessing');
+  card.classList.remove('fdj-revealed');
+  // Ludex 2.0 : reprend le traitement plein cadre du swipe — .guess-poster
+  // (toujours une <img>, testée par plusieurs specs e2e sur son tag et son
+  // filter inline) devient le FOND plein cadre plutôt qu'une vignette en
+  // ligne, via repositionnement CSS uniquement (voir .guess-poster dans
+  // styles.css) — le DOM/JS ne change pas de forme, juste son habillage.
+  // .guess-attempts est conservée telle quelle (texte "Essai X/Y", utilisée
+  // aussi comme cible de clic neutre par guess-suggestions.spec.js) ; les
+  // pastilles d'essai sont un ajout purement visuel à côté.
+  const attemptDots = Array.from({ length: GUESS_MAX_ATTEMPTS }, (_, i) =>
+    `<span class="fdj-attempt-dot${i < state.attempts ? ' used' : ''}"></span>`
+  ).join('');
+  card.innerHTML = `
+    <img class="guess-poster" src="${posterUrl}" alt="Affiche à deviner" style="filter:blur(${blur}px)">
+    <div class="fdj-hero-overlay"></div>
+    <div class="fdj-hero-top">
+      <span class="fdj-hero-badge">Film du jour</span>
+      <div class="fdj-attempt-dots">
+        ${attemptDots}
+        <div class="guess-attempts">Essai ${state.attempts + 1}/${GUESS_MAX_ATTEMPTS}</div>
+      </div>
+    </div>
+    <div class="fdj-hero-body">
+      <div class="fdj-title-mask" aria-hidden="true">? ? ? ? ? ? ?</div>
+      <div class="fdj-hero-pills">
+        ${year ? `<span class="fdj-hero-pill accent">${escAttr(year)}</span>` : ''}
+        ${m.genres?.[0]?.name ? `<span class="fdj-hero-pill">${escAttr(m.genres[0].name)}</span>` : '<span class="fdj-hero-pill">Genre</span>'}
+      </div>
+      ${hints.length ? `<div class="guess-hints">${hints.map(h => `<span class="guess-hint">${escAttr(h)}</span>`).join('')}</div>` : ''}
+      <form class="guess-form" id="guess-form" autocomplete="off">
+        <div class="guess-input-wrap">
+          <input type="text" class="guess-input" id="guess-input" placeholder="Devine le titre…" aria-label="Ta proposition" autocomplete="off">
+          <div class="guess-suggestions" id="guess-suggestions" style="display:none;" role="listbox" aria-label="Suggestions de titres"></div>
+        </div>
+        <button type="submit" class="guess-submit-btn">Valider</button>
+      </form>
+    </div>
+  `;
+
+  // Suggestions de titres en tapant — même recherche TMDb que le formulaire
+  // de notation et la watchlist, mais SANS affiche dans la liste (juste
+  // titre + année) : montrer l'affiche du bon film dans les suggestions
+  // spoilerait instantanément le jeu.
+  const guessInput = document.getElementById('guess-input');
+  const guessSuggestEl = document.getElementById('guess-suggestions');
+  let guessSearchTimer;
+  guessInput.addEventListener('input', () => {
+    clearTimeout(guessSearchTimer);
+    const q = guessInput.value.trim();
+    if (q.length < 2) { guessSuggestEl.style.display = 'none'; return; }
+    guessSearchTimer = setTimeout(() => fetchGuessSuggestions(q, guessInput, guessSuggestEl), 280);
+  });
+
+  document.getElementById('guess-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    guessSuggestEl.style.display = 'none';
+    const input = document.getElementById('guess-input');
+    const guess = normalizeGuessText(input.value);
+    if (!guess) return;
+
+    const targets = [normalizeGuessText(m.title)];
+    if (m.original_title && m.original_title !== m.title) targets.push(normalizeGuessText(m.original_title));
+    const correct = targets.includes(guess);
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const lastPlayed = localStorage.getItem(GUESS_LAST_PLAYED_KEY);
+    state.attempts += 1; // compte CETTE tentative, gagnante ou non — sinon "trouvé au 1er essai" affichait "0 essai"
+    if (correct) {
+      state.done = true;
+      state.won = true;
+      const streak = parseInt(localStorage.getItem(GUESS_STREAK_KEY), 10) || 0;
+      const newStreak = lastPlayed === yesterday ? streak + 1 : 1;
+      localStorage.setItem(GUESS_STREAK_KEY, String(newStreak));
+      if (navigator.vibrate) navigator.vibrate(20);
+    } else {
+      if (state.attempts >= GUESS_MAX_ATTEMPTS) {
+        state.done = true;
+        state.won = false;
+        localStorage.setItem(GUESS_STREAK_KEY, '0');
+      }
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+    }
+    localStorage.setItem(GUESS_LAST_PLAYED_KEY, todayKey);
+    saveGuessGameState(state);
+    // Rejoue le rendu complet (pas juste la mise à jour du jeu) : si la
+    // partie vient de se terminer, ce même appel bascule automatiquement sur
+    // la fiche révélée — c'est tout l'intérêt de la fusion des deux sections.
+    renderGuessGame(m, isWeekly);
+  });
+}
+
+// Affiche la fiche complète du jour — affiche nette, synopsis, réalisateur
+// et note, plateformes — précédée du résultat du jeu si on vient d'y jouer
+// (state non nul), ou affichée directement s'il n'y avait pas d'affiche
+// pour deviner.
+function renderRevealedFilm(m, posterUrl, year, state) {
+  const card = document.getElementById('fdj-card');
+  card.classList.add('fdj-revealed');
+  card.classList.remove('fdj-guessing');
+  renderGuessStreakBadge();
+
+  const resultHTML = state
+    ? `<div class="guess-result ${state.won ? 'guess-won' : 'guess-lost'}">
+         ${state.won ? `Trouvé en ${state.attempts} essai${state.attempts > 1 ? 's' : ''} !` : `Perdu — c'était « ${escAttr(m.title)} »`}
+       </div>`
+    : '';
+
+  // Présentation simple du film : synopsis, réalisateur, note — les
+  // anecdotes Wikipédia ont été retirées (n'apportaient pas de réelle
+  // plus-value au retour de l'utilisateur), remplacées par ces informations
+  // toujours disponibles directement depuis TMDb, sans dépendre de
+  // l'existence d'une page Wikipédia adaptée.
+  const director = m.credits?.crew?.find(c => c.job === 'Director')?.name;
+  const metaParts = [];
+  // Icônes cohérentes avec le reste de l'app (clap déjà utilisé comme
+  // placeholder d'affiche, étoile déjà utilisée pour les notes ailleurs)
+  // plutôt que d'introduire de nouveaux symboles isolés.
+  if (director) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.clapper}</span>Réalisé par ${escAttr(director)}</span>`);
+  if (m.vote_average) metaParts.push(`<span class="fdj-meta-item"><span class="fdj-meta-icon" aria-hidden="true">${ICONS.star}</span>${m.vote_average.toFixed(1)}/10</span>`);
+  const metaLineHTML = metaParts.length ? `<div class="fdj-meta-line">${metaParts.join('')}</div>` : '';
+  // Synopsis en encart distinct (même traitement visuel que l'ancienne
+  // carte anecdote, réutilisé ici) — tronqué à 4 lignes avec "Lire la
+  // suite" si long, pour garder une hauteur de carte stable plutôt que de
+  // varier fortement selon la longueur du synopsis d'un film à l'autre.
+  const synopsisNeedsToggle = m.overview && m.overview.length > 180;
+  const synopsisHTML = m.overview
+    ? `<div class="fdj-synopsis-card">
+         <div class="fdj-synopsis-icon" aria-hidden="true">${ICONS.clapper}</div>
+         <div class="fdj-synopsis-body">
+           <p class="fdj-synopsis-text${synopsisNeedsToggle ? ' fdj-synopsis-clamped' : ''}">${escAttr(m.overview)}</p>
+           ${synopsisNeedsToggle ? `<button type="button" class="fdj-synopsis-toggle">Lire la suite</button>` : ''}
+         </div>
+       </div>`
+    : '';
+
+  // Ludex 2.0 : même traitement plein cadre que la phase "à deviner" — le
+  // fond flouté devient l'affiche nette une fois révélée, plutôt qu'un
+  // agencement affiche+infos côte à côte différent. .fdj-poster/.fdj-info/
+  // .fdj-film-title/.fdj-meta-line/.fdj-synopsis-card/.fdj-providers restent
+  // les MÊMES éléments qu'avant (testés par 5 specs e2e sur leur présence et
+  // leur contenu) — seul l'habillage CSS change, voir styles.css.
+  card.innerHTML = `
+    <div class="fdj-hero-frame" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
+      ${posterUrl
+        ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        : `<div class="fdj-poster fdj-poster-ph">${ICONS.clapper}</div>`}
+      <div class="fdj-hero-overlay"></div>
+      <div class="fdj-hero-top">
+        <span class="fdj-hero-badge">Film du jour</span>
+        ${resultHTML}
+      </div>
+      <div class="fdj-hero-body">
+        <div class="fdj-info">
+          <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
+          ${metaLineHTML}
+        </div>
+      </div>
+    </div>
+    <div class="fdj-below">
+      ${synopsisHTML}
+      <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
+    </div>
+  `;
+  card.dataset.movieId = String(m.id);
+  // La carte entière reste cliquable au clic/tap (zone large, meilleure
+  // ergonomie tactile) — seul le bouton de re-tentative des plateformes en
+  // est exclu, pour ne jamais voler son propre clic.
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-synopsis-toggle')) return;
+    openMovieDetailSheet(m.id);
+  });
+  // Activation clavier : le rôle "bouton" est porté par .fdj-hero-frame
+  // (le cadre plein cadre affiche+dégradé — voir plus haut) plutôt que par
+  // .fdj-poster seule depuis le passage au traitement plein cadre —
+  // role="button"+tabindex="0" rendent l'élément focusable et l'annoncent
+  // comme un bouton, mais ne déclenchent PAS d'activation clavier tout
+  // seuls (contrairement à un vrai <button>) — même oubli que celui
+  // corrigé sur les cartes de l'historique.
+  const heroFrame = card.querySelector('.fdj-hero-frame');
+  if (heroFrame) {
+    heroFrame.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openMovieDetailSheet(m.id);
+    });
+  }
+
+  // "Lire la suite" : déplie le synopsis complet (déjà dans le DOM, aucun
+  // appel réseau) en retirant le troncage visuel à 4 lignes.
+  const synopsisToggle = card.querySelector('.fdj-synopsis-toggle');
+  if (synopsisToggle) {
+    synopsisToggle.addEventListener('click', () => {
+      const text = card.querySelector('.fdj-synopsis-text');
+      const expanded = text.classList.toggle('fdj-synopsis-expanded');
+      text.classList.toggle('fdj-synopsis-clamped', !expanded);
+      synopsisToggle.textContent = expanded ? 'Réduire' : 'Lire la suite';
+    });
+  }
+
+  fetchFilmDuJourProviders(m.id);
+}
+
+// ═══════════════════════════════════════════
+//  CARROUSEL "TENDANCES DU MOMENT"
+// ═══════════════════════════════════════════
+// Séparé du jeu de cartes à swiper : pas basé sur l'historique de
+// l'utilisateur, juste ce qui buzz sur TMDb cette semaine. Défilement
+// automatique en boucle (CSS, pas de JS dans la boucle d'animation), mis en
+// pause au survol/toucher pour laisser le temps de taper sur une affiche.
+let trendingLoaded = false;
+
+async function loadTrendingCarousel() {
+  if (trendingLoaded) return;
+  trendingLoaded = true;
+  try {
+    const res = await fetch('/api/search?trending=true');
+    const data = await res.json();
+    // "trending/all/week" mélange films et séries (et parfois des personnes,
+    // sans poster_path — écartées par le filtre) ; media_type distingue les
+    // deux pour le tag par vignette et le bon gestionnaire de clic.
+    const items = (data.results || [])
+      .filter(m => m.poster_path && (m.media_type === 'movie' || m.media_type === 'tv'))
+      .slice(0, 15);
+    if (items.length === 0) return;
+    renderTrendingCarousel(items);
+    document.getElementById('trending-carousel-wrap').style.display = 'block';
+  } catch (e) {
+    console.warn('Impossible de charger les tendances du moment', e);
+  }
+}
+
+function renderTrendingCarousel(items) {
+  const outer = document.getElementById('trending-carousel');
+  const itemsHtml = items.map(m => {
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    const title = m.title || m.name || '';
+    const isTv = m.media_type === 'tv';
+    return `
+      <div class="trending-item" data-media-id="${m.id}" data-media-type="${m.media_type}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(title)}">
+        <img class="trending-item-poster" src="${posterUrl}" alt="Affiche de ${escAttr(title)}" loading="lazy">
+        <span class="trending-item-type">${isTv ? 'Série' : 'Film'}</span>
+        <div class="trending-item-title">${escAttr(title)}</div>
+      </div>`;
+  }).join('');
+
+  // La piste contient la liste EN DOUBLE pour permettre une boucle infinie
+  // sans à-coup (voir plus bas : on revient à 0 dès qu'on a défilé au-delà
+  // d'une copie complète, ce qui retombe pile sur un contenu identique).
+  outer.innerHTML = `<div class="trending-carousel-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.trending-carousel-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.trending-item');
+    if (!item) return;
+    if (item.dataset.mediaType === 'tv') openTvDetailSheet(item.dataset.mediaId);
+    else openMovieDetailSheet(item.dataset.mediaId);
+  });
+
+  // Défilement automatique piloté en JS (pas une animation CSS) : ça permet
+  // de le mettre en pause pendant une interaction manuelle (glisser du doigt,
+  // molette, flèches) tout en laissant le défilement NATIF du navigateur
+  // gérer cette interaction lui-même — plutôt que de devoir réimplémenter un
+  // suivi de glissement à la main.
+  const AUTO_SCROLL_SPEED = 0.5; // px par frame
+  const RESUME_DELAY_MS = 3000; // reprise du défilement auto 3s après la dernière interaction
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    // Ne fait le travail (qui force un recalcul de mise en page via
+    // scrollLeft) QUE si l'onglet Découvrir est bien affiché — sinon cette
+    // boucle tournait indéfiniment en arrière-plan, même après être passé sur
+    // un autre onglet, au lieu de s'arrêter. Coût quasi nul quand invisible
+    // (juste une vérification de classe), pour pouvoir reprendre sans à-coup
+    // dès qu'on revient sur Découvrir.
+    const isVisible = document.getElementById('view-discover')?.classList.contains('active');
+    if (isVisible && !autoScrollPaused) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+
+  // Flèches de navigation (utiles surtout au clavier/souris sur desktop, où
+  // glisser à la souris est moins naturel qu'au doigt sur mobile).
+  document.getElementById('trending-prev-btn').addEventListener('click', () => {
+    pauseThenScheduleResume();
+    outer.scrollBy({ left: -200, behavior: 'smooth' });
+  });
+  document.getElementById('trending-next-btn').addEventListener('click', () => {
+    pauseThenScheduleResume();
+    outer.scrollBy({ left: 200, behavior: 'smooth' });
+  });
+}
+
+const discoverStack = document.getElementById('discover-stack');
+const discoverActionsEl = document.getElementById('discover-actions');
+const discoverReloadBtn = document.getElementById('discover-reload-btn');
+const discoverPassBtn = document.getElementById('discover-pass-btn');
+const discoverLikeBtn = document.getElementById('discover-like-btn');
+
+// ═══════════════════════════════════════════
+//  "SURPRENDS-MOI" : film totalement au hasard dans TOUTE la base TMDb —
+//  pas une recommandation personnalisée (contrairement aux suggestions),
+//  ni limité à la watchlist. Ouvre directement sa fiche complète.
+// ═══════════════════════════════════════════
+const surpriseMeBtn = document.getElementById('surprise-me-btn');
+surpriseMeBtn?.addEventListener('click', async () => {
+  if (surpriseMeBtn.disabled) return;
+  surpriseMeBtn.disabled = true;
+  const originalHtml = surpriseMeBtn.innerHTML;
+  surpriseMeBtn.textContent = '⏳ Recherche...';
+  try {
+    const res = await fetch('/api/search?random=true');
+    const data = await res.json();
+    if (!data.result || !data.result.id) {
+      showToast("Impossible de trouver un film pour l'instant, réessaie.");
+      return;
+    }
+    openMovieDetailSheet(data.result.id);
+  } catch {
+    showToast("Impossible de charger un film au hasard pour l'instant.");
+  } finally {
+    surpriseMeBtn.disabled = false;
+    surpriseMeBtn.innerHTML = originalHtml;
+  }
+});
+
+// Enveloppe fine autour de la vraie logique de chargement : démarre la
+// rotation de l'icône ↻ avant, l'arrête après — via try/finally, pour être sûr
+// qu'elle s'arrête quel que soit le chemin de sortie de la fonction (plusieurs
+// "return" précoces existent selon les cas : aucun film 8+/10, aucun avec
+// fiche TMDb, etc.).
+async function loadDiscoverQueue() {
+  discoverReloadBtn.classList.add('spinning');
+  try {
+    await loadDiscoverQueueInner();
+  } finally {
+    discoverReloadBtn.classList.remove('spinning');
+  }
+}
+
+async function loadDiscoverQueueInner() {
+  discoverActionsEl.style.display = 'none';
+  discoverStack.style.height = '';
+  // Squelette aux dimensions d'une vraie carte de suggestion plutôt qu'un
+  // texte d'attente : la mise en page ne "saute" pas à l'arrivée du contenu,
+  // et la perception d'attente est bien meilleure.
+  discoverStack.innerHTML = `
+    <div class="discover-card discover-card-skeleton">
+      <div class="skeleton-bg" style="width:100%;aspect-ratio:2/3;border-radius:var(--radius-sm);"></div>
+      <div class="skeleton-text long skeleton-bg" style="margin-top:10px;height:16px;"></div>
+      <div class="skeleton-text short skeleton-bg"></div>
+    </div>`;
+
+  const history = loadHistory();
+  const watchlist = loadWatchlist();
+  const watchedWithId = history.filter(h => h.tmdbId);
+
+  if (watchedWithId.length === 0) {
+    // Hauteur fixe modeste plutôt que 'auto' : .discover-empty est en
+    // position absolute (inset:0), donc ne contribue pas à la hauteur
+    // automatique de son parent — 'auto' donnerait 0px de haut et
+    // rendrait le message invisible malgré son contenu.
+    discoverStack.style.height = '120px';
+    discoverStack.innerHTML = '<div class="discover-empty">Note au moins un film (n\'importe quelle note) pour débloquer des suggestions personnalisées ici.</div>';
+    return;
+  }
+
+  const shuffledTop = pickDiverseBasisFilms(watchedWithId, 3);
+  markBasisUsed(shuffledTop.map(f => f.tmdbId));
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+  const watchlistIds = new Set(watchlist.map(w => String(w.tmdbId)).filter(Boolean));
+  const passedIds = new Set(loadDiscoverPassed());
+
+  let allRecs = [];
+  // Les 3 requêtes sont indépendantes : en parallèle (Promise.all) plutôt que
+  // l'une après l'autre, le temps d'attente total tombe à celui de la plus
+  // lente des trois au lieu de la somme des trois — l'onglet Découvrir
+  // s'affiche nettement plus vite.
+  const results = await Promise.allSettled(
+    shuffledTop.map(film => fetch(`/api/search?id=${film.tmdbId}&recommendations=true`).then(res => res.json()))
+  );
+  results.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
+      const data = result.value;
+      const moviesArray = data.results || (Array.isArray(data) ? data : null);
+      if (moviesArray) allRecs.push(...moviesArray);
+    } else {
+      console.warn("Impossible de charger les suggestions pour l'ID " + shuffledTop[i].tmdbId, result.reason);
+    }
+  });
+
+  // Distingue "vraiment plus rien a suggerer" (toutes les requetes ont abouti
+  // mais tout a deja ete vu) d'une panne reseau totale (aucune n'a abouti) :
+  // les deux meritent des messages tres differents.
+  discoverLoadFailed = shuffledTop.length > 0 && !results.some(r => r.status === 'fulfilled');
+
+  const uniqueRecs = [];
+  const addedIds = new Set();
+  allRecs.forEach(m => {
+    if (!m || !m.id) return;
+    const idStr = String(m.id);
+    if (!addedIds.has(idStr) && !seenIds.has(idStr) && !watchlistIds.has(idStr) && !passedIds.has(idStr)) {
+      addedIds.add(idStr);
+      uniqueRecs.push(m);
+    }
+  });
+
+  // Mélange véritable (Fisher-Yates), pas le raccourci .sort(Math.random())
+  // habituel (biaisé et peu fiable) : sans lui, les suggestions restaient
+  // groupées par film source (donc souvent par genre), puisque allRecs les
+  // accumule film de base par film de base, dans l'ordre.
+  for (let i = uniqueRecs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [uniqueRecs[i], uniqueRecs[j]] = [uniqueRecs[j], uniqueRecs[i]];
+  }
+
+  discoverQueue = uniqueRecs.slice(0, 15);
+  discoverLoaded = true;
+  renderDiscoverCards();
+}
+
+// Ludex 2.0 : bascule entre la pile à glisser (comportement historique) et
+// la liste compacte (réglage optionnel, voir Réglages > "Suggestions en
+// liste compacte") — un seul point d'entrée, pour que loadDiscoverQueueInner
+// et le bouton de rechargement n'aient jamais à connaître ce choix.
+function renderDiscoverCards() {
+  if (document.documentElement.classList.contains('discover-swipe-compact')) {
+    renderDiscoverCompactList();
+  } else {
+    renderDiscoverStack();
+  }
+}
+
+function renderDiscoverStack() {
+  if (discoverQueue.length === 0) {
+    discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '120px';
+    if (discoverLoadFailed) {
+      discoverStack.innerHTML = `
+        <div class="error-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
+          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
+        </div>`;
+    } else {
+      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    }
+    return;
+  }
+  discoverStack.style.height = '';
+  discoverActionsEl.style.display = 'flex';
+
+  // Retire l'ancienne carte "top" (celle qui vient de s'envoler après un
+  // swipe) — son animation de sortie est déjà terminée à ce stade
+  // (resolveDiscoverSwipe n'est appelé qu'après le délai de l'animation).
+  const oldTop = discoverStack.querySelector('.discover-card.top');
+  if (oldTop) oldTop.remove();
+
+  const existingBehind = discoverStack.querySelector('.discover-card.behind');
+  const behindMatchesNewTop = existingBehind && existingBehind.dataset.movieId === String(discoverQueue[0].id);
+
+  if (behindMatchesNewTop) {
+    // Réutilise la carte déjà chargée et posée derrière (affiche déjà
+    // récupérée, couleur d'accent déjà extraite) plutôt que de tout
+    // reconstruire — c'était la principale source du délai ressenti entre
+    // deux cartes : chaque swipe relançait un chargement d'image et une
+    // extraction de couleur pour une carte qui était déjà prête juste avant.
+    existingBehind.classList.remove('behind');
+    existingBehind.classList.add('top');
+    existingBehind.setAttribute('tabindex', '0');
+    existingBehind.setAttribute('role', 'group');
+    existingBehind.setAttribute('aria-label', `Suggestion : ${discoverQueue[0].title}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+    attachSwipeHandlers(existingBehind, discoverQueue[0]);
+  } else {
+    // Pas de correspondance (première ouverture de l'onglet, ou file
+    // rechargée manuellement) : construit la carte du haut de zéro.
+    if (existingBehind) existingBehind.remove();
+    const topCard = buildDiscoverCardEl(discoverQueue[0], true);
+    discoverStack.appendChild(topCard);
+    attachSwipeHandlers(topCard, discoverQueue[0]);
+  }
+
+  // Construit la nouvelle carte "derrière" (aperçu du film suivant).
+  if (discoverQueue[1]) {
+    const newBehind = buildDiscoverCardEl(discoverQueue[1], false);
+    discoverStack.insertBefore(newBehind, discoverStack.firstChild);
+  }
+}
+
+function buildDiscoverCardEl(m, isTop) {
+  const year = m.release_date?.slice(0, 4) || '????';
+  const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
+  const posterUrl = tmdbImage(m.poster_path, 'w500');
+  let overview = m.overview ? m.overview : 'Pas de synopsis disponible.';
+  if (overview.length > 160) overview = overview.slice(0, 160) + '…';
+
+  const el = document.createElement('div');
+  el.className = 'discover-card ' + (isTop ? 'top' : 'behind');
+  el.dataset.movieId = String(m.id);
+  el.innerHTML = `
+    <div class="discover-card-poster-wrap">
+      ${posterUrl
+        ? `<img class="discover-card-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        : `<div class="discover-card-poster-ph">${ICONS.clapper}</div>`}
+      <div class="discover-stamp like">Watchlist</div><div class="discover-stamp pass">Passer</div>
+    </div>
+    <div class="discover-card-info">
+      <div class="discover-card-title">${escAttr(m.title)}</div>
+      <div class="discover-card-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
+      <div class="discover-card-overview">${escAttr(overview)}</div>
+    </div>
+  `;
+  if (isTop) {
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', `Suggestion : ${escAttr(m.title)}. Flèche droite pour ajouter à la watchlist, flèche gauche pour passer.`);
+  }
+  applyPosterAccent(posterUrl, el);
+  return el;
+}
+
+// Résout un swipe/clic/touche : retire le film de la file, exécute l'action,
+// puis réaffiche la pile avec la carte suivante.
+function resolveDiscoverSwipe(direction) {
+  const movie = discoverQueue.shift();
+  if (!movie) return;
+
+  if (direction === 'like') {
+    const year = movie.release_date?.slice(0, 4) || '????';
+    addToWatchlistFromTMDb(movie, year);
+    if (navigator.vibrate) navigator.vibrate(20);
+  } else {
+    markDiscoverPassed(movie.id);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+  hapticPulse(discoverStack, 'medium');
+  renderDiscoverStack();
+}
+
+// ── Ludex 2.0 : liste compacte (réglage optionnel) ──
+// Même file (discoverQueue), même logique d'action (watchlist/passer), mais
+// chaque ligne a ses propres boutons plutôt qu'un geste de glissement sur
+// une seule carte à la fois — toute la file reste visible et actionnable
+// d'un coup, pas juste le film du dessus de la pile.
+function renderDiscoverCompactList() {
+  if (discoverQueue.length === 0) {
+    discoverActionsEl.style.display = 'none';
+    discoverStack.style.height = '';
+    if (discoverLoadFailed) {
+      discoverStack.innerHTML = `
+        <div class="error-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <div class="error-state-msg">Impossible de charger les suggestions. Vérifie ta connexion.</div>
+          <button type="button" class="error-retry-btn" data-retry-discover>Réessayer</button>
+        </div>`;
+    } else {
+      discoverStack.innerHTML = '<div class="discover-empty">Tu as tout vu ! 🎉<br>Reviens plus tard ou appuie sur ↻ pour de nouvelles suggestions.</div>';
+    }
+    return;
+  }
+  discoverActionsEl.style.display = 'none'; // boutons pass/like par ligne, plus besoin de la paire globale sous la pile
+  discoverStack.style.height = '';
+
+  discoverStack.innerHTML = `<div class="discover-compact-list">${discoverQueue.map(m => {
+    const year = m.release_date?.slice(0, 4) || '????';
+    const rating = m.vote_average ? m.vote_average.toFixed(1) : null;
+    const posterUrl = tmdbImage(m.poster_path, 'w200');
+    return `
+      <div class="discover-compact-row" data-movie-id="${m.id}">
+        <div class="discover-compact-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
+          ${posterUrl
+            ? `<img class="discover-compact-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+            : `<div class="discover-compact-poster-ph">${ICONS.clapper}</div>`}
+          <div class="discover-compact-info">
+            <div class="discover-compact-title">${escAttr(m.title)}</div>
+            <div class="discover-compact-meta">${year}${rating ? ' · ⭐ ' + rating + '/10' : ''}</div>
+          </div>
+        </div>
+        <div class="discover-compact-actions">
+          <button type="button" class="discover-compact-btn pass" data-action="pass" aria-label="Passer ${escAttr(m.title)}" title="Passer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <button type="button" class="discover-compact-btn like" data-action="like" aria-label="Ajouter ${escAttr(m.title)} à la watchlist" title="Ajouter à la watchlist"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+// Résout l'action d'UNE ligne de la liste compacte (pas forcément la
+// première de la file, contrairement à resolveDiscoverSwipe) : retrouve le
+// film par son id, applique la même action que le swipe, réaffiche la liste.
+function resolveDiscoverCompact(movieId, direction) {
+  const idx = discoverQueue.findIndex(m => String(m.id) === String(movieId));
+  if (idx === -1) return;
+  const [movie] = discoverQueue.splice(idx, 1);
+
+  if (direction === 'like') {
+    const year = movie.release_date?.slice(0, 4) || '????';
+    addToWatchlistFromTMDb(movie, year);
+    if (navigator.vibrate) navigator.vibrate(20);
+  } else {
+    markDiscoverPassed(movie.id);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }
+  renderDiscoverCompactList();
+}
+
+discoverStack?.addEventListener('click', (e) => {
+  const row = e.target.closest('.discover-compact-row');
+  if (!row) return;
+  const actionBtn = e.target.closest('.discover-compact-btn');
+  if (actionBtn) {
+    resolveDiscoverCompact(row.dataset.movieId, actionBtn.dataset.action);
+    return;
+  }
+  if (e.target.closest('.discover-compact-open')) openMovieDetailSheet(row.dataset.movieId);
+});
+
+function attachSwipeHandlers(cardEl, movie) {
+  let startX = 0, startY = 0, dx = 0, dy = 0, dragging = false;
+  const TAP_MAX_MOVE = 6; // en dessous de ce seuil de mouvement, on considère que c'est un tap, pas un swipe
+  const stampLike = cardEl.querySelector('.discover-stamp.like');
+  const stampPass = cardEl.querySelector('.discover-stamp.pass');
+
+  function onStart(clientX, clientY) {
+    startX = clientX; startY = clientY; dx = 0; dy = 0; dragging = true;
+    cardEl.classList.add('dragging');
+    cardEl.classList.remove('snap-back', 'flying');
+  }
+  function onMove(clientX, clientY) {
+    if (!dragging) return;
+    dx = clientX - startX;
+    dy = clientY - startY;
+    cardEl.style.transform = `translate(${dx}px, ${dy * 0.4}px) rotate(${dx / 18}deg)`;
+    const progress = Math.min(1, Math.abs(dx) / DISCOVER_SWIPE_THRESHOLD);
+    if (dx > 0) { stampLike.style.opacity = progress; stampPass.style.opacity = 0; }
+    else if (dx < 0) { stampPass.style.opacity = progress; stampLike.style.opacity = 0; }
+  }
+  function onEnd() {
+    if (!dragging) return;
+    dragging = false;
+    cardEl.classList.remove('dragging');
+
+    if (Math.abs(dx) > DISCOVER_SWIPE_THRESHOLD) {
+      const direction = dx > 0 ? 'like' : 'pass';
+      cardEl.classList.add('flying');
+      cardEl.style.transform = `translate(${dx > 0 ? 900 : -900}px, ${dy * 0.4}px) rotate(${dx / 10}deg)`;
+      cardEl.style.opacity = '0';
+      setTimeout(() => resolveDiscoverSwipe(direction), 200);
+    } else if (Math.abs(dx) < TAP_MAX_MOVE && Math.abs(dy) < TAP_MAX_MOVE) {
+      // Tap (quasi aucun mouvement) : ouvre la fiche détaillée du film plutôt
+      // que de traiter ça comme un swipe avorté.
+      cardEl.style.transform = '';
+      stampLike.style.opacity = 0;
+      stampPass.style.opacity = 0;
+      if (movie) openMovieDetailSheet(movie.id);
+    } else {
+      cardEl.classList.add('snap-back');
+      cardEl.style.transform = '';
+      stampLike.style.opacity = 0;
+      stampPass.style.opacity = 0;
+    }
+  }
+
+  cardEl.addEventListener('touchstart', e => {
+    e.stopPropagation(); // évite que le geste remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
+    e.preventDefault(); // renfort : touch-action:none (CSS) suffit en théorie, mais certaines versions de
+                         // Safari/PWA en mode "installé" l'appliquent de façon incohérente — d'où le décalage
+                         // d'affichage rapporté pendant le swipe. preventDefault() est la garantie la plus sûre.
+    onStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  cardEl.addEventListener('touchmove', e => {
+    e.stopPropagation();
+    e.preventDefault();
+    onMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  cardEl.addEventListener('touchend', e => {
+    e.stopPropagation();
+    onEnd();
+  });
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  cardEl.addEventListener('mousedown', e => {
+    e.preventDefault();
+    onStart(e.clientX, e.clientY);
+    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
+    const upHandler = () => {
+      onEnd();
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+    };
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+
+  // Clavier : accessibilité pour qui n'utilise pas le tactile/la souris
+  cardEl.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); resolveDiscoverSwipe('like'); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); resolveDiscoverSwipe('pass'); }
+  });
+}
+
+discoverPassBtn.addEventListener('click', () => resolveDiscoverSwipe('pass'));
+discoverLikeBtn.addEventListener('click', () => resolveDiscoverSwipe('like'));
+discoverReloadBtn.addEventListener('click', () => loadDiscoverQueue());
+
+// ═══════════════════════════════════════════
+//  QUIZ DU JOUR
+// ═══════════════════════════════════════════
+// Une question par jour (stable toute la journée, comme Film du jour), tirée
+// d'Open Trivia DB (catégorie 11 = Entertainment: Film) — gratuit, sans clé,
+// jamais à court de contenu contrairement à une banque de questions écrites
+// à la main qu'il faudrait sans cesse renouveler. Un lot de 30 questions est
+// récupéré une fois puis mis en cache ; chaque jour, une question du lot est
+// choisie de façon déterministe (index = jour depuis l'epoch, modulo la
+// taille du lot), et le lot est renouvelé une fois entièrement parcouru.
+const QUIZ_BATCH_KEY = 'lbx_quiz_batch';
+const QUIZ_BATCH_FETCHED_DAY_KEY = 'lbx_quiz_batch_fetched_day';
+const QUIZ_STREAK_KEY = 'lbx_quiz_streak';
+const QUIZ_LAST_PLAYED_KEY = 'lbx_quiz_last_played_date';
+const QUIZ_LAST_RESULT_KEY = 'lbx_quiz_last_result';
+
+function quizDaysSinceEpoch() {
+  return Math.floor(Date.now() / 86400000);
+}
+function quizTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function quizDecodeEntities(str) {
+  const el = document.createElement('textarea');
+  el.innerHTML = str;
+  return el.value;
+}
+// Mélange déterministe (seed = index du jour) : l'ordre des réponses reste
+// stable toute la journée, pas un nouveau tirage à chaque rafraîchissement.
+function quizSeededShuffle(arr, seed) {
+  const a = arr.slice();
+  let s = seed || 1;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function ensureQuizBatch() {
+  let batch = [];
+  try { batch = JSON.parse(localStorage.getItem(QUIZ_BATCH_KEY)) || []; } catch {}
+  const fetchedDay = parseInt(localStorage.getItem(QUIZ_BATCH_FETCHED_DAY_KEY), 10) || 0;
+  const daysSinceFetch = quizDaysSinceEpoch() - fetchedDay;
+  const needsRefresh = batch.length === 0 || daysSinceFetch >= batch.length || daysSinceFetch >= 30;
+  if (!needsRefresh) return batch;
+
+  try {
+    const res = await fetch('https://opentdb.com/api.php?amount=30&category=11&type=multiple&encode=url3986');
+    const data = await res.json();
+    if (data.response_code === 0 && data.results?.length > 0) {
+      batch = data.results;
+      localStorage.setItem(QUIZ_BATCH_KEY, JSON.stringify(batch));
+      localStorage.setItem(QUIZ_BATCH_FETCHED_DAY_KEY, String(quizDaysSinceEpoch()));
+    }
+  } catch {
+    // Silencieux : la section reste cachée si indisponible (voir loadDailyQuiz), pas d'erreur gênante pour l'utilisateur.
+  }
+  return batch;
+}
+
+function getTodaysQuizQuestion(batch) {
+  if (!batch || batch.length === 0) return null;
+  const idx = quizDaysSinceEpoch() % batch.length;
+  const raw = batch[idx];
+  const question = quizDecodeEntities(decodeURIComponent(raw.question));
+  const correctAnswer = quizDecodeEntities(decodeURIComponent(raw.correct_answer));
+  const incorrectAnswers = raw.incorrect_answers.map(a => quizDecodeEntities(decodeURIComponent(a)));
+  const allAnswers = quizSeededShuffle([correctAnswer, ...incorrectAnswers], idx);
+  return { idx, question, correctAnswer, allAnswers };
+}
+
+function renderQuizStreakBadge() {
+  const badge = document.getElementById('quiz-streak-badge');
+  if (!badge) return;
+  const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+  badge.innerHTML = streak > 0 ? `${ICONS.flame} ${streak}` : '';
+}
+
+function renderQuizAnsweredState(card, q, lastResult) {
+  card.innerHTML = `
+    <div class="quiz-question">${escAttr(q.question)}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map((a, i) => {
+        const cls = a === q.correctAnswer ? 'correct' : (a === lastResult.picked ? 'wrong' : '');
+        const icon = a === q.correctAnswer ? ICONS.check : (a === lastResult.picked ? ICONS.close : '');
+        return `<button class="quiz-answer-btn ${cls}" disabled>
+          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
+          <span class="quiz-answer-text">${a}</span>
+          <span class="quiz-answer-icon" aria-hidden="true">${icon}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div class="quiz-already-played">${lastResult.wasCorrect ? "✓ Bonne réponse aujourd'hui — reviens demain pour la suite." : `La bonne réponse était « ${q.correctAnswer} » — reviens demain.`}</div>
+  `;
+}
+
+async function loadDailyQuiz() {
+  const wrap = document.getElementById('quiz-wrap');
+  const card = document.getElementById('quiz-card');
+  if (!wrap || !card) return;
+
+  const batch = await ensureQuizBatch();
+  const q = getTodaysQuizQuestion(batch);
+  if (!q) return; // API indisponible pour l'instant : section reste cachée plutôt que d'afficher une erreur
+
+  wrap.style.display = 'block';
+  renderQuizStreakBadge();
+
+  const today = quizTodayStr();
+  const lastPlayed = localStorage.getItem(QUIZ_LAST_PLAYED_KEY);
+  let lastResult = null;
+  try { lastResult = JSON.parse(localStorage.getItem(QUIZ_LAST_RESULT_KEY)); } catch {}
+
+  if (lastPlayed === today && lastResult && lastResult.questionIdx === q.idx) {
+    renderQuizAnsweredState(card, q, lastResult);
+    return;
+  }
+
+  card.innerHTML = `
+    <div class="quiz-question">${escAttr(q.question)}</div>
+    <div class="quiz-answers">
+      ${q.allAnswers.map((a, i) => `
+        <button class="quiz-answer-btn" data-answer="${escAttr(a)}">
+          <span class="quiz-answer-letter">${String.fromCharCode(65 + i)}</span>
+          <span class="quiz-answer-text">${a}</span>
+          <span class="quiz-answer-icon" aria-hidden="true"></span>
+        </button>`).join('')}
+    </div>
+  `;
+
+  card.querySelectorAll('.quiz-answer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const picked = btn.dataset.answer;
+      const wasCorrect = picked === q.correctAnswer;
+      card.querySelectorAll('.quiz-answer-btn').forEach(b => {
+        b.disabled = true;
+        // Icône en plus de la couleur (pas seulement une teinte de fond) :
+        // reste clair même pour qui distingue mal le vert du rouge.
+        if (b.dataset.answer === q.correctAnswer) {
+          b.classList.add('correct');
+          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.check;
+        } else if (b === btn) {
+          b.classList.add('wrong');
+          b.querySelector('.quiz-answer-icon').innerHTML = ICONS.close;
+        }
+      });
+
+      // Série : hier → continue ; sinon (jamais joué, ou pause d'un jour ou
+      // plus) → repart de 1. Une mauvaise réponse casse la série (compte
+      // vraiment y répondre juste, contrairement à la série de notation qui
+      // ne demande que d'être actif).
+      const streak = parseInt(localStorage.getItem(QUIZ_STREAK_KEY), 10) || 0;
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const newStreak = wasCorrect ? (lastPlayed === yesterday ? streak + 1 : 1) : 0;
+
+      localStorage.setItem(QUIZ_STREAK_KEY, String(newStreak));
+      localStorage.setItem(QUIZ_LAST_PLAYED_KEY, today);
+      localStorage.setItem(QUIZ_LAST_RESULT_KEY, JSON.stringify({ questionIdx: q.idx, wasCorrect, picked }));
+      renderQuizStreakBadge();
+      if (navigator.vibrate) navigator.vibrate(wasCorrect ? 20 : [20, 40, 20]);
+
+      const resultEl = document.createElement('div');
+      resultEl.className = 'quiz-result';
+      resultEl.textContent = wasCorrect ? 'Bonne réponse ! 🎉' : `La bonne réponse était « ${q.correctAnswer} ».`;
+      card.appendChild(resultEl);
+    });
+  });
+}
+
+// Reprise après panne réseau des suggestions : délégué au niveau racine.
+discoverStack?.addEventListener('click', (e) => {
+  if (!e.target.closest('.error-retry-btn[data-retry-discover]')) return;
+  discoverLoadFailed = false;
+  loadDiscoverQueue();
+});
+
+// ═══════════════════════════════════════════
+//  "PARCOURIR" — sous-onglets Par thème / Classiques (Ludex 2.0 §06)
+// ═══════════════════════════════════════════
+// Bascule sur classList uniquement (jamais .style.display) : ces deux
+// panneaux sont aussi manipulés en .style.display par 00e-feature-flags.js
+// (activation/désactivation de fonctionnalité) — voir le commentaire dans
+// styles.css (.browse-panel) pour pourquoi ça évite tout conflit.
+const browseTabTheme = document.getElementById('browse-tab-theme');
+const browseTabClassics = document.getElementById('browse-tab-classics');
+const browsePanelTheme = document.getElementById('theme-explorer-wrap');
+const browsePanelClassics = document.getElementById('curated-lists-shortcut-wrap');
+function setBrowseTab(which) {
+  const themeActive = which === 'theme';
+  browseTabTheme?.classList.toggle('active', themeActive);
+  browseTabClassics?.classList.toggle('active', !themeActive);
+  browsePanelTheme?.classList.toggle('active', themeActive);
+  browsePanelClassics?.classList.toggle('active', !themeActive);
+}
+browseTabTheme?.addEventListener('click', () => setBrowseTab('theme'));
+browseTabClassics?.addEventListener('click', () => setBrowseTab('classics'));
+
+// ═══════════════════════════════════════════
+//  FICHE FILM DÉTAILLÉE
+// ═══════════════════════════════════════════
+// Ouverte au tap sur un film (historique, watchlist, découvrir). Récupère la
+// fiche complète TMDb (synopsis, budget, box-office, équipe...) à la demande,
+// via le même endpoint /api/search?id=X déjà utilisé ailleurs (mis en cache
+// côté CDN, voir api/search.js). Si le film n'a pas de tmdbId (ajouté en
+// saisie manuelle), affiche un message clair plutôt que d'échouer.
+
+const mdsEl = document.getElementById('movie-detail-sheet');
+const mdsContentEl = document.getElementById('mds-content');
+const mdsCloseBtn = document.getElementById('mds-close-btn');
+
+// Bande-annonce : chargée seulement au clic (vignette + bouton lecture avant
+// ça), pas embarquée automatiquement dès l'ouverture de la fiche. Attaché ici,
+// au niveau racine (pas dans renderCastCarousel), pour qu'il fonctionne même
+// pour un film sans casting. Le gestionnaire clavier générique
+// (01-navigation.js) couvre déjà Entrée/Espace pour ce role="button".
+mdsContentEl.addEventListener('click', (e) => {
+  const trailerWrap = e.target.closest('.mds-trailer-wrap');
+  if (!trailerWrap || trailerWrap.querySelector('iframe')) return;
+  const key = trailerWrap.dataset.videoKey;
+  trailerWrap.innerHTML = `<iframe class="mds-trailer" src="https://www.youtube.com/embed/${key}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+});
+
+function formatMoney(amount) {
+  if (!amount || amount <= 0) return 'Non communiqué';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+}
+
+function buildMdsSkeleton() {
+  return `
+    <div class="mds-skeleton">
+      <div class="mds-skeleton-poster skeleton-bg"></div>
+      <div class="mds-skeleton-lines">
+        <div class="skeleton-text long skeleton-bg" style="height:18px;"></div>
+        <div class="skeleton-text short skeleton-bg"></div>
+      </div>
+    </div>
+    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>
+    <div class="skeleton-text long skeleton-bg"></div>
+    <div class="skeleton-text short skeleton-bg"></div>
+  `;
+}
+
+// Chaque section reçoit un léger délai croissant (voir CSS .mds-section) pour
+// apparaître en cascade plutôt que d'un bloc — plus agréable à l'œil qu'un
+// simple remplacement de contenu.
+// Cherche une affiche choisie à la main pour ce film, dans l'historique OU
+// n'importe quelle watchlist (un film "à voir" pas encore noté peut aussi
+// avoir reçu un choix d'affiche — voir applyChosenPoster, qui sauvegarde aux
+// deux endroits). localMatch (historique) ne suffit pas seul : un film
+// uniquement en watchlist n'y apparaît jamais.
+function findSavedPosterUrl(tmdbId, localMatch) {
+  if (localMatch && localMatch.poster) return localMatch.poster;
+  for (const meta of loadWatchlistsMeta()) {
+    const found = loadWatchlist(meta.id).find(w => String(w.tmdbId) === String(tmdbId) && w.poster);
+    if (found) return found.poster;
+  }
+  return null;
+}
+
+function buildMdsContent(data, localMatch, localMatchIdx) {
+  // Une affiche choisie à la main (voir applyChosenPoster) est enregistrée
+  // sur l'item local (historique/watchlist) — elle doit toujours l'emporter
+  // sur l'affiche par défaut de TMDb, sinon rouvrir la fiche plus tard
+  // "oublie" le choix : le rendu revenait systématiquement à data.poster_path
+  // (toujours frais depuis l'API), sans jamais consulter ce qui avait été
+  // sauvegardé. C'était le vrai bug derrière "ça ne se sauvegarde pas".
+  const savedPoster = findSavedPosterUrl(data.id, localMatch);
+  const posterUrl = savedPoster || (tmdbImage(data.poster_path, 'w342'));
+  const year = data.release_date ? data.release_date.slice(0, 4) : '';
+  const runtime = data.runtime ? `${data.runtime} min` : '';
+  const genres = (data.genres || []).map(g => g.name).join(', ');
+  const directorObj = data.credits?.crew?.find(c => c.job === 'Director') || null;
+  const castList = (data.credits?.cast || []).slice(0, 5);
+  const releaseDateStr = data.release_date
+    ? new Date(data.release_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'Inconnue';
+
+  // Petit lien cliquable sur un nom de réalisateur/acteur : ouvre sa fiche
+  // personne (bio + filmographie + % déjà vu). data-person-id/data-person-name
+  // portés directement sur l'élément, lus par le clic délégué plus bas.
+  function personLink(p) {
+    return `<span class="mds-person-link" data-person-id="${p.id}" data-person-name="${escAttr(p.name)}">${escAttr(p.name)}</span>`;
+  }
+  const directorHtml = directorObj ? personLink(directorObj) : '';
+  const castHtml = castList.map(personLink).join(', ');
+
+  let personalHtml = '';
+  if (localMatch) {
+    const critBreakdown = buildCriteriaBreakdown(localMatch);
+    personalHtml = `
+      <div class="mds-section mds-personal" style="animation-delay:.05s">
+        <div class="mds-section-title">Ta note</div>
+        <div class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+        ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
+      </div>
+      ${critBreakdown}
+    `;
+  }
+
+  return `
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
+      <div class="mds-header-left">
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
+        ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
+      </div>
+      <div class="mds-header-info">
+        <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
+        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="mds-external-ratings"></div>
+        ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
+      </div>
+    </div>
+
+    <div class="mds-actions" style="animation-delay:.02s">
+      ${localMatch
+        ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note">${ICONS.edit} Modifier ma note</button>`
+        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
+           <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
+      }
+    </div>
+
+    ${personalHtml}
+
+    ${(() => {
+      const trailer = pickBestTrailer(data.videos?.results || []);
+      if (!trailer) return '';
+      return `
+      <div class="mds-section" style="animation-delay:.08s">
+        <div class="mds-section-title">Bande-annonce</div>
+        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.title)}">
+          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
+          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+      </div>`;
+    })()}
+
+    ${data.overview ? `
+      <div class="mds-section" style="animation-delay:.1s">
+        <div class="mds-section-title">Synopsis</div>
+        <div class="mds-overview" id="mds-overview">${escAttr(data.overview)}</div>
+        <button type="button" class="mds-overview-toggle" id="mds-overview-toggle">Lire la suite ▾</button>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.15s">
+      <div class="mds-section-title">Équipe</div>
+      ${directorHtml ? `<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${directorHtml}</span></div>` : ''}
+      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
+      ${!directorHtml && !castHtml ? `<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>` : ''}
+    </div>
+
+    <div class="mds-section" style="animation-delay:.2s">
+      <div class="mds-section-title">Détails</div>
+      <div class="mds-row"><span class="mds-label">Sortie</span><span>${releaseDateStr}</span></div>
+      <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(data.budget)}</span></div>
+      <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(data.revenue)}</span></div>
+    </div>
+
+    ${(data.credits?.cast || []).length > 0 ? `
+      <div class="mds-section" style="animation-delay:.25s">
+        <div class="mds-section-title">Casting</div>
+        <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
+      </div>` : ''}
+
+    ${data.belongs_to_collection ? `
+      <div class="mds-section" style="animation-delay:.3s">
+        <div class="mds-section-title">
+          Fait partie d'une saga
+          <span class="mds-saga-link" id="mds-saga-link" data-collection-id="${data.belongs_to_collection.id}" data-collection-name="${escAttr(data.belongs_to_collection.name)}" role="button" tabindex="0">${escAttr(data.belongs_to_collection.name)} →</span>
+        </div>
+        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.35s">
+      ${typeof buildAnalysisSectionHtml === 'function' ? buildAnalysisSectionHtml(data.id, data.title) : ''}
+    </div>
+  `;
+}
+
+// Ventilation par critère (barres, pas un radar — déjà utilisé sur le
+// dashboard, on veut ici quelque chose de plus direct à lire pour un seul
+// film) : uniquement si le film a été noté en mode détaillé.
+const MDS_CRITERIA_LABELS = {
+  scenario: 'Scénario', realisation: 'Réalisation', photo: 'Photo',
+  acteurs: 'Acteurs', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect',
+};
+function buildCriteriaBreakdown(localMatch) {
+  if (localMatch.mode !== 'detail' || !localMatch.values) return '';
+
+  const rows = CRITERIA.map((key, i) => {
+    const val = parseFloat(localMatch.values[key]);
+    if (isNaN(val)) return '';
+    const pct = (val / 10) * 100;
+    return `
+      <div class="mds-crit-row" style="animation-delay:${0.05 * i}s">
+        <span class="mds-crit-label">${MDS_CRITERIA_LABELS[key] || key}</span>
+        <div class="mds-crit-track"><div class="mds-crit-fill" style="--mds-crit-pct:${pct}%"></div></div>
+        <span class="mds-crit-value">${val.toFixed(1)}</span>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="mds-section mds-crit-breakdown" style="animation-delay:.08s">
+      <div class="mds-section-title">Détail par critère</div>
+      ${rows}
+    </div>
+  `;
+}
+
+// Carrousel du casting complet, en bas de la fiche film — même mécanique que
+// le carrousel "Tendances" de Découvrir (défilement auto piloté en JS, pas
+// une animation CSS qui bloquerait le glissement manuel natif), à vitesse
+// volontairement plus lente ici (plus de monde à voir défiler, moins de
+// pression pour choisir/lire rapidement).
+function renderCastCarousel(castArray) {
+  const outer = document.getElementById('mds-cast-carousel');
+  if (!outer) return;
+  const cast = castArray.filter(c => c.id).slice(0, 20);
+  if (cast.length === 0) return;
+
+  const itemsHtml = cast.map(actor => {
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
+    return `
+      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+        ${photoUrl
+          ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
+          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
+        <div class="mds-cast-name">${escAttr(actor.name)}</div>
+        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
+  // qu'il a parcouru l'équivalent d'une copie complète.
+  outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.mds-cast-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.mds-cast-item');
+    if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
+  });
+
+  const AUTO_SCROLL_SPEED = 0.3; // plus lent que le carrousel tendances (0.5) : plus de monde à voir défiler
+  const RESUME_DELAY_MS = 3000;
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused && mdsEl.classList.contains('open')) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    // Arrête la boucle si la fiche a été fermée (évite de faire tourner un
+    // requestAnimationFrame indéfiniment pour un carrousel qu'on ne voit plus).
+    if (mdsEl.classList.contains('open')) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+}
+
+// Bande des autres films de la saga (belongs_to_collection), en bas de la
+// fiche film — appel réseau séparé du chargement principal (les détails
+// d'un film n'incluent pas la liste complète de sa collection, juste son
+// id/nom/affiche), donc rendue après coup plutôt que de retarder tout
+// l'affichage de la fiche pour ça.
+async function populateSagaStrip(collectionId, currentMovieId) {
+  const stripEl = document.getElementById('mds-saga-strip');
+  if (!stripEl) return;
+  try {
+    const res = await fetch(`/api/search?collectionId=${collectionId}`);
+    const data = await readApiJson(res);
+    const parts = (data.parts || []).filter(f => f.poster_path)
+      .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
+    if (parts.length === 0) { stripEl.innerHTML = ''; return; }
+    stripEl.innerHTML = parts.map(f => `
+      <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <img class="mds-saga-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">
+        <div class="mds-saga-title">${escAttr(f.title)}</div>
+      </div>
+    `).join('');
+  } catch {
+    stripEl.innerHTML = ''; // pas grave : le lien "Voir la saga complète" reste utilisable
+  }
+}
+
+// Notes IMDb/Rotten Tomatoes/Metacritic (OMDb) — uniquement sur une fiche
+// film ouverte explicitement (jamais sur les grilles/carrousels), voir
+// api/search.js. Repli silencieux si la clé OMDB_KEY n'est pas configurée
+// ou si l'appel échoue : la fiche reste utilisable sans ces notes.
+async function populateExternalRatings(imdbId) {
+  const el = document.getElementById('mds-external-ratings');
+  if (!el) return;
+  try {
+    const res = await fetch(`/api/search?imdbId=${imdbId}`);
+    const data = await readApiJson(res);
+    const ratings = data.ratings || [];
+    if (ratings.length === 0) return;
+    const labels = { 'Internet Movie Database': 'IMDb', 'Rotten Tomatoes': 'RT', 'Metacritic': 'Metacritic' };
+    el.innerHTML = ratings
+      .filter(r => labels[r.Source])
+      .map(r => `<span class="mds-external-rating"><b>${labels[r.Source]}</b> ${escAttr(r.Value)}</span>`)
+      .join('');
+  } catch {
+    // silencieux : la note TMDb deja affichee suffit
+  }
+}
+
+// Cache le bouton "Lire la suite" si le synopsis tient déjà entièrement dans
+// les lignes visibles par défaut — pas la peine de proposer un accordéon pour
+// un texte qui ne déborde pas. Comparaison scrollHeight/clientHeight après un
+// requestAnimationFrame, le temps que le layout (avec le clamp CSS) se stabilise.
+function setupOverviewToggle() {
+  const overview = document.getElementById('mds-overview');
+  const toggle = document.getElementById('mds-overview-toggle');
+  if (!overview || !toggle) return;
+  requestAnimationFrame(() => {
+    if (overview.scrollHeight <= overview.clientHeight + 2) {
+      toggle.style.display = 'none';
+    }
+  });
+}
+
+// En-tête collant qui rétrécit : au-delà d'un seuil de défilement DANS la
+// fiche (.mds-box, le conteneur qui défile réellement), l'affiche+titre
+// passent en mode compact — l'inverse en repassant sous ce seuil. Un seul
+// écouteur de scroll par ouverture de fiche (retiré à la fermeture) pour ne
+// pas empiler des écouteurs orphelins à chaque nouvelle fiche ouverte.
+const STICKY_HEADER_THRESHOLD = 80;
+const stickyHeaderHandlers = new WeakMap(); // un gestionnaire par fiche (evite toute collision d'etat entre film et serie)
+function setupStickyHeader(sheetEl = mdsEl) {
+  const box = sheetEl.querySelector('.mds-box');
+  const header = sheetEl.querySelector('.mds-header');
+  if (!box || !header) return;
+  const existing = stickyHeaderHandlers.get(sheetEl);
+  if (existing) box.removeEventListener('scroll', existing);
+  const handler = () => {
+    header.classList.toggle('compact', box.scrollTop > STICKY_HEADER_THRESHOLD);
+  };
+  stickyHeaderHandlers.set(sheetEl, handler);
+  box.addEventListener('scroll', handler, { passive: true });
+}
+
+// Choisit la meilleure bande-annonce parmi les vidéos TMDb : uniquement
+// YouTube (seule plateforme embarquable simplement sans clé ni accord
+// spécifique), en priorisant une vraie "Trailer" officielle, puis en
+// préférant la version française si elle existe — sans quoi n'importe quelle
+// bande-annonce YouTube fait l'affaire plutôt que rien.
+function pickBestTrailer(videos) {
+  const yt = videos.filter(v => v.site === 'YouTube');
+  if (yt.length === 0) return null;
+  const trailers = yt.filter(v => v.type === 'Trailer');
+  const pool = trailers.length > 0 ? trailers : yt;
+  return pool.find(v => v.official && v.iso_639_1 === 'fr')
+      || pool.find(v => v.iso_639_1 === 'fr')
+      || pool.find(v => v.official)
+      || pool[0];
+}
+
+let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
+
+async function openMovieDetailSheet(tmdbId) {
+  if (!tmdbId) {
+    showToast("Ce film n'a pas de fiche TMDb liée (ajouté en saisie manuelle).");
+    return;
+  }
+
+  lastFocusedBeforeModal = document.activeElement;
+  mdsContentEl.innerHTML = buildMdsSkeleton();
+  mdsEl.classList.add('open');
+  mdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture (pas juste piégé une fois qu'on y est déjà)
+  const mdsBoxEl = mdsEl.querySelector('.mds-box');
+  if (mdsBoxEl) mdsBoxEl.scrollTop = 0; // évite de démarrer en mode compact si une fiche precedente avait été scrollée
+
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}`);
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    if (!data || !data.title) throw new Error('no data');
+
+    const history = loadHistory();
+    const localMatch = history.find(h => String(h.tmdbId) === String(tmdbId));
+    const localMatchIdx = history.findIndex(h => String(h.tmdbId) === String(tmdbId));
+
+    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
+    mdsCurrentData = data;
+    renderCastCarousel(data.credits?.cast || []);
+    setupOverviewToggle();
+    setupStickyHeader();
+    const mdsPosterUrl = tmdbImage(data.poster_path, 'w342');
+    applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
+    if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
+    if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
+    if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
+  } catch (e) {
+    mdsCurrentData = null;
+    // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
+    // gestionnaire délégué RACINE (plus bas) relance le chargement complet.
+    mdsContentEl.innerHTML = `
+      <div class="error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <div class="error-state-msg">Impossible de charger les détails du film. Vérifie ta connexion.</div>
+        <button type="button" class="error-retry-btn" data-retry-tmdb-id="${escAttr(String(tmdbId))}">Réessayer</button>
+      </div>`;
+  }
+}
+
+function closeMovieDetailSheet() {
+  closeModal(mdsEl);
+}
+
+mdsCloseBtn.addEventListener('click', closeMovieDetailSheet);
+mdsEl.addEventListener('click', (e) => {
+  if (e.target === mdsEl) { closeMovieDetailSheet(); return; }
+
+  const personLink = e.target.closest('.mds-person-link');
+  if (personLink) {
+    openPersonDetailSheet(personLink.dataset.personId, personLink.dataset.personName);
+    return;
+  }
+
+  const overviewToggle = e.target.closest('#mds-overview-toggle');
+  if (overviewToggle) {
+    const overview = document.getElementById('mds-overview');
+    const expanded = overview.classList.toggle('expanded');
+    overviewToggle.textContent = expanded ? 'Réduire ▴' : 'Lire la suite ▾';
+    return;
+  }
+
+  const sagaItem = e.target.closest('.mds-saga-item');
+  if (sagaItem && !sagaItem.classList.contains('current')) {
+    openMovieDetailSheet(sagaItem.dataset.movieId); // remplace la fiche actuelle par celle du film de la saga choisi
+    return;
+  }
+  const sagaLink = e.target.closest('.mds-saga-link');
+  if (sagaLink) {
+    closeMovieDetailSheet();
+    openSagaSheet(sagaLink.dataset.collectionId, sagaLink.dataset.collectionName);
+    return;
+  }
+
+  if (e.target.closest('#mds-rate-btn')) {
+    if (!mdsCurrentData) return;
+    const year = mdsCurrentData.release_date ? mdsCurrentData.release_date.slice(0, 4) : '????';
+    closeMovieDetailSheet();
+    selectMovie(mdsCurrentData, year);
+    if (window.innerWidth <= 860) switchMobileNav('rating');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  if (e.target.closest('#mds-watchlist-btn')) {
+    if (!mdsCurrentData) return;
+    const year = mdsCurrentData.release_date ? mdsCurrentData.release_date.slice(0, 4) : '';
+    addToWatchlistFromTMDb(mdsCurrentData, year);
+    closeMovieDetailSheet();
+    return;
+  }
+
+  const editBtn = e.target.closest('#mds-edit-btn');
+  if (editBtn) {
+    const idx = parseInt(editBtn.dataset.idx, 10);
+    closeMovieDetailSheet();
+    loadItem(idx);
+    if (window.innerWidth <= 860) switchMobileNav('rating');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+// ═══════════════════════════════════════════
+//  FICHE PERSONNE (réalisateur/acteur)
+// ═══════════════════════════════════════════
+// Bio + filmographie complète + pourcentage déjà vu (films de sa filmographie
+// présents dans l'historique de l'utilisateur). Ouverte en tapant un nom de
+// réalisateur/acteur dans la fiche film.
+const pdsEl = document.getElementById('person-detail-sheet');
+const pdsContentEl = document.getElementById('pds-content');
+const pdsCloseBtn = document.getElementById('pds-close-btn');
+
+function buildPdsSkeleton(personName) {
+  return `
+    <div class="mds-skeleton">
+      <div class="mds-skeleton-poster skeleton-bg"></div>
+      <div class="mds-skeleton-lines">
+        <div class="skeleton-text long skeleton-bg" style="height:18px;">${escAttr(personName || '')}</div>
+        <div class="skeleton-text short skeleton-bg"></div>
+      </div>
+    </div>
+    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>
+    <div class="skeleton-text long skeleton-bg"></div>
+  `;
+}
+
+// Combine cast + équipe technique en une filmographie dédoublonnée (une
+// personne peut apparaître à la fois comme actrice ET réalisatrice sur le
+// même film, ex: dans les deux listes renvoyées par TMDb). Marque aussi
+// chaque film comme "vu" ou non (par tmdbId dans l'historique) — utilisé à la
+// fois pour le pourcentage et pour griser les affiches déjà vues.
+function buildPersonFilmography(data) {
+  const history = loadHistory();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+
+  // Limite la filmographie au rôle PRINCIPAL de la personne plutôt que de tout
+  // mélanger (un réalisateur crédité comme producteur ou scénariste sur un
+  // film n'a, à nos yeux ici, pas "réalisé" ce film-là — c'est ce qui gonflait
+  // la filmographie de films produits/écrits en plus de ceux réalisés).
+  const dept = data.known_for_department;
+  let source;
+  if (dept === 'Directing') {
+    source = (data.movie_credits?.crew || []).filter(m => m.job === 'Director');
+  } else if (dept === 'Writing') {
+    source = (data.movie_credits?.crew || []).filter(m => m.department === 'Writing');
+  } else if (dept === 'Acting') {
+    source = data.movie_credits?.cast || [];
+  } else {
+    // Département moins courant (Production, Camera...) : pas de règle
+    // spécifique établie, on garde le mélange complet plutôt que de risquer
+    // de cacher des films pertinents pour ces cas plus rares.
+    source = [...(data.movie_credits?.cast || []), ...(data.movie_credits?.crew || [])];
+  }
+
+  const seen = new Set();
+  const films = [];
+  source.forEach(m => {
+    if (!m.id || seen.has(m.id)) return;
+    seen.add(m.id);
+    films.push({ id: m.id, title: m.title, release_date: m.release_date, poster_path: m.poster_path, isSeen: seenIds.has(String(m.id)) });
+  });
+  films.sort((a, b) => (b.release_date || '').localeCompare(a.release_date || ''));
+  return films;
+}
+
+// Pourcentage de la filmographie déjà présent dans l'historique de
+// l'utilisateur — le petit "plus" ludique de cette fiche.
+function computeSeenPercentage(films) {
+  const seenCount = films.filter(f => f.isSeen).length;
+  const pct = films.length > 0 ? Math.round((seenCount / films.length) * 100) : 0;
+  return { seenCount, total: films.length, pct };
+}
+
+function buildPdsContent(data) {
+  const films = buildPersonFilmography(data);
+  const { seenCount, total, pct } = computeSeenPercentage(films);
+  const photoUrl = tmdbImage(data.profile_path, 'w185');
+  const bio = data.biography
+    ? (data.biography.length > 400 ? data.biography.slice(0, 400) + '…' : data.biography)
+    : '';
+
+  return `
+    <div class="mds-header" style="animation-delay:0s">
+      ${photoUrl
+        ? `<img class="mds-poster" src="${photoUrl}" alt="Photo de ${escAttr(data.name)}" loading="lazy">`
+        : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+      <div class="mds-header-info">
+        <div class="mds-title" id="pds-title">${escAttr(data.name)}</div>
+        <div class="mds-meta">${escAttr(data.known_for_department || '')}</div>
+      </div>
+    </div>
+
+    <div class="mds-section pds-completion" style="animation-delay:.05s">
+      <div class="mds-section-title">Films vus dans sa filmographie</div>
+      <div class="pds-completion-bar"><div class="pds-completion-fill" style="width:${pct}%"></div></div>
+      <div class="pds-completion-label">${seenCount} / ${total} film${total > 1 ? 's' : ''} vus (${pct}%)</div>
+    </div>
+
+    ${bio ? `
+      <div class="mds-section" style="animation-delay:.1s">
+        <div class="mds-section-title">Biographie</div>
+        <div class="mds-overview">${escAttr(bio)}</div>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.15s">
+      <div class="mds-section-title">Filmographie (${total})</div>
+      <div class="pds-filmography">
+        ${films.map(f => {
+          const posterUrl = tmdbImage(f.poster_path, 'w185');
+          const year = f.release_date ? f.release_date.slice(0, 4) : '';
+          return `
+            <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
+              ${posterUrl
+                ? `<img class="pds-film-poster" src="${posterUrl}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">`
+                : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
+              <div class="pds-film-title">${escAttr(f.title)}</div>
+              <div class="pds-film-year">${year}</div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+async function openPersonDetailSheet(personId, personName) {
+  if (!personId) return;
+  lastFocusedBeforeModal = document.activeElement;
+  pdsContentEl.innerHTML = buildPdsSkeleton(personName);
+  pdsEl.classList.add('open');
+  pdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture
+
+  try {
+    const res = await fetch(`/api/search?personId=${personId}`);
+    if (!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    if (!data || !data.name) throw new Error('no data');
+    pdsContentEl.innerHTML = buildPdsContent(data);
+  } catch (e) {
+    pdsContentEl.innerHTML = `<div class="mds-error">Impossible de charger cette fiche pour l'instant. Vérifie ta connexion et réessaie.</div>`;
+  }
+}
+
+function closePersonDetailSheet() {
+  closeModal(pdsEl);
+}
+
+pdsCloseBtn.addEventListener('click', closePersonDetailSheet);
+pdsEl.addEventListener('click', (e) => {
+  if (e.target === pdsEl) { closePersonDetailSheet(); return; }
+  const filmItem = e.target.closest('.pds-film-item');
+  if (filmItem) {
+    closePersonDetailSheet();
+    openMovieDetailSheet(filmItem.dataset.movieId);
+  }
+});
+
+// ═══════════════════════════════════════════
+//  GLISSER VERS LE BAS POUR FERMER
+// ═══════════════════════════════════════════
+// En plus de la croix (gardée pour clavier/souris/lecteurs d'écran) : sur
+// mobile, glisser la fiche vers le bas la ferme, geste naturel et attendu
+// pour ce genre de panneau. Ne s'active que si la fiche est déjà tout en haut
+// de son propre défilement (sinon un glissement vers le bas doit d'abord
+// juste faire remonter le contenu) et pas depuis une zone qui gère déjà son
+// propre geste horizontal (carrousel de casting).
+function initSwipeToClose(overlayEl, closeFn) {
+  const box = overlayEl.querySelector('.mds-box');
+  if (!box) return;
+  const THRESHOLD = 110;
+  let startY = 0;
+  let dragging = false;
+  let currentDelta = 0;
+
+  box.addEventListener('touchstart', (e) => {
+    if (box.scrollTop > 5) return;
+    if (e.target.closest('.mds-cast-carousel, .mds-trailer-wrap')) return;
+    startY = e.touches[0].clientY;
+    dragging = true;
+    box.style.transition = 'none';
+  }, { passive: true });
+
+  box.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || box.scrollTop > 5) { dragging = false; box.style.transition = ''; box.style.transform = ''; return; }
+    currentDelta = deltaY;
+    box.style.transform = `translateY(${deltaY}px) scale(1)`;
+    overlayEl.style.backgroundColor = `rgba(0,0,0,${Math.max(0, 0.8 - deltaY / 250)})`;
+  }, { passive: true });
+
+  box.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    // Système de mouvement unifié (voir styles.css :root) plutôt qu'une durée
+    // isolée : 240ms correspond à --dur-base, JS et CSS ne peuvent pas
+    // partager directement une valeur ici (transition posée en JS), donc la
+    // constante est dupliquée consciemment — le setTimeout ci-dessous DOIT
+    // rester synchronisé avec elle.
+    const CLOSE_DUR_MS = 240;
+    box.style.transition = `transform ${CLOSE_DUR_MS}ms var(--ease-out)`;
+    if (currentDelta > THRESHOLD) {
+      box.style.transform = `translateY(100%) scale(1)`;
+      // Attend la fin RÉELLE de l'animation avant de fermer : le délai précédent
+      // (180ms) coupait la feuille avant que le glissement vers le bas ait
+      // visuellement terminé sa course (transition de 220ms) — léger "saut"
+      // perceptible en toute fin de fermeture.
+      setTimeout(() => {
+        closeFn();
+        box.style.transform = '';
+        box.style.transition = '';
+        overlayEl.style.backgroundColor = '';
+      }, CLOSE_DUR_MS);
+    } else {
+      box.style.transform = '';
+      overlayEl.style.backgroundColor = '';
+    }
+    currentDelta = 0;
+  });
+}
+
+initSwipeToClose(mdsEl, closeMovieDetailSheet);
+initSwipeToClose(pdsEl, closePersonDetailSheet);
+
+// Reprise après erreur de chargement : délégué au niveau racine du fichier
+// (jamais dans une fonction de rendu conditionnelle — leçon apprise).
+mdsContentEl?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.error-retry-btn[data-retry-tmdb-id]');
+  if (!btn) return;
+  openMovieDetailSheet(btn.dataset.retryTmdbId);
+});
+
+// ═══ CHOIX DE L'AFFICHE ═══
+// TMDb propose souvent des dizaines de variantes d'affiche par film (langues,
+// éditions, versions sans texte). Ce sélecteur laisse choisir SA version : le
+// choix est persisté dans l'historique ET toutes les watchlists où le film
+// apparaît — il voyage donc naturellement avec les sauvegardes JSON, sans
+// table de correspondance séparée à maintenir.
+
+function isInCollection(tmdbId) {
+  const inHistory = loadHistory().some(h => String(h.tmdbId) === String(tmdbId));
+  if (inHistory) return true;
+  return loadWatchlistsMeta().some(meta =>
+    loadWatchlist(meta.id).some(w => String(w.tmdbId) === String(tmdbId))
+  );
+}
+
+function applyChosenPoster(tmdbId, posterUrl) {
+  let touched = 0;
+  // updatedAt est CRUCIAL ici : la fusion de la synchro cloud garde la version
+  // la plus récente par updatedAt — sans le mettre à jour, le choix d'affiche
+  // était silencieusement écrasé par la copie distante au sync suivant
+  // ("l'affiche ne se sauvegarde pas", alors que le stockage local était bon).
+  const now = new Date().toISOString();
+  const history = loadHistory();
+  let histChanged = false;
+  for (const h of history) {
+    if (String(h.tmdbId) === String(tmdbId)) { h.poster = posterUrl; h.updatedAt = now; histChanged = true; touched++; }
+  }
+  if (histChanged) saveHistory(history);
+
+  for (const meta of loadWatchlistsMeta()) {
+    const list = loadWatchlist(meta.id);
+    let listChanged = false;
+    for (const w of list) {
+      if (String(w.tmdbId) === String(tmdbId)) { w.poster = posterUrl; w.updatedAt = now; listChanged = true; touched++; }
+    }
+    if (listChanged) saveWatchlist(list, meta.id);
+  }
+  return touched;
+}
+
+// Calcule et pose une hauteur EXACTE en pixels sur chaque case du sélecteur
+// d'affiches, dérivée de la largeur réelle mesurée (ratio 2:3 : hauteur =
+// largeur × 1,5). Après deux échecs consécutifs de techniques CSS pures dans
+// ce contexte grid+bouton+img (aspect-ratio direct, puis padding-top en %,
+// tous deux cassés en pratique sur iOS malgré les tests — voir les
+// commentaires CSS historiques), on calcule des pixels concrets : aucune
+// résolution de pourcentage ambiguë possible, donc aucun risque de ce bug de
+// case tronquée qui ne montrait qu'une fine tranche de chaque affiche.
+function applyPosterCellHeights(grid) {
+  function apply() {
+    const cells = grid.querySelectorAll('.poster-picker-cell');
+    if (cells.length === 0) return;
+    const width = cells[0].getBoundingClientRect().width;
+    if (width <= 0) return; // grille pas encore rendue/visible, on retentera au resize
+    const height = Math.round(width * 1.5);
+    cells.forEach(c => { c.style.height = `${height}px`; });
+  }
+  // Un frame d'attente : au moment de l'appel, le innerHTML vient tout juste
+  // d'être posé et la grille peut ne pas avoir encore de largeur calculée.
+  requestAnimationFrame(apply);
+  // Recalcule sur rotation d'écran tant que la modale reste ouverte — retire
+  // l'écouteur à la fermeture pour ne pas accumuler de fuite mémoire.
+  const modal = document.getElementById('poster-picker-modal');
+  const onResize = () => apply();
+  window.addEventListener('resize', onResize);
+  const cleanup = () => {
+    window.removeEventListener('resize', onResize);
+    modal?.removeEventListener('transitionend', maybeCleanup);
+  };
+  function maybeCleanup() { if (!modal.classList.contains('open')) cleanup(); }
+  modal?.addEventListener('transitionend', maybeCleanup);
+}
+
+async function openPosterPicker(tmdbId, mediaType = 'movie') {
+  const modal = document.getElementById('poster-picker-modal');
+  const grid = document.getElementById('poster-picker-grid');
+  if (!modal || !grid) return;
+  modal.classList.add('open');
+  grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
+
+  try {
+    const param = mediaType === 'tv' ? 'tvImages' : 'images';
+    const res = await fetch(`/api/search?${param}=${encodeURIComponent(tmdbId)}`);
+    // readApiJson lève si l'API a réellement échoué, au lieu de laisser une
+    // réponse d'erreur passer pour "aucune affiche disponible" (voir
+    // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
+    // simple manque de variantes pour ce film precis.
+    const data = await readApiJson(res);
+    const posters = (data && data.posters) || [];
+    if (posters.length === 0) {
+      grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
+      return;
+    }
+    grid.innerHTML = posters.map(p => `
+      <button type="button" class="poster-picker-cell" data-poster-path="${escAttr(p.file_path)}" aria-label="Choisir cette affiche">
+        <img src="${tmdbImage(p.file_path, 'w185')}" alt="" loading="lazy" decoding="async">
+      </button>
+    `).join('');
+    grid.dataset.tmdbId = String(tmdbId);
+    grid.dataset.mediaType = mediaType;
+    applyPosterCellHeights(grid);
+  } catch (err) {
+    grid.innerHTML = `
+      <div class="error-state">
+        <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
+        <button type="button" class="error-retry-btn" data-retry-posters="${escAttr(String(tmdbId))}" data-retry-media-type="${mediaType}">Réessayer</button>
+      </div>`;
+  }
+}
+
+// Gestionnaires délégués au niveau RACINE (leçon apprise : jamais dans une
+// fonction de rendu conditionnelle).
+document.getElementById('movie-detail-sheet')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.mds-poster-change-btn');
+  if (btn) openPosterPicker(btn.dataset.posterPicker);
+});
+
+document.getElementById('poster-picker-modal')?.addEventListener('click', (e) => {
+  const modal = document.getElementById('poster-picker-modal');
+  if (e.target === modal) { modal.classList.remove('open'); return; }
+  if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
+
+  const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
+  if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
+
+  const cell = e.target.closest('.poster-picker-cell[data-poster-path]');
+  if (!cell) return;
+  const grid = document.getElementById('poster-picker-grid');
+  const tmdbId = grid.dataset.tmdbId;
+  const mediaType = grid.dataset.mediaType || 'movie';
+  modal.classList.remove('open');
+
+  if (mediaType === 'tv') {
+    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
+    // URL complète comme les films) — on garde ce même format plutôt que
+    // d'introduire une seconde représentation.
+    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+    if (navigator.vibrate) navigator.vibrate(15);
+    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
+    if (sheetPoster && sheetPoster.tagName === 'IMG') {
+      sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
+    }
+    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
+    showToast('Affiche mise à jour');
+    return;
+  }
+
+  // w342 (pas w185) : c'est la résolution que la fiche film affiche en
+  // grand — sauvegarder la taille "vignette" du sélecteur aurait rendu
+  // l'affiche floue une fois agrandie sur la fiche. Les vignettes ailleurs
+  // (historique, watchlist) se contentent très bien de la redimensionner
+  // vers le bas.
+  const url = tmdbImage(cell.dataset.posterPath, 'w342');
+  const touched = applyChosenPoster(tmdbId, url);
+  if (navigator.vibrate) navigator.vibrate(15);
+
+  // Rafraîchit l'affiche visible dans la fiche immédiatement (w342 pour la
+  // grande vue, même chemin de fichier)
+  const sheetPoster = document.querySelector('#movie-detail-sheet .mds-poster');
+  if (sheetPoster && sheetPoster.tagName === 'IMG') {
+    sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
+  }
+  renderAll();
+  showToast(touched > 0 ? 'Affiche mise à jour dans ta collection' : 'Affiche mise à jour');
+});
+
+// ═══════════════════════════════════════════
+//  DUELS ELO
+// ═══════════════════════════════════════════
+// "Lequel préfères-tu ?" : l'app propose deux films déjà vus, on choisit, et
+// un classement personnel se construit duel après duel — système ELO, le même
+// que les échecs. Pourquoi ELO plutôt qu'un tri manuel : chaque duel n'exige
+// qu'une micro-décision facile ("celui-là"), et le classement global émerge
+// tout seul, y compris entre films jamais comparés directement.
+//
+// Les cotes vivent dans leur propre clé localStorage (lbx_duels), séparée de
+// l'historique : l'export/import de l'historique n'est pas pollué par des
+// données de jeu, et supprimer un film de l'historique ne casse rien ici
+// (sa cote devient simplement orpheline et ignorée).
+
+const DUELS_KEY = 'lbx_duels';
+const DUEL_START_ELO = 1200;
+const DUEL_K = 32; // facteur K standard : assez réactif sans être erratique
+
+function duelFilmKey(item) {
+  return (item.title + '|' + (item.year || '')).toLowerCase();
+}
+
+function loadDuelsData() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DUELS_KEY)) || {};
+    // pairs : memoire des affrontements deja joues (cle canonique triee),
+    // pour ne JAMAIS reproposer deux fois le meme duel. Le || {} assure la
+    // compatibilite avec les donnees d'avant cette fonctionnalite.
+    return { ratings: d.ratings || {}, totalDuels: d.totalDuels || 0, pairs: d.pairs || {} };
+  }
+  catch { return { ratings: {}, totalDuels: 0, pairs: {} }; }
+}
+
+function duelPairKey(keyA, keyB) {
+  return [keyA, keyB].sort().join('||');
+}
+function saveDuelsData(data) {
+  localStorage.setItem(DUELS_KEY, JSON.stringify(data));
+}
+
+function getDuelRating(data, key) {
+  return data.ratings[key] || { elo: DUEL_START_ELO, duels: 0 };
+}
+
+// Cœur mathématique dans 03b-pure-logic.js (computeEloUpdate), testé dans
+// tests/duels.test.js — ici uniquement le stockage, la sélection de paires
+// et le rendu.
+
+// Choisit la paire du prochain duel : privilégie les films les MOINS déjà
+// duellés, puis parmi eux, deux films aux cotes PROCHES — mais JAMAIS deux
+// films qui se sont déjà affrontés (mémoire data.pairs). Si toutes les paires
+// possibles ont été jouées, retourne { exhausted: true } pour un message dédié.
+function pickDuelPair() {
+  const history = loadHistory();
+  if (history.length < 2) return null;
+  const data = loadDuelsData();
+
+  // Déduplique par clé (re-visionnages = même film)
+  const seen = new Set();
+  const films = [];
+  for (const item of history) {
+    const key = duelFilmKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    films.push({ key, item, ...getDuelRating(data, key) });
+  }
+  if (films.length < 2) return null;
+
+  // PASSE 1 — départage : s'il existe quelque part une paire jamais affrontée
+  // de films ayant la MÊME note dans l'historique (deux 8/10 à ordonner
+  // enfin), elle passe en priorité absolue. Parmi ces paires, celles ayant le
+  // moins duellé d'abord, avec un peu de hasard entre égalités.
+  const tiebreakPairs = [];
+  for (let i = 0; i < films.length; i++) {
+    const si = parseFloat(films[i].item.score);
+    if (isNaN(si)) continue;
+    for (let j = i + 1; j < films.length; j++) {
+      if (parseFloat(films[j].item.score) !== si) continue;
+      if (data.pairs[duelPairKey(films[i].key, films[j].key)]) continue;
+      tiebreakPairs.push([films[i], films[j]]);
+    }
+  }
+  if (tiebreakPairs.length > 0) {
+    tiebreakPairs.sort((a, b) => (a[0].duels + a[1].duels) - (b[0].duels + b[1].duels) || Math.random() - 0.5);
+    const [first, second] = tiebreakPairs[0];
+    return Math.random() < 0.5 ? [first, second] : [second, first];
+  }
+
+  // PASSE 2 — cas général : les moins expérimentés d'abord, adversaire proche en cote.
+  const byExperience = films.slice().sort((a, b) => a.duels - b.duels || Math.random() - 0.5);
+
+  for (const first of byExperience) {
+    const unfought = films.filter(f =>
+      f.key !== first.key && !data.pairs[duelPairKey(first.key, f.key)]
+    );
+    if (unfought.length === 0) continue;
+    unfought.sort((a, b) => Math.abs(a.elo - first.elo) - Math.abs(b.elo - first.elo));
+    const nearest = unfought.slice(0, Math.min(5, unfought.length));
+    const second = nearest[Math.floor(Math.random() * nearest.length)];
+    return Math.random() < 0.5 ? [first, second] : [second, first];
+  }
+
+  return { exhausted: true }; // toutes les paires possibles ont été jouées
+}
+
+function resolveDuel(winnerKey, loserKey) {
+  const data = loadDuelsData();
+  const w = getDuelRating(data, winnerKey);
+  const l = getDuelRating(data, loserKey);
+  const { winnerElo, loserElo, delta } = computeEloUpdate(w.elo, l.elo, DUEL_K);
+  data.ratings[winnerKey] = { elo: winnerElo, duels: w.duels + 1 };
+  data.ratings[loserKey] = { elo: loserElo, duels: l.duels + 1 };
+  data.pairs[duelPairKey(winnerKey, loserKey)] = true; // ce duel ne sera plus jamais reproposé
+  data.totalDuels = (data.totalDuels || 0) + 1;
+  saveDuelsData(data);
+  return delta;
+}
+
+// Classement : uniquement les films ayant réellement duellé (>= 3 duels pour
+// éviter qu'un film à 1 victoire chanceuse squatte le podium), croisé avec
+// l'historique pour ignorer les cotes orphelines de films supprimés.
+function computeDuelRanking(minDuels = 3) {
+  const history = loadHistory();
+  const data = loadDuelsData();
+  const seen = new Set();
+  const ranked = [];
+  for (const item of history) {
+    const key = duelFilmKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const r = data.ratings[key];
+    if (r && r.duels >= minDuels) ranked.push({ key, item, elo: r.elo, duels: r.duels });
+  }
+  ranked.sort((a, b) => b.elo - a.elo);
+  return ranked;
+}
+
+// ── Rendu ──
+let currentDuelPair = null;
+
+function duelPosterHtml(item) {
+  return item.poster
+    ? `<img class="duel-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+    : `<div class="duel-poster duel-poster-ph">${ICONS.clapper}</div>`;
+}
+
+function renderDuel() {
+  const arena = document.getElementById('duel-arena');
+  const emptyEl = document.getElementById('duel-empty');
+  if (!arena || !emptyEl) return;
+
+  currentDuelPair = pickDuelPair();
+  if (!currentDuelPair || currentDuelPair.exhausted) {
+    arena.style.display = 'none';
+    emptyEl.style.display = 'block';
+    emptyEl.textContent = currentDuelPair && currentDuelPair.exhausted
+      ? 'Tous les duels possibles ont été joués — ton classement est complet ! Note de nouveaux films pour relancer l\'arène.'
+      : 'Note au moins 2 films pour lancer les duels.';
+    if (currentDuelPair && currentDuelPair.exhausted) currentDuelPair = null;
+    return;
+  }
+  arena.style.display = '';
+  emptyEl.style.display = 'none';
+
+  const [a, b] = currentDuelPair;
+  arena.innerHTML = `
+    <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
+      ${duelPosterHtml(a.item)}
+      <div class="duel-title">${escAttr(a.item.title)}</div>
+      <div class="duel-year">${a.item.year || ''}</div>
+    </div>
+    <div class="duel-vs">VS</div>
+    <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
+      ${duelPosterHtml(b.item)}
+      <div class="duel-title">${escAttr(b.item.title)}</div>
+      <div class="duel-year">${b.item.year || ''}</div>
+    </div>
+  `;
+}
+
+function renderDuelRanking() {
+  const listEl = document.getElementById('duel-ranking-list');
+  const counterEl = document.getElementById('duel-counter');
+  if (!listEl) return;
+  const data = loadDuelsData();
+  if (counterEl) counterEl.textContent = data.totalDuels > 0 ? `${data.totalDuels} duel${data.totalDuels > 1 ? 's' : ''}` : '';
+
+  const ranking = computeDuelRanking().slice(0, 10);
+  if (ranking.length === 0) {
+    listEl.innerHTML = `<div class="duel-ranking-empty">Ton podium apparaîtra après quelques duels (3 duels minimum par film).</div>`;
+    return;
+  }
+  // Podium (top 3) toujours visible, sans les points ELO — c'est l'ORDRE qui
+  // compte pour l'utilisateur, le chiffre interne n'apporte que du bruit. Le
+  // reste du top 10 se déplie à la demande (accordéon natif <details>).
+  // Médailles en SVG (même dessin, trois teintes or/argent/bronze via CSS)
+  // plutôt que les emojis 🥇🥈🥉 : rendu identique sur tous les appareils,
+  // couleurs cohérentes avec le thème actif.
+  const medals = [
+    `<span class="duel-medal duel-medal-gold">${ICONS.medal}</span>`,
+    `<span class="duel-medal duel-medal-silver">${ICONS.medal}</span>`,
+    `<span class="duel-medal duel-medal-bronze">${ICONS.medal}</span>`,
+  ];
+  const rowHtml = (r, i) => `
+    <div class="duel-rank-row">
+      <span class="duel-rank-pos">${medals[i] || (i + 1)}</span>
+      <span class="duel-rank-title">${escAttr(r.item.title)}</span>
+    </div>`;
+  const podium = ranking.slice(0, 3).map(rowHtml).join('');
+  const rest = ranking.slice(3);
+  const restHtml = rest.length > 0 ? `
+    <details class="duel-rank-more">
+      <summary>Voir le reste du top 10 (${rest.length})</summary>
+      ${rest.map((r, i) => rowHtml(r, i + 3)).join('')}
+    </details>` : '';
+  listEl.innerHTML = podium + restHtml;
+}
+
+function renderDuelsSection() {
+  renderDuel();
+  renderDuelRanking();
+}
+
+// Gestion des choix : délégué au niveau racine (leçon apprise : jamais dans
+// une fonction de rendu conditionnelle, sinon il disparaît selon le chemin).
+document.getElementById('duel-arena')?.addEventListener('click', (e) => {
+  const side = e.target.closest('.duel-side');
+  if (!side || !currentDuelPair) return;
+  const winnerKey = side.dataset.key;
+  const loser = currentDuelPair.find(f => f.key !== winnerKey);
+  const winner = currentDuelPair.find(f => f.key === winnerKey);
+  if (!winner || !loser) return;
+
+  resolveDuel(winner.key, loser.key);
+  if (navigator.vibrate) navigator.vibrate(15);
+
+  // Petit feedback visuel avant d'enchaîner sur la paire suivante
+  side.classList.add('duel-winner');
+  currentDuelPair = null; // fige les clics le temps de l'animation
+  setTimeout(() => {
+    renderDuelsSection();
+  }, 450);
+});
+
+document.getElementById('duel-arena')?.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const side = e.target.closest('.duel-side');
+  if (side) { e.preventDefault(); side.click(); }
+});
+
+document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
+  renderDuel(); // nouvelle paire, aucune cote touchée
+});
+
+// ── Réinitialisation des duels (depuis Réglages) ──
+// Efface UNIQUEMENT le classement ELO, le compteur de duels, les paires déjà
+// jouées et l'état "duel du jour joué" — ne touche jamais à l'historique des
+// films ni à leurs notes. Confirmation obligatoire : c'est irréversible et
+// perd une vraie progression (parfois des dizaines de duels joués).
+document.getElementById('reset-duels-btn')?.addEventListener('click', () => {
+  openModal(
+    'Réinitialiser les duels ?',
+    'Le classement, les cotes et l\'historique des affrontements déjà joués seront définitivement effacés. Tes films et tes notes ne sont pas concernés. Cette action est irréversible.',
+    () => {
+      localStorage.removeItem(DUELS_KEY);
+      if (typeof renderDuelsSection === 'function') renderDuelsSection();
+      showToast('Duels réinitialisés.');
+    },
+    true // danger : bouton rouge "Supprimer"
+  );
+});
+
+// ═══════════════════════════════════════════
+//  LISTES PRÉDÉFINIES — logique et affichage
+// ═══════════════════════════════════════════
+// Deux natures de contenu bien distinctes, à ne pas présenter pareil :
+// - "Tous les temps" : compilée à la main (voir 00f-curated-lists-data.js),
+//   sur le classement Sight & Sound 2022 — une vraie référence critique.
+// - Par décennie : tri algorithmique TMDb (note + 500 votes minimum, voir
+//   api/search.js) — annoncé comme tel dans l'app, "les mieux notés sur
+//   TMDb", pas un vrai palmarès critique. Toutes les décennies disponibles,
+//   des années 1920 (le cinéma sonore/l'ère TMDb couvre correctement) à
+//   aujourd'hui — les décennies les plus anciennes auront naturellement
+//   moins de films avec 500+ votes, ce qui est normal, pas un défaut.
+const CURATED_RESOLVED_KEY = 'lbx_curated_alltime_resolved';
+const CURATED_DECADE_KEY_PREFIX = 'lbx_curated_decade_v2_'; // v2 : invalide le cache d'avant le correctif de l'annee manquante (voir withExtractedYear)
+const CURATED_DECADE_CACHE_DAYS = 30;
+const CURATED_DECADES = [1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
+
+function curatedDecadeLabel(startYear) {
+  return `Les meilleurs des années ${startYear}`;
+}
+
+// ── Résolution "Tous les temps" (titre+année -> id/affiche TMDb) ──
+// Se fait une seule fois, en tâche de fond, par lots pour respecter la
+// limite de débit du proxy (60 requêtes/minute) — pas un souci pour
+// l'usage normal de recherche, mais 100 titres d'un coup la dépasserait.
+function loadResolvedAllTime() {
+  try { return JSON.parse(localStorage.getItem(CURATED_RESOLVED_KEY) || '{}'); } catch { return {}; }
+}
+function saveResolvedAllTime(map) {
+  localStorage.setItem(CURATED_RESOLVED_KEY, JSON.stringify(map));
+}
+
+async function resolveOneCuratedFilm(entry) {
+  try {
+    const res = await fetch(`/api/search?query=${encodeURIComponent(entry.title)}`);
+    const data = await readApiJson(res);
+    const results = data.results || [];
+    // Cherche une correspondance sur l'année (±1 pour absorber les écarts de
+    // date de sortie selon les pays) parmi les résultats de recherche par
+    // titre, plutôt que de prendre le premier résultat les yeux fermés.
+    const match = results.find(r => {
+      const y = r.release_date ? parseInt(r.release_date.slice(0, 4), 10) : null;
+      return y && Math.abs(y - entry.year) <= 1;
+    }) || results[0];
+    if (!match) return null;
+    return { id: match.id, title: match.title, year: entry.year, poster_path: match.poster_path };
+  } catch {
+    return null;
+  }
+}
+
+let curatedResolutionInProgress = false;
+async function ensureAllTimeResolved(onProgress) {
+  const resolved = loadResolvedAllTime();
+  const missing = CURATED_ALL_TIME.filter(f => !resolved[f.title]);
+  if (missing.length === 0) return resolved;
+  if (curatedResolutionInProgress) return resolved; // évite deux résolutions en parallèle si l'onglet est rouvert vite
+  curatedResolutionInProgress = true;
+
+  const BATCH_SIZE = 8;
+  for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+    const batch = missing.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(resolveOneCuratedFilm));
+    batch.forEach((entry, idx) => {
+      if (results[idx]) resolved[entry.title] = results[idx];
+    });
+    saveResolvedAllTime(resolved);
+    if (onProgress) onProgress(Object.keys(resolved).length, CURATED_ALL_TIME.length);
+    if (i + BATCH_SIZE < missing.length) await new Promise(r => setTimeout(r, 1500));
+  }
+  curatedResolutionInProgress = false;
+  return resolved;
+}
+
+function getAllTimeFilmsFromCache() {
+  const resolved = loadResolvedAllTime();
+  return CURATED_ALL_TIME.map(f => resolved[f.title]).filter(Boolean);
+}
+
+// ── Listes par décennie ──
+function loadDecadeCache(startYear) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_DECADE_KEY_PREFIX + startYear) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_DECADE_CACHE_DAYS) return null;
+    return raw.films;
+  } catch { return null; }
+}
+// Normalise .year depuis .release_date : les résultats bruts de l'API
+// discover TMDb (décennies, studios) n'ont qu'une date complète, pas une
+// année pré-extraite — sans ça, l'année s'affichait vide dans la grille
+// (vrai bug trouvé en vérifiant le texte réellement affiché, pas juste le
+// nombre de films).
+function withExtractedYear(films) {
+  return films.map(f => ({ ...f, year: f.year || (f.release_date ? f.release_date.slice(0, 4) : '') }));
+}
+
+async function fetchDecadeList(startYear) {
+  const cached = loadDecadeCache(startYear);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?decadeTop=${startYear}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_DECADE_KEY_PREFIX + startYear, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+// ── Catalogues de studio ──
+const CURATED_STUDIO_KEY_PREFIX = 'lbx_curated_studio_';
+function loadStudioCache(studioId) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_STUDIO_KEY_PREFIX + studioId) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_DECADE_CACHE_DAYS) return null; // même durée que les décennies : ça ne bouge presque jamais
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchStudioList(studioId) {
+  const cached = loadStudioCache(studioId);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?studioId=${studioId}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_STUDIO_KEY_PREFIX + studioId, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+// ── Cinéma par pays (carte du monde) ──
+const CURATED_COUNTRY_KEY_PREFIX = 'lbx_curated_country_';
+function loadCountryCache(code) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_COUNTRY_KEY_PREFIX + code) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_DECADE_CACHE_DAYS) return null;
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchCountryList(code) {
+  const cached = loadCountryCache(code);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?countryCode=${code}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_COUNTRY_KEY_PREFIX + code, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+// ── Pourcentage déjà vu (même principe que pour un réalisateur/acteur) ──
+function computeCuratedSeenPercentage(films) {
+  const history = loadHistory();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)).filter(Boolean));
+  const withSeen = films.map(f => ({ ...f, isSeen: seenIds.has(String(f.id)) }));
+  const seenCount = withSeen.filter(f => f.isSeen).length;
+  const pct = withSeen.length > 0 ? Math.round((seenCount / withSeen.length) * 100) : 0;
+  return { films: withSeen, seenCount, total: withSeen.length, pct };
+}
+
+// ── Carte Profil : liste des listes disponibles ──
+function renderCuratedListsCard() {
+  const container = document.getElementById('curated-lists-container');
+  if (!container) return;
+
+  // "Tous les temps" reste toujours visible (la liste principale, compilée
+  // à la main) — les 11 décennies partent dans un accordéon natif
+  // <details>/<summary> replié par défaut (gratuit en accessibilité
+  // clavier, pas besoin de JS pour le toggle) : les montrer toutes dépliées
+  // d'un coup rendait la carte bien trop longue à faire défiler.
+  const rowHtml = (e) => `
+    <button type="button" class="curated-list-row" data-list-id="${e.id}">
+      <div class="curated-list-row-text">
+        <div class="curated-list-row-label">${escAttr(e.label)}</div>
+        <div class="curated-list-row-sub">${escAttr(e.sub)}</div>
+      </div>
+      <div class="curated-list-row-pct" id="curated-pct-${e.id}">…</div>
+    </button>`;
+
+  const decadeEntries = CURATED_DECADES.map(y => ({ id: `decade-${y}`, label: curatedDecadeLabel(y), sub: 'Mieux notés sur TMDb (500 votes min.)' }));
+  const studioEntries = CURATED_STUDIOS.map(s => ({ id: `studio-${s.id}`, label: s.name, sub: s.sub }));
+  // Même design en lignes que les décennies/studios — la carte stylisée
+  // (pastilles positionnées façon carte du monde) a été abandonnée : retour
+  // utilisateur négatif sur son rendu visuel.
+  const countryEntries = CURATED_COUNTRIES.map(c => ({ id: `country-${c.code}`, label: `${c.flag} ${c.name}`, sub: 'Mieux notés sur TMDb (200 votes min.)' }));
+
+  container.innerHTML = `
+    ${rowHtml({ id: 'alltime', label: 'Tous les temps', sub: 'Classement Sight & Sound 2022' })}
+    <details class="curated-decades-accordion">
+      <summary>Par décennie (${CURATED_DECADES.length})</summary>
+      <div class="curated-decades-list">${decadeEntries.map(rowHtml).join('')}</div>
+    </details>
+    <details class="curated-decades-accordion">
+      <summary>Par studio (${CURATED_STUDIOS.length})</summary>
+      <div class="curated-decades-list">${studioEntries.map(rowHtml).join('')}</div>
+    </details>
+    <details class="curated-decades-accordion">
+      <summary>Par pays (${CURATED_COUNTRIES.length})</summary>
+      <div class="curated-decades-list">${countryEntries.map(rowHtml).join('')}</div>
+    </details>
+  `;
+
+  container.querySelectorAll('.curated-list-row').forEach(btn => {
+    btn.addEventListener('click', () => openCuratedListSheet(btn.dataset.listId));
+  });
+
+  // Décennies : rapide, direct depuis le cache serveur/local — pas besoin
+  // d'attendre pour afficher un pourcentage. Calculé même repliées (léger,
+  // et évite un "…" qui traîne si l'utilisateur déplie plus tard).
+  CURATED_DECADES.forEach(async (y) => {
+    const films = await fetchDecadeList(y);
+    const { pct, total } = computeCuratedSeenPercentage(films);
+    const el = document.getElementById(`curated-pct-decade-${y}`);
+    if (el) el.textContent = total > 0 ? `${pct}%` : '—';
+  });
+
+  // Studios : même principe.
+  CURATED_STUDIOS.forEach(async (s) => {
+    const films = await fetchStudioList(s.id);
+    const { pct, total } = computeCuratedSeenPercentage(films);
+    const el = document.getElementById(`curated-pct-studio-${s.id}`);
+    if (el) el.textContent = total > 0 ? `${pct}%` : '—';
+  });
+
+  // Pays : même principe.
+  CURATED_COUNTRIES.forEach(async (c) => {
+    const films = await fetchCountryList(c.code);
+    const { pct, total } = computeCuratedSeenPercentage(films);
+    const el = document.getElementById(`curated-pct-country-${c.code}`);
+    if (el) el.textContent = total > 0 ? `${pct}%` : '—';
+  });
+
+  // "Tous les temps" : peut demander une résolution en tâche de fond la
+  // toute première fois (jamais ensuite, résultat mis en cache
+  // définitivement) — affiche le pourcentage progressivement plutôt que de
+  // bloquer le reste de la carte en l'attendant.
+  const alreadyResolved = getAllTimeFilmsFromCache();
+  if (alreadyResolved.length === CURATED_ALL_TIME.length) {
+    const { pct } = computeCuratedSeenPercentage(alreadyResolved);
+    const el = document.getElementById('curated-pct-alltime');
+    if (el) el.textContent = `${pct}%`;
+  } else {
+    ensureAllTimeResolved((done, totalCount) => {
+      const el = document.getElementById('curated-pct-alltime');
+      if (!el) return;
+      if (done < totalCount) { el.textContent = `${done}/${totalCount}`; return; }
+      const { pct } = computeCuratedSeenPercentage(getAllTimeFilmsFromCache());
+      el.textContent = `${pct}%`;
+    });
+  }
+}
+
+// ── Feuille détail : grille des films, vus/manquants, ajout en masse ──
+const clsEl = document.getElementById('curated-list-sheet');
+const clsContentEl = document.getElementById('cls-content');
+const clsCloseBtn = document.getElementById('cls-close-btn');
+
+async function openCuratedListSheet(listId) {
+  lastFocusedBeforeModal = document.activeElement;
+  clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
+  clsEl.classList.add('open');
+  clsCloseBtn.focus();
+
+  let label, films;
+  if (listId === 'alltime') {
+    label = 'Tous les temps';
+    films = getAllTimeFilmsFromCache();
+  } else if (listId.startsWith('studio-')) {
+    const studioId = parseInt(listId.replace('studio-', ''), 10);
+    const studio = CURATED_STUDIOS.find(s => s.id === studioId);
+    label = studio ? studio.name : 'Studio';
+    films = await fetchStudioList(studioId);
+  } else if (listId.startsWith('country-')) {
+    const code = listId.replace('country-', '');
+    const country = CURATED_COUNTRIES.find(c => c.code === code);
+    label = country ? `Cinéma ${country.flag} ${country.name}` : 'Cinéma';
+    films = await fetchCountryList(code);
+  } else {
+    const startYear = parseInt(listId.replace('decade-', ''), 10);
+    label = curatedDecadeLabel(startYear);
+    films = await fetchDecadeList(startYear);
+  }
+  renderFilmGridSheet(label, films);
+}
+
+// Fiche saga (belongs_to_collection TMDb) — même mise en page que les
+// listes prédéfinies (grille, % vu, ajout des manquants), juste une source
+// de films différente. Réutilise la même feuille plutôt que d'en construire
+// une nouvelle, à l'image de la fiche réalisateur.
+async function openSagaSheet(collectionId, collectionName) {
+  lastFocusedBeforeModal = document.activeElement;
+  clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
+  clsEl.classList.add('open');
+  clsCloseBtn.focus();
+
+  try {
+    const res = await fetch(`/api/search?collectionId=${collectionId}`);
+    const data = await readApiJson(res);
+    const films = (data.parts || [])
+      .filter(f => f.poster_path)
+      .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'))
+      .map(f => ({ id: f.id, title: f.title, poster_path: f.poster_path, year: f.release_date ? f.release_date.slice(0, 4) : '' }));
+    renderFilmGridSheet(data.name || collectionName, films);
+  } catch {
+    clsContentEl.innerHTML = `<div class="mds-error">Impossible de charger la saga. Vérifie ta connexion.</div>`;
+  }
+}
+
+// Rendu partagé : grille de films avec pourcentage vu et ajout des
+// manquants à la watchlist — utilisé par les listes prédéfinies ET les
+// sagas, seule la provenance des films diffère.
+function renderFilmGridSheet(label, films) {
+  const { films: withSeen, seenCount, total, pct } = computeCuratedSeenPercentage(films);
+  const missingCount = total - seenCount;
+
+  clsContentEl.innerHTML = `
+    <div class="mds-header" style="animation-delay:0s">
+      <div class="mds-header-info">
+        <div class="mds-title" id="cls-title">${escAttr(label)}</div>
+        <div class="mds-meta">${total} film${total > 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="mds-section pds-completion" style="animation-delay:.05s">
+      <div class="mds-section-title">Films vus dans cette liste</div>
+      <div class="pds-completion-bar"><div class="pds-completion-fill" style="width:${pct}%"></div></div>
+      <div class="pds-completion-label">${seenCount} / ${total} déjà vus (${pct}%)</div>
+      ${missingCount > 0 ? `<button type="button" class="icon-btn" id="cls-add-missing-btn" style="margin-top:8px;">Ajouter les ${missingCount} manquant${missingCount > 1 ? 's' : ''} à ma watchlist</button>` : ''}
+    </div>
+    <div class="mds-section pds-filmography" style="animation-delay:.1s">
+      ${withSeen.map(f => `
+        <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
+          ${f.poster_path
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
+            : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
+          <div class="pds-film-title">${escAttr(f.title)}</div>
+          <div class="pds-film-year">${f.year || ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  const addBtn = document.getElementById('cls-add-missing-btn');
+  if (addBtn) {
+    addBtn.addEventListener('click', async () => {
+      addBtn.disabled = true;
+      addBtn.textContent = 'Ajout en cours…';
+      const activeListId = getActiveWatchlistId();
+      const missing = withSeen.filter(f => !f.isSeen);
+      for (const f of missing) {
+        await addToSpecificWatchlist({ id: f.id, title: f.title, poster_path: f.poster_path }, f.year, activeListId);
+      }
+      showToast(`${missing.length} film${missing.length > 1 ? 's' : ''} ajouté${missing.length > 1 ? 's' : ''} à ta watchlist.`);
+      addBtn.textContent = 'Ajouté !';
+    });
+  }
+}
+
+function closeCuratedListSheet() {
+  closeModal(clsEl);
+}
+clsCloseBtn.addEventListener('click', closeCuratedListSheet);
+clsEl.addEventListener('click', (e) => {
+  if (e.target === clsEl) { closeCuratedListSheet(); return; }
+  const filmItem = e.target.closest('.pds-film-item');
+  if (filmItem) {
+    closeCuratedListSheet();
+    openMovieDetailSheet(filmItem.dataset.movieId);
+  }
+});
+
+// Raccourci depuis Découvrir : bascule vers Profil et fait défiler jusqu'à
+// la carte, plutôt que de dupliquer la fonctionnalité à deux endroits.
+document.getElementById('curated-lists-shortcut-btn')?.addEventListener('click', () => {
+  switchMobileNav('profile');
+  setTimeout(() => {
+    document.getElementById('curated-lists-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+});
+
+// ═══════════════════════════════════════════
+//  EXPLORATION PAR THÈME (Découvrir)
+// ═══════════════════════════════════════════
+// Contrairement aux décennies/studios/pays (Profil, un vrai "canon" à
+// suivre avec % vu), un mot-clé n'a pas de nombre canonique de films — vit
+// ici comme un outil de navigation/suggestion. Cache plus court que les
+// autres listes (5 jours, pas 30) : trié par popularité, qui évolue plus
+// vite qu'un classement par note.
+const CURATED_THEME_KEY_PREFIX = 'lbx_curated_theme_';
+const CURATED_THEME_CACHE_DAYS = 5;
+function loadThemeCache(id) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CURATED_THEME_KEY_PREFIX + id) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > CURATED_THEME_CACHE_DAYS) return null;
+    return raw.films;
+  } catch { return null; }
+}
+async function fetchThemeList(id) {
+  const cached = loadThemeCache(id);
+  if (cached) return cached;
+  try {
+    const res = await fetch(`/api/search?keywordId=${id}`);
+    const data = await readApiJson(res);
+    const films = withExtractedYear(data.results || []);
+    localStorage.setItem(CURATED_THEME_KEY_PREFIX + id, JSON.stringify({ films, fetchedAt: Date.now() }));
+    return films;
+  } catch {
+    return [];
+  }
+}
+
+function renderThemeChips() {
+  const row = document.getElementById('theme-chips-row');
+  if (!row) return;
+  row.innerHTML = CURATED_THEMES.map(t => `
+    <button type="button" class="theme-chip" data-theme-id="${t.id}" data-theme-name="${escAttr(t.name)}">
+      ${ICONS[t.icon] || ''} ${escAttr(t.name)}
+    </button>
+  `).join('');
+  row.querySelectorAll('.theme-chip').forEach(chip => {
+    chip.addEventListener('click', () => openThemeSheet(chip.dataset.themeId, chip.dataset.themeName));
+  });
+}
+
+// Feuille thème : réutilise la même modale que les listes prédéfinies/sagas
+// (#curated-list-sheet), mais un rendu plus simple — pas de barre de
+// complétion ni de bouton d'ajout en masse, juste une grille à parcourir
+// (esprit "suggestion", pas "collection à cocher"). L'ajout à la watchlist
+// se fait film par film en ouvrant sa fiche, comme partout ailleurs.
+async function openThemeSheet(themeId, themeName) {
+  lastFocusedBeforeModal = document.activeElement;
+  clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
+  clsEl.classList.add('open');
+  clsCloseBtn.focus();
+
+  const films = await fetchThemeList(themeId);
+  clsContentEl.innerHTML = `
+    <div class="mds-header" style="animation-delay:0s">
+      <div class="mds-header-info">
+        <div class="mds-title" id="cls-title">${escAttr(themeName)}</div>
+        <div class="mds-meta">${films.length} film${films.length > 1 ? 's' : ''}</div>
+      </div>
+    </div>
+    <div class="mds-section pds-filmography" style="animation-delay:.05s">
+      ${films.map(f => `
+        <div class="pds-film-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+          ${f.poster_path
+            ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
+            : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
+          <div class="pds-film-title">${escAttr(f.title)}</div>
+          <div class="pds-film-year">${f.year || ''}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+renderThemeChips();
+
+// ═══════════════════════════════════════════
+//  ANGLE MORT CIBLÉ (Découvrir)
+// ═══════════════════════════════════════════
+// "Tu adores [réalisateur], il te reste N films à découvrir" — transforme
+// le % de filmographie déjà affiché sur la fiche personne (une simple
+// donnée passive) en incitation concrète, dans Découvrir. Le vrai défi
+// technique : l'historique stocke le réalisateur en texte simple, pas en
+// identifiant TMDb — il faut faire le lien film par film (une fois, mis en
+// cache définitivement, jamais recalculé) avant de pouvoir agréger quoi
+// que ce soit par créateur.
+
+const CREATOR_MATCH_CACHE_KEY = 'lbx_creator_match_cache';
+const BLIND_SPOTS_CACHE_KEY = 'lbx_blind_spots';
+const BLIND_SPOTS_CACHE_DAYS = 7; // les gouts recents peuvent changer le classement, contrairement aux listes figées
+
+function loadCreatorMatchCache() {
+  try { return JSON.parse(localStorage.getItem(CREATOR_MATCH_CACHE_KEY) || '{}'); } catch { return {}; }
+}
+function saveCreatorMatchCache(map) {
+  localStorage.setItem(CREATOR_MATCH_CACHE_KEY, JSON.stringify(map));
+}
+
+// Une entrée par film déjà noté : { directorId, directorName } ou
+// { directorId: null } si le film n'a pas de réalisateur crédité (rare,
+// mais évite de re-essayer indéfiniment le même film sans résultat).
+async function resolveOneFilmDirector(tmdbId) {
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}`);
+    const data = await readApiJson(res);
+    const director = data.credits?.crew?.find(c => c.job === 'Director');
+    return director ? { directorId: director.id, directorName: director.name } : { directorId: null };
+  } catch {
+    return null; // erreur reseau : on ne met PAS en cache, pour retenter au prochain passage
+  }
+}
+
+let creatorMatchInProgress = false;
+// Traite par lots (respecte la limite de débit du proxy, comme la
+// résolution de la liste "Tous les temps") — priorise les films les MIEUX
+// notés d'abord : plus susceptibles de faire remonter un créateur pertinent
+// rapidement, plutôt que de traiter l'historique dans un ordre arbitraire.
+async function ensureCreatorMatchesResolved(onProgress) {
+  if (creatorMatchInProgress) return;
+  const history = loadHistory().filter(h => h.tmdbId);
+  const cache = loadCreatorMatchCache();
+  const missing = history
+    .filter(h => !(h.tmdbId in cache))
+    .sort((a, b) => (parseFloat(b.score) || 0) - (parseFloat(a.score) || 0));
+  if (missing.length === 0) return;
+  creatorMatchInProgress = true;
+
+  const BATCH_SIZE = 8;
+  for (let i = 0; i < missing.length; i += BATCH_SIZE) {
+    const batch = missing.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(batch.map(h => resolveOneFilmDirector(h.tmdbId)));
+    batch.forEach((h, idx) => {
+      if (results[idx]) cache[h.tmdbId] = results[idx];
+    });
+    saveCreatorMatchCache(cache);
+    if (onProgress) onProgress();
+    if (i + BATCH_SIZE < missing.length) await new Promise(r => setTimeout(r, 1500));
+  }
+  creatorMatchInProgress = false;
+}
+
+// Agrège les notes par réalisateur à partir du cache de correspondance déjà
+// résolu — ne déclenche AUCUN appel réseau (utilise ce qui est déjà là,
+// même partiel). Minimum 2 films notés pour compter (une seule note ne dit
+// pas grand-chose sur un "créateur préféré"), triés par note moyenne
+// décroissante.
+function computeTopCreators(minFilms = 2, topN = 3) {
+  const history = loadHistory().filter(h => h.tmdbId);
+  const cache = loadCreatorMatchCache();
+  const seenIds = new Set(history.map(h => String(h.tmdbId)));
+  const byDirector = {};
+
+  history.forEach(h => {
+    const match = cache[h.tmdbId];
+    if (!match || !match.directorId) return;
+    const score = parseFloat(h.score);
+    if (!score) return;
+    if (!byDirector[match.directorId]) {
+      byDirector[match.directorId] = { id: match.directorId, name: match.directorName, scores: [], seenFilmIds: new Set() };
+    }
+    byDirector[match.directorId].scores.push(score);
+    byDirector[match.directorId].seenFilmIds.add(String(h.tmdbId));
+  });
+
+  return Object.values(byDirector)
+    .filter(d => d.scores.length >= minFilms)
+    .map(d => ({ ...d, avg: d.scores.reduce((a, b) => a + b, 0) / d.scores.length }))
+    .sort((a, b) => b.avg - a.avg)
+    .slice(0, topN);
+}
+
+async function fetchCreatorBlindSpot(directorId) {
+  try {
+    const res = await fetch(`/api/search?personId=${directorId}`);
+    const data = await readApiJson(res);
+    if (!data || !data.name) return null;
+    const films = buildPersonFilmography(data);
+    const { seenCount, total } = computeSeenPercentage(films);
+    return { unseenCount: total - seenCount, total };
+  } catch {
+    return null;
+  }
+}
+
+function loadBlindSpotsCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BLIND_SPOTS_CACHE_KEY) || 'null');
+    if (!raw) return null;
+    const ageDays = (Date.now() - raw.fetchedAt) / 86400000;
+    if (ageDays > BLIND_SPOTS_CACHE_DAYS) return null;
+    return raw.creators;
+  } catch { return null; }
+}
+
+async function renderBlindSpotsSection() {
+  const wrap = document.getElementById('blind-spots-wrap');
+  const container = document.getElementById('blind-spots-container');
+  if (!wrap || !container) return;
+
+  const cached = loadBlindSpotsCache();
+  if (cached) {
+    renderBlindSpotsCards(cached);
+    // Continue quand même la résolution en tâche de fond pour affiner au
+    // fil du temps (nouveaux films notés depuis) — sans bloquer l'affichage
+    // déjà en cache.
+    ensureCreatorMatchesResolved();
+    return;
+  }
+
+  // Première fois (ou cache expiré) : résout ce qui manque avant de calculer
+  // le classement — sinon les tout premiers résultats seraient basés sur un
+  // historique quasi vide.
+  await ensureCreatorMatchesResolved();
+  const topCreators = computeTopCreators();
+  if (topCreators.length === 0) return; // pas assez de donnees encore (historique trop court, ou pas assez de recoupements) : section reste masquee
+
+  const withBlindSpots = await Promise.all(topCreators.map(async (c) => {
+    const spot = await fetchCreatorBlindSpot(c.id);
+    return spot && spot.unseenCount > 0 ? { ...c, ...spot } : null;
+  }));
+  const creators = withBlindSpots.filter(Boolean);
+  localStorage.setItem(BLIND_SPOTS_CACHE_KEY, JSON.stringify({ creators, fetchedAt: Date.now() }));
+  renderBlindSpotsCards(creators);
+}
+
+function renderBlindSpotsCards(creators) {
+  const wrap = document.getElementById('blind-spots-wrap');
+  const container = document.getElementById('blind-spots-container');
+  if (creators.length === 0) return; // reste masque (display:none par defaut)
+
+  container.innerHTML = creators.map(c => `
+    <button type="button" class="blind-spot-card" data-person-id="${c.id}" data-person-name="${escAttr(c.name)}">
+      <div class="blind-spot-text">
+        <span class="blind-spot-highlight">Tu adores ${escAttr(c.name)}</span>
+        <span class="blind-spot-detail">${c.avg.toFixed(1)}/10 en moyenne sur ${c.scores.length} film${c.scores.length > 1 ? 's' : ''} — il te reste ${c.unseenCount} film${c.unseenCount > 1 ? 's' : ''} à découvrir</span>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon blind-spot-arrow"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  `).join('');
+
+  container.querySelectorAll('.blind-spot-card').forEach(card => {
+    card.addEventListener('click', () => openPersonDetailSheet(card.dataset.personId, card.dataset.personName));
+  });
+
+  wrap.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════
+//  MODULE ANALYSE DE FILM
+// ═══════════════════════════════════════════
+// Un onglet "Analyse" sur la fiche de chaque film, à côté de la note (voir
+// guide-module-analyse-film.pdf). Stockage local comme tout le reste de
+// Ludex (historique, watchlists, duels) — pas de vraie base de données
+// serveur, décidé ensemble : Analyse et ProgressionUtilisateur sont des
+// données personnelles comme les autres, pas une raison de sortir du
+// mécanisme existant. La synchronisation cloud n'inclut pas encore ces
+// clés (à ajouter dans un second temps, voir 10-cloud-sync.js).
+//
+// Phase 1+2 du document uniquement pour cette livraison : la boucle
+// complète (écrire → recevoir un retour → garder une trace) fonctionne de
+// bout en bout. Le système de connaissances (glossaire, notions à
+// débloquer — Phase 5 du document) est volontairement repoussé plus tard,
+// une fois ce socle vécu un moment.
+
+const FILM_ANALYSES_KEY = 'lbx_analyses';
+
+function loadAnalyses() {
+  try { return JSON.parse(localStorage.getItem(FILM_ANALYSES_KEY)) || []; } catch { return []; }
+}
+function saveAnalyses(analyses) {
+  localStorage.setItem(FILM_ANALYSES_KEY, JSON.stringify(analyses));
+}
+function getAnalysesForFilm(filmId) {
+  return loadAnalyses()
+    .filter(a => String(a.filmId) === String(filmId))
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function buildAnalysisSectionHtml(movieId, movieTitle) {
+  const past = getAnalysesForFilm(movieId);
+  return `
+    <div class="mds-section-title">Analyse</div>
+    <div class="analysis-form">
+      <label class="analysis-label" for="analysis-technique">Analyse technique</label>
+      <textarea class="analysis-textarea" id="analysis-technique" rows="3" placeholder="Cadrage, lumière, montage, son, mise en scène..."></textarea>
+      <label class="analysis-label" for="analysis-theme">Analyse thématique</label>
+      <textarea class="analysis-textarea" id="analysis-theme" rows="3" placeholder="Sujet apparent vs sujet réel, comment la forme sert le fond..."></textarea>
+      <button type="button" class="icon-btn analysis-submit-btn" id="analysis-submit-btn">
+        <span class="analysis-submit-spinner" id="analysis-submit-spinner" style="display:none;" aria-hidden="true">${ICONS.refresh}</span>
+        <span id="analysis-submit-label">Envoyer pour analyse</span>
+      </button>
+      <div class="analysis-error" id="analysis-error" style="display:none;" role="alert">
+        <span class="analysis-error-icon" aria-hidden="true">⚠</span>
+        <span id="analysis-error-text"></span>
+      </div>
+    </div>
+    <div class="analysis-history" id="analysis-history">${past.map(renderAnalysisEntry).join('')}</div>
+  `;
+}
+
+function renderAnalysisEntry(a) {
+  const dateLabel = new Date(a.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  const r = a.retour;
+  return `
+    <div class="analysis-entry">
+      <div class="analysis-entry-date">${escAttr(dateLabel)}</div>
+      <p class="analysis-synthese">${escAttr(r.synthese || '')}</p>
+      ${renderAnalysisGroup('Points forts', r.pointsForts)}
+      ${renderAnalysisGroup('Angles morts', r.anglesMorts)}
+      ${renderAnalysisGroup('Questions pour approfondir', r.questions)}
+    </div>
+  `;
+}
+
+function renderAnalysisGroup(label, items) {
+  if (!items || items.length === 0) return '';
+  return `
+    <div class="analysis-retour-group">
+      <div class="analysis-retour-label">${escAttr(label)}</div>
+      <ul>${items.map(i => `<li>${escAttr(i)}</li>`).join('')}</ul>
+    </div>
+  `;
+}
+
+function wireAnalysisSection(movieId, movieTitle) {
+  const submitBtn = document.getElementById('analysis-submit-btn');
+  if (!submitBtn) return; // section pas presente (fiche fermee entre temps, etc.)
+  const submitSpinner = document.getElementById('analysis-submit-spinner');
+  const submitLabel = document.getElementById('analysis-submit-label');
+
+  submitBtn.addEventListener('click', async () => {
+    const techniqueEl = document.getElementById('analysis-technique');
+    const themeEl = document.getElementById('analysis-theme');
+    const errorEl = document.getElementById('analysis-error');
+    const errorTextEl = document.getElementById('analysis-error-text');
+    const technique = techniqueEl.value.trim();
+    const theme = themeEl.value.trim();
+    errorEl.style.display = 'none';
+
+    if (!technique && !theme) {
+      errorTextEl.textContent = 'Écris au moins un des deux champs avant d\'envoyer.';
+      errorEl.style.display = 'flex';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitSpinner.style.display = 'inline-flex';
+    submitLabel.textContent = 'Analyse en cours…';
+
+    try {
+      const res = await fetch('/api/analyse-film', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ titre: movieTitle, technique, theme }),
+      });
+      const data = await readApiJson(res); // lève avec le message precis du serveur si !res.ok
+
+      const entry = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        filmId: movieId,
+        filmTitle: movieTitle,
+        date: new Date().toISOString(),
+        texteTechnique: technique,
+        texteThematique: theme,
+        retour: data.retour,
+      };
+      const all = loadAnalyses();
+      all.push(entry);
+      saveAnalyses(all);
+
+      // Nouvel élément DOM créé à part (pas une concaténation innerHTML) :
+      // l'animation d'entrée ne rejoue que sur lui, pas sur les entrées déjà
+      // présentes qui n'ont pas à retrembler à chaque nouvel envoi.
+      const historyEl = document.getElementById('analysis-history');
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = renderAnalysisEntry(entry);
+      historyEl.prepend(wrapper.firstElementChild);
+
+      techniqueEl.value = '';
+      themeEl.value = '';
+      showToast('Analyse enregistrée.');
+    } catch (err) {
+      // describeApiFailure (déjà utilisée ailleurs dans l'app) : affiche le
+      // message précis du serveur quand il y en a un (clé manquante, quota
+      // épuisé...), plutôt qu'un "vérifie ta connexion" générique qui serait
+      // faux dans la plupart de ces cas.
+      errorTextEl.textContent = describeApiFailure(err);
+      errorEl.style.display = 'flex';
+    } finally {
+      submitBtn.disabled = false;
+      submitSpinner.style.display = 'none';
+      submitLabel.textContent = 'Envoyer pour analyse';
+    }
+  });
+}
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 1 : recherche + sélection de saison
+// ═══════════════════════════════════════════
+// Bascule Film/Série dans l'onglet Noter, recherche d'une série (TMDb
+// /search/tv), puis choix d'une saison (TMDb /tv/{id} pour la liste des
+// saisons). S'arrête volontairement là : le suivi épisode par épisode et
+// la notation de saison sont les Phases 2 et 3, pas encore construites —
+// on avance point par point plutôt que tout d'un coup, comme convenu.
+//
+// Stockage à venir en Phase 2+ (lbx_tv_shows, une entrée par SÉRIE avec
+// ses saisons imbriquées) — rien n'est encore sauvegardé à ce stade,
+// cette phase se limite à la sélection.
+
+// currentMediaType est déclarée dans 03-foundation.js (pas ici) — voir le
+// commentaire à cet endroit pour la raison exacte (calculateScore() y
+// accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
+let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
+
+function setMediaType(type) {
+  currentMediaType = type;
+  document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('tab-media-tv').classList.toggle('active', type === 'tv');
+  const movieFields = document.getElementById('movie-only-fields');
+  const tvFields = document.getElementById('tv-only-fields');
+  if (type === 'movie') fadeSwitchDisplay(tvFields, movieFields); else fadeSwitchDisplay(movieFields, tvFields);
+  document.getElementById('film-card-title').textContent = type === 'movie' ? 'Film' : 'Série';
+  applyCriteriaLabelsForMediaType(type);
+  // Pour un film, la carte Notation est toujours visible (on peut ajuster
+  // les curseurs avant même d'avoir cherché un titre). Pour une série, il
+  // faut d'abord qu'une saison soit sélectionnée pour que noter ait un
+  // sens — selectSeason() la révèle elle-même le moment venu.
+  document.getElementById('notation-card').style.display = type === 'movie' || selectedSeasonNumber != null ? '' : 'none';
+  if (type === 'tv' && typeof renderTvContinueList === 'function') renderTvContinueList();
+}
+
+// Les deux critères reformulés pour une saison — les 5 autres (scenario,
+// realisation, acteurs, ambiance, affect) restent identiques au film,
+// donc pas dans cette table.
+const TV_CRITERIA_LABELS = { photo: 'Qualité du final', rythme: 'Rythme & Cohérence de la saison' };
+const _originalCriteriaLabels = {};
+
+function applyCriteriaLabelsForMediaType(type) {
+  Object.keys(TV_CRITERIA_LABELS).forEach(c => {
+    const labelEl = document.getElementById(`crit-label-${c}`);
+    if (!labelEl || !labelEl.firstChild) return;
+    // Le badge de pondération (<span class="weight-badge">) est un enfant
+    // du label — on ne modifie QUE le nœud de texte qui le précède, pour
+    // ne jamais l'écraser (même classe de bug déjà rencontrée ailleurs
+    // dans ce projet : cibler le bon élément, pas tout le conteneur).
+    if (!(c in _originalCriteriaLabels)) _originalCriteriaLabels[c] = labelEl.firstChild.nodeValue;
+    const newText = (type === 'tv' ? TV_CRITERIA_LABELS[c] : _originalCriteriaLabels[c].trim()) + ' ';
+    labelEl.firstChild.nodeValue = newText;
+    const trimmed = newText.trim();
+    document.querySelectorAll(`.criterion-step-btn[data-target="${c}"]`).forEach(btn => {
+      const sign = btn.dataset.step.startsWith('-') ? 'Diminuer' : 'Augmenter';
+      btn.setAttribute('aria-label', `${sign} ${trimmed} de 0,5`);
+    });
+  });
+}
+
+const tvSearchEl = document.getElementById('tv-search');
+const tvSuggestEl = document.getElementById('tv-suggestions');
+const tvSearchStatus = document.getElementById('tv-search-status');
+const tvSearchClearBtn = document.getElementById('tv-search-clear-btn');
+let tvSearchTimer;
+
+tvSearchEl.addEventListener('input', () => {
+  clearTimeout(tvSearchTimer);
+  tvSearchClearBtn.style.display = tvSearchEl.value ? 'flex' : 'none';
+  const q = tvSearchEl.value.trim();
+  if (q.length < 2) {
+    tvSuggestEl.style.display = 'none';
+    tvSearchStatus.style.display = 'none';
+    return;
+  }
+  tvSearchStatus.style.display = 'none';
+  tvSuggestEl.style.display = 'block';
+  tvSuggestEl.innerHTML = `
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+    <div class="skeleton-item"><div class="skeleton-poster skeleton-bg"></div><div style="flex:1"><div class="skeleton-text long skeleton-bg"></div><div class="skeleton-text short skeleton-bg"></div></div></div>
+  `;
+  tvSearchTimer = setTimeout(() => fetchTvSuggestions(q), 280);
+});
+tvSearchClearBtn.addEventListener('click', () => {
+  tvSearchEl.value = '';
+  tvSearchEl.dispatchEvent(new Event('input'));
+  tvSearchEl.focus();
+});
+
+async function fetchTvSuggestions(q) {
+  try {
+    const res = await fetch(`/api/search?tvQuery=${encodeURIComponent(q)}`);
+    const data = await readApiJson(res);
+    const results = (data.results || []).filter(s => s.poster_path).slice(0, 8);
+    if (results.length === 0) {
+      tvSuggestEl.style.display = 'none';
+      tvSearchStatus.textContent = 'Aucune série trouvée.';
+      tvSearchStatus.style.display = 'block';
+      return;
+    }
+    tvSuggestEl.innerHTML = results.map(s => `
+      <div class="suggestion-item" data-show-id="${s.id}" data-show-name="${escAttr(s.name)}" data-show-poster="${escAttr(s.poster_path || '')}">
+        <img class="suggestion-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="" loading="lazy">
+        <div class="suggestion-info">
+          <div class="suggestion-title">${escAttr(s.name)}</div>
+          <div class="suggestion-year">${s.first_air_date ? s.first_air_date.slice(0, 4) : ''}</div>
+        </div>
+      </div>
+    `).join('');
+    tvSuggestEl.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => selectShow({
+        id: item.dataset.showId, name: item.dataset.showName, poster_path: item.dataset.showPoster,
+      }));
+    });
+  } catch (err) {
+    tvSuggestEl.style.display = 'none';
+    tvSearchStatus.textContent = describeApiFailure(err);
+    tvSearchStatus.style.display = 'block';
+  }
+}
+
+async function selectShow(show) {
+  selectedShow = show;
+  tvSuggestEl.style.display = 'none';
+  tvSearchEl.value = show.name;
+  document.getElementById('tv-season-strip').style.display = 'none';
+  document.getElementById('tv-season-picker').style.display = 'none';
+  openTvDetailSheet(show.id);
+}
+
+function selectSeason(season) {
+  const stripEl = document.getElementById('tv-season-strip');
+  stripEl.style.display = 'flex';
+  const posterImg = document.getElementById('tv-strip-poster');
+  posterImg.src = tmdbImage(season.poster, 'w200');
+  document.getElementById('tv-strip-title').textContent = `${selectedShow.name} — ${season.name}`;
+  document.getElementById('tv-strip-genre').textContent = `${season.episodeCount} épisode${season.episodeCount > 1 ? 's' : ''}`;
+  selectedSeasonNumber = Number(season.number);
+  selectedSeasonName = season.name;
+  selectedSeasonEpisodeCount = Number(season.episodeCount);
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  refreshShowAverageDisplay();
+
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const localSeason = showEntry?.seasons?.[String(selectedSeasonNumber)];
+  const episodesComplete = localSeason && localSeason.totalEpisodes > 0 && localSeason.watchedEpisodes.length >= localSeason.totalEpisodes;
+  const isComplete = localSeason && (episodesComplete || localSeason.rating);
+
+  const startPromptEl = document.getElementById('tv-season-start-prompt');
+  const inProgressEl = document.getElementById('tv-season-in-progress-msg');
+  const notationEl = document.getElementById('notation-card');
+
+  if (isComplete) {
+    // Saison terminée : plus rien à cocher, on passe directement à la note
+    // — pré-remplie si déjà notée, exactement le même geste que rouvrir
+    // depuis l'Historique.
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    notationEl.style.display = '';
+    loadSeasonRatingIntoForm();
+  } else if (localSeason) {
+    // Déjà entamée (via le widget En cours) mais pas finie : pas de second
+    // suivi ici, juste un rappel de où continuer plutôt qu'un doublon.
+    notationEl.style.display = 'none';
+    startPromptEl.style.display = 'none';
+    inProgressEl.style.display = 'flex';
+    document.getElementById('tv-in-progress-text').textContent =
+      `${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} épisodes déjà vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  } else {
+    // Jamais touchée : propose de commencer plutôt que d'ouvrir directement
+    // un suivi épisode par épisode ici.
+    notationEl.style.display = 'none';
+    inProgressEl.style.display = 'none';
+    startPromptEl.style.display = 'flex';
+    document.getElementById('tv-start-prompt-text').textContent = `Commencer "${selectedShow.name} — ${season.name}" ?`;
+  }
+}
+
+function startTrackingSeason() {
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+  }
+  saveTvShows(shows);
+  document.getElementById('tv-season-start-prompt').style.display = 'none';
+  document.getElementById('tv-season-in-progress-msg').style.display = 'flex';
+  document.getElementById('tv-in-progress-text').textContent =
+    `0/${selectedSeasonEpisodeCount} épisodes vus — continue depuis le widget "En cours" en haut de cet onglet.`;
+  if (typeof renderTvContinueList === 'function') renderTvContinueList();
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" ajoutée à En cours`);
+}
+document.getElementById('tv-start-season-btn').addEventListener('click', startTrackingSeason);
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 2 : suivi épisode par épisode
+// ═══════════════════════════════════════════
+// Stockage : une entrée par SÉRIE (lbx_tv_shows), avec ses saisons
+// imbriquées — chaque saison garde la liste des épisodes vus et son
+// total. Aucune note stockée ici (Phase 3) : la note de saison viendra
+// plus tard, la note globale de série ne sera jamais stockée du tout,
+// toujours recalculée à la volée à partir des saisons notées.
+const TV_SHOWS_KEY = 'lbx_tv_shows';
+let selectedSeasonNumber = null;
+let selectedSeasonName = null;
+let selectedSeasonEpisodeCount = 0;
+
+function loadTvShows() {
+  try { return JSON.parse(localStorage.getItem(TV_SHOWS_KEY)) || []; } catch { return []; }
+}
+function saveTvShows(shows) {
+  localStorage.setItem(TV_SHOWS_KEY, JSON.stringify(shows));
+}
+function getOrCreateTvShow(shows) {
+  let entry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  if (!entry) {
+    entry = { tmdbTvId: selectedShow.id, title: selectedShow.name, poster_path: selectedShow.poster_path, genre: selectedShow.genres || '', seasons: {} };
+    shows.push(entry);
+  }
+  return entry;
+}
+function getOrCreateTvSeason(showEntry, seasonName, totalEpisodes) {
+  const key = String(selectedSeasonNumber);
+  if (!showEntry.seasons[key]) {
+    showEntry.seasons[key] = { seasonName, watchedEpisodes: [], totalEpisodes };
+  }
+  // Le total peut differer de ce qu'on avait stocke si TMDb ajoute un
+  // episode entre deux visites (saison en cours de diffusion) — on le
+  // reajuste plutot que de garder une valeur perimee.
+  showEntry.seasons[key].totalEpisodes = totalEpisodes;
+  return showEntry.seasons[key];
+}
+
+function loadSeasonRatingIntoForm() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const seasonEntry = showEntry && showEntry.seasons[String(selectedSeasonNumber)];
+  const rating = seasonEntry && seasonEntry.rating;
+
+  if (rating && rating.mode === 'quick' && rating.values?.quick !== undefined) {
+    setMode('quick');
+    quickRating = parseFloat(rating.values.quick);
+    const radioEl = document.getElementById('s' + (quickRating * 2));
+    if (radioEl) radioEl.checked = true;
+  } else {
+    setMode('detail');
+    CRITERIA.forEach(c => {
+      document.getElementById(c).value = rating && rating.values && rating.values[c] !== undefined ? rating.values[c] : 5;
+    });
+  }
+  document.getElementById('review-text').value = rating ? (rating.review || '') : '';
+  calculateScore();
+}
+
+// Toutes les notes de saison, toutes séries confondues, à plat — réutilisé
+// pour le radar (moyennes par critère, même fonction pure que les films)
+// et pour fusionner l'activité films+séries dans le graphique 6 mois (voir
+// 06-history.js) : la heatmap ET ce graphique restent uniques, décidé
+// ensemble, contrairement au reste des statistiques qui bascule.
+function getAllTvSeasonRatings() {
+  return loadTvShows().flatMap(show =>
+    Object.values(show.seasons || {}).filter(s => s.rating).map(s => s.rating)
+  );
+}
+
+function refreshShowAverageDisplay() {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const avg = computeShowAverageScore(showEntry);
+  const el = document.getElementById('tv-show-average');
+  if (avg == null) {
+    el.style.display = 'none';
+    return;
+  }
+  const ratedCount = Object.values(showEntry.seasons).filter(s => s.rating).length;
+  el.textContent = `Note globale : ${avg.toFixed(1)}/10 (moyenne de ${ratedCount} saison${ratedCount > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})`;
+  el.style.display = 'block';
+}
+
+function saveTvSeasonRating() {
+  if (!selectedShow || selectedSeasonNumber == null) {
+    showToast('Sélectionne une série et une saison avant de noter.');
+    return;
+  }
+  const score = calculateScore();
+  const shows = loadTvShows();
+  const showEntry = getOrCreateTvShow(shows);
+  const seasonKey = String(selectedSeasonNumber);
+  // La saison existe déjà forcément (créée dès qu'on "Commence" à la suivre,
+  // voir startTrackingSeason) — on y ajoute juste la note, sans repasser par
+  // getOrCreateTvSeason pour ne pas risquer d'écraser totalEpisodes avec
+  // une valeur périmée.
+  if (!showEntry.seasons[seasonKey]) {
+    showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+  }
+  showEntry.seasons[seasonKey].rating = {
+    mode: currentMode,
+    values: currentMode === 'detail'
+      ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
+      : { quick: quickRating },
+    score: score.toFixed(1),
+    stars: document.getElementById('stars-display').textContent,
+    review: document.getElementById('review-text').value.trim(),
+    date: new Date().toISOString(),
+  };
+  saveTvShows(shows);
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+  showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`);
+  if (typeof playSaveConfirmation === 'function') playSaveConfirmation();
+  refreshShowAverageDisplay();
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+}
+
+function maybeShowSeasonCompleteBanner(showTmdbId, seasonKey, seasonEntry) {
+  if (seasonEntry.watchedEpisodes.length < seasonEntry.totalEpisodes) return;
+  const banner = document.getElementById('tv-season-complete-banner');
+  banner.dataset.showId = showTmdbId;
+  banner.dataset.seasonKey = seasonKey;
+  banner.style.display = 'flex';
+}
+
+document.getElementById('tv-season-complete-dismiss').addEventListener('click', () => {
+  document.getElementById('tv-season-complete-banner').style.display = 'none';
+});
+document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
+  const banner = document.getElementById('tv-season-complete-banner');
+  const showId = banner.dataset.showId;
+  const seasonKey = banner.dataset.seasonKey;
+  banner.style.display = 'none';
+
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (show) {
+    switchMobileNav('rating');
+    setMediaType('tv');
+    selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+    document.getElementById('tv-search').value = show.title;
+    document.getElementById('tv-season-picker').style.display = 'none';
+    const seasonData = show.seasons[seasonKey];
+    selectedSeasonNumber = Number(seasonKey);
+    selectedSeasonName = seasonData.seasonName;
+    document.getElementById('tv-season-strip').style.display = 'flex';
+    document.getElementById('tv-strip-poster').src = tmdbImage(show.poster_path, 'w200');
+    document.getElementById('tv-strip-title').textContent = `${show.title} — ${seasonData.seasonName}`;
+    document.getElementById('tv-strip-genre').textContent = `${seasonData.totalEpisodes} épisodes`;
+    document.getElementById('tv-season-start-prompt').style.display = 'none';
+    document.getElementById('tv-season-in-progress-msg').style.display = 'none';
+    refreshShowAverageDisplay();
+    loadSeasonRatingIntoForm();
+  }
+  const card = document.getElementById('notation-card');
+  card.style.display = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 4 : Historique scindé Films/Séries
+// ═══════════════════════════════════════════
+// Bascule façon Détaillé/Rapide (pas un simple filtre dans une liste
+// mélangée) : une carte de saison et une carte de film n'ont pas le même
+// contenu à afficher, les mélanger aurait rendu chaque carte confuse.
+// Comptage par SÉRIE, pas par saison — noter 3 saisons de la même série
+// compte pour 1, pas 3, comme convenu.
+
+function switchHistoryMediaFilter(type) {
+  historyMediaFilter = type;
+  document.getElementById('hist-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
+  const movieList = document.getElementById('history-list');
+  const tvList = document.getElementById('tv-history-list');
+  if (type === 'movie') fadeSwitchDisplay(tvList, movieList); else fadeSwitchDisplay(movieList, tvList);
+  renderActiveHistoryView();
+  if (type === 'tv') retrofitMissingTvGenres();
+}
+
+// Récupère silencieusement le genre des séries suivies avant l'ajout de ce
+// filtre (donc sans genre stocké) — une seule fois par série, en arrière-
+// plan, sans bloquer l'affichage déjà rendu avec les genres déjà connus.
+async function retrofitMissingTvGenres() {
+  const missing = loadTvShows().filter(s => !s.genre);
+  if (missing.length === 0) return;
+  for (const show of missing) {
+    try {
+      const data = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      const current = loadTvShows();
+      const entry = current.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      if (entry && genreStr) { entry.genre = genreStr; saveTvShows(current); }
+    } catch { /* silencieux — retentera au prochain passage sur l'onglet */ }
+  }
+  if (historyMediaFilter === 'tv') renderTvHistory();
+}
+
+function getSortedTvShows() {
+  const shows = loadTvShows();
+  let s = shows;
+  if (historySearchQuery) {
+    s = s.filter(sh => sh.title && sh.title.toLowerCase().includes(historySearchQuery));
+  }
+  if (activeScoreFilter !== null) {
+    s = s.filter(sh => isScoreInActiveRange(computeShowAverageScore(sh)));
+  }
+  if (activeGenre) {
+    s = s.filter(sh => sh.genre && sh.genre.split(',').map(g => g.trim()).includes(activeGenre));
+  }
+  const avg = (sh) => computeShowAverageScore(sh);
+  if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
+  if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
+  if (sortOrder === 'title')      return [...s].sort((a, b) => a.title.localeCompare(b.title));
+  // "Récents" : dernière saison mise à jour (notée ou suivie), la plus
+  // récente d'abord — même esprit que le tri "Récents" des films.
+  const lastUpdate = (sh) => Object.values(sh.seasons || {}).reduce((max, se) => {
+    const d = se.rating?.date || '';
+    return d > max ? d : max;
+  }, '');
+  return [...s].sort((a, b) => lastUpdate(b).localeCompare(lastUpdate(a)));
+}
+
+function renderTvHistory() {
+  const allShows = loadTvShows();
+  const shows = getSortedTvShows();
+  const container = document.getElementById('tv-history-list');
+  renderGenreChips(allShows, renderTvHistory);
+  document.getElementById('filter-row').style.display = allShows.length === 0 ? 'none' : '';
+
+  const badge = document.getElementById('hist-count-badge');
+  const filmCount = loadHistory().length;
+  const filmFragment = `${filmCount} film${filmCount > 1 ? 's' : ''}`;
+  if (historySearchQuery || activeScoreFilter) {
+    badge.textContent = `${filmFragment} · ${shows.length} / ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = 'var(--orange)';
+  } else {
+    badge.textContent = `${filmFragment} · ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
+    badge.style.color = '';
+  }
+
+  if (allShows.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
+    return;
+  }
+  if (shows.length === 0) {
+    container.innerHTML = `<div class="empty-state">Aucun résultat pour ce filtre.</div>`;
+    return;
+  }
+
+  container.innerHTML = shows.map(renderTvShowCard).join('');
+
+  container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
+    const posterUrl = tmdbImage(shows[i]?.poster_path, 'w154');
+    applyPosterAccent(posterUrl, cardEl);
+  });
+
+  container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
+    btn.addEventListener('click', () => openTvDetailSheet(btn.dataset.showId));
+  });
+
+  container.querySelectorAll('.tv-show-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.showId;
+      const show = loadTvShows().find(s => String(s.tmdbTvId) === String(id));
+      if (!show) return;
+      openModal(
+        'Retirer cette série',
+        `"${show.title}" et toutes ses saisons suivies/notées seront définitivement retirées. Continuer ?`,
+        () => {
+          const remaining = loadTvShows().filter(s => String(s.tmdbTvId) !== String(id));
+          saveTvShows(remaining);
+          if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_show_tombstones', String(id));
+          renderTvHistory();
+          showToast(`"${show.title}" retirée`);
+          if (typeof statsDirty !== 'undefined') statsDirty = true;
+        },
+        true
+      );
+    });
+  });
+
+  container.querySelectorAll('.tv-season-reopen-btn').forEach(btn => {
+    btn.addEventListener('click', () => reopenTvSeason(btn.dataset.showId, btn.dataset.seasonKey));
+  });
+
+  container.querySelectorAll('.tv-season-delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteTvSeasonWithConfirm(btn.dataset.showId, btn.dataset.seasonKey);
+    });
+  });
+
+  initTvSeasonSwipeGestures(container);
+  initTvShowCardSwipeGestures(container);
+}
+
+function deleteTvSeasonWithConfirm(showId, seasonKey) {
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (!show) return;
+  const seasonName = show.seasons[seasonKey]?.seasonName || `Saison ${seasonKey}`;
+  const isLastSeason = Object.keys(show.seasons).length === 1;
+  openModal(
+    'Retirer cette saison',
+    isLastSeason
+      ? `"${seasonName}" est la dernière saison suivie de "${show.title}" — la retirer retire toute la série. Continuer ?`
+      : `"${seasonName}" de "${show.title}" sera définitivement retirée. Continuer ?`,
+    () => {
+      const shows = loadTvShows();
+      const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+      if (!showEntry) return;
+      delete showEntry.seasons[seasonKey];
+      if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_season_tombstones', `${showId}:${seasonKey}`);
+      const remaining = Object.keys(showEntry.seasons).length === 0
+        ? shows.filter(s => String(s.tmdbTvId) !== String(showId))
+        : shows;
+      if (Object.keys(showEntry.seasons).length === 0 && typeof recordTombstone === 'function') {
+        recordTombstone('lbx_tv_show_tombstones', String(showId));
+      }
+      saveTvShows(remaining);
+      renderTvHistory();
+      showToast(`"${seasonName}" retirée`);
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+    },
+    true
+  );
+}
+
+function renderTvShowCard(show) {
+  const avg = computeShowAverageScore(show);
+  const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const ratedCount = seasons.filter(([, s]) => s.rating).length;
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
+
+  return `
+    <div class="tv-show-card">
+      <div class="tv-show-card-header-wrap" data-show-id="${show.tmdbTvId}">
+        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+        <div class="tv-show-card-header">
+          <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
+            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
+            <div class="tv-show-card-info">
+              <div class="tv-show-card-title">${escAttr(show.title)}</div>
+              <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
+            </div>
+          </button>
+          <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+        </div>
+      </div>
+      <details class="tv-show-seasons-fold">
+        <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
+        <div class="tv-show-seasons-list">
+          ${seasons.map(([key, s]) => `
+            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}">
+              <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
+              <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
+              <div class="tv-season-row-content">
+                <button type="button" class="tv-season-reopen-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">
+                  <span>${escAttr(s.seasonName)}</span>
+                  <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
+                </button>
+                <button type="button" class="tv-season-delete-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+// Glissement sur les lignes de saison — mêmes paramètres physiques déjà
+// éprouvés que l'historique films (voir initHistoryGestures), mais
+// contrôleur séparé plutôt qu'une généralisation complète : le système
+// film est ancien, très affiné (de nombreux bugs corrigés un par un au
+// fil de plusieurs sessions), le réécrire pour le rendre générique aurait
+// un vrai risque de régression sur un comportement déjà fiable et testé.
+// Version allégée ici : pas de menu d'appui long (pas d'équivalent série
+// pour l'instant), pas de survie à un nouveau rendu complexe (un
+// re-rendu annule simplement un geste armé, acceptable sur cette liste
+// moins sollicitée que l'historique principal).
+function initTvSeasonSwipeGestures(container) {
+  const MOVE_CANCEL_PX = 12;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let startX = 0, startY = 0;
+  let pressedItem = null, pressedContent = null;
+  let wasSwipe = false;
+  let swipeMode = null;
+  let dx = 0;
+  let armedItem = null, armedDirection = null;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.tv-season-row-content');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
+    armedItem = null;
+    armedDirection = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const showId = armedItem.dataset.showId;
+    const seasonKey = armedItem.dataset.seasonKey;
+    const dir = armedDirection;
+    armedItem = null;
+    armedDirection = null;
+    if (dir === 'left') {
+      deleteTvSeasonWithConfirm(showId, seasonKey);
+    } else {
+      reopenTvSeason(showId, seasonKey);
+    }
+  }
+
+  function resetGesture() {
+    if (pressedItem) pressedItem.classList.remove('hist-dragging');
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  function cancelGestureFully() {
+    if (pressedItem) {
+      if (pressedContent) {
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = '';
+      }
+      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+    }
+    resetGesture();
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.tv-season-row');
+    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) { resetGesture(); return; }
+    e.stopPropagation();
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-season-row-content');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const rawDx = e.touches[0].clientX - startX;
+    const rawDy = e.touches[0].clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  }, { passive: true });
+
+  function resolveGesture() {
+    if (!pressedItem) return;
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        armedDirection = 'left';
+        hapticPulse(pressedItem, 'medium');
+      } else if (dx >= SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(120px)';
+        pressedItem.classList.add('hist-swipe-armed-right');
+        armedItem = pressedItem;
+        armedDirection = 'right';
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
+      }
+      wasSwipe = true;
+      setTimeout(() => { wasSwipe = false; }, 300);
+    }
+    resetGesture();
+  }
+  container.addEventListener('touchend', resolveGesture);
+  container.addEventListener('touchcancel', cancelGestureFully);
+
+  // Souris (pratique pour tester sur desktop / vercel dev)
+  let mouseActive = false;
+  container.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.tv-season-row');
+    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) return;
+    mouseActive = true;
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-season-row-content');
+    startX = e.clientX;
+    startY = e.clientY;
+    swipeMode = null;
+    dx = 0;
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!mouseActive || !pressedItem) return;
+    const rawDx = e.clientX - startX;
+    const rawDy = e.clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!mouseActive) return;
+    mouseActive = false;
+    resolveGesture();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (armedItem) {
+      const hint = e.target.closest('.hist-swipe-hint');
+      const clickedItem = e.target.closest('.tv-season-row');
+      if (hint && clickedItem === armedItem) {
+        confirmArmed();
+        return;
+      }
+      const wasArmedItself = clickedItem === armedItem;
+      cancelArmed();
+      if (wasArmedItself) return;
+    }
+  }, true); // capture : s'exécute avant les listeners de clic sur les boutons internes (reopen/delete)
+
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+}
+
+// Glissement sur la carte de série elle-même — supprime toute la série
+// (pas juste une saison). Uniquement vers la gauche : contrairement à une
+// saison, une série entière n'a pas d'action "Modifier" unique vers
+// laquelle glisser à droite, donc pas de second sens ici. Contrôleur
+// séparé plutôt que de généraliser initTvSeasonSwipeGestures : n'agit que
+// sur l'en-tête de la carte (pas sur la liste de saisons dépliée juste en
+// dessous), pour ne jamais entrer en conflit avec le glissement des
+// lignes de saison qui vit dans une zone distincte du DOM.
+function initTvShowCardSwipeGestures(container) {
+  const MOVE_CANCEL_PX = 12;
+  const SWIPE_THRESHOLD = 80;
+  const MAX_DRAG = 130;
+
+  let startX = 0, startY = 0;
+  let pressedItem = null, pressedContent = null;
+  let swipeMode = null;
+  let dx = 0;
+  let armedItem = null;
+
+  function cancelArmed() {
+    if (!armedItem) return;
+    const content = armedItem.querySelector('.tv-show-card-header');
+    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
+    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-left');
+    armedItem = null;
+  }
+
+  function confirmArmed() {
+    if (!armedItem) return;
+    const showId = armedItem.dataset.showId;
+    armedItem = null;
+    const btn = container.querySelector(`.tv-show-delete-btn[data-show-id="${showId}"]`);
+    if (btn) btn.click(); // réutilise exactement la même confirmation/suppression que le bouton visible
+  }
+
+  function resetGesture() {
+    if (pressedItem) pressedItem.classList.remove('hist-dragging');
+    pressedItem = null;
+    pressedContent = null;
+    swipeMode = null;
+    dx = 0;
+  }
+
+  container.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.tv-show-card-header-wrap');
+    if (!item || e.target.closest('.tv-show-card-open-btn') || e.target.closest('.tv-show-delete-btn')) { resetGesture(); return; }
+    e.stopPropagation();
+    pressedItem = item;
+    pressedContent = item.querySelector('.tv-show-card-header');
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    swipeMode = null;
+    dx = 0;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!pressedItem) return;
+    e.stopPropagation();
+    const rawDx = e.touches[0].clientX - startX;
+    const rawDy = e.touches[0].clientY - startY;
+    if (swipeMode === null) {
+      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
+        if (swipeMode === 'swipe') {
+          if (armedItem === pressedItem) cancelArmed();
+          pressedItem.classList.add('hist-dragging');
+        }
+      } else {
+        return;
+      }
+    }
+    if (swipeMode !== 'swipe') return;
+    // Seulement vers la gauche : un glissement vers la droite ne fait rien
+    // (pas de deuxième action), donc plafonné à 0 plutôt que de suivre le doigt.
+    dx = Math.max(-MAX_DRAG, Math.min(0, rawDx));
+    pressedContent.style.transform = `translateX(${dx}px)`;
+    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
+  }, { passive: true });
+
+  container.addEventListener('touchend', () => {
+    if (!pressedItem) return;
+    if (swipeMode === 'swipe') {
+      if (dx <= -SWIPE_THRESHOLD) {
+        cancelArmed();
+        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+        pressedContent.style.transform = 'translateX(-120px)';
+        pressedItem.classList.add('hist-swipe-armed-left');
+        armedItem = pressedItem;
+        hapticPulse(pressedItem, 'medium');
+      } else {
+        pressedContent.style.transform = '';
+        pressedItem.classList.remove('hist-swipe-left');
+      }
+    }
+    resetGesture();
+  });
+  container.addEventListener('touchcancel', () => {
+    if (pressedItem && pressedContent) {
+      pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
+      pressedContent.style.transform = '';
+      pressedItem.classList.remove('hist-swipe-left');
+    }
+    resetGesture();
+  });
+
+  container.addEventListener('click', (e) => {
+    if (!armedItem) return;
+    const hint = e.target.closest('.hist-swipe-hint');
+    const clickedItem = e.target.closest('.tv-show-card-header-wrap');
+    if (hint && clickedItem === armedItem) { confirmArmed(); return; }
+    const wasArmedItself = clickedItem === armedItem;
+    cancelArmed();
+    if (wasArmedItself) return;
+  }, true);
+
+  document.addEventListener('click', (e) => {
+    if (armedItem && !container.contains(e.target)) cancelArmed();
+  }, true);
+}
+
+function reopenTvSeason(showId, seasonKey) {
+  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+  if (!show) return;
+  switchMobileNav('rating');
+  setMediaType('tv');
+  selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+  document.getElementById('tv-search').value = show.title;
+  document.getElementById('tv-season-picker').style.display = 'none';
+  const seasonData = show.seasons[seasonKey];
+  selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
+  document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Phase 5 : statistiques
+// ═══════════════════════════════════════════
+// Bascule sur le tableau de bord (KPI, radar, distribution des notes) —
+// comptage par SÉRIE, pas par saison, comme partout ailleurs dans le
+// module. La heatmap ET le graphique "Activité (6 derniers mois)" restent
+// UNIQUES dans les deux modes (décidé ensemble) : ils montrent le rythme
+// de visionnage global, films et séries confondus, pas de dédoublement.
+// "Top Réalisateurs" n'a pas d'équivalent série pour l'instant (aucune
+// donnée de showrunner récupérée) — replié plutôt que vide ou trompeur.
+
+function switchStatsMediaFilter(type) {
+  statsMediaFilter = type;
+  document.getElementById('stats-tab-movie').classList.toggle('active', type === 'movie');
+  document.getElementById('stats-tab-tv').classList.toggle('active', type === 'tv');
+  const dashboard = document.querySelector('.dashboard-grid');
+  const applyChange = () => {
+    document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
+    document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
+    if (type === 'tv') renderTvStats(); else renderStats();
+  };
+  if (!dashboard) { applyChange(); return; }
+  dashboard.style.transition = 'opacity var(--dur-fast) var(--ease-out)';
+  dashboard.style.opacity = '0';
+  setTimeout(() => {
+    applyChange();
+    requestAnimationFrame(() => {
+      dashboard.style.opacity = '1';
+      setTimeout(() => { dashboard.style.removeProperty('opacity'); dashboard.style.removeProperty('transition'); }, 150);
+    });
+  }, 140);
+}
+
+function renderTvStats() {
+  const shows = loadTvShows();
+  animateCountUp(document.getElementById('kpi-total'), shows.length);
+
+  const showAverages = shows.map(computeShowAverageScore).filter(a => a != null);
+  if (showAverages.length === 0) {
+    document.getElementById('kpi-avg').textContent = '-';
+  } else {
+    const avg = showAverages.reduce((a, b) => a + b, 0) / showAverages.length;
+    animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
+  }
+
+  // Compte les SÉRIES ayant au moins une saison notée cette année (pas le
+  // nombre brut de saisons notées) — même logique de comptage par série.
+  const currentYear = new Date().getFullYear().toString();
+  const yearShowsCount = shows.filter(s =>
+    Object.values(s.seasons || {}).some(se => se.rating?.date?.startsWith(currentYear))
+  ).length;
+  animateCountUp(document.getElementById('kpi-year'), yearShowsCount);
+
+  const allRatings = getAllTvSeasonRatings();
+
+  if (allRatings.length === 0) {
+    document.getElementById('radar-chart-container').innerHTML = '';
+    document.getElementById('radar-chart-container').style.minHeight = '0';
+    document.getElementById('radar-empty').style.display = 'block';
+  } else {
+    const avgsByCriterion = computeCriteriaAverages(allRatings, CRITERIA);
+    const avgs = CRITERIA.map(c => avgsByCriterion[c] || 0);
+    const radarSvg = createRadarSVG(avgs, 'tv');
+    if (radarSvg) {
+      document.getElementById('radar-chart-container').innerHTML = radarSvg;
+      document.getElementById('radar-chart-container').style.minHeight = '160px';
+      document.getElementById('radar-empty').style.display = 'none';
+    } else {
+      document.getElementById('radar-chart-container').innerHTML = '';
+      document.getElementById('radar-chart-container').style.minHeight = '0';
+      document.getElementById('radar-empty').style.display = 'block';
+    }
+  }
+
+  // Timeline fusionnée (films + séries), identique à ce qu'affiche le mode
+  // Films — voir le commentaire en tête de section.
+  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(loadHistory().concat(allRatings));
+
+  const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
+  allRatings.forEach(r => {
+    const stars = Math.round((parseFloat(r.score) / 2) * 2) / 2;
+    const key = Math.round(stars * 10).toString().padStart(2, '0');
+    if (dist[key] !== undefined) dist[key]++;
+  });
+  buildHistogram(dist);
+}
+
+// ═══════════════════════════════════════════
+//  SÉRIES — Widget "En cours" (onglet Noter, mode Série uniquement)
+// ═══════════════════════════════════════════
+// Une carte par série ayant un épisode à regarder : soit une saison
+// entamée mais pas finie, soit — si la dernière saison connue vient
+// d'être terminée — la saison suivante si elle existe (détectée via TMDb,
+// pas stockée d'avance puisque seules les saisons déjà sélectionnées sont
+// connues localement). Si aucune suite n'existe, la série disparaît
+// simplement du widget.
+
+async function renderTvContinueList() {
+  const container = document.getElementById('tv-continue-list');
+  const sectionEl = document.getElementById('tv-continue-section');
+  const shows = loadTvShows();
+  const candidates = [];
+
+  for (const show of shows) {
+    const entries = Object.entries(show.seasons || {});
+    const partial = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes && !s.paused)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (partial) {
+      candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
+      continue;
+    }
+    const complete = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length >= s.totalEpisodes)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (complete) {
+      candidates.push({ show, seasonKey: complete[0], seasonEntry: complete[1], needsNextSeasonCheck: true });
+    }
+  }
+
+  if (candidates.length === 0) {
+    sectionEl.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+
+  sectionEl.style.display = 'block';
+  document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
+  container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
+
+  candidates.forEach(async (cand, idx) => {
+    const resolved = await resolveNextTvEpisode(cand);
+    const placeholder = container.querySelector(`[data-continue-idx="${idx}"]`);
+    if (!placeholder) return; // le conteneur a pu être reconstruit entre-temps
+    if (!resolved) {
+      placeholder.remove();
+      if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+      return;
+    }
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    placeholder.replaceWith(wrapper.firstElementChild);
+  });
+}
+
+async function resolveNextTvEpisode(cand) {
+  const { show, needsNextSeasonCheck } = cand;
+  let seasonKey = cand.seasonKey;
+  let seasonEntry = cand.seasonEntry;
+
+  if (needsNextSeasonCheck) {
+    const nextNum = Number(seasonKey) + 1;
+    try {
+      const showDetail = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
+      const nextMeta = (showDetail.seasons || []).find(s => s.season_number === nextNum);
+      if (!nextMeta) return null; // pas de saison suivante
+      const shows = loadTvShows();
+      const showEntry = shows.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+      seasonKey = String(nextNum);
+      if (!showEntry.seasons[seasonKey]) {
+        showEntry.seasons[seasonKey] = { seasonName: nextMeta.name, watchedEpisodes: [], totalEpisodes: nextMeta.episode_count };
+        saveTvShows(shows);
+      }
+      seasonEntry = showEntry.seasons[seasonKey];
+    } catch { return null; }
+  }
+
+  try {
+    const seasonData = await fetch(`/api/search?tvSeasonShowId=${show.tmdbTvId}&tvSeasonNumber=${seasonKey}`).then(readApiJson);
+    const episodes = seasonData.episodes || [];
+    const nextEp = episodes.find(e => !seasonEntry.watchedEpisodes.includes(e.episode_number));
+    if (!nextEp) return null;
+    return { show, seasonKey, seasonEntry, episode: nextEp };
+  } catch { return null; }
+}
+
+function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
+  const posterUrl = tmdbImage(show.poster_path, 'w154');
+  const meta = [
+    episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+    episode.runtime ? `${episode.runtime} min` : '',
+  ].filter(Boolean).join(' · ');
+  return `
+    <div class="tv-continue-card">
+      <div class="tv-continue-card-actions">
+        <button type="button" class="tv-continue-pause-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Mettre en pause" title="Mettre en pause — reprends-la depuis sa fiche">${ICONS.pause}</button>
+        <button type="button" class="tv-continue-remove-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" aria-label="Retirer ${escAttr(show.title)} de cette liste" title="Retirer de la liste">${ICONS.close || '✕'}</button>
+      </div>
+      ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+      <div class="tv-continue-info">
+        <div class="tv-continue-show-title">${escAttr(show.title)}</div>
+        <div class="tv-continue-ep-title">${escAttr(seasonEntry.seasonName)} · Ép. ${episode.episode_number} — ${escAttr(episode.name || 'Sans titre')}</div>
+        ${meta ? `<div class="tv-continue-meta">${escAttr(meta)}</div>` : ''}
+        ${episode.overview ? `
+          <details class="tv-continue-synopsis">
+            <summary>Synopsis</summary>
+            <p>${escAttr(episode.overview)}</p>
+          </details>
+        ` : ''}
+      </div>
+      <button type="button" class="tv-continue-check-btn" data-show-id="${show.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}" aria-label="Valider l'épisode ${episode.episode_number} de ${escAttr(show.title)}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+      </button>
+    </div>
+  `;
+}
+
+document.getElementById('tv-continue-list').addEventListener('click', async (e) => {
+  const removeBtn = e.target.closest('.tv-continue-remove-btn');
+  if (removeBtn) {
+    // Retire uniquement de cette liste — aucune donnée touchée, la carte
+    // peut revenir au prochain rendu si les conditions correspondent
+    // encore (ex : un épisode coché ailleurs).
+    const cardEl = removeBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    return;
+  }
+
+  const pauseBtn = e.target.closest('.tv-continue-pause-btn');
+  if (pauseBtn) {
+    const shows = loadTvShows();
+    const showEntry = shows.find(s => String(s.tmdbTvId) === String(pauseBtn.dataset.showId));
+    const seasonEntry = showEntry?.seasons?.[pauseBtn.dataset.seasonKey];
+    if (seasonEntry) {
+      seasonEntry.paused = true;
+      saveTvShows(shows);
+    }
+    const cardEl = pauseBtn.closest('.tv-continue-card');
+    cardEl.remove();
+    const container = document.getElementById('tv-continue-list');
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    showToast('Mise en pause — reprends-la depuis sa fiche');
+    return;
+  }
+
+  const btn = e.target.closest('.tv-continue-check-btn');
+  if (!btn) return;
+  const showId = btn.dataset.showId;
+  const seasonKey = btn.dataset.seasonKey;
+  const episodeNumber = Number(btn.dataset.episode);
+
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  const seasonEntry = showEntry.seasons[seasonKey];
+  if (!seasonEntry.watchedEpisodes.includes(episodeNumber)) seasonEntry.watchedEpisodes.push(episodeNumber);
+  saveTvShows(shows);
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+  maybeShowSeasonCompleteBanner(showId, seasonKey, seasonEntry);
+
+  const cardEl = btn.closest('.tv-continue-card');
+  cardEl.classList.add('tv-continue-loading');
+  const resolved = await resolveNextTvEpisode({
+    show: showEntry, seasonKey, seasonEntry,
+    needsNextSeasonCheck: seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes,
+  });
+  const container = document.getElementById('tv-continue-list');
+  if (!resolved) {
+    cardEl.remove();
+    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+  } else {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderTvContinueCard(resolved);
+    cardEl.replaceWith(wrapper.firstElementChild);
+  }
+});
+
+// Repli/dépliage de tout le widget — pour ne pas surcharger l'écran quand
+// plusieurs séries sont en cours. Préférence mémorisée pour rester repliée
+// d'une visite à l'autre si l'utilisateur le souhaite.
+document.getElementById('tv-continue-toggle').addEventListener('click', () => {
+  const list = document.getElementById('tv-continue-list');
+  const toggle = document.getElementById('tv-continue-toggle');
+  const collapsed = list.style.display === 'none';
+  list.style.display = collapsed ? '' : 'none';
+  toggle.setAttribute('aria-expanded', String(collapsed));
+  toggle.classList.toggle('collapsed', !collapsed);
+  localStorage.setItem('lbx_tv_continue_collapsed', collapsed ? '0' : '1');
+});
+if (localStorage.getItem('lbx_tv_continue_collapsed') === '1') {
+  document.getElementById('tv-continue-list').style.display = 'none';
+  document.getElementById('tv-continue-toggle').setAttribute('aria-expanded', 'false');
+  document.getElementById('tv-continue-toggle').classList.add('collapsed');
+}
+
+// ═══════════════════════════════════════════
+//  FICHE SÉRIE DÉTAILLÉE
+// ═══════════════════════════════════════════
+// Ouverte au tap sur une série (carte dans l'Historique). Même structure et
+// mécanique que la fiche film (voir 12-movie-detail.js) : squelette de
+// chargement, récupération à la demande, sections qui apparaissent en
+// cascade. Adaptée où le format série le demande — la vraie différence :
+// pas de "Ta note" unique, mais la progression par saison + note globale.
+
+const tdsEl = document.getElementById('tv-detail-sheet');
+const tdsContentEl = document.getElementById('tds-content');
+const tdsCloseBtn = document.getElementById('tds-close-btn');
+
+tdsContentEl.addEventListener('click', (e) => {
+  const trailerWrap = e.target.closest('.mds-trailer-wrap');
+  if (!trailerWrap || trailerWrap.querySelector('iframe')) return;
+  const key = trailerWrap.dataset.videoKey;
+  trailerWrap.innerHTML = `<iframe class="mds-trailer" src="https://www.youtube.com/embed/${key}?autoplay=1" title="Bande-annonce" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+});
+
+function buildTdsSkeleton() {
+  return `
+    <div class="mds-skeleton">
+      <div class="mds-skeleton-poster skeleton-bg"></div>
+      <div class="mds-skeleton-lines">
+        <div class="skeleton-text long skeleton-bg" style="height:18px;"></div>
+        <div class="skeleton-text short skeleton-bg"></div>
+      </div>
+    </div>
+    <div class="skeleton-text long skeleton-bg" style="margin-top:18px;"></div>
+    <div class="skeleton-text long skeleton-bg"></div>
+    <div class="skeleton-text short skeleton-bg"></div>
+  `;
+}
+
+function buildSeasonProgressionSection(data, localShow) {
+  const tmdbSeasons = (data.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
+  if (tmdbSeasons.length === 0) return '';
+
+  const avg = localShow ? computeShowAverageScore(localShow) : null;
+  const avgHtml = avg != null
+    ? `<div class="mds-personal-score">${avg.toFixed(1)}/10 <span class="mds-personal-stars">note globale</span></div>`
+    : `<div class="mds-row"><span class="mds-label">—</span><span>Pas encore notée</span></div>`;
+
+  const rowsHtml = tmdbSeasons.map(ts => {
+    const key = String(ts.season_number);
+    const localSeason = localShow?.seasons?.[key];
+    let statusHtml;
+    if (localSeason?.rating) {
+      statusHtml = `<span class="tds-season-status tds-season-rated">${localSeason.rating.score}/10</span>`;
+    } else if (localSeason) {
+      statusHtml = `<span class="tds-season-status">${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} ép.</span>`;
+    } else {
+      statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
+    }
+    return `
+      <details class="tds-season-details" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
+        <summary class="tds-season-progress-row">
+          <span>${escAttr(ts.name)}</span>
+          ${statusHtml}
+        </summary>
+        <div class="tds-season-episodes" data-loaded="false"></div>
+      </details>
+    `;
+  }).join('');
+
+  return `
+    <div class="mds-section mds-personal" style="animation-delay:.05s">
+      <div class="mds-section-title">Progression</div>
+      ${avgHtml}
+    </div>
+    <div class="mds-section" style="animation-delay:.08s">
+      <div class="mds-section-title">Détail par saison</div>
+      <div class="tds-season-progress-list">${rowsHtml}</div>
+    </div>
+  `;
+}
+
+function buildTdsContent(data, localShow) {
+  const posterUrl = tmdbImage(data.poster_path, 'w342');
+  const year = data.first_air_date ? data.first_air_date.slice(0, 4) : '';
+  const genres = (data.genres || []).map(g => g.name).join(', ');
+  function personLink(p) {
+    return `<span class="mds-person-link" data-person-id="${p.id}" data-person-name="${escAttr(p.name)}">${escAttr(p.name)}</span>`;
+  }
+  const creators = (data.created_by || []).map(personLink).join(', ');
+  const castList = (data.credits?.cast || []).slice(0, 5);
+  const castHtml = castList.map(c => escAttr(c.name)).join(', ');
+  const firstAirStr = data.first_air_date
+    ? new Date(data.first_air_date + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : 'Inconnue';
+  const statusLabels = { 'Returning Series': 'En cours', 'Ended': 'Terminée', 'Canceled': 'Annulée' };
+  const statusStr = statusLabels[data.status] || data.status || 'Inconnu';
+  const seasonCount = (data.seasons || []).filter(s => s.season_number > 0).length;
+
+  return `
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
+      <div class="mds-header-left">
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.name)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
+        ${localShow ? `<button type="button" class="mds-poster-change-btn" data-tv-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
+      </div>
+      <div class="mds-header-info">
+        <div class="mds-title" id="tds-title">${escAttr(data.name)}</div>
+        <div class="mds-meta">${[year, `${seasonCount} saison${seasonCount > 1 ? 's' : ''}`, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="tds-external-ratings"></div>
+        ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
+      </div>
+    </div>
+
+    ${!localShow ? `
+    <div class="mds-actions" style="animation-delay:.02s">
+      <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>
+    </div>
+    ` : ''}
+
+    ${buildSeasonProgressionSection(data, localShow)}
+
+    ${(() => {
+      const trailer = pickBestTrailer(data.videos?.results || []);
+      if (!trailer) return '';
+      return `
+      <div class="mds-section" style="animation-delay:.12s">
+        <div class="mds-section-title">Bande-annonce</div>
+        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.name)}">
+          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
+          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+      </div>`;
+    })()}
+
+    ${data.overview ? `
+      <div class="mds-section" style="animation-delay:.15s">
+        <div class="mds-section-title">Synopsis</div>
+        <div class="mds-overview" id="tds-overview">${escAttr(data.overview)}</div>
+        <button type="button" class="mds-overview-toggle" id="tds-overview-toggle">Lire la suite ▾</button>
+      </div>` : ''}
+
+    <div class="mds-section" style="animation-delay:.18s">
+      <div class="mds-section-title">Détails</div>
+      <div class="mds-row"><span class="mds-label">Première diffusion</span><span>${firstAirStr}</span></div>
+      <div class="mds-row"><span class="mds-label">Statut</span><span>${escAttr(statusStr)}</span></div>
+      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
+    </div>
+
+    ${(data.credits?.cast || []).length > 0 ? `
+      <div class="mds-section" style="animation-delay:.22s">
+        <div class="mds-section-title">Casting</div>
+        <div class="mds-cast-carousel" id="tds-cast-carousel"></div>
+      </div>` : ''}
+  `;
+}
+
+async function populateTdsExternalRatings(imdbId) {
+  const el = document.getElementById('tds-external-ratings');
+  if (!el || !imdbId) return;
+  try {
+    const res = await fetch(`/api/search?imdbId=${imdbId}`);
+    const data = await readApiJson(res);
+    const ratings = data.ratings || [];
+    if (ratings.length === 0) return;
+    const labels = { 'Internet Movie Database': 'IMDb', 'Rotten Tomatoes': 'RT', 'Metacritic': 'Metacritic' };
+    el.innerHTML = ratings
+      .filter(r => labels[r.Source])
+      .map(r => `<span class="mds-external-rating"><b>${labels[r.Source]}</b> ${escAttr(r.Value)}</span>`)
+      .join('');
+  } catch { /* silencieux : la note TMDb deja affichee suffit */ }
+}
+
+function setupTdsOverviewToggle() {
+  const overview = document.getElementById('tds-overview');
+  const toggle = document.getElementById('tds-overview-toggle');
+  if (!overview || !toggle) return;
+  requestAnimationFrame(() => {
+    if (overview.scrollHeight <= overview.clientHeight + 2) toggle.style.display = 'none';
+  });
+}
+
+function renderTdsCastCarousel(castArray) {
+  const outer = document.getElementById('tds-cast-carousel');
+  if (!outer) return;
+  const cast = castArray.filter(c => c.id).slice(0, 20);
+  if (cast.length === 0) return;
+
+  const itemsHtml = cast.map(actor => {
+    const photoUrl = tmdbImage(actor.profile_path, 'w185');
+    return `
+      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+        ${photoUrl
+          ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
+          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
+        <div class="mds-cast-name">${escAttr(actor.name)}</div>
+        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
+  // qu'il a parcouru l'équivalent d'une copie complète — même technique que
+  // la fiche film (voir renderCastCarousel).
+  outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
+  const track = outer.querySelector('.mds-cast-track');
+
+  outer.addEventListener('click', (e) => {
+    const item = e.target.closest('.mds-cast-item');
+    if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
+  });
+
+  const AUTO_SCROLL_SPEED = 0.3;
+  const RESUME_DELAY_MS = 3000;
+  let autoScrollPaused = false;
+  let resumeTimer = null;
+
+  function pauseThenScheduleResume() {
+    autoScrollPaused = true;
+    clearTimeout(resumeTimer);
+    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
+  }
+
+  function tick() {
+    if (!autoScrollPaused && tdsEl.classList.contains('open')) {
+      outer.scrollLeft += AUTO_SCROLL_SPEED;
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+    }
+    if (tdsEl.classList.contains('open')) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
+  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
+  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+}
+
+// Sauvegarde l'affiche choisie sur la série suivie localement — même geste
+// que applyChosenPoster côté film, mais écrit directement le fragment TMDb
+// brut (poster_path), déjà le format utilisé partout côté séries, plutôt
+// que de construire une URL complète comme les films en ont besoin.
+function applyChosenTvPoster(tmdbTvId, posterPath) {
+  const shows = loadTvShows();
+  const show = shows.find(s => String(s.tmdbTvId) === String(tmdbTvId));
+  if (!show) return 0;
+  show.poster_path = posterPath;
+  saveTvShows(shows);
+  return 1;
+}
+
+let tdsCurrentData = null;
+
+async function openTvDetailSheet(tmdbTvId) {
+  if (!tmdbTvId) return;
+  lastFocusedBeforeModal = document.activeElement;
+  tdsContentEl.innerHTML = buildTdsSkeleton();
+  tdsEl.classList.add('open');
+  tdsCloseBtn.focus();
+  const tdsBoxEl = tdsEl.querySelector('.mds-box');
+  if (tdsBoxEl) tdsBoxEl.scrollTop = 0;
+
+  try {
+    const res = await fetch(`/api/search?tvId=${tmdbTvId}`);
+    if (!res.ok) throw new Error('bad status');
+    const data = await readApiJson(res);
+    if (!data || !data.name) throw new Error('no data');
+
+    const localShow = loadTvShows().find(s => String(s.tmdbTvId) === String(tmdbTvId));
+    tdsContentEl.innerHTML = buildTdsContent(data, localShow);
+    tdsCurrentData = data;
+    renderTdsCastCarousel(data.credits?.cast || []);
+    const tdsPosterUrl = tmdbImage(data.poster_path, 'w342');
+    applyPosterAccent(tdsPosterUrl, tdsEl.querySelector('.mds-box'));
+    setupTdsOverviewToggle();
+    setupStickyHeader(tdsEl);
+    if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
+    wireSeasonDetailsToggles();
+  } catch (e) {
+    tdsCurrentData = null;
+    tdsContentEl.innerHTML = `
+      <div class="error-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M1 1l22 22"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <div class="error-state-msg">Impossible de charger les détails de la série. Vérifie ta connexion.</div>
+        <button type="button" class="error-retry-btn" data-retry-tv-id="${escAttr(String(tmdbTvId))}">Réessayer</button>
+      </div>`;
+  }
+}
+
+// ── Grille d'épisodes, uniquement dans la fiche série ──
+// Chargée à la demande au premier dépliage d'une saison (pas toutes en même
+// temps à l'ouverture de la fiche) — même mécanique de coche/rattrapage que
+// ce qui existait avant dans Noter, juste déplacée ici.
+
+function wireSeasonDetailsToggles() {
+  tdsContentEl.querySelectorAll('.tds-season-details').forEach(details => {
+    details.addEventListener('toggle', () => {
+      if (!details.open) return;
+      const episodesContainer = details.querySelector('.tds-season-episodes');
+      if (episodesContainer.dataset.loaded === 'true') return;
+      loadAndRenderSeasonEpisodes(details, episodesContainer);
+    });
+  });
+}
+
+async function loadAndRenderSeasonEpisodes(detailsEl, container) {
+  const showId = tdsCurrentData.id;
+  const seasonNumber = detailsEl.dataset.seasonNumber;
+  container.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
+  try {
+    const data = await fetch(`/api/search?tvSeasonShowId=${showId}&tvSeasonNumber=${seasonNumber}`).then(readApiJson);
+    const episodes = data.episodes || [];
+    if (episodes.length === 0) {
+      container.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
+      return;
+    }
+    renderTdsEpisodeChecklist(container, showId, String(seasonNumber), detailsEl.dataset.seasonName, episodes);
+    container.dataset.loaded = 'true';
+  } catch (err) {
+    container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
+  }
+}
+
+function renderTdsEpisodeChecklist(container, showId, seasonKey, seasonName, episodes) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const watched = seasonEntry ? seasonEntry.watchedEpisodes : [];
+
+  const rowsHtml = episodes.map(ep => {
+    const isWatched = watched.includes(ep.episode_number);
+    const meta = [
+      ep.air_date ? new Date(ep.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
+      ep.runtime ? `${ep.runtime} min` : '',
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="tv-episode-row" data-episode="${ep.episode_number}">
+        <button type="button" class="tv-episode-check${isWatched ? ' watched' : ''}" data-episode="${ep.episode_number}" aria-pressed="${isWatched}" aria-label="Marquer l'épisode ${ep.episode_number} comme ${isWatched ? 'non vu' : 'vu'}">
+          <svg class="tv-episode-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+        </button>
+        <div class="tv-episode-info">
+          <div class="tv-episode-title">${ep.episode_number}. ${escAttr(ep.name || 'Sans titre')}</div>
+          ${meta ? `<div class="tv-episode-meta">${escAttr(meta)}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="tds-episode-list">${rowsHtml}</div>
+    <button type="button" class="mds-action-btn primary tds-rate-now-btn" style="display:none;" data-show-id="${showId}" data-season-key="${seasonKey}">Noter cette saison</button>
+  `;
+
+  container.querySelectorAll('.tv-episode-check').forEach(btn => {
+    btn.addEventListener('click', () => onTdsEpisodeCheckClick(showId, seasonKey, seasonName, episodes.length, Number(btn.dataset.episode), container));
+  });
+
+  updateTdsRateButtonVisibility(container, showId, seasonKey);
+}
+
+function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisodes, episodeNumber, container) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  if (!showEntry) return;
+  if (!showEntry.seasons[seasonKey]) {
+    // Ne devrait normalement pas arriver (la saison est censée déjà exister
+    // dès qu'elle a été "commencée" depuis Noter), créée quand même par
+    // sécurité plutôt que de planter.
+    showEntry.seasons[seasonKey] = { seasonName, watchedEpisodes: [], totalEpisodes };
+  }
+  const seasonEntry = showEntry.seasons[seasonKey];
+  const already = seasonEntry.watchedEpisodes.includes(episodeNumber);
+
+  const applyState = (num, watched) => {
+    const btn = container.querySelector(`.tv-episode-check[data-episode="${num}"]`);
+    if (!btn) return;
+    btn.classList.toggle('watched', watched);
+    btn.setAttribute('aria-pressed', String(watched));
+  };
+
+  if (already) {
+    seasonEntry.watchedEpisodes = seasonEntry.watchedEpisodes.filter(n => n !== episodeNumber);
+    saveTvShows(shows);
+    applyState(episodeNumber, false);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+    return;
+  }
+
+  const maxWatched = seasonEntry.watchedEpisodes.length ? Math.max(...seasonEntry.watchedEpisodes) : 0;
+  const skipsAhead = episodeNumber > maxWatched + 1;
+  const markWatched = (numbers) => {
+    for (const n of numbers) if (!seasonEntry.watchedEpisodes.includes(n)) seasonEntry.watchedEpisodes.push(n);
+    saveTvShows(shows);
+    for (const n of numbers) applyState(n, true);
+    updateTdsRateButtonVisibility(container, showId, seasonKey);
+    updateSeasonProgressRowStatus(showId, seasonKey);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+  };
+
+  if (skipsAhead) {
+    const from = maxWatched + 1;
+    const proposeAll = confirm(`Marquer aussi les épisodes ${from} à ${episodeNumber - 1} comme vus ?`);
+    const toMark = [];
+    if (proposeAll) { for (let n = from; n <= episodeNumber; n++) toMark.push(n); }
+    else toMark.push(episodeNumber);
+    markWatched(toMark);
+  } else {
+    markWatched([episodeNumber]);
+  }
+}
+
+function updateTdsRateButtonVisibility(container, showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  const btn = container.querySelector('.tds-rate-now-btn');
+  if (!btn || !seasonEntry) return;
+  const isComplete = seasonEntry.totalEpisodes > 0 && seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes;
+  btn.style.display = isComplete ? 'block' : 'none';
+}
+
+// Met à jour le badge visible dans le <summary> (X/Y ép.) sans reconstruire
+// toute la fiche — seulement si la saison n'est pas déjà notée (une note
+// existante prime toujours sur le décompte d'épisodes dans l'affichage).
+function updateSeasonProgressRowStatus(showId, seasonKey) {
+  const shows = loadTvShows();
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+  const seasonEntry = showEntry?.seasons?.[seasonKey];
+  if (!seasonEntry || seasonEntry.rating) return;
+  const details = tdsContentEl.querySelector(`.tds-season-details[data-season-number="${seasonKey}"]`);
+  const statusEl = details?.querySelector('.tds-season-status');
+  if (statusEl) statusEl.textContent = `${seasonEntry.watchedEpisodes.length}/${seasonEntry.totalEpisodes} ép.`;
+}
+
+function closeTvDetailSheet() {
+  closeModal(tdsEl);
+}
+
+tdsCloseBtn.addEventListener('click', closeTvDetailSheet);
+tdsEl.addEventListener('click', (e) => {
+  if (e.target === tdsEl) { closeTvDetailSheet(); return; }
+
+  const personLinkEl = e.target.closest('.mds-person-link');
+  if (personLinkEl) {
+    openPersonDetailSheet(personLinkEl.dataset.personId, personLinkEl.dataset.personName);
+    return;
+  }
+
+  const retryBtn = e.target.closest('[data-retry-tv-id]');
+  if (retryBtn) { openTvDetailSheet(retryBtn.dataset.retryTvId); return; }
+
+  const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
+  if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
+
+  // "Commencer la série" : crée le suivi de la première saison directement
+  // (sans passer par Noter), l'ajoute au widget "En cours", puis recharge
+  // la fiche sur place pour montrer la progression qui vient de démarrer.
+  if (e.target.closest('#tds-start-btn')) {
+    const data = tdsCurrentData;
+    if (!data) return;
+    const seasons = (data.seasons || [])
+      .filter(s => s.season_number > 0 && s.episode_count > 0)
+      .sort((a, b) => a.season_number - b.season_number);
+    const first = seasons[0];
+    if (!first) return;
+    const shows = loadTvShows();
+    let showEntry = shows.find(s => String(s.tmdbTvId) === String(data.id));
+    if (!showEntry) {
+      const genreStr = (data.genres || []).map(g => g.name).join(', ');
+      showEntry = { tmdbTvId: data.id, title: data.name, poster_path: data.poster_path, genre: genreStr, seasons: {} };
+      shows.push(showEntry);
+    }
+    const seasonKey = String(first.season_number);
+    if (!showEntry.seasons[seasonKey]) {
+      showEntry.seasons[seasonKey] = { seasonName: first.name, watchedEpisodes: [], totalEpisodes: first.episode_count };
+    }
+    saveTvShows(shows);
+    showToast(`"${data.name} — ${first.name}" ajoutée à En cours`);
+    if (typeof renderTvContinueList === 'function') renderTvContinueList();
+    openTvDetailSheet(data.id);
+    return;
+  }
+
+  // Bouton "Noter cette saison", affiché une fois tous les épisodes cochés
+  // dans la grille — même navigation que rouvrir depuis l'Historique.
+  const rateNowBtn = e.target.closest('.tds-rate-now-btn');
+  if (rateNowBtn && tdsCurrentData) {
+    const showId = rateNowBtn.dataset.showId;
+    const seasonKey = rateNowBtn.dataset.seasonKey;
+    const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
+    if (show && show.seasons[seasonKey]) {
+      const seasonData = show.seasons[seasonKey];
+      closeTvDetailSheet();
+      switchMobileNav('rating');
+      setMediaType('tv');
+      selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+      document.getElementById('tv-search').value = show.title;
+      document.getElementById('tv-season-picker').style.display = 'none';
+      selectSeason({
+        number: seasonKey, name: seasonData.seasonName,
+        episodeCount: seasonData.totalEpisodes, poster: show.poster_path,
+      });
+    }
+    return;
+  }
+});
+
+initSwipeToClose(tdsEl, closeTvDetailSheet);

@@ -41,13 +41,14 @@ function escAttr(str) {
 // vide si path est absent, pour que les appelants gardent leur `? :` habituel
 // sans avoir à vérifier deux fois.
 // Ludex 2.0 : la composition "entrée vedette + liste groupée par mois +
-// grille d'affiches watchlist" est spécifique au thème par défaut (voir
-// "Vers Ludex 2.0" §01 — les 6 autres thèmes gardent leur composition
-// d'origine). Un seul point de vérité, partagé par l'historique, la
+// grille d'affiches watchlist" est désormais appliquée aux 6 thèmes
+// (décision confirmée : compositions identiques partout, seules les
+// couleurs/polices changent déjà par thème via les tokens) — nom conservé
+// pour ne pas devoir toucher chaque site d'appel, mais ne dépend plus du
+// thème actif. Un seul point de vérité, partagé par l'historique, la
 // watchlist et l'écran Noter.
 function isDefaultComposition() {
-  const t = document.documentElement.dataset.theme;
-  return !t || t === 'default';
+  return true;
 }
 
 function tmdbImage(path, size = 'w185') {

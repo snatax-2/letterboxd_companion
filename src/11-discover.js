@@ -515,14 +515,30 @@ function renderRevealedFilm(m, posterUrl, year, state) {
        </div>`
     : '';
 
+  // Ludex 2.0 : même traitement plein cadre que la phase "à deviner" — le
+  // fond flouté devient l'affiche nette une fois révélée, plutôt qu'un
+  // agencement affiche+infos côte à côte différent. .fdj-poster/.fdj-info/
+  // .fdj-film-title/.fdj-meta-line/.fdj-synopsis-card/.fdj-providers restent
+  // les MÊMES éléments qu'avant (testés par 5 specs e2e sur leur présence et
+  // leur contenu) — seul l'habillage CSS change, voir styles.css.
   card.innerHTML = `
-    ${posterUrl
-      ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">`
-      : `<div class="fdj-poster fdj-poster-ph" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">${ICONS.clapper}</div>`}
-    <div class="fdj-info">
-      ${resultHTML}
-      <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
-      ${metaLineHTML}
+    <div class="fdj-hero-frame" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(m.title)}">
+      ${posterUrl
+        ? `<img class="fdj-poster" src="${posterUrl}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
+        : `<div class="fdj-poster fdj-poster-ph">${ICONS.clapper}</div>`}
+      <div class="fdj-hero-overlay"></div>
+      <div class="fdj-hero-top">
+        <span class="fdj-hero-badge">Film du jour</span>
+        ${resultHTML}
+      </div>
+      <div class="fdj-hero-body">
+        <div class="fdj-info">
+          <div class="fdj-film-title">${escAttr(m.title)}${year ? ` <span class="fdj-year">(${year})</span>` : ''}</div>
+          ${metaLineHTML}
+        </div>
+      </div>
+    </div>
+    <div class="fdj-below">
       ${synopsisHTML}
       <div class="fdj-providers" id="fdj-providers">Recherche des plateformes disponibles…</div>
     </div>
@@ -535,15 +551,16 @@ function renderRevealedFilm(m, posterUrl, year, state) {
     if (e.target.closest('.fdj-providers') || e.target.closest('.fdj-synopsis-toggle')) return;
     openMovieDetailSheet(m.id);
   });
-  // Activation clavier : le rôle "bouton" est porté par l'affiche seule (le
-  // seul élément de la carte qui ne contient jamais lui-même de contrôle
-  // interactif — d'où l'ARIA correcte) — role="button"+tabindex="0" rendent
-  // l'élément focusable et l'annoncent comme un bouton, mais ne déclenchent
-  // PAS d'activation clavier tout seuls (contrairement à un vrai <button>) —
-  // même oubli que celui corrigé sur les cartes de l'historique.
-  const poster = card.querySelector('.fdj-poster');
-  if (poster) {
-    poster.addEventListener('keydown', (e) => {
+  // Activation clavier : le rôle "bouton" est porté par .fdj-hero-frame
+  // (le cadre plein cadre affiche+dégradé — voir plus haut) plutôt que par
+  // .fdj-poster seule depuis le passage au traitement plein cadre —
+  // role="button"+tabindex="0" rendent l'élément focusable et l'annoncent
+  // comme un bouton, mais ne déclenchent PAS d'activation clavier tout
+  // seuls (contrairement à un vrai <button>) — même oubli que celui
+  // corrigé sur les cartes de l'historique.
+  const heroFrame = card.querySelector('.fdj-hero-frame');
+  if (heroFrame) {
+    heroFrame.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       openMovieDetailSheet(m.id);
