@@ -482,6 +482,17 @@ async function retrofitMissingTvGenres() {
   if (historyMediaFilter === 'tv') renderTvHistory();
 }
 
+// Ludex 2.0 : date la plus récente parmi les saisons NOTÉES d'une série —
+// partagée entre le tri "Récents" et le regroupement mensuel de
+// renderTvHistory() (même esprit que monthKeyOf() côté films,
+// 06a-history-list.js), pour ne calculer cette logique qu'à un seul endroit.
+function mostRecentRatingDate(show) {
+  return Object.values(show.seasons || {}).reduce((max, se) => {
+    const d = se.rating?.date || '';
+    return d > max ? d : max;
+  }, '');
+}
+
 function getSortedTvShows() {
   const shows = loadTvShows();
   let s = shows;
@@ -503,11 +514,7 @@ function getSortedTvShows() {
   if (sortOrder === 'title')      return [...s].sort((a, b) => a.title.localeCompare(b.title));
   // "Récents" : dernière saison mise à jour (notée ou suivie), la plus
   // récente d'abord — même esprit que le tri "Récents" des films.
-  const lastUpdate = (sh) => Object.values(sh.seasons || {}).reduce((max, se) => {
-    const d = se.rating?.date || '';
-    return d > max ? d : max;
-  }, '');
-  return [...s].sort((a, b) => lastUpdate(b).localeCompare(lastUpdate(a)));
+  return [...s].sort((a, b) => mostRecentRatingDate(b).localeCompare(mostRecentRatingDate(a)));
 }
 
 // Ludex 2.0 : vedette "dernière série notée" côté Séries — même
@@ -575,7 +582,59 @@ function renderTvHistory() {
     return;
   }
 
-  container.innerHTML = `<div class="hist-grid">${shows.map(renderTvShowCard).join('')}</div>`;
+  // Ludex 2.0 : m\u00eame affichage que les films \u2014 s\u00e9paration par mois, note
+  // moyenne et nombre de s\u00e9ries par mois (voir renderHistory(),
+  // 06a-history-list.js). Une s\u00e9rie peut avoir des saisons not\u00e9es \u00e0 des
+  // dates diff\u00e9rentes ; class\u00e9e selon la date de sa saison la PLUS
+  // R\u00c9CEMMENT not\u00e9e (mostRecentRatingDate(), juste au-dessus \u2014 la m\u00eame
+  // logique d\u00e9j\u00e0 utilis\u00e9e par le tri "R\u00e9cents"), jamais dupliqu\u00e9e entre
+  // plusieurs mois. Les s\u00e9ries sans AUCUNE saison not\u00e9e (juste suivies) vont
+  // dans un groupe \u00e0 part, en tout dernier \u2014 aucune date n'existe pour les
+  // classer ailleurs.
+  const groupByMonth = isDefaultComposition() && sortOrder === 'date';
+  const groups = [];
+  if (groupByMonth) {
+    const byKey = new Map();
+    let unratedGroup = null;
+    shows.forEach(show => {
+      const d = mostRecentRatingDate(show);
+      if (!d) {
+        if (!unratedGroup) { unratedGroup = { key: null, items: [] }; }
+        unratedGroup.items.push(show);
+        return;
+      }
+      const key = monthKeyOf({ date: d });
+      if (!byKey.has(key)) { const g = { key, items: [] }; byKey.set(key, g); groups.push(g); }
+      byKey.get(key).items.push(show);
+    });
+    if (unratedGroup) groups.push(unratedGroup);
+  } else {
+    groups.push({ key: null, items: shows });
+  }
+
+  const isFeaturedFn = sh => {
+    const avg = computeShowAverageScore(sh);
+    return !!sh.liked || (avg != null && avg >= 8.5);
+  };
+
+  container.innerHTML = '';
+  groups.forEach(group => {
+    if (groupByMonth) {
+      const sep = document.createElement('div');
+      sep.className = 'hist-month-sep';
+      const rated = group.items.map(sh => computeShowAverageScore(sh)).filter(v => v != null);
+      const avg = rated.length > 0 ? (rated.reduce((a, b) => a + b, 0) / rated.length).toFixed(1) : null;
+      const label = group.key ? escAttr(monthLabelOf(group.key)) : 'S\u00e9ries pas encore not\u00e9es';
+      sep.innerHTML = `<span class="hist-month-label">${label}</span><span class="hist-month-recap">${group.items.length} s\u00e9rie${group.items.length > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
+      container.appendChild(sep);
+    }
+    const gridEl = document.createElement('div');
+    gridEl.className = 'hist-grid';
+    container.appendChild(gridEl);
+
+    const tiers = computeFeaturedTiers(group.items, isFeaturedFn);
+    gridEl.innerHTML = group.items.map((sh, i) => renderTvShowCard(sh, tiers[i])).join('');
+  });
 
   container.querySelectorAll('.hist-grid-card[data-show-id]').forEach((cardEl) => {
     const show = shows.find(s => String(s.tmdbTvId) === cardEl.dataset.showId);
@@ -655,7 +714,7 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
 // 19-tv-detail.js), qui affichait déjà la progression par saison mais sans
 // ces deux actions avant ce changement. Un tap ouvre directement la fiche —
 // plus de repli "tout gérer depuis la grille".
-function renderTvShowCard(show) {
+function renderTvShowCard(show, tier) {
   const avg = computeShowAverageScore(show);
   const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
   const seasonsWithProgress = seasons.filter(([, s]) => s.totalEpisodes > 0);
@@ -663,20 +722,21 @@ function renderTvShowCard(show) {
   const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
-  const isHighScore = avg != null && avg >= 8.5;
-  const isFeatured = !!show.liked || isHighScore;
+  const isFeatured = tier !== 'normal';
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les
-  // cartes vedettes 2×2 ne demande donc qu'un paramètre différent ici, pas
-  // de substitution de chaîne comme côté films.
-  const posterUrl = tmdbImage(show.poster_path, isFeatured ? 'w342' : 'w154');
+  // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
+  // substitution de chaîne comme côté films. Même correspondance palier→
+  // taille que renderHistory() (06a-history-list.js), gardée cohérente.
+  const POSTER_SIZE_BY_TIER = { pair: 'w342', isolated: 'w342', banner: 'w500' };
+  const posterUrl = tmdbImage(show.poster_path, POSTER_SIZE_BY_TIER[tier] || 'w154');
 
   const imgHtml = posterUrl
     ? `<img class="hist-grid-poster" src="${posterUrl}" alt="Affiche de ${escAttr(show.title)}" loading="lazy" decoding="async">`
     : `<div class="hist-grid-poster-ph">${ICONS.tv || ICONS.clapper}</div>`;
 
   return `
-    <div class="hist-item hist-grid-card${isFeatured ? ' hist-grid-card-featured' : ''}" data-show-id="${show.tmdbTvId}">
+    <div class="hist-item hist-grid-card${isFeatured ? ` hist-grid-card-${tier}` : ''}" data-show-id="${show.tmdbTvId}">
       <button type="button" class="tv-show-card-open-btn hist-item-open" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
         ${imgHtml}
       </button>

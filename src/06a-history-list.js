@@ -226,7 +226,6 @@ function renderHistory() {
   renderHistoryHero(sorted);
 
   const groupByMonth = isDefaultComposition() && sortOrder === 'date';
-  let lastMonthKey = null;
   // Cascade d'entr\u00e9e r\u00e9serv\u00e9e au tout premier affichage R\u00c9EL de l'onglet
   // Historique (pas un rendu d\u00e9clench\u00e9 en arri\u00e8re-plan par renderAll() au
   // d\u00e9marrage pendant qu'un autre onglet est affich\u00e9 \u2014 l'animation serait
@@ -236,92 +235,98 @@ function renderHistory() {
   const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
   if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
 
-  // Ludex 2.0 : r\u00e9cap mensuel (X films, moyenne) \u2014 calcul\u00e9 une fois sur
-  // l'ensemble affich\u00e9 (sorted, donc d\u00e9j\u00e0 pass\u00e9 par les filtres actifs),
-  // pas re-parcouru \u00e0 chaque s\u00e9parateur.
-  const monthStats = {};
+  // Ludex 2.0 : les items sont d'abord regroup\u00e9s par mois (ou un seul
+  // groupe unique si le tri/les filtres emp\u00eachent le d\u00e9coupage mensuel),
+  // AVANT tout rendu \u2014 n\u00e9cessaire pour que computeFeaturedTiers() (voir
+  // 03b-pure-logic.js) puisse d\u00e9tecter les coups de c\u0153ur cons\u00e9cutifs \u00e0
+  // l'int\u00e9rieur d'un m\u00eame mois, jamais \u00e0 cheval entre deux mois diff\u00e9rents
+  // (deux conteneurs .hist-grid s\u00e9par\u00e9s, une \u00ab suite \u00bb qui les enjambe
+  // n'existe pas visuellement).
+  const groups = [];
   if (groupByMonth) {
+    let currentKey = null, currentGroup = null;
     sorted.forEach(item => {
       const key = monthKeyOf(item);
-      const s = (monthStats[key] = monthStats[key] || { count: 0, sum: 0 });
-      s.count++;
-      s.sum += parseFloat(item.score) || 0;
+      if (key !== currentKey) {
+        currentGroup = { key, items: [] };
+        groups.push(currentGroup);
+        currentKey = key;
+      }
+      currentGroup.items.push(item);
     });
+  } else {
+    groups.push({ key: null, items: sorted });
   }
 
+  const isFeaturedFn = item => !!item.liked || parseFloat(item.score) >= 8.5;
+  // Ludex 2.0 : taille d'affiche demand\u00e9e selon le palier \u2014 une carte plus
+  // large a besoin de plus de pixels sources pour rester nette. w185 (normal)
+  // \u00e9tait d\u00e9j\u00e0 la taille enregistr\u00e9e \u00e0 la sauvegarde ; les trois paliers
+  // vedette demandent explicitement plus, via un remplacement de segment
+  // dans l'URL d\u00e9j\u00e0 stock\u00e9e (aucune migration de donn\u00e9es n\u00e9cessaire,
+  // fonctionne aussi sur les films not\u00e9s avant ce changement).
+  const POSTER_SIZE_BY_TIER = { pair: 'w342', isolated: 'w342', banner: 'w500' };
+
   container.innerHTML = '';
-  let gridEl = null; // conteneur .hist-grid courant \u2014 recr\u00e9\u00e9 \u00e0 chaque nouveau mois
-  sorted.forEach((item, i) => {
-    const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
+  let flatIndex = 0; // pour le d\u00e9lai de cascade \u2014 continu \u00e0 travers tous les groupes, pas remis \u00e0 z\u00e9ro \u00e0 chaque mois
+  groups.forEach(group => {
+    if (group.key) {
+      const sep = document.createElement('div');
+      sep.className = 'hist-month-sep';
+      const avg = group.items.length > 0
+        ? (group.items.reduce((sum, it) => sum + (parseFloat(it.score) || 0), 0) / group.items.length).toFixed(1)
+        : null;
+      sep.innerHTML = `<span class="hist-month-label">${escAttr(monthLabelOf(group.key))}</span><span class="hist-month-recap">${group.items.length} film${group.items.length > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
+      if (cascadeEntrance) sep.classList.add('hist-cascade-in');
+      container.appendChild(sep);
+    }
+    const gridEl = document.createElement('div');
+    gridEl.className = 'hist-grid';
+    container.appendChild(gridEl);
 
-    if (groupByMonth) {
-      const key = monthKeyOf(item);
-      if (key !== lastMonthKey) {
-        const sep = document.createElement('div');
-        sep.className = 'hist-month-sep';
-        const stats = monthStats[key];
-        const avg = stats.count > 0 ? (stats.sum / stats.count).toFixed(1) : null;
-        sep.innerHTML = `<span class="hist-month-label">${escAttr(monthLabelOf(key))}</span><span class="hist-month-recap">${stats.count} film${stats.count > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
-        if (cascadeEntrance) sep.classList.add('hist-cascade-in');
-        container.appendChild(sep);
-        lastMonthKey = key;
-        gridEl = document.createElement('div');
-        gridEl.className = 'hist-grid';
-        container.appendChild(gridEl);
+    const tiers = computeFeaturedTiers(group.items, isFeaturedFn);
+    group.items.forEach((item, idxInGroup) => {
+      const tier = tiers[idxInGroup];
+      const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
+
+      const scoreNum = parseFloat(item.score);
+      let scoreColor = 'var(--red)';
+      if (scoreNum >= 7.5) scoreColor = 'var(--green)';
+      else if (scoreNum >= 5.0) scoreColor = 'var(--gold)';
+      const isFeatured = tier !== 'normal';
+
+      const div = document.createElement('div');
+      div.className = 'hist-item hist-grid-card' + (isFeatured ? ` hist-grid-card-${tier}` : '');
+      div.dataset.idx = realIdx;
+      div.dataset.savedAt = item.savedAt || '';
+      div.dataset.titleKey = item.title.toLowerCase();
+      if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+        div.classList.add('hist-item-entering');
+      } else if (cascadeEntrance) {
+        div.classList.add('hist-cascade-in');
+        div.style.animationDelay = `${Math.min(flatIndex, 20) * 25}ms`;
       }
-    } else if (!gridEl) {
-      // Genre/recherche/coups de c\u0153ur actifs, ou tri diff\u00e9rent de "R\u00e9cents" :
-      // pas de s\u00e9parateurs de mois, mais la grille reste \u2014 un seul bloc continu.
-      gridEl = document.createElement('div');
-      gridEl.className = 'hist-grid';
-      container.appendChild(gridEl);
-    }
+      flatIndex++;
 
-    const scoreNum = parseFloat(item.score);
-    let scoreColor = 'var(--red)';
-    if (scoreNum >= 7.5) scoreColor = 'var(--green)';
-    else if (scoreNum >= 5.0) scoreColor = 'var(--gold)';
-    const isHighScore = scoreNum >= 8.5;
-    // Ludex 2.0 : traitement "vedette" (2\u00d72, bordure) pour un coup de c\u0153ur
-    // OU une note \u2265 8.5 \u2014 les deux crit\u00e8res d\u00e9j\u00e0 utilis\u00e9s c\u00f4t\u00e9 D\u00e9couvrir/
-    // Watchlist pour ce m\u00eame genre de mise en avant, gard\u00e9s coh\u00e9rents ici.
-    const isFeatured = !!item.liked || isHighScore;
+      const targetSize = POSTER_SIZE_BY_TIER[tier];
+      const posterSrc = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
+      const imgHtml = posterSrc
+        ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
+        : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
 
-    const div = document.createElement('div');
-    div.className = 'hist-item hist-grid-card' + (isFeatured ? ' hist-grid-card-featured' : '');
-    div.dataset.idx = realIdx;
-    div.dataset.savedAt = item.savedAt || '';
-    div.dataset.titleKey = item.title.toLowerCase();
-    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
-      div.classList.add('hist-item-entering');
-    } else if (cascadeEntrance) {
-      div.classList.add('hist-cascade-in');
-      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
-    }
-
-    // Ludex 2.0 : les affiches sont enregistrées en w185 (pensé pour une
-    // case de grille normale) — une carte vedette 2×2 fait le double de
-    // largeur, l'affiche s'étire donc et perd en netteté. Remplace juste
-    // le segment de taille dans l'URL déjà stockée plutôt que de changer
-    // ce qui est sauvegardé (aucune migration nécessaire, fonctionne aussi
-    // sur les films déjà notés avant ce correctif).
-    const posterSrc = isFeatured && item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
-    const imgHtml = posterSrc
-      ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
-      : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
-
-    div.innerHTML = `
-      <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-        ${imgHtml}
-      </div>
-      <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
-      ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
-      <div class="hist-actions">
-        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
-        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
-      </div>`;
-    gridEl.appendChild(div);
-    applyPosterAccent(item.poster, div);
+      div.innerHTML = `
+        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${imgHtml}
+        </div>
+        <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
+        ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
+        <div class="hist-actions">
+          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
+        </div>`;
+      gridEl.appendChild(div);
+      applyPosterAccent(item.poster, div);
+    });
   });
   window._justSavedHistoryTitle = null;
   if (window.reapplyArmedHistoryState) window.reapplyArmedHistoryState(capturedArmedState);

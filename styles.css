@@ -429,24 +429,32 @@
      plutôt qu'au tap : plus sûr sur tactile qu'un survol qui n'existe pas
      vraiment sur mobile. */
   .hist-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    /* Ludex 2.0 : grille base 6 (au lieu de 3) — permet des largeurs de
+       50%/66%/100% en plus du 33% normal, avec des nombres entiers de
+       sous-colonnes à chaque fois (3/6, 4/6, 6/6) plutôt que la fraction
+       "1,5 colonne sur 3" qu'un simple 66% aurait demandé. Une carte
+       normale occupe 2 de ces 6 sous-colonnes — visuellement identique à
+       avant (33%), juste exprimé plus finement. grid-auto-rows:auto (pas
+       de hauteur imposée) : chaque ligne s'adapte à ce qu'elle contient,
+       aucune affiche n'a besoin d'être étirée ou recadrée pour correspondre
+       à une hauteur qui ne lui va pas — vérifié par le calcul : une carte
+       à 66% en vraie proportion 2:3 fait exactement la hauteur de deux
+       cartes normales empilées, sans avoir besoin de forcer quoi que ce
+       soit. Voir Ludex_Historique_Grille_Base6 (document de spécification)
+       et computeFeaturedTiers() dans 03b-pure-logic.js pour la répartition. */
+    display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: auto; gap: 8px;
     margin-bottom: 4px;
-    /* Ludex 2.0 : une carte vedette (2×2, voir .hist-grid-card-featured
-       plus bas) qui tombe en position 3 d'une ligne à 3 colonnes ne peut
-       pas y démarrer — le placement automatique la renvoie entièrement à
-       la ligne suivante, laissant un trou vide non comblé sur la ligne
-       d'avant. "dense" autorise le navigateur à piocher une carte NORMALE
-       plus loin dans la liste pour combler ce trou plutôt que le laisser
-       vide — au prix d'un léger désordre chronologique possible, mais
-       toujours contenu à l'intérieur d'un même mois (chaque mois a son
-       propre conteneur .hist-grid séparé, jamais partagé avec un autre —
-       voir renderHistory(), 06a-history-list.js) : la portée du décalage
-       reste donc toujours de quelques semaines maximum, jamais plus. */
+    /* "dense" reste un filet de sécurité pour les cas limites que
+       computeFeaturedTiers() ne couvre pas explicitement (ex: une vedette
+       isolée suivie d'un seul film normal, pas deux) — plus la même
+       nécessité qu'avant maintenant que les paliers eux-mêmes évitent la
+       plupart des trous, mais ne coûte rien de le garder en renfort. */
     grid-auto-flow: dense;
   }
   .hist-grid-card {
     position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 2/3;
     background: var(--surface2); cursor: pointer;
+    grid-column: span 2; /* palier "normal", 33% — 2 des 6 sous-colonnes */
   }
   .hist-grid-card .hist-item-open { display: block; width: 100%; height: 100%; }
   .hist-grid-poster, .hist-grid-poster-ph {
@@ -461,22 +469,31 @@
     padding: 3px 6px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
     border: 1px solid rgba(255,255,255,0.08); font-family: var(--font-mono);
   }
-  /* Traitement vedette : coup de cœur OU note ≥ 8.5 (voir renderHistory(),
-     06a-history-list.js) — span 2×2 façon maquette, bordure + lueur douce
-     plutôt qu'un simple contour pour vraiment sauter aux yeux dans la
-     grille, pas juste "légèrement différent". */
-  .hist-grid-card-featured {
-    grid-column: span 2; grid-row: span 2;
+  /* Traitement vedette partagé par les trois paliers (isolé/paire/bannière,
+     voir juste en dessous) — bordure + lueur douce + dégradé + badge,
+     factorisés ici une seule fois plutôt que trois fois identiques. */
+  .hist-grid-card-isolated, .hist-grid-card-pair, .hist-grid-card-banner {
     border: 2px solid var(--gold); box-shadow: 0 0 16px color-mix(in srgb, var(--gold) 35%, transparent);
   }
-  /* Ludex 2.0 : dégradé affiné — partait sec du noir opaque au transparent
-     sur 45% de la hauteur ; une transition plus longue et plus douce évite
-     l'effet "bandeau collé" et laisse mieux respirer l'affiche derrière,
-     tout en gardant le texte du badge parfaitement lisible en bas. */
-  .hist-grid-card-featured::after {
+  .hist-grid-card-isolated::after, .hist-grid-card-pair::after, .hist-grid-card-banner::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
     background: linear-gradient(to top, rgba(14,17,22,0.88) 0%, rgba(14,17,22,0.5) 30%, transparent 65%);
   }
+  /* Palier "isolé" — 66% de large (4/6), 2 lignes de haut : reprend
+     l'ancien .hist-grid-card-featured tel quel, juste renommé pour
+     s'aligner sur le vocabulaire des trois nouveaux paliers. */
+  .hist-grid-card-isolated { grid-column: span 4; grid-row: span 2; }
+  /* Palier "paire" — deux coups de cœur consécutifs, 50% chacun (3/6),
+     UNE seule ligne de haut (pas deux) : à cette largeur, une vraie
+     proportion 2:3 est déjà bien assez haute — inutile de forcer un
+     grid-row:span 2 en plus, ça les rendrait disproportionnellement
+     hautes et étroites par rapport aux deux autres paliers. */
+  .hist-grid-card-pair { grid-column: span 3; }
+  /* Palier "bannière" — pleine largeur (6/6), pour un impair qui absorbe
+     le surplus ou une vedette isolée en toute fin de mois (rien à combler
+     après elle). Une seule ligne, mais très grande vu la largeur. */
+  .hist-grid-card-banner { grid-column: span 6; }
+
   .hist-grid-featured-badge {
     position: absolute; bottom: 15px; left: 8px; z-index: 1;
     background: var(--gold); color: var(--solid-fill-text, #0d1117);

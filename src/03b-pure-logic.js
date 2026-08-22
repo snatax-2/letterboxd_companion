@@ -809,6 +809,47 @@ function computeBadges(history, extras = {}) {
 }
 
 // ─── Compatibilité Node (tests) sans rien changer au comportement navigateur ──
+// Ludex 2.0 : regroupement des coups de cœur consécutifs pour la grille
+// Historique (films ET séries, voir Ludex_Historique_Grille_Base6) — une
+// grille 3 colonnes classique laisse un vide non comblé quand plusieurs
+// vedettes (coup de cœur ou note ≥8.5) se suivent, puisqu'une carte 2×2 ne
+// trouve pas toujours de petite carte disponible juste à côté pour combler
+// le tiers restant. Fonction pure (testable indépendamment) : reçoit les
+// items DANS L'ORDRE D'AFFICHAGE d'un seul groupe (un mois, ou toute la
+// liste séries qui n'a pas de découpage mensuel) et renvoie le palier de
+// chacun, sans jamais réordonner les items eux-mêmes.
+//
+// Règles (voir le document de spécification) :
+// - Une vedette isolée (pas de vedette juste avant/après) → 'isolated' (66%,
+//   2 lignes de haut) — SAUF si c'est la toute dernière chose du groupe,
+//   auquel cas rien ne reste pour combler le tiers manquant → 'banner' (100%).
+// - Un nombre PAIR de vedettes consécutives → regroupées deux par deux en
+//   'pair' (50/50 côte à côte).
+// - Un nombre IMPAIR de vedettes consécutives (3, 5, 7...) → la première
+//   absorbe le surplus en 'banner' (100%), les suivantes se regroupent
+//   normalement en paires.
+function computeFeaturedTiers(items, isFeaturedFn) {
+  const tiers = new Array(items.length).fill('normal');
+  let i = 0;
+  while (i < items.length) {
+    if (!isFeaturedFn(items[i])) { i++; continue; }
+    let j = i;
+    while (j < items.length && isFeaturedFn(items[j])) j++;
+    const runLength = j - i;
+    const isLastInGroup = j === items.length;
+
+    if (runLength === 1) {
+      tiers[i] = isLastInGroup ? 'banner' : 'isolated';
+    } else {
+      let k = i;
+      if (runLength % 2 === 1) { tiers[k] = 'banner'; k++; }
+      for (; k < j; k += 2) { tiers[k] = 'pair'; tiers[k + 1] = 'pair'; }
+    }
+    i = j;
+  }
+  return tiers;
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     computeQuickScore,
@@ -842,5 +883,6 @@ if (typeof module !== 'undefined' && module.exports) {
     computeDecadeStats,
     findOneYearAgoFilm,
     normalizeHistoryItemV2,
+    computeFeaturedTiers,
   };
 }
