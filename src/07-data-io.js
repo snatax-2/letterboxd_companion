@@ -49,7 +49,7 @@ function importLudexJson(text) {
   openModal(
     "Importer la sauvegarde",
     `Importer ${parts.join(' et ')} ? Cela fusionnera avec vos données actuelles (les doublons seront ignorés).`,
-    async () => {
+    () => {
       let addedFilms = 0, addedShows = 0, addedSeasons = 0;
 
       if (history.length) {
@@ -63,34 +63,26 @@ function importLudexJson(text) {
       }
 
       if (tvShows.length && typeof loadTvShows === 'function') {
-        // Ludex 2.0 : passe par mutateTvShows() (voir 18-tv-shows.js) plutôt
-        // qu'un load/save direct — un import qui tomberait pile pendant
-        // qu'une autre écriture séries est en vol (widget "En cours" par
-        // exemple) écraserait sinon cette dernière avec une copie périmée.
-        const counts = await mutateTvShows(existingShows => {
-          let localAddedShows = 0, localAddedSeasons = 0;
-          tvShows.forEach(importedShow => {
-            let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
-            if (!localShow) {
-              localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
-              existingShows.push(localShow);
-              localAddedShows++;
+        const existingShows = loadTvShows();
+        tvShows.forEach(importedShow => {
+          let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
+          if (!localShow) {
+            localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
+            existingShows.push(localShow);
+            addedShows++;
+          }
+          // Par saison : n'ajoute que celles absentes localement — même
+          // philosophie "doublons ignorés" que les films, plutôt que
+          // d'inventer une règle de fusion (plus regardée / plus récente)
+          // qui n'a pas d'équivalent côté films.
+          Object.entries(importedShow.seasons || {}).forEach(([key, season]) => {
+            if (!localShow.seasons[key]) {
+              localShow.seasons[key] = season;
+              addedSeasons++;
             }
-            // Par saison : n'ajoute que celles absentes localement — même
-            // philosophie "doublons ignorés" que les films, plutôt que
-            // d'inventer une règle de fusion (plus regardée / plus récente)
-            // qui n'a pas d'équivalent côté films.
-            Object.entries(importedShow.seasons || {}).forEach(([key, season]) => {
-              if (!localShow.seasons[key]) {
-                localShow.seasons[key] = season;
-                localAddedSeasons++;
-              }
-            });
           });
-          return { addedShows: localAddedShows, addedSeasons: localAddedSeasons };
         });
-        addedShows = counts.addedShows;
-        addedSeasons = counts.addedSeasons;
+        saveTvShows(existingShows);
       }
 
       renderAll();

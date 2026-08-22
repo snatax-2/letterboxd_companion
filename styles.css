@@ -1013,7 +1013,10 @@
     display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
-
+  /* Positionné en coin de l'en-tête plutôt qu'en ligne avec .mds-header-info
+     (dont le flex horizontal ne lui laisserait pas une place naturelle) —
+     même bouton, contexte différent de la barre de recherche du film. */
+  .tds-heart-btn { position: absolute; top: 12px; right: 12px; z-index: 2; }
 
   .search-status { font-size: 0.75rem; color: var(--blue); font-weight: 600; margin-top: 6px; display: none; }
 

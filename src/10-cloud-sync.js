@@ -107,17 +107,7 @@ function mergeWithRemote(remotePayload) {
   const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
   const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
   const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
-  // Ludex 2.0 : passe par la file d'écriture séquentielle (mutateTvShows(),
-  // 18-tv-shows.js) plutôt qu'un saveTvShows() direct — une synchro qui
-  // tombe pile pendant qu'une note ou un coup de cœur est en cours d'écriture
-  // ailleurs écraserait sinon ce changement avec cette copie fusionnée, déjà
-  // périmée au moment où elle s'écrit. mergedTvShows est déjà entièrement
-  // calculé à ce stade (toute la logique de fusion tourne juste au-dessus,
-  // de façon synchrone) — le mutateur se contente de le renvoyer tel quel
-  // comme tableau de remplacement, sans awaiter ici (cette fonction reste
-  // synchrone comme avant ; la vraie écriture est simplement mise en file).
-  if (typeof mutateTvShows === 'function') mutateTvShows(() => mergedTvShows);
-  else if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows); // repli si 18-tv-shows.js n'est pas chargé
+  if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows);
   saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
   saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
 
