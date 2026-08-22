@@ -162,17 +162,37 @@ function drawProfileShareCard(data) {
   drawFilmStripBand(ctx, h - 16, w, accent);
 }
 
+// Ludex 2.0 : partage natif (Web Share API) quand le navigateur le permet —
+// repli sur le téléchargement classique sinon (desktop, ou navigateurs qui
+// ne supportent pas le partage de FICHIERS spécifiquement, distinct du
+// partage de simple texte/lien que beaucoup supportent déjà). .toBlob() +
+// File plutôt que .toDataURL() seul : c'est ce qui permet de partager une
+// vraie image, pas juste un lien vers elle.
 document.getElementById('profile-share-btn').addEventListener('click', () => {
   const canvas = document.getElementById('profile-share-canvas');
   if (!canvas || !canvas.getContext || !canvas.getContext('2d')) {
     showToast("Ton navigateur ne permet pas de générer cette image.");
     return;
   }
-  const link = document.createElement('a');
-  link.download = 'ludex-profil.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  showToast('Image téléchargée.');
+  canvas.toBlob(async (blob) => {
+    if (!blob) { showToast("Impossible de générer l'image."); return; }
+    const file = new File([blob], 'ludex-profil.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Ma carte de profil Ludex' });
+        return; // partage réussi, rien de plus à faire
+      } catch (e) {
+        if (e.name === 'AbortError') return; // l'utilisateur a juste annulé — pas une erreur à signaler
+        // toute autre erreur (rare) : on retombe sur le téléchargement classique ci-dessous
+      }
+    }
+    const link = document.createElement('a');
+    link.download = 'ludex-profil.png';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Image téléchargée.');
+  }, 'image/png');
 });
 
 // ═══════════════════════════════════════════

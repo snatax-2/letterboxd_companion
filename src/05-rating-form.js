@@ -272,10 +272,20 @@ function calculateScore() {
 
   const scoreEl = document.getElementById('score-big');
   const denomEl = document.querySelector('.score-denom');
+  const ringFillEl = document.getElementById('score-ring-fill');
 
   animateValueTowards(scoreEl, score, 1, 200);
   denomEl.textContent = '/10';
-  scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
+  const scoreClass = score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad';
+  scoreEl.className = 'score-big ' + scoreClass;
+  // Anneau : même circonférence que celle posée dans styles.css
+  // (2π×52 ≈ 326.7) — decalée proportionnellement à score/10, remplie dans
+  // le sens horaire grâce à la rotation -90deg posée sur le <svg> lui-même.
+  if (ringFillEl) {
+    const RING_CIRCUMFERENCE = 326.7;
+    ringFillEl.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - score / 10));
+    ringFillEl.setAttribute('class', 'score-ring-fill ' + scoreClass);
+  }
 
   const stars = scoreToStars(score);
   document.getElementById('stars-display').textContent = getStarStr(stars);
@@ -626,7 +636,12 @@ window.loadItem = function(idx) {
 // repère de moyenne perso et la piste colorée continuent de fonctionner
 // normalement — seule la mise en page (quel bloc est visible) change.
 const FOCUS_MODE_KEY = 'lbx_focus_mode';
-let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) === 'true';
+// Ludex 2.0 : mode focus activé PAR DÉFAUT désormais (auparavant décoché par
+// défaut) — la liste empilée devient l'option de repli plutôt que l'inverse.
+// `!== 'false'` plutôt que `=== 'true'` : un utilisateur n'ayant jamais
+// touché ce réglage (localStorage vide, donc `null`) doit démarrer en mode
+// focus ; seul un choix explicite enregistré comme 'false' désactive.
+let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) !== 'false';
 let focusIndex = 0;
 
 const criteriaListEl = document.getElementById('criteria-list');

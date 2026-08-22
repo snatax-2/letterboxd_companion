@@ -410,6 +410,7 @@
       <div class="search-wrap">
         <div class="search-row">
           <div class="search-input-wrap">
+            <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" class="search-input" id="movie-search" placeholder="Titre du film (ex: Marty Supreme, Parasite...)" autocomplete="off">
             <button type="button" class="search-clear-btn" id="search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
           </div>
@@ -467,6 +468,7 @@
         <div class="search-wrap">
           <div class="search-row" style="grid-template-columns: 1fr;">
             <div class="search-input-wrap">
+              <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               <input type="text" class="search-input" id="tv-search" placeholder="Titre de la série (ex: True Detective, Twin Peaks...)" autocomplete="off">
               <button type="button" class="search-clear-btn" id="tv-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
             </div>
@@ -510,8 +512,14 @@
 
       <div class="score-result">
         <div class="score-main">
-          <div class="score-big" id="score-big">5.0</div>
-          <div class="score-denom">/10</div>
+          <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="score-ring-track" cx="60" cy="60" r="52"/>
+            <circle class="score-ring-fill" id="score-ring-fill" cx="60" cy="60" r="52"/>
+          </svg>
+          <div class="score-ring-value">
+            <div class="score-big" id="score-big">5.0</div>
+            <div class="score-denom">/10</div>
+          </div>
         </div>
         <div class="stars-display" id="stars-display">★★½</div>
       </div>
@@ -729,6 +737,7 @@
 
         <div class="search-wrap" style="margin-bottom: 14px;">
           <div class="search-input-wrap">
+            <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
             <button type="button" class="search-clear-btn" id="history-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
           </div>
@@ -739,6 +748,7 @@
           <button class="filter-btn" data-sort="score-desc">Mieux notés</button>
           <button class="filter-btn" data-sort="score-asc">Moins bien</button>
           <button class="filter-btn" data-sort="title">A→Z</button>
+          <button class="filter-btn filter-btn-liked" id="hist-liked-filter-btn">♥ Coups de cœur</button>
         </div>
 
         <details class="genre-fold" id="genre-fold" style="display:none;">
@@ -762,14 +772,66 @@
           <span id="watchlist-active-name">À voir</span>
           <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
         </div>
-        <div class="wl-lists-row" id="wl-lists-row"></div>
-        <div class="watchlist-add-row wl-suggest-wrap">
-          <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
-          <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
-          <div class="wl-suggestions" id="wl-suggestions"></div>
+
+        <!-- Ludex 2.0 : toggle Films/Séries — même principe que Découvrir et
+             Historique (voir Ludex_Specifications_Watchlist). Les listes
+             nommées multiples (À voir, Halloween...) restent FILMS
+             UNIQUEMENT : la watchlist séries est une seule liste, pas
+             encore ce système à listes multiples — portée volontairement
+             réduite pour ce premier passage. -->
+        <div class="mode-tabs" id="wl-media-tabs">
+          <button type="button" class="mode-tab active" id="wl-tab-movie">Films</button>
+          <button type="button" class="mode-tab" id="wl-tab-tv">Séries</button>
         </div>
-        <div class="watchlist-scroller" id="watchlist-list">
-          <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les films que tu veux voir.</div>
+
+        <div id="wl-movie-section">
+          <div class="wl-lists-row" id="wl-lists-row"></div>
+          <div class="wl-sort-row" id="wl-sort-row">
+            <button type="button" class="wl-sort-btn active" data-sort="recent">Récents</button>
+            <button type="button" class="wl-sort-btn" data-sort="rating">Note TMDb</button>
+            <button type="button" class="wl-sort-btn" data-sort="year">Année</button>
+            <button type="button" class="wl-sort-btn wl-sort-btn-filter" id="wl-duration-filter" data-duration="under2h">− de 2h</button>
+          </div>
+          <details class="genre-fold" id="wl-genre-fold" style="display:none;">
+            <summary class="genre-fold-summary">
+              <span class="genre-filter-label">Filtrer :</span>
+              <span class="genre-fold-current" id="wl-genre-fold-current">Tous</span>
+              <span class="badges-chevron" aria-hidden="true">▾</span>
+            </summary>
+            <div class="genre-chips" id="wl-genre-chips"></div>
+          </details>
+          <div class="watchlist-add-row wl-suggest-wrap">
+            <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
+            <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
+            <div class="wl-suggestions" id="wl-suggestions"></div>
+          </div>
+          <div class="watchlist-scroller" id="watchlist-list">
+            <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les films que tu veux voir.</div>
+          </div>
+        </div>
+
+        <div id="wl-tv-section" style="display:none;">
+          <div class="wl-sort-row" id="wl-tv-sort-row">
+            <button type="button" class="wl-sort-btn active" data-sort="recent">Récentes</button>
+            <button type="button" class="wl-sort-btn" data-sort="rating">Note TMDb</button>
+            <button type="button" class="wl-sort-btn" data-sort="year">Année</button>
+          </div>
+          <details class="genre-fold" id="wl-tv-genre-fold" style="display:none;">
+            <summary class="genre-fold-summary">
+              <span class="genre-filter-label">Filtrer :</span>
+              <span class="genre-fold-current" id="wl-tv-genre-fold-current">Tous</span>
+              <span class="badges-chevron" aria-hidden="true">▾</span>
+            </summary>
+            <div class="genre-chips" id="wl-tv-genre-chips"></div>
+          </details>
+          <div class="watchlist-add-row wl-suggest-wrap">
+            <input type="text" class="watchlist-add-input" id="wl-tv-input" placeholder="Rechercher une série à ajouter..." autocomplete="off">
+            <button class="watchlist-add-btn" id="wl-tv-add-btn">+ Ajouter</button>
+            <div class="wl-suggestions" id="wl-tv-suggestions"></div>
+          </div>
+          <div class="watchlist-scroller" id="wl-tv-list">
+            <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -816,6 +878,33 @@
     </div>
 
     <div class="right-view" id="view-profile">
+      <!-- Ludex 2.0 : Hero Header (voir ludex_profil_maquette.html) — les 3
+           statistiques clés réutilisent les MÊMES id (#kpi-total/#kpi-avg,
+           #kpi-year) que l'ancienne rangée de cartes du Dashboard, juste
+           déplacés ici : aucun changement JS nécessaire pour cette partie,
+           renderStats() les remplit exactement comme avant. Pas de nom
+           d'utilisateur : l'app n'a pas de champ "pseudo" séparé du nom de
+           l'app elle-même, inutile d'en inventer un pour la maquette. -->
+      <div class="profile-hero-header">
+        <div class="profile-hero-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M2.5 8h19M6.5 8V4.5M11 8V4.5M15.5 8V4.5M2.5 19.5h19V4.5h-19z"/></svg></div>
+        <div class="profile-hero-bento">
+          <div class="profile-hero-bento-card">
+            <div class="kpi-val" id="kpi-total">0</div>
+            <div class="kpi-label" id="kpi-total-label">Films notés</div>
+            <div class="profile-hero-bento-sub" id="profile-hero-year-sub">+0 en 2026</div>
+          </div>
+          <div class="profile-hero-bento-card">
+            <div class="kpi-val" id="kpi-avg" style="color:var(--gold)">-</div>
+            <div class="kpi-label">Moyenne</div>
+          </div>
+          <div class="profile-hero-bento-card profile-hero-bento-wide">
+            <div class="kpi-label">Temps visionné</div>
+            <div class="kpi-val" id="profile-hero-watch-time" style="color:var(--blue)">—</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-hero-sub" id="profile-hero-sub">Cinéphile · Membre depuis —</div>
+
       <div class="card" id="data-management-card">
         <div class="card-title">Données</div>
         <div class="data-management-row">
@@ -831,23 +920,18 @@
         </div>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon wrapped-entry-arrow"><path d="M9 18l6-6-6-6"/></svg>
       </div>
-      <div class="card" id="duels-card">
-        <div class="card-title">Duels</div>
-        <!-- Ludex 2.0 : l'arène de jeu elle-même déplacée depuis Découvrir
-             (qui ne gardait jusque-là que le classement) — 13-duels.js
-             n'a pas été modifié, renderDuel()/renderDuelRanking() ciblent
-             les mêmes ID qu'avant, juste posés ici désormais. -->
-        <div class="duels-arena-title">
-          <span>Lequel préfères-tu ?</span>
-          <span class="duel-counter" id="duel-counter"></span>
-        </div>
-        <div class="duel-arena" id="duel-arena"></div>
-        <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
-        <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
-        <div class="duels-card-sep"></div>
-        <div class="card-title">Ton classement</div>
-        <div id="duel-ranking-list"></div>
+
+      <!-- Ludex 2.0 : vitrine de trophées toujours visible (voir
+           Ludex_Specifications_Profil.pdf — "les badges cachés derrière un
+           menu déroulant perdent leur pouvoir de récompense") — plus de
+           <details> replié. Le détail complet (tous les badges, verrouillés
+           inclus) reste juste en dessous, dans la même carte. -->
+      <div class="card" id="profile-badges-card">
+        <div class="card-title">Tes trophées</div>
+        <div class="trophy-row" id="trophy-showcase"></div>
+        <div class="badges-grid" id="badges-grid"></div>
       </div>
+
       <div class="card" id="curated-lists-card">
         <div class="card-title">Classiques à explorer</div>
         <div class="curated-lists-hint">Le pourcentage déjà vu de quelques incontournables du cinéma.</div>
@@ -874,21 +958,6 @@
           <button class="mode-tab" id="stats-tab-tv" onclick="switchStatsMediaFilter('tv')">Séries</button>
         </div>
 
-        <div class="kpi-row">
-          <div class="kpi-card">
-            <div class="kpi-val" id="kpi-total">0</div>
-            <div class="kpi-label" id="kpi-total-label">Films notés</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-val" id="kpi-avg" style="color:var(--gold)">-</div>
-            <div class="kpi-label">Moyenne</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-val" id="kpi-year" style="color:var(--blue)">0</div>
-            <div class="kpi-label" id="kpi-year-label">En 2026</div>
-          </div>
-        </div>
-
         <div class="dashboard-grid">
           <div class="dash-box">
             <div class="dash-box-title">L'ADN de tes notes</div>
@@ -896,10 +965,11 @@
             <div id="radar-empty" style="display:none; font-size:0.8rem; text-align:center; color:var(--text); margin-top:20px;">Utilise le mode Détaillé pour débloquer ce radar.</div>
           </div>
 
-          <div class="dash-box">
-            <div class="dash-box-title">Activité (6 derniers mois)</div>
-            <div id="timeline-chart-container" style="display:flex; justify-content:center; align-items:flex-end; min-height:160px; padding-top:10px; width:100%;"></div>
-          </div>
+          <!-- Ludex 2.0 : "Activité (6 derniers mois)" (graphique linéaire)
+               retiré — la heatmap plus haut (#heatmap-card) couvre déjà ce
+               même rôle (rythme de visionnage dans le temps), en mieux :
+               c'était une vraie redondance, pas deux informations
+               différentes. -->
 
           <div class="dash-box full-width" id="top-directors-box">
             <div class="dash-box-title" style="display:flex; justify-content:space-between">
@@ -920,14 +990,6 @@
         <div class="card-title">Ton profil</div>
         <div class="profile-info-grid">
           <div class="profile-info-item">
-            <div class="profile-info-label">Membre depuis</div>
-            <div class="profile-info-val" id="profile-member-since">—</div>
-          </div>
-          <div class="profile-info-item">
-            <div class="profile-info-label">Temps total visionné</div>
-            <div class="profile-info-val" id="profile-watch-time">—</div>
-          </div>
-          <div class="profile-info-item">
             <div class="profile-info-label">Acteur favori</div>
             <div class="profile-info-val" id="profile-fav-actor">—</div>
           </div>
@@ -936,23 +998,41 @@
             <div class="profile-info-val" id="profile-streak">—</div>
           </div>
         </div>
+        <!-- #profile-member-since et #profile-watch-time restent dans le DOM
+             (juste masqués) plutôt que supprimés : renderProfileExtras()
+             (06c-profile-stats.js) continue de les écrire pour alimenter le
+             Hero Header en haut de page (#profile-hero-sub/#profile-hero-
+             watch-time), sans qu'il faille toucher cette fonction. -->
+        <div style="display:none;">
+          <span id="profile-member-since"></span>
+          <span id="profile-watch-time"></span>
+        </div>
       </div>
 
-      <div class="card" id="profile-badges-card">
-        <details class="badges-fold" id="badges-fold">
-          <summary class="badges-summary">
-            <span class="card-title" style="margin:0;">Badges</span>
-            <span class="badges-count" id="badges-count"></span>
-            <span class="badges-chevron" aria-hidden="true">▾</span>
-          </summary>
-          <div class="badges-grid" id="badges-grid"></div>
-        </details>
+      <div class="card" id="duels-card">
+        <div class="card-title">Duels</div>
+        <!-- Ludex 2.0 : repositionné sous les succès (voir
+             Ludex_Specifications_Profil.pdf + demande explicite) — l'arène
+             de jeu était jusque-là tout en haut du Profil, avant même les
+             statistiques. 13-duels.js n'a pas été modifié, renderDuel()/
+             renderDuelRanking() ciblent les mêmes ID qu'avant, juste posés
+             ici désormais. -->
+        <div class="duels-arena-title">
+          <span>Lequel préfères-tu ?</span>
+          <span class="duel-counter" id="duel-counter"></span>
+        </div>
+        <div class="duel-arena" id="duel-arena"></div>
+        <div class="duel-empty" id="duel-empty" style="display:none;">Note au moins 2 films pour lancer les duels.</div>
+        <button type="button" class="duel-skip" id="duel-skip-btn">Passer ce duel</button>
+        <div class="duels-card-sep"></div>
+        <div class="card-title">Ton classement</div>
+        <div id="duel-ranking-list"></div>
       </div>
 
       <div class="card" id="profile-share-card">
         <div class="card-title">Carte de profil</div>
         <canvas id="profile-share-canvas" width="360" height="480" style="width:100%; max-width:360px; display:block; margin:0 auto; border-radius:var(--radius-sm);"></canvas>
-        <button class="btn-new-review" id="profile-share-btn" style="width:100%; margin-top:12px; justify-content:center;">Télécharger l'image</button>
+        <button class="btn-share-gradient" id="profile-share-btn">📸 Partager ma carte de profil</button>
       </div>
     </div>
   </div>

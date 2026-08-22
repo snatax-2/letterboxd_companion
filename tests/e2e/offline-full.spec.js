@@ -56,7 +56,7 @@ test('parcours hors-ligne complet : shell installe, chaque onglet reste utilisab
   await page.click('#nav-history');
   await page.waitForTimeout(300);
   await expect(page.locator('.hist-item')).toHaveCount(1);
-  await expect(page.locator('.hist-title').first()).toContainText('Film Historique');
+  await expect(page.locator('.hist-item .hist-item-open').first()).toHaveAttribute('aria-label', /Film Historique/);
 
   // Onglet Watchlist : pareil, pleinement utilisable
   await page.click('#nav-watchlist');

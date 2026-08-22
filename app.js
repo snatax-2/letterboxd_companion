@@ -694,10 +694,10 @@ function switchRightTab(tabName) {
   if (tabName === 'profile' && typeof renderProfileIfDirty === 'function') {
     renderProfileIfDirty();
   }
-  // Aperçu unique du geste de swipe à la première visite de l'historique
-  if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
-    maybePlaySwipeHint();
-  }
+  // Ludex 2.0 : l'aperçu de swipe n'a plus lieu d'être — l'Historique est
+  // passé en grille, il n'y a plus de geste caché à révéler (voir
+  // 06b-history-actions.js). maybePlaySwipeHint() reste définie
+  // (06a-history-list.js) mais n'est plus appelée nulle part.
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));
@@ -1205,6 +1205,10 @@ let activeContextTags = new Set();
 let historySearchQuery = ''; 
 let isFetchingMovie = false; 
 let activeScoreFilter = null; 
+// Ludex 2.0 : filtre "Coups de cœur" de l'Historique (films ET séries) —
+// déclaré ici, même raison que le reste de ce bloc (référencé avant que
+// 06a-history-list.js/18-tv-shows.js ne s'exécutent).
+let activeLikedFilter = false;
 
 // ═══════════════════════════════════════════
 //  STORAGE & DRAFT
@@ -1870,6 +1874,31 @@ function computeWeekStreak(history, referenceDate = new Date()) {
   return streak;
 }
 
+// Nombre de JOURS consécutifs (en remontant depuis AUJOURD'HUI) avec au
+// moins une note ajoutée — granularité plus fine que computeWeekStreak
+// (semaines ISO), nécessaire pour le succès "Fidélité" (3/10/30 jours) qui
+// parle explicitement de jours, pas de semaines. Fonctions séparées plutôt
+// que fusionnées : le streak hebdomadaire (déjà affiché ailleurs dans le
+// Profil) reste inchangé, celui-ci sert uniquement au nouveau succès.
+function computeDayStreak(history, referenceDate = new Date()) {
+  const daysWithActivity = new Set();
+  history.forEach(h => {
+    const raw = h.savedAt || h.date;
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    daysWithActivity.add(d.toISOString().slice(0, 10));
+  });
+
+  let streak = 0;
+  const cursor = new Date(referenceDate);
+  while (daysWithActivity.has(cursor.toISOString().slice(0, 10))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
 // Badges débloqués selon l'historique — chaque entrée est indépendante,
 // aucune ne dépend d'un ordre de déblocage particulier.
 // ─── Rétrospective annuelle ("Wrapped") ─────────────────────────────────────
@@ -2083,16 +2112,37 @@ function computeWrappedStats(history, year) {
   };
 }
 
+// Ludex 2.0 : système de paliers (I/II/III, bronze/argent/or) — voir
+// Ludex_Gamification_Succes.pdf. Chaque badge a 3 seuils au lieu d'un seul ;
+// tierify() calcule où on en est. Remplace l'ancien système à seuil unique
+// dans son intégralité (mêmes id que les tiers eux-mêmes n'existaient pas
+// avant, donc rien à migrer côté stockage — les badges sont toujours
+// recalculés à la volée, jamais une donnée primaire).
+function tierify(value, tiers) {
+  let tier = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    if (value >= tiers[i]) tier = i + 1;
+  }
+  const maxed = tier >= tiers.length;
+  const nextThreshold = maxed ? null : tiers[tier];
+  // Palier 0 : progression vers le PREMIER seuil (pas vers un seuil déjà
+  // dépassé) — value/tiers[0], jamais value/nextThreshold quand tier>0 (le
+  // dénominateur serait alors le seuil déjà franchi, pas le suivant).
+  const progress = maxed ? 1 : Math.min(1, value / nextThreshold);
+  return { value, tier, maxed, nextThreshold, progress };
+}
+
+// Première vague de succès à paliers (voir Ludex_Gamification_Succes.pdf) —
+// seuls les trophées calculables avec les données déjà stockées aujourd'hui.
+// Le reste du document (récompenses, popularité TMDb à l'instant T, langue
+// originale, franchises, minutage par épisode...) demande de nouvelles
+// données jamais suivies jusqu'ici — repoussé à une vague suivante plutôt
+// que deviné approximativement.
 function computeBadges(history, extras = {}) {
-  // Déclaré ICI (local, pas en haut du fichier) : même bug que
-  // CRITERIA_SHORT_LABELS et CONTEXT_TAG_ICONS rencontré précédemment — un
-  // `const` top-level serait dans sa "zone morte temporelle" tant que
-  // l'exécution n'a pas atteint cette ligne, or `renderAll()` est appelée de
-  // façon précoce (03-foundation.js) avant même que 03b-pure-logic.js n'ait
-  // fini de s'exécuter.
-  const GENRE_BADGE_THRESHOLD = 5;
   const totalMinutes = extras.totalMinutes || 0;
-  const streak = extras.streak || 0;
+  const dayStreak = extras.dayStreak || 0;
+  const tvRatings = extras.tvRatings || []; // { score, date } par saison notée — voir getAllTvSeasonRatings()
+
   const genreSet = new Set();
   const genreCounts = {};
   history.forEach(h => {
@@ -2102,32 +2152,65 @@ function computeBadges(history, extras = {}) {
       genreCounts[t] = (genreCounts[t] || 0) + 1;
     });
   });
-  const reviewCount = history.filter(h => h.review && h.review.trim().length > 0).length;
+
+  const scores = history.map(h => parseFloat(h.score)).filter(s => !isNaN(s));
+  const masterpieceCount = scores.filter(s => s >= 9).length;
+  const demonCount = scores.filter(s => s < 3).length;
+  const likedCount = history.filter(h => h.liked).length;
+
+  // "Le Difficile" / "Le Bon Public" : compte de tranches COMPLÈTES et
+  // DISJOINTES de 20 notes consécutives (par ordre chronologique
+  // d'ajout) dont la moyenne franchit le seuil — pas une fenêtre glissante
+  // (qui compterait la même série de bons/mauvais films des dizaines de
+  // fois de suite), une vraie répétition de la performance sur des lots
+  // différents.
+  const chronological = [...history].sort((a, b) => (a.savedAt || a.date || '').localeCompare(b.savedAt || b.date || ''));
+  let hardCount = 0, crowdPleaserCount = 0;
+  for (let i = 0; i + 20 <= chronological.length; i += 20) {
+    const slice = chronological.slice(i, i + 20);
+    const sliceAvg = slice.reduce((sum, h) => sum + (parseFloat(h.score) || 0), 0) / slice.length;
+    if (sliceAvg < 5) hardCount++;
+    if (sliceAvg > 8) crowdPleaserCount++;
+  }
+
+  // "Le Puriste" : plus longue série de films notés d'affilée SANS le bonus
+  // coup de cœur (ordre chronologique) — l'inverse exact de Coup de Foudre.
+  let purestStreak = 0, purestMax = 0;
+  chronological.forEach(h => {
+    if (h.liked) { purestStreak = 0; } else { purestStreak++; purestMax = Math.max(purestMax, purestStreak); }
+  });
 
   const defs = [
-    { id: 'films_10',  label: '10 films notés',        unlocked: history.length >= 10 },
-    { id: 'films_50',  label: '50 films notés',         unlocked: history.length >= 50 },
-    { id: 'films_100', label: '100 films notés',        unlocked: history.length >= 100 },
-    { id: 'genres_5',  label: '5 genres différents',    unlocked: genreSet.size >= 5 },
-    { id: 'genres_10', label: '10 genres différents',   unlocked: genreSet.size >= 10 },
-    { id: 'reviews_10',label: '10 critiques écrites',   unlocked: reviewCount >= 10 },
-    { id: 'streak_4',  label: '4 semaines de suite',    unlocked: streak >= 4 },
-    { id: 'marathon',  label: 'Marathon (24h de films)',unlocked: totalMinutes >= 24 * 60 },
-    { id: 'cinephile', label: 'Cinéphile (7j de films)',unlocked: totalMinutes >= 7 * 24 * 60 },
+    { id: 'critique',   name: 'Le Critique',   icon: '🎬', ...tierify(history.length + tvRatings.length, [10, 100, 500]) },
+    { id: 'marathonien',name: 'Marathonien',    icon: '⏱️', ...tierify(totalMinutes, [24 * 60, 100 * 60, 500 * 60]) },
+    { id: 'fidelite',   name: 'Fidélité',       icon: '🔥', ...tierify(dayStreak, [3, 10, 30]) },
+    { id: 'chef_oeuvre',name: 'Chef-d\'Œuvre',  icon: '🏆', ...tierify(masterpieceCount, [5, 25, 50]) },
+    { id: 'ame_demon',  name: 'L\'Âme du Démon',icon: '😈', ...tierify(demonCount, [1, 10, 25]) },
+    { id: 'difficile',  name: 'Le Difficile',   icon: '📉', ...tierify(hardCount, [1, 5, 10]) },
+    { id: 'bon_public', name: 'Le Bon Public',  icon: '📈', ...tierify(crowdPleaserCount, [1, 5, 10]) },
+    { id: 'coup_foudre',name: 'Coup de Foudre', icon: '❤️', ...tierify(likedCount, [5, 25, 50]) },
+    { id: 'puriste',    name: 'Le Puriste',     icon: '🎭', ...tierify(purestMax, [20, 50, 100]) },
   ];
 
-  // Un badge par genre RÉELLEMENT exploré (au moins un film), pas une liste
-  // figée de tous les genres TMDb possibles — évite d'afficher des dizaines
-  // de badges verrouillés pour des genres jamais regardés. Triés du plus au
-  // moins regardé, pour mettre en avant ce qui définit vraiment les goûts de
-  // l'utilisateur.
+  // Noms "flavor" repris du document quand ils existent pour ce genre
+  // précis ; repli générique "Fan de X" sinon — un genre exploré mais non
+  // listé dans le document (ex: "Fantastique" seul, sans le "Dark" de
+  // "Chasseur de Démons") reste un badge normal, pas un badge absent.
+  const GENRE_FLAVOR_NAMES = {
+    'Horreur': 'Livre des Morts', 'Comédie': 'Rire en Boîte',
+    'Science-Fiction': 'Sabres & Lasers', 'Drame': 'Départ Soudain',
+    'Animation': 'Otaku', 'Romance': 'Le Romantique',
+    'Aventure': 'Cape et Épée', 'Documentaire': 'Documentaliste',
+    'Musique': 'Symphonie', 'Western': 'Westerner',
+  };
   const genreBadges = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8) // les 8 genres les plus regardés seulement, pour ne pas surcharger la grille
     .map(([genre, count]) => ({
       id: 'genre_' + genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
-      label: `Fan de ${genre} (${Math.min(count, GENRE_BADGE_THRESHOLD)}/${GENRE_BADGE_THRESHOLD})`,
-      unlocked: count >= GENRE_BADGE_THRESHOLD,
+      name: GENRE_FLAVOR_NAMES[genre] || `Fan de ${genre}`,
+      icon: '🎞️',
+      ...tierify(count, [5, 50, 100]),
     }));
 
   return defs.concat(genreBadges);
@@ -2156,6 +2239,8 @@ if (typeof module !== 'undefined' && module.exports) {
     formatWatchTime,
     getISOWeekKey,
     computeWeekStreak,
+    computeDayStreak,
+    tierify,
     computeBadges,
     computeWrappedStats,
     computeEloUpdate,
@@ -2688,10 +2773,20 @@ function calculateScore() {
 
   const scoreEl = document.getElementById('score-big');
   const denomEl = document.querySelector('.score-denom');
+  const ringFillEl = document.getElementById('score-ring-fill');
 
   animateValueTowards(scoreEl, score, 1, 200);
   denomEl.textContent = '/10';
-  scoreEl.className = 'score-big ' + (score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad');
+  const scoreClass = score >= 7.5 ? 'good' : score >= 5.0 ? 'mid' : 'bad';
+  scoreEl.className = 'score-big ' + scoreClass;
+  // Anneau : même circonférence que celle posée dans styles.css
+  // (2π×52 ≈ 326.7) — decalée proportionnellement à score/10, remplie dans
+  // le sens horaire grâce à la rotation -90deg posée sur le <svg> lui-même.
+  if (ringFillEl) {
+    const RING_CIRCUMFERENCE = 326.7;
+    ringFillEl.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - score / 10));
+    ringFillEl.setAttribute('class', 'score-ring-fill ' + scoreClass);
+  }
 
   const stars = scoreToStars(score);
   document.getElementById('stars-display').textContent = getStarStr(stars);
@@ -3042,7 +3137,12 @@ window.loadItem = function(idx) {
 // repère de moyenne perso et la piste colorée continuent de fonctionner
 // normalement — seule la mise en page (quel bloc est visible) change.
 const FOCUS_MODE_KEY = 'lbx_focus_mode';
-let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) === 'true';
+// Ludex 2.0 : mode focus activé PAR DÉFAUT désormais (auparavant décoché par
+// défaut) — la liste empilée devient l'option de repli plutôt que l'inverse.
+// `!== 'false'` plutôt que `=== 'true'` : un utilisateur n'ayant jamais
+// touché ce réglage (localStorage vide, donc `null`) doit démarrer en mode
+// focus ; seul un choix explicite enregistré comme 'false' désactive.
+let focusModeOn = localStorage.getItem(FOCUS_MODE_KEY) !== 'false';
 let focusIndex = 0;
 
 const criteriaListEl = document.getElementById('criteria-list');
@@ -3127,19 +3227,6 @@ applyFocusMode(); // état initial au chargement, selon la préférence sauvegar
 // glissement au premier chargement. Les actions (feuille d'action,
 // toast) vivent dans 06b-history-actions.js ; les statistiques du
 // Profil et les cartes à partager dans 06c/06d.
-
-function renderTagLabel(tagText) {
-  const CONTEXT_TAG_ICONS = {
-    '🍿': ICONS.popcorn,
-    '🔄': ICONS.refresh,
-    '📝': ICONS.edit,
-    '🛋️': ICONS.sofa,
-    '🛋': ICONS.sofa,
-  };
-  const [emoji, ...rest] = tagText.split(' ');
-  const icon = CONTEXT_TAG_ICONS[emoji];
-  return icon ? `${icon} ${rest.join(' ')}` : tagText;
-}
 
 // Ludex 2.0 : la composition "entrée vedette + liste groupée par mois" est
 // spécifique au thème par défaut (voir "Vers Ludex 2.0" §01 — les 6 autres
@@ -3278,6 +3365,13 @@ function getSorted(history) {
     h = h.filter(item => isScoreInActiveRange(item.score));
   }
 
+  // Ludex 2.0 : filtre "Coups de cœur" — réutilise item.liked, déjà posé par
+  // le cœur du formulaire Noter (voir 05-rating-form.js), aucune nouvelle
+  // donnée à créer.
+  if (activeLikedFilter) {
+    h = h.filter(item => item.liked);
+  }
+
   if (historySearchQuery) {
     // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
     // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
@@ -3323,8 +3417,8 @@ function renderHistory() {
 
   const badge = document.getElementById('hist-count-badge');
   const showCount = loadTvShows().length;
-  const tvFragment = ` · ${showCount} série${showCount > 1 ? 's' : ''}`;
-  if (activeGenre || historySearchQuery || activeScoreFilter) {
+  const tvFragment = ` \u00b7 ${showCount} s\u00e9rie${showCount > 1 ? 's' : ''}`;
+  if (activeGenre || historySearchQuery || activeScoreFilter || activeLikedFilter) {
     badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
     badge.style.color = 'var(--orange)';
   } else {
@@ -3337,14 +3431,14 @@ function renderHistory() {
 
   if (history.length === 0) {
     document.getElementById('history-hero').innerHTML = '';
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide\u2026 Note ton premier film pour lancer la s\u00e9ance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
     document.getElementById('history-hero').innerHTML = '';
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien \u00e0 l'affiche sous ce filtre.</div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -3353,21 +3447,30 @@ function renderHistory() {
 
   const groupByMonth = isDefaultComposition() && sortOrder === 'date';
   let lastMonthKey = null;
-  // Cascade d'entrée réservée au tout premier affichage de l'onglet Historique
-  // dans cette session (pas à chaque changement de filtre/tri, qui redessine
-  // aussi la liste — même principe déjà appliqué à hist-item-entering
-  // juste en dessous, pour ne jamais rejouer une animation sur toute une
-  // longue liste à cause d'une simple interaction de filtrage).
-  // Cascade d'entrée réservée au tout premier affichage RÉEL de l'onglet
-  // Historique (pas un rendu déclenché en arrière-plan par renderAll() au
-  // démarrage pendant qu'un autre onglet est affiché — l'animation serait
-  // consommée silencieusement sans jamais être vue). Même principe que
+  // Cascade d'entr\u00e9e r\u00e9serv\u00e9e au tout premier affichage R\u00c9EL de l'onglet
+  // Historique (pas un rendu d\u00e9clench\u00e9 en arri\u00e8re-plan par renderAll() au
+  // d\u00e9marrage pendant qu'un autre onglet est affich\u00e9 \u2014 l'animation serait
+  // consomm\u00e9e silencieusement sans jamais \u00eatre vue). M\u00eame principe que
   // renderStats()/statsDirty pour Profil, voir 06c-profile-stats.js.
   const historyViewVisible = document.getElementById('view-history')?.classList.contains('active');
   const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
   if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
 
+  // Ludex 2.0 : r\u00e9cap mensuel (X films, moyenne) \u2014 calcul\u00e9 une fois sur
+  // l'ensemble affich\u00e9 (sorted, donc d\u00e9j\u00e0 pass\u00e9 par les filtres actifs),
+  // pas re-parcouru \u00e0 chaque s\u00e9parateur.
+  const monthStats = {};
+  if (groupByMonth) {
+    sorted.forEach(item => {
+      const key = monthKeyOf(item);
+      const s = (monthStats[key] = monthStats[key] || { count: 0, sum: 0 });
+      s.count++;
+      s.sum += parseFloat(item.score) || 0;
+    });
+  }
+
   container.innerHTML = '';
+  let gridEl = null; // conteneur .hist-grid courant \u2014 recr\u00e9\u00e9 \u00e0 chaque nouveau mois
   sorted.forEach((item, i) => {
     const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
 
@@ -3376,89 +3479,61 @@ function renderHistory() {
       if (key !== lastMonthKey) {
         const sep = document.createElement('div');
         sep.className = 'hist-month-sep';
-        sep.textContent = monthLabelOf(key);
+        const stats = monthStats[key];
+        const avg = stats.count > 0 ? (stats.sum / stats.count).toFixed(1) : null;
+        sep.innerHTML = `<span class="hist-month-label">${escAttr(monthLabelOf(key))}</span><span class="hist-month-recap">${stats.count} film${stats.count > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
         if (cascadeEntrance) sep.classList.add('hist-cascade-in');
         container.appendChild(sep);
         lastMonthKey = key;
+        gridEl = document.createElement('div');
+        gridEl.className = 'hist-grid';
+        container.appendChild(gridEl);
       }
-    }
-
-    const div = document.createElement('div');
-    div.className = 'hist-item';
-    div.dataset.idx = realIdx;
-    div.dataset.savedAt = item.savedAt || '';
-    div.dataset.titleKey = item.title.toLowerCase();
-    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
-    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
-    // l'animation à chaque re-rendu (changement de filtre, etc.).
-    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
-      div.classList.add('hist-item-entering');
-    } else if (cascadeEntrance) {
-      // Délai croissant plafonné : au-delà d'une vingtaine de lignes, les
-      // faire toutes attendre leur tour rendrait l'affichage perceptiblement
-      // lent à se stabiliser — les suivantes entrent toutes au même instant,
-      // dernier de la cascade.
-      div.classList.add('hist-cascade-in');
-      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
+    } else if (!gridEl) {
+      // Genre/recherche/coups de c\u0153ur actifs, ou tri diff\u00e9rent de "R\u00e9cents" :
+      // pas de s\u00e9parateurs de mois, mais la grille reste \u2014 un seul bloc continu.
+      gridEl = document.createElement('div');
+      gridEl.className = 'hist-grid';
+      container.appendChild(gridEl);
     }
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
-    if(scoreNum >= 7.5) scoreColor = 'var(--green)';
-    else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
+    if (scoreNum >= 7.5) scoreColor = 'var(--green)';
+    else if (scoreNum >= 5.0) scoreColor = 'var(--gold)';
+    const isHighScore = scoreNum >= 8.5;
+    // Ludex 2.0 : traitement "vedette" (2\u00d72, bordure) pour un coup de c\u0153ur
+    // OU une note \u2265 8.5 \u2014 les deux crit\u00e8res d\u00e9j\u00e0 utilis\u00e9s c\u00f4t\u00e9 D\u00e9couvrir/
+    // Watchlist pour ce m\u00eame genre de mise en avant, gard\u00e9s coh\u00e9rents ici.
+    const isFeatured = !!item.liked || isHighScore;
 
-    const imgHtml = item.poster
-      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
-      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
-
-    const tmdbHtml = item.tmdbScore
-      ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
-      : '';
-
-    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
-    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
-    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
-    let metaHTML = '';
-    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
-    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
-    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
-    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
-
-    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
-    // c'était la dernière source de hauteurs inégales entre cartes — un film
-    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
-    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
-
-    let reviewHTML = '';
-    if (item.review) {
-      reviewHTML = `
-        <div class="hist-review" onclick="this.classList.toggle('expanded')">
-          <div class="hist-review-content">"${escAttr(item.review)}"</div>
-          <span class="hist-review-toggle"></span>
-        </div>
-      `;
+    const div = document.createElement('div');
+    div.className = 'hist-item hist-grid-card' + (isFeatured ? ' hist-grid-card-featured' : '');
+    div.dataset.idx = realIdx;
+    div.dataset.savedAt = item.savedAt || '';
+    div.dataset.titleKey = item.title.toLowerCase();
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    } else if (cascadeEntrance) {
+      div.classList.add('hist-cascade-in');
+      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
     }
 
+    const imgHtml = item.poster
+      ? `<img class="hist-grid-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
+      : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
+
     div.innerHTML = `
-      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-      <div class="hist-item-content">
-        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-          ${imgHtml}
-          <div class="hist-body">
-            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-            <div class="hist-meta">${metaHTML}</div>
-            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-            <div class="hist-stars">${item.stars || ''}<span class="hist-score"></span></div>
-            ${reviewHTML}
-          </div>
-        </div>
-        <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
-        </div>
+      <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        ${imgHtml}
+      </div>
+      <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
+      ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
+      <div class="hist-actions">
+        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
       </div>`;
-    container.appendChild(div);
+    gridEl.appendChild(div);
     applyPosterAccent(item.poster, div);
   });
   window._justSavedHistoryTitle = null;
@@ -3473,45 +3548,25 @@ function renderHistory() {
 // mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
 // dans le formulaire d'abord). Garde les deux textes strictement identiques.
 document.getElementById('filter-row').addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
+  // Le bouton "Coups de cœur" est un TOGGLE indépendant du tri (pas de
+  // data-sort) — traité à part, sinon la logique générique ci-dessous lui
+  // assignerait sortOrder = undefined et retirerait "active" du vrai bouton
+  // de tri actuellement sélectionné.
+  const likedBtn = e.target.closest('#hist-liked-filter-btn');
+  if (likedBtn) {
+    activeLikedFilter = !activeLikedFilter;
+    likedBtn.classList.toggle('active', activeLikedFilter);
+    renderActiveHistoryView();
+    return;
+  }
+  const btn = e.target.closest('.filter-btn[data-sort]');
   if (!btn) return;
   sortOrder = btn.dataset.sort;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn[data-sort]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderActiveHistoryView();
 });
 
-// ── Découvrabilité du swipe ──
-// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
-// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
-// l'historique (avec au moins un film), la première carte fait un petit
-// aperçu automatique — elle glisse brièvement, révélant l'action cachée
-// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
-const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
-function maybePlaySwipeHint() {
-  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
-  const firstItem = document.querySelector('.hist-item');
-  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
-  const content = firstItem.querySelector('.hist-item-content');
-  if (!content) return;
-  localStorage.setItem(SWIPE_HINT_KEY, '1');
-
-  // Respecte la préférence de réduction des animations
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  setTimeout(() => {
-    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
-    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
-    content.style.transform = 'translateX(-56px)';
-    setTimeout(() => {
-      content.style.transform = '';
-      setTimeout(() => {
-        firstItem.classList.remove('hist-swipe-left');
-        content.style.transition = '';
-      }, 450);
-    }, 900);
-  }, 600);
-}
 // ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──
 
 // ═══════════════════════════════════════════
@@ -3803,7 +3858,15 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
-    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    // Ludex 2.0 : Historique passé en grille — plus de swipe possible (une
+    // cellule de grille n'a pas la place pour révéler un indice en dessous).
+    // .hist-item-content n'existe plus dans le nouveau balisage (voir
+    // renderHistory(), 06a-history-list.js) : sa seule présence sert donc de
+    // signal fiable "ce geste est pertinent ici" — jamais vrai désormais,
+    // ce qui laisse pressedItem/pressedContent à null et neutralise en
+    // cascade tout le reste de ce fichier (touchmove/touchend gardent déjà
+    // `if (!pressedItem) return;`) sans avoir à toucher chacun séparément.
+    if (!item || !item.querySelector('.hist-item-content') || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
     // NOTE : ne PAS annuler ici un item armé — un simple tap déclenche
     // touchstart AVANT click, et annuler dès le toucher tuait l'état armé
@@ -4142,35 +4205,6 @@ function createRadarSVG(averages, mediaType = 'movie') {
   return svg;
 }
 
-function createTimelineSVG(history) {
-  const months = {};
-  const now = new Date();
-  for(let i=5; i>=0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`] = { c: 0 };
-  }
-  history.forEach(h => {
-    if(h.date) { const k = h.date.substring(0,7); if(months[k]) months[k].c++; }
-  });
-
-  const keys = Object.keys(months).sort();
-  const maxC = Math.max(...keys.map(k => months[k].c), 1);
-  const w = 300, h = 100, pad = 20, barW = (w - pad*2)/6 - 10;
-
-  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible;">`;
-  keys.forEach((k, i) => {
-    const count = months[k].c;
-    const barH = (count / maxC) * (h - pad - 10);
-    const x = pad + i*(barW + 10), y = h - pad - barH;
-    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="var(--border-hi)" rx="2" style="transition:height 0.5s ease, y 0.5s ease" />`;
-    if(count > 0) svg += `<text x="${x + barW/2}" y="${y - 4}" class="svg-text-mono" text-anchor="middle">${count}</text>`;
-    const mLab = new Date(k+'-01').toLocaleDateString('fr-FR', {month:'short'}).substring(0,3);
-    svg += `<text x="${x + barW/2}" y="${h - 5}" class="svg-text" fill="var(--text-mid)" text-anchor="middle">${mLab}</text>`;
-  });
-  svg += `</svg>`;
-  return svg;
-}
-
 // Anime un chiffre de 0 (ou de sa valeur affichée actuelle) jusqu'à sa valeur
 // finale, avec un ralentissement en fin de course (ease-out) pour un rendu
 // plus "premium" qu'un simple changement instantané. Respecte la préférence
@@ -4220,11 +4254,11 @@ function renderStats() {
   
   if (history.length === 0) {
     document.getElementById('kpi-avg').textContent = '-'; 
-    document.getElementById('kpi-year').textContent = '0';
+    const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+    if (heroYearSubEl) heroYearSubEl.textContent = '';
     document.getElementById('radar-chart-container').innerHTML = ''; 
     document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
-    document.getElementById('timeline-chart-container').innerHTML = '';
     document.getElementById('top-directors-list').innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' });
     buildHistogram({});
     resetProfileExtras();
@@ -4236,7 +4270,13 @@ function renderStats() {
 
   const currentYear = new Date().getFullYear().toString();
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
-  animateCountUp(document.getElementById('kpi-year'), yearCount);
+  // Ludex 2.0 : plus de carte KPI séparée "En 2026" — ce compte vit
+  // maintenant en sous-texte du bento "Films notés" (voir la maquette
+  // envoyée). #kpi-year a disparu du HTML ; textContent direct plutôt que
+  // animateCountUp() ici, puisqu'on affiche un texte formaté ("+24 en
+  // 2026"), pas un nombre brut animé seul.
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = `+${yearCount} en ${currentYear}`;
 
   // Réutilise la même fonction que le repère de moyenne perso sur les sliders
   // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
@@ -4255,8 +4295,6 @@ function renderStats() {
     document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block'; 
   }
-
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history.concat(typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : []));
 
   const dirs = {};
   history.forEach(h => {
@@ -4291,6 +4329,12 @@ function renderStats() {
 function resetProfileExtras() {
   document.getElementById('profile-member-since').textContent = '—';
   document.getElementById('profile-watch-time').textContent = '—';
+  const heroSubEl = document.getElementById('profile-hero-sub');
+  if (heroSubEl) heroSubEl.textContent = 'Cinéphile · Membre depuis —';
+  const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
+  if (heroWatchTimeEl) heroWatchTimeEl.textContent = '—';
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = '';
   document.getElementById('profile-fav-actor').textContent = '—';
   document.getElementById('profile-streak').textContent = 'Pas de série en cours';
   renderBadges(computeBadges([], {}));
@@ -4332,6 +4376,8 @@ function renderProfileExtras(history) {
     memberSinceStr = earliest.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
   document.getElementById('profile-member-since').textContent = memberSinceStr;
+  const heroSubEl = document.getElementById('profile-hero-sub');
+  if (heroSubEl) heroSubEl.textContent = `Cinéphile · Membre depuis ${memberSinceStr}`;
 
   // Temps total visionné : somme des durées (le champ runtime est stocké en
   // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
@@ -4341,6 +4387,8 @@ function renderProfileExtras(history) {
     return sum + (isNaN(mins) ? 0 : mins);
   }, 0);
   document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
+  const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
+  if (heroWatchTimeEl) heroWatchTimeEl.textContent = formatWatchTime(totalMinutes);
 
   // Acteur favori : même principe que le top réalisateurs (compte + note
   // moyenne), mais un seul nom affiché ici.
@@ -4365,7 +4413,11 @@ function renderProfileExtras(history) {
   document.getElementById('profile-streak').textContent =
     streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
 
-  const badges = computeBadges(history, { totalMinutes, streak });
+  // Ludex 2.0 : streak JOURNALIER séparé pour le succès Fidélité (voir
+  // Ludex_Gamification_Succes.pdf — "jours consécutifs", pas semaines).
+  const dayStreak = computeDayStreak(history);
+  const tvRatings = typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : [];
+  const badges = computeBadges(history, { totalMinutes, dayStreak, tvRatings });
   renderBadges(badges);
 
   // Genre favori (pour la carte de profil) : même logique que le top
@@ -4391,19 +4443,66 @@ function renderProfileExtras(history) {
 function renderBadges(badges) {
   const grid = document.getElementById('badges-grid');
   if (!grid) return;
-  // Compteur dans l'en-tête plié : l'info essentielle (progression) reste
-  // visible sans déplier, le détail ne prend plus tout cet espace du profil.
   const countEl = document.getElementById('badges-count');
   if (countEl) {
-    const unlocked = badges.filter(b => b.unlocked).length;
+    const unlocked = badges.filter(b => b.tier > 0).length;
     countEl.textContent = `${unlocked}/${badges.length}`;
   }
+
+  // Ludex 2.0 : détection de franchissement de palier — compare le palier
+  // actuel de chaque badge à son dernier palier CONNU (stocké), déclenche
+  // un toast de célébration si un nouveau palier vient d'être atteint. À la
+  // toute première exécution (aucun état connu encore stocké), initialise
+  // silencieusement sur les paliers ACTUELS plutôt que sur 0 — sinon un
+  // utilisateur avec déjà 200 films notés recevrait d'un coup une pluie de
+  // toasts "Palier débloqué" pour des trophées qu'il a en réalité depuis
+  // longtemps.
+  let knownTiers = {};
+  let isFirstRun = true;
+  try {
+    const stored = localStorage.getItem('lbx_badges_known_tiers');
+    if (stored) { knownTiers = JSON.parse(stored); isFirstRun = false; }
+  } catch { /* ignore, repart de zéro */ }
+
+  const newlyUnlocked = [];
+  badges.forEach(b => {
+    const prevTier = knownTiers[b.id] ?? 0;
+    if (!isFirstRun && b.tier > prevTier) newlyUnlocked.push(b);
+    knownTiers[b.id] = b.tier;
+  });
+  localStorage.setItem('lbx_badges_known_tiers', JSON.stringify(knownTiers));
+  const TIER_NAMES = ['', 'Palier I', 'Palier II', 'Palier III'];
+  newlyUnlocked.forEach(b => showToast(`🏆 ${TIER_NAMES[b.tier]} débloqué — ${b.name} !`));
+
   grid.innerHTML = badges.map(b => `
-    <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
-      <div class="badge-icon">${ICONS.star}</div>
-      <div class="badge-label">${b.label}</div>
+    <div class="badge-item ${b.tier > 0 ? 'unlocked' : 'locked'}" title="${b.tier > 0 ? `${TIER_NAMES[b.tier]} débloqué` : 'Pas encore débloqué'}">
+      <div class="badge-icon badge-tier-${b.tier}">${b.icon}</div>
+      <div class="badge-label">${escAttr(b.name)}</div>
+      ${!b.maxed ? `
+        <div class="badge-progress-track"><div class="badge-progress-fill" style="width:${Math.round(b.progress * 100)}%"></div></div>
+        <div class="badge-progress-text">${b.value}/${b.nextThreshold}</div>
+      ` : `<div class="badge-progress-text badge-maxed">Complété</div>`}
     </div>
   `).join('');
+
+  // Ludex 2.0 : vitrine des 3 derniers trophées débloqués, toujours visible
+  // (voir #trophy-showcase, index.html) — sans dépendre de newlyUnlocked
+  // (qui ne contient que ceux débloqués À CETTE exécution précise) : les 3
+  // avec le palier le plus élevé, tous badges confondus, peu importe QUAND
+  // ils ont été débloqués.
+  const showcaseEl = document.getElementById('trophy-showcase');
+  if (showcaseEl) {
+    const top3 = [...badges].filter(b => b.tier > 0).sort((a, b) => b.tier - a.tier || b.progress - a.progress).slice(0, 3);
+    showcaseEl.innerHTML = top3.length > 0
+      ? top3.map(b => `
+          <div class="trophy-medal">
+            <div class="trophy-icon badge-tier-${b.tier}">${b.icon}</div>
+            <div class="trophy-name">${escAttr(b.name)}</div>
+            <div class="trophy-tier">${TIER_NAMES[b.tier]}</div>
+          </div>
+        `).join('')
+      : `<div class="trophy-empty">Note quelques films pour débloquer tes premiers trophées.</div>`;
+  }
 }
 
 // Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs
@@ -4735,17 +4834,37 @@ function drawProfileShareCard(data) {
   drawFilmStripBand(ctx, h - 16, w, accent);
 }
 
+// Ludex 2.0 : partage natif (Web Share API) quand le navigateur le permet —
+// repli sur le téléchargement classique sinon (desktop, ou navigateurs qui
+// ne supportent pas le partage de FICHIERS spécifiquement, distinct du
+// partage de simple texte/lien que beaucoup supportent déjà). .toBlob() +
+// File plutôt que .toDataURL() seul : c'est ce qui permet de partager une
+// vraie image, pas juste un lien vers elle.
 document.getElementById('profile-share-btn').addEventListener('click', () => {
   const canvas = document.getElementById('profile-share-canvas');
   if (!canvas || !canvas.getContext || !canvas.getContext('2d')) {
     showToast("Ton navigateur ne permet pas de générer cette image.");
     return;
   }
-  const link = document.createElement('a');
-  link.download = 'ludex-profil.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  showToast('Image téléchargée.');
+  canvas.toBlob(async (blob) => {
+    if (!blob) { showToast("Impossible de générer l'image."); return; }
+    const file = new File([blob], 'ludex-profil.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Ma carte de profil Ludex' });
+        return; // partage réussi, rien de plus à faire
+      } catch (e) {
+        if (e.name === 'AbortError') return; // l'utilisateur a juste annulé — pas une erreur à signaler
+        // toute autre erreur (rare) : on retombe sur le téléchargement classique ci-dessous
+      }
+    }
+    const link = document.createElement('a');
+    link.download = 'ludex-profil.png';
+    link.href = URL.createObjectURL(blob);
+    link.click();
+    URL.revokeObjectURL(link.href);
+    showToast('Image téléchargée.');
+  }, 'image/png');
 });
 
 // ═══════════════════════════════════════════
@@ -5206,6 +5325,80 @@ function saveWatchlist(list, listId) {
   localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
 }
 
+// ── Ludex 2.0 : tri et filtre (voir Ludex_Specifications_Watchlist) ──
+// État séparé de celui de l'Historique (activeGenre/activeScoreFilter,
+// 06a-history-list.js) — même vocabulaire visuel (.genre-chip) mais deux
+// écrans indépendants, sinon choisir un genre ici filtrerait aussi
+// l'Historique par erreur.
+let wlSortOrder = 'recent';
+let wlActiveGenre = null;
+let wlDurationFilterOn = false;
+
+function sortWatchlist(list) {
+  if (wlSortOrder === 'rating') {
+    // Les films sans note connue (ajoutés avant ce champ, ou échec réseau
+    // au moment de l'ajout) descendent en fin de liste plutôt que de
+    // fausser le tri en tête à cause d'un `undefined` traité comme 0.
+    return [...list].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  }
+  if (wlSortOrder === 'year') {
+    return [...list].sort((a, b) => (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0));
+  }
+  return list; // 'recent' = déjà l'ordre de stockage (unshift à l'ajout)
+}
+
+function filterWatchlist(list) {
+  return list.filter(item => {
+    if (wlActiveGenre && !(item.genre || '').split(',').map(g => g.trim()).includes(wlActiveGenre)) return false;
+    if (wlDurationFilterOn && !(typeof item.runtime === 'number' && item.runtime < 120)) return false;
+    return true;
+  });
+}
+
+function renderWlGenreChips(list) {
+  const genres = getGenres(list);
+  const row = document.getElementById('wl-genre-fold');
+  const chips = document.getElementById('wl-genre-chips');
+  const currentLabel = document.getElementById('wl-genre-fold-current');
+  if (!row || !chips) return;
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  if (currentLabel) currentLabel.textContent = wlActiveGenre || 'Tous';
+  chips.innerHTML = '';
+
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (wlActiveGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { wlActiveGenre = null; renderWatchlist(); });
+  chips.appendChild(allChip);
+
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (wlActiveGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => {
+      wlActiveGenre = (wlActiveGenre === g) ? null : g;
+      renderWatchlist();
+    });
+    chips.appendChild(chip);
+  });
+}
+
+document.getElementById('wl-sort-row')?.addEventListener('click', (e) => {
+  const durationBtn = e.target.closest('#wl-duration-filter');
+  if (durationBtn) {
+    wlDurationFilterOn = !wlDurationFilterOn;
+    durationBtn.classList.toggle('active', wlDurationFilterOn);
+    renderWatchlist();
+    return;
+  }
+  const sortBtn = e.target.closest('.wl-sort-btn[data-sort]');
+  if (!sortBtn) return;
+  wlSortOrder = sortBtn.dataset.sort;
+  document.querySelectorAll('#wl-sort-row .wl-sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b === sortBtn));
+  renderWatchlist();
+});
+
 
 // Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
 // "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
@@ -5305,20 +5498,78 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
   }, true);
 }
 
+// Ludex 2.0 : suggestions concrètes dans l'état vide — plutôt qu'un bouton
+// "Découvrir" générique qui renvoie l'utilisateur bredouille à un autre
+// onglet, 3 films populaires directement ajoutables en un tap. Réutilise le
+// même endpoint tendances que Découvrir (trending=true), pas de nouvelle
+// route à créer. Mise en cache mémoire simple : ne re-fetch pas à chaque
+// fois que la watchlist active repasse à vide dans la même session.
+let _wlEmptySuggestionsCache = null;
+async function renderWatchlistEmptySuggestions() {
+  const wrap = document.getElementById('wl-empty-suggestions');
+  if (!wrap) return;
+  try {
+    let items = _wlEmptySuggestionsCache;
+    if (!items) {
+      const res = await fetch('/api/search?trending=true');
+      const data = await res.json();
+      items = (data.results || []).filter(m => m.media_type === 'movie' && m.poster_path).slice(0, 3);
+      _wlEmptySuggestionsCache = items;
+    }
+    if (items.length === 0) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="wl-empty-suggestions-title">Quelques suggestions pour commencer :</div>
+      <div class="wl-empty-suggestions-row">
+        ${items.map(m => `
+          <div class="wl-empty-sugg-card">
+            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+            <div class="wl-empty-sugg-title">${escAttr(m.title)}</div>
+            <button type="button" class="wl-empty-sugg-btn" data-movie-id="${m.id}" data-movie-title="${escAttr(m.title)}" data-movie-year="${(m.release_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    console.warn('Impossible de charger les suggestions', e);
+    wrap.innerHTML = '';
+  }
+}
+// Délégué depuis #watchlist-list (toujours présent), pas depuis
+// #wl-empty-suggestions lui-même — cet élément n'existe qu'une fois la
+// liste vide effectivement rendue, jamais au moment où ce script s'exécute.
+document.getElementById('watchlist-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-empty-sugg-btn');
+  if (!btn) return;
+  addToWatchlistFromTMDb(
+    { id: Number(btn.dataset.movieId), title: btn.dataset.movieTitle, poster_path: btn.dataset.poster },
+    btn.dataset.movieYear
+  );
+});
+
 function renderWatchlist() {
   const list = loadWatchlist();
   const container = document.getElementById('watchlist-list');
   const badge = document.getElementById('watchlist-count-badge');
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
+  renderWlGenreChips(list);
+  document.getElementById('wl-sort-row').style.display = list.length === 0 ? 'none' : 'flex';
+
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div><div class="wl-empty-suggestions" id="wl-empty-suggestions"></div>`;
+    window._justSavedWatchlistTitle = null;
+    renderWatchlistEmptySuggestions();
+    return;
+  }
+
+  const visible = filterWatchlist(sortWatchlist(list));
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun film ne correspond à ce filtre.</div>`;
     window._justSavedWatchlistTitle = null;
     return;
   }
 
   container.innerHTML = '';
-  list.forEach((item, i) => {
+  visible.forEach((item) => {
+    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent (voir attributs onclick plus bas), pas la position affichée après tri/filtre.
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
@@ -5447,11 +5698,17 @@ async function addToSpecificWatchlist(movie, year, listId) {
     return;
   }
 
-  let genre = '';
+  // Ludex 2.0 : note et durée capturées ici, réutilisant cet appel déjà fait
+  // pour le genre — aucun appel réseau supplémentaire — pour alimenter le
+  // tri "Note TMDb" et le filtre "− de 2h" sans jamais avoir à refaire cette
+  // requête plus tard au moment d'afficher la liste.
+  let genre = '', rating = null, runtime = null;
   try {
     const res = await fetch(`/api/search?id=${movie.id}`);
     const data = await res.json();
     genre = data.genres?.map(g => g.name).join(', ') || '';
+    rating = typeof data.vote_average === 'number' ? data.vote_average : null;
+    runtime = typeof data.runtime === 'number' ? data.runtime : null;
   } catch {}
 
   list.unshift({
@@ -5459,6 +5716,8 @@ async function addToSpecificWatchlist(movie, year, listId) {
     year,
     poster: tmdbImage(movie.poster_path, 'w185'),
     genre,
+    rating,
+    runtime,
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
   });
@@ -5779,6 +6038,258 @@ document.getElementById('wl-list-modal-cancel').addEventListener('click', () => 
 
 renderWatchlistTabs();
 renderWatchlist();
+
+// ═══════════════════════════════════════════
+//  WATCHLIST SÉRIES (Ludex 2.0)
+// ═══════════════════════════════════════════
+// Une seule liste (pas le système à listes multiples nommées des films —
+// portée volontairement réduite pour ce premier passage). Stockage et
+// logique séparés, mais même vocabulaire visuel (.wl-card, .wl-poster,
+// tri/filtre) que la watchlist films, pour que les deux se ressemblent à
+// l'usage sans être la même donnée.
+const TV_WATCHLIST_KEY = 'lbx_tv_watchlist';
+const TV_WATCHLIST_TOMBSTONES_KEY = 'lbx_tv_watchlist_tombstones';
+
+function loadTvWatchlist() {
+  try { return JSON.parse(localStorage.getItem(TV_WATCHLIST_KEY)) || []; } catch { return []; }
+}
+function saveTvWatchlist(list) {
+  localStorage.setItem(TV_WATCHLIST_KEY, JSON.stringify(list));
+}
+function tvWatchlistItemKey(item) { return (item.title + '|' + (item.year || '')).toLowerCase(); }
+
+let wlTvSortOrder = 'recent';
+let wlTvActiveGenre = null;
+
+function sortTvWatchlist(list) {
+  if (wlTvSortOrder === 'rating') return [...list].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  if (wlTvSortOrder === 'year') return [...list].sort((a, b) => (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0));
+  return list;
+}
+function filterTvWatchlist(list) {
+  if (!wlTvActiveGenre) return list;
+  return list.filter(item => (item.genre || '').split(',').map(g => g.trim()).includes(wlTvActiveGenre));
+}
+function renderWlTvGenreChips(list) {
+  const genres = getGenres(list);
+  const row = document.getElementById('wl-tv-genre-fold');
+  const chips = document.getElementById('wl-tv-genre-chips');
+  const currentLabel = document.getElementById('wl-tv-genre-fold-current');
+  if (!row || !chips) return;
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  if (currentLabel) currentLabel.textContent = wlTvActiveGenre || 'Tous';
+  chips.innerHTML = '';
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (wlTvActiveGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { wlTvActiveGenre = null; renderTvWatchlist(); });
+  chips.appendChild(allChip);
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (wlTvActiveGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => { wlTvActiveGenre = (wlTvActiveGenre === g) ? null : g; renderTvWatchlist(); });
+    chips.appendChild(chip);
+  });
+}
+
+document.getElementById('wl-tv-sort-row')?.addEventListener('click', (e) => {
+  const sortBtn = e.target.closest('.wl-sort-btn[data-sort]');
+  if (!sortBtn) return;
+  wlTvSortOrder = sortBtn.dataset.sort;
+  document.querySelectorAll('#wl-tv-sort-row .wl-sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b === sortBtn));
+  renderTvWatchlist();
+});
+
+function renderTvWatchlist() {
+  const list = loadTvWatchlist();
+  const container = document.getElementById('wl-tv-list');
+  if (!container) return;
+
+  renderWlTvGenreChips(list);
+  document.getElementById('wl-tv-sort-row').style.display = list.length === 0 ? 'none' : 'flex';
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>`;
+    return;
+  }
+
+  const visible = filterTvWatchlist(sortTvWatchlist(list));
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucune série ne correspond à ce filtre.</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  visible.forEach((item) => {
+    const i = list.indexOf(item);
+    const div = document.createElement('div');
+    div.className = 'wl-card';
+    if (window._justSavedTvWatchlistTitle && item.title.toLowerCase() === window._justSavedTvWatchlistTitle) {
+      div.classList.add('wl-card-entering');
+    }
+    const posterHtml = item.poster
+      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      : `<div class="wl-poster">${ICONS.clapper}</div>`;
+    div.innerHTML = `
+      <div class="wl-card-content">
+        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${posterHtml}
+        </div>
+        <div class="wl-actions">
+          <button class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
+          <button class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+        </div>
+      </div>`;
+    div.querySelector('.wl-card-open').addEventListener('click', () => openTvDetailSheet(item.tmdbId));
+    container.appendChild(div);
+    applyPosterAccent(item.poster, div);
+  });
+  window._justSavedTvWatchlistTitle = null;
+}
+
+document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-btn[data-tv-idx]');
+  if (!btn) return;
+  const idx = Number(btn.dataset.tvIdx);
+  const list = loadTvWatchlist();
+  const item = list[idx];
+  if (!item) return;
+
+  if (btn.dataset.action === 'remove') {
+    list.splice(idx, 1);
+    saveTvWatchlist(list);
+    recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+    renderTvWatchlist();
+    return;
+  }
+
+  // "Commencer à suivre" : même principe que watchlistToForm() côté films —
+  // relance la recherche (ici sur le champ séries), retire l'item de la
+  // watchlist, bascule vers Noter en mode Séries.
+  list.splice(idx, 1);
+  saveTvWatchlist(list);
+  recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+  renderTvWatchlist();
+
+  if (typeof setMediaType === 'function') setMediaType('tv');
+  const tvSearchEl = document.getElementById('tv-search');
+  if (tvSearchEl) {
+    tvSearchEl.value = item.title;
+    tvSearchEl.dispatchEvent(new Event('input'));
+  }
+  if (window.innerWidth <= 860) switchMobileNav('rating');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`Recherche lancée pour "${item.title}"`);
+});
+
+async function addToTvWatchlist(show, year) {
+  const list = loadTvWatchlist();
+  const key = (show.name + '|' + year).toLowerCase();
+  if (list.find(i => (i.title + '|' + (i.year || '')).toLowerCase() === key)) {
+    showToast('Déjà dans la watchlist séries.');
+    return;
+  }
+  let genre = '', rating = null;
+  try {
+    const res = await fetch(`/api/search?tvId=${show.id}`);
+    const data = await res.json();
+    genre = data.genres?.map(g => g.name).join(', ') || '';
+    rating = typeof data.vote_average === 'number' ? data.vote_average : null;
+  } catch { /* pas bloquant : la série s'ajoute quand même, juste sans genre/note pour le tri */ }
+
+  list.unshift({
+    title: show.name,
+    year,
+    poster: tmdbImage(show.poster_path, 'w185'),
+    genre,
+    rating,
+    tmdbId: show.id,
+    addedAt: new Date().toISOString(),
+  });
+  saveTvWatchlist(list);
+  window._justSavedTvWatchlistTitle = show.name.toLowerCase();
+  renderTvWatchlist();
+  showToast(`"${show.name}" ajoutée à la watchlist séries 🎯`);
+}
+
+// ── Recherche séries (mêmes suggestions à affiches, même pattern que le
+// champ films juste au-dessus) ──
+const wlTvInput = document.getElementById('wl-tv-input');
+const wlTvSuggestEl = document.getElementById('wl-tv-suggestions');
+let wlTvSearchTimer;
+
+wlTvInput?.addEventListener('input', () => {
+  clearTimeout(wlTvSearchTimer);
+  const q = wlTvInput.value.trim();
+  if (q.length < 2) { wlTvSuggestEl.style.display = 'none'; return; }
+  wlTvSearchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/search?tvQuery=${encodeURIComponent(q)}`);
+      const data = await readApiJson(res);
+      if (!data.results?.length) { wlTvSuggestEl.style.display = 'none'; return; }
+      wlTvSuggestEl.innerHTML = '';
+      wlTvSuggestEl.style.display = 'block';
+      data.results.slice(0, 5).forEach(s => {
+        const year = s.first_air_date?.slice(0, 4) || '';
+        const el = document.createElement('div');
+        el.className = 'wl-suggest-item';
+        el.innerHTML = `
+          ${s.poster_path
+            ? `<img class="wl-suggest-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="Affiche de ${escAttr(s.name)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">${escAttr(s.name)}</div>
+            <div class="wl-suggest-year">${year}</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          wlTvSuggestEl.style.display = 'none';
+          wlTvInput.value = '';
+          addToTvWatchlist(s, year);
+        });
+        wlTvSuggestEl.appendChild(el);
+      });
+    } catch (err) {
+      wlTvSuggestEl.style.display = 'none';
+      showToast(describeApiFailure(err));
+    }
+  }, 280);
+});
+document.addEventListener('click', e => {
+  if (wlTvInput && wlTvSuggestEl && !wlTvInput.contains(e.target) && !wlTvSuggestEl.contains(e.target)) {
+    wlTvSuggestEl.style.display = 'none';
+  }
+});
+document.getElementById('wl-tv-add-btn')?.addEventListener('click', () => {
+  const val = wlTvInput.value.trim();
+  if (!val) return;
+  wlTvSuggestEl.style.display = 'none';
+  const list = loadTvWatchlist();
+  if (list.find(i => i.title.toLowerCase() === val.toLowerCase())) { showToast('Déjà dans la liste.'); wlTvInput.value = ''; return; }
+  list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
+  saveTvWatchlist(list);
+  window._justSavedTvWatchlistTitle = val.toLowerCase();
+  renderTvWatchlist();
+  wlTvInput.value = '';
+});
+
+// ── Toggle Films/Séries ──
+document.getElementById('wl-tab-movie')?.addEventListener('click', () => {
+  document.getElementById('wl-tab-movie').classList.add('active');
+  document.getElementById('wl-tab-tv').classList.remove('active');
+  document.getElementById('wl-movie-section').style.display = '';
+  document.getElementById('wl-tv-section').style.display = 'none';
+});
+document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
+  document.getElementById('wl-tab-tv').classList.add('active');
+  document.getElementById('wl-tab-movie').classList.remove('active');
+  document.getElementById('wl-tv-section').style.display = '';
+  document.getElementById('wl-movie-section').style.display = 'none';
+  renderTvWatchlist();
+});
+
+renderTvWatchlist();
 
 // ═══════════════════════════════════════════
 //  MODAL DE CONFIRMATION
@@ -8783,6 +9294,9 @@ function getSortedTvShows() {
   if (activeGenre) {
     s = s.filter(sh => sh.genre && sh.genre.split(',').map(g => g.trim()).includes(activeGenre));
   }
+  if (activeLikedFilter) {
+    s = s.filter(sh => sh.liked);
+  }
   const avg = (sh) => computeShowAverageScore(sh);
   if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
   if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
@@ -8806,7 +9320,7 @@ function renderTvHistory() {
   const badge = document.getElementById('hist-count-badge');
   const filmCount = loadHistory().length;
   const filmFragment = `${filmCount} film${filmCount > 1 ? 's' : ''}`;
-  if (historySearchQuery || activeScoreFilter) {
+  if (historySearchQuery || activeScoreFilter || activeLikedFilter) {
     badge.textContent = `${filmFragment} · ${shows.length} / ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
     badge.style.color = 'var(--orange)';
   } else {
@@ -8823,11 +9337,11 @@ function renderTvHistory() {
     return;
   }
 
-  container.innerHTML = shows.map(renderTvShowCard).join('');
+  container.innerHTML = `<div class="hist-grid">${shows.map(renderTvShowCard).join('')}</div>`;
 
-  container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
-    const posterUrl = tmdbImage(shows[i]?.poster_path, 'w154');
-    applyPosterAccent(posterUrl, cardEl);
+  container.querySelectorAll('.hist-grid-card[data-show-id]').forEach((cardEl) => {
+    const show = shows.find(s => String(s.tmdbTvId) === cardEl.dataset.showId);
+    applyPosterAccent(tmdbImage(show?.poster_path, 'w154'), cardEl);
   });
 
   container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
@@ -8855,20 +9369,6 @@ function renderTvHistory() {
       );
     });
   });
-
-  container.querySelectorAll('.tv-season-reopen-btn').forEach(btn => {
-    btn.addEventListener('click', () => reopenTvSeason(btn.dataset.showId, btn.dataset.seasonKey));
-  });
-
-  container.querySelectorAll('.tv-season-delete-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteTvSeasonWithConfirm(btn.dataset.showId, btn.dataset.seasonKey);
-    });
-  });
-
-  initTvSeasonSwipeGestures(container);
-  initTvShowCardSwipeGestures(container);
 }
 
 function deleteTvSeasonWithConfirm(showId, seasonKey) {
@@ -8895,6 +9395,17 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
       }
       saveTvShows(remaining);
       renderTvHistory();
+      // Ludex 2.0 : ce bouton est désormais accessible DEPUIS la fiche
+      // détail (voir 19-tv-detail.js) — la rouvrir sur elle-même après
+      // suppression pour que sa liste de saisons reflète le changement,
+      // pas seulement la grille en arrière-plan. tdsCurrentData n'existe
+      // que si ce fichier est chargé (toujours vrai ici) et qu'une fiche
+      // série est actuellement ouverte.
+      if (typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id && remaining.find(s => String(s.tmdbTvId) === String(showId))) {
+        openTvDetailSheet(showId);
+      } else if (typeof closeTvDetailSheet === 'function' && typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id === Number(showId)) {
+        closeTvDetailSheet(); // la série entière vient de disparaître avec sa dernière saison
+      }
       showToast(`"${seasonName}" retirée`);
       if (typeof statsDirty !== 'undefined') statsDirty = true;
     },
@@ -8902,45 +9413,44 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
   );
 }
 
+// Ludex 2.0 : la carte devient une cellule de grille (poster + badges) —
+// la liste extensible par saison (Voir les X saisons, avec rouvrir/
+// supprimer) a migré dans la fiche détail (voir buildSeasonProgressionSection,
+// 19-tv-detail.js), qui affichait déjà la progression par saison mais sans
+// ces deux actions avant ce changement. Un tap ouvre directement la fiche —
+// plus de repli "tout gérer depuis la grille".
 function renderTvShowCard(show) {
   const avg = computeShowAverageScore(show);
   const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
-  const ratedCount = seasons.filter(([, s]) => s.rating).length;
+  const seasonsWithProgress = seasons.filter(([, s]) => s.totalEpisodes > 0);
+  const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
+  const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
+  const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const posterUrl = tmdbImage(show.poster_path, 'w154');
 
+  const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
+  const isHighScore = avg != null && avg >= 8.5;
+  const isFeatured = !!show.liked || isHighScore;
+
+  const imgHtml = posterUrl
+    ? `<img class="hist-grid-poster" src="${posterUrl}" alt="Affiche de ${escAttr(show.title)}" loading="lazy" decoding="async">`
+    : `<div class="hist-grid-poster-ph">${ICONS.tv || ICONS.clapper}</div>`;
+
   return `
-    <div class="tv-show-card">
-      <div class="tv-show-card-header-wrap" data-show-id="${show.tmdbTvId}">
-        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-        <div class="tv-show-card-header">
-          <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
-            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
-            <div class="tv-show-card-info">
-              <div class="tv-show-card-title">${escAttr(show.title)}</div>
-              <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
-            </div>
-          </button>
-          <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+    <div class="hist-item hist-grid-card${isFeatured ? ' hist-grid-card-featured' : ''}" data-show-id="${show.tmdbTvId}">
+      <button type="button" class="tv-show-card-open-btn hist-item-open" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
+        ${imgHtml}
+      </button>
+      <div class="hist-grid-badge" style="color:${scoreColor}">${avg != null ? avg.toFixed(1) : '—'}</div>
+      ${isFeatured ? `<div class="hist-grid-featured-badge">${show.liked ? `${ICONS.heart} Coup de cœur` : `★ ${avg.toFixed(1)}`}</div>` : ''}
+      ${totalEpisodes > 0 ? `
+        <div class="hist-grid-progress" title="${watchedEpisodes}/${totalEpisodes} épisodes vus" aria-hidden="true">
+          <div class="hist-grid-progress-fill" style="width:${progressPct}%"></div>
         </div>
+      ` : ''}
+      <div class="hist-actions">
+        <button type="button" class="hist-action-btn del tv-show-delete-btn" data-show-id="${show.tmdbTvId}" title="Retirer" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
       </div>
-      <details class="tv-show-seasons-fold">
-        <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
-        <div class="tv-show-seasons-list">
-          ${seasons.map(([key, s]) => `
-            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}">
-              <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-              <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-              <div class="tv-season-row-content">
-                <button type="button" class="tv-season-reopen-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">
-                  <span>${escAttr(s.seasonName)}</span>
-                  <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
-                </button>
-                <button type="button" class="tv-season-delete-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </details>
     </div>
   `;
 }
@@ -9318,7 +9828,10 @@ function renderTvStats() {
   const yearShowsCount = shows.filter(s =>
     Object.values(s.seasons || {}).some(se => se.rating?.date?.startsWith(currentYear))
   ).length;
-  animateCountUp(document.getElementById('kpi-year'), yearShowsCount);
+  // Ludex 2.0 : #kpi-year a disparu (voir le même correctif côté films dans
+  // 06c-profile-stats.js) — sous-texte du Hero Header à la place.
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = `+${yearShowsCount} en ${currentYear}`;
 
   const allRatings = getAllTvSeasonRatings();
 
@@ -9341,9 +9854,8 @@ function renderTvStats() {
     }
   }
 
-  // Timeline fusionnée (films + séries), identique à ce qu'affiche le mode
-  // Films — voir le commentaire en tête de section.
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(loadHistory().concat(allRatings));
+  // Ludex 2.0 : timeline retirée (voir index.html) — la heatmap couvre déjà
+  // ce rôle, films et séries confondus.
 
   const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
   allRatings.forEach(r => {
@@ -9443,8 +9955,52 @@ async function resolveNextTvEpisode(cand) {
   } catch { return null; }
 }
 
+// Texte engageant selon la proximité de diffusion — "Demain", "J-3", ou la
+// date complète au-delà d'une semaine (pas la peine d'un compte à rebours
+// pour un épisode encore loin).
+function formatAirCountdown(airDateStr) {
+  const airDate = new Date(airDateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((airDate - today) / 86400000);
+  if (diffDays <= 0) return 'Diffusion imminente';
+  if (diffDays === 1) return 'Demain';
+  if (diffDays <= 13) return `J-${diffDays}`;
+  return `Diffusion le ${airDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+}
+
 function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   const posterUrl = tmdbImage(show.poster_path, 'w154');
+
+  // Ludex 2.0 : protection anti-spoilers — un épisode déjà présent dans la
+  // liste de la saison (donc "next unwatched" au sens strict) mais dont la
+  // date de diffusion n'est pas encore passée reste verrouillé : ni titre,
+  // ni synopsis, ni action de notation. episode.air_date vient de la même
+  // réponse saison déjà chargée (pas d'appel réseau supplémentaire) —
+  // équivalent en pratique à next_episode_to_air pour cet usage précis :
+  // le prochain épisode non vu ET pas encore diffusé est justement celui
+  // que next_episode_to_air désignerait.
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const airDate = episode.air_date ? new Date(episode.air_date + 'T00:00:00') : null;
+  const isLocked = !airDate || airDate > today;
+
+  if (isLocked) {
+    const countdown = episode.air_date ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+    return `
+      <div class="tv-continue-card tv-continue-locked">
+        ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+        <div class="tv-continue-info">
+          <div class="tv-continue-show-title">${escAttr(show.title)}</div>
+          <div class="tv-continue-ep-title"><span class="tv-continue-ep-masked">Épisode à venir</span></div>
+          <div class="tv-continue-meta">${escAttr(countdown)}</div>
+        </div>
+        <div class="tv-continue-lock-badge" aria-label="Épisode pas encore diffusé, notation indisponible" title="Pas encore diffusé">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </div>
+      </div>
+    `;
+  }
+
   const meta = [
     episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
     episode.runtime ? `${episode.runtime} min` : '',
@@ -9613,7 +10169,11 @@ function buildSeasonProgressionSection(data, localShow) {
       <details class="tds-season-details" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
         <summary class="tds-season-progress-row">
           <span>${escAttr(ts.name)}</span>
-          ${statusHtml}
+          <span class="tds-season-progress-right">
+            ${statusHtml}
+            ${localSeason ? `<button type="button" class="tds-season-reopen-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Rouvrir pour noter" aria-label="Rouvrir ${escAttr(ts.name)} pour la noter">${ICONS.star}</button>` : ''}
+            ${localSeason ? `<button type="button" class="tds-season-delete-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Retirer cette saison" aria-label="Retirer ${escAttr(ts.name)}">${ICONS.trash}</button>` : ''}
+          </span>
         </summary>
         <div class="tds-season-episodes" data-loaded="false"></div>
       </details>
@@ -9666,6 +10226,16 @@ function buildTdsContent(data, localShow) {
         <div class="mds-external-ratings" id="tds-external-ratings"></div>
         ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
       </div>
+      ${localShow ? `
+        <!-- Ludex 2.0 : "coup de cœur" pour les séries (voir
+             Ludex_Specifications_Historique) — au niveau de LA SÉRIE entière
+             (localShow.liked), pas par saison : plus simple, et cohérent
+             avec la carte vedette de l'Historique qui représente une série
+             en un seul bloc, pas saison par saison. Seulement visible une
+             fois la série suivie (localShow existe) — se marquer "coup de
+             cœur" sur une série qu'on n'a pas encore commencée n'a pas de sens. -->
+        <button type="button" class="heart-btn tds-heart-btn ${localShow.liked ? 'active' : ''}" id="tds-heart-btn" data-show-id="${escAttr(String(data.id))}" title="Marquer comme coup de cœur" aria-label="Marquer ${escAttr(data.name)} comme coup de cœur" aria-pressed="${localShow.liked ? 'true' : 'false'}"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
+      ` : ''}
     </div>
 
     ${!localShow ? `
@@ -10009,6 +10579,43 @@ tdsEl.addEventListener('click', (e) => {
 
   const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
   if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
+
+  const heartBtn = e.target.closest('#tds-heart-btn[data-show-id]');
+  if (heartBtn) {
+    const shows = loadTvShows();
+    const show = shows.find(s => String(s.tmdbTvId) === String(heartBtn.dataset.showId));
+    if (show) {
+      show.liked = !show.liked;
+      saveTvShows(shows);
+      heartBtn.classList.toggle('active', show.liked);
+      heartBtn.setAttribute('aria-pressed', String(show.liked));
+      hapticPulse(heartBtn, 'medium');
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+    }
+    return;
+  }
+
+  // Ludex 2.0 : le bouton supprimer d'une saison a migré ici depuis
+  // l'ancienne carte extensible de l'Historique (retirée avec le passage en
+  // grille) — même fonction (deleteTvSeasonWithConfirm, 18-tv-shows.js),
+  // juste un point d'entrée différent. preventDefault+stopPropagation
+  // impératifs : ce bouton vit DANS un <summary>, sans ça le clic
+  // déclencherait aussi l'ouverture/fermeture du <details> parent.
+  const seasonDeleteBtn = e.target.closest('.tds-season-delete-btn[data-show-id]');
+  if (seasonDeleteBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    deleteTvSeasonWithConfirm(seasonDeleteBtn.dataset.showId, seasonDeleteBtn.dataset.seasonKey);
+    return;
+  }
+
+  const seasonReopenBtn = e.target.closest('.tds-season-reopen-btn[data-show-id]');
+  if (seasonReopenBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    reopenTvSeason(seasonReopenBtn.dataset.showId, seasonReopenBtn.dataset.seasonKey);
+    return;
+  }
 
   // "Commencer la série" : crée le suivi de la première saison directement
   // (sans passer par Noter), l'ajoute au widget "En cours", puis recharge

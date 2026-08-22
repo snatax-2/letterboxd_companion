@@ -63,35 +63,6 @@ function createRadarSVG(averages, mediaType = 'movie') {
   return svg;
 }
 
-function createTimelineSVG(history) {
-  const months = {};
-  const now = new Date();
-  for(let i=5; i>=0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`] = { c: 0 };
-  }
-  history.forEach(h => {
-    if(h.date) { const k = h.date.substring(0,7); if(months[k]) months[k].c++; }
-  });
-
-  const keys = Object.keys(months).sort();
-  const maxC = Math.max(...keys.map(k => months[k].c), 1);
-  const w = 300, h = 100, pad = 20, barW = (w - pad*2)/6 - 10;
-
-  let svg = `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" style="overflow:visible;">`;
-  keys.forEach((k, i) => {
-    const count = months[k].c;
-    const barH = (count / maxC) * (h - pad - 10);
-    const x = pad + i*(barW + 10), y = h - pad - barH;
-    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" fill="var(--border-hi)" rx="2" style="transition:height 0.5s ease, y 0.5s ease" />`;
-    if(count > 0) svg += `<text x="${x + barW/2}" y="${y - 4}" class="svg-text-mono" text-anchor="middle">${count}</text>`;
-    const mLab = new Date(k+'-01').toLocaleDateString('fr-FR', {month:'short'}).substring(0,3);
-    svg += `<text x="${x + barW/2}" y="${h - 5}" class="svg-text" fill="var(--text-mid)" text-anchor="middle">${mLab}</text>`;
-  });
-  svg += `</svg>`;
-  return svg;
-}
-
 // Anime un chiffre de 0 (ou de sa valeur affichée actuelle) jusqu'à sa valeur
 // finale, avec un ralentissement en fin de course (ease-out) pour un rendu
 // plus "premium" qu'un simple changement instantané. Respecte la préférence
@@ -141,11 +112,11 @@ function renderStats() {
   
   if (history.length === 0) {
     document.getElementById('kpi-avg').textContent = '-'; 
-    document.getElementById('kpi-year').textContent = '0';
+    const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+    if (heroYearSubEl) heroYearSubEl.textContent = '';
     document.getElementById('radar-chart-container').innerHTML = ''; 
     document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
-    document.getElementById('timeline-chart-container').innerHTML = '';
     document.getElementById('top-directors-list').innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' });
     buildHistogram({});
     resetProfileExtras();
@@ -157,7 +128,13 @@ function renderStats() {
 
   const currentYear = new Date().getFullYear().toString();
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
-  animateCountUp(document.getElementById('kpi-year'), yearCount);
+  // Ludex 2.0 : plus de carte KPI séparée "En 2026" — ce compte vit
+  // maintenant en sous-texte du bento "Films notés" (voir la maquette
+  // envoyée). #kpi-year a disparu du HTML ; textContent direct plutôt que
+  // animateCountUp() ici, puisqu'on affiche un texte formaté ("+24 en
+  // 2026"), pas un nombre brut animé seul.
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = `+${yearCount} en ${currentYear}`;
 
   // Réutilise la même fonction que le repère de moyenne perso sur les sliders
   // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
@@ -176,8 +153,6 @@ function renderStats() {
     document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block'; 
   }
-
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(history.concat(typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : []));
 
   const dirs = {};
   history.forEach(h => {
@@ -212,6 +187,12 @@ function renderStats() {
 function resetProfileExtras() {
   document.getElementById('profile-member-since').textContent = '—';
   document.getElementById('profile-watch-time').textContent = '—';
+  const heroSubEl = document.getElementById('profile-hero-sub');
+  if (heroSubEl) heroSubEl.textContent = 'Cinéphile · Membre depuis —';
+  const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
+  if (heroWatchTimeEl) heroWatchTimeEl.textContent = '—';
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = '';
   document.getElementById('profile-fav-actor').textContent = '—';
   document.getElementById('profile-streak').textContent = 'Pas de série en cours';
   renderBadges(computeBadges([], {}));
@@ -253,6 +234,8 @@ function renderProfileExtras(history) {
     memberSinceStr = earliest.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   }
   document.getElementById('profile-member-since').textContent = memberSinceStr;
+  const heroSubEl = document.getElementById('profile-hero-sub');
+  if (heroSubEl) heroSubEl.textContent = `Cinéphile · Membre depuis ${memberSinceStr}`;
 
   // Temps total visionné : somme des durées (le champ runtime est stocké en
   // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
@@ -262,6 +245,8 @@ function renderProfileExtras(history) {
     return sum + (isNaN(mins) ? 0 : mins);
   }, 0);
   document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
+  const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
+  if (heroWatchTimeEl) heroWatchTimeEl.textContent = formatWatchTime(totalMinutes);
 
   // Acteur favori : même principe que le top réalisateurs (compte + note
   // moyenne), mais un seul nom affiché ici.
@@ -286,7 +271,11 @@ function renderProfileExtras(history) {
   document.getElementById('profile-streak').textContent =
     streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
 
-  const badges = computeBadges(history, { totalMinutes, streak });
+  // Ludex 2.0 : streak JOURNALIER séparé pour le succès Fidélité (voir
+  // Ludex_Gamification_Succes.pdf — "jours consécutifs", pas semaines).
+  const dayStreak = computeDayStreak(history);
+  const tvRatings = typeof getAllTvSeasonRatings === 'function' ? getAllTvSeasonRatings() : [];
+  const badges = computeBadges(history, { totalMinutes, dayStreak, tvRatings });
   renderBadges(badges);
 
   // Genre favori (pour la carte de profil) : même logique que le top
@@ -312,19 +301,66 @@ function renderProfileExtras(history) {
 function renderBadges(badges) {
   const grid = document.getElementById('badges-grid');
   if (!grid) return;
-  // Compteur dans l'en-tête plié : l'info essentielle (progression) reste
-  // visible sans déplier, le détail ne prend plus tout cet espace du profil.
   const countEl = document.getElementById('badges-count');
   if (countEl) {
-    const unlocked = badges.filter(b => b.unlocked).length;
+    const unlocked = badges.filter(b => b.tier > 0).length;
     countEl.textContent = `${unlocked}/${badges.length}`;
   }
+
+  // Ludex 2.0 : détection de franchissement de palier — compare le palier
+  // actuel de chaque badge à son dernier palier CONNU (stocké), déclenche
+  // un toast de célébration si un nouveau palier vient d'être atteint. À la
+  // toute première exécution (aucun état connu encore stocké), initialise
+  // silencieusement sur les paliers ACTUELS plutôt que sur 0 — sinon un
+  // utilisateur avec déjà 200 films notés recevrait d'un coup une pluie de
+  // toasts "Palier débloqué" pour des trophées qu'il a en réalité depuis
+  // longtemps.
+  let knownTiers = {};
+  let isFirstRun = true;
+  try {
+    const stored = localStorage.getItem('lbx_badges_known_tiers');
+    if (stored) { knownTiers = JSON.parse(stored); isFirstRun = false; }
+  } catch { /* ignore, repart de zéro */ }
+
+  const newlyUnlocked = [];
+  badges.forEach(b => {
+    const prevTier = knownTiers[b.id] ?? 0;
+    if (!isFirstRun && b.tier > prevTier) newlyUnlocked.push(b);
+    knownTiers[b.id] = b.tier;
+  });
+  localStorage.setItem('lbx_badges_known_tiers', JSON.stringify(knownTiers));
+  const TIER_NAMES = ['', 'Palier I', 'Palier II', 'Palier III'];
+  newlyUnlocked.forEach(b => showToast(`🏆 ${TIER_NAMES[b.tier]} débloqué — ${b.name} !`));
+
   grid.innerHTML = badges.map(b => `
-    <div class="badge-item ${b.unlocked ? 'unlocked' : 'locked'}" title="${b.unlocked ? 'Débloqué' : 'Pas encore débloqué'}">
-      <div class="badge-icon">${ICONS.star}</div>
-      <div class="badge-label">${b.label}</div>
+    <div class="badge-item ${b.tier > 0 ? 'unlocked' : 'locked'}" title="${b.tier > 0 ? `${TIER_NAMES[b.tier]} débloqué` : 'Pas encore débloqué'}">
+      <div class="badge-icon badge-tier-${b.tier}">${b.icon}</div>
+      <div class="badge-label">${escAttr(b.name)}</div>
+      ${!b.maxed ? `
+        <div class="badge-progress-track"><div class="badge-progress-fill" style="width:${Math.round(b.progress * 100)}%"></div></div>
+        <div class="badge-progress-text">${b.value}/${b.nextThreshold}</div>
+      ` : `<div class="badge-progress-text badge-maxed">Complété</div>`}
     </div>
   `).join('');
+
+  // Ludex 2.0 : vitrine des 3 derniers trophées débloqués, toujours visible
+  // (voir #trophy-showcase, index.html) — sans dépendre de newlyUnlocked
+  // (qui ne contient que ceux débloqués À CETTE exécution précise) : les 3
+  // avec le palier le plus élevé, tous badges confondus, peu importe QUAND
+  // ils ont été débloqués.
+  const showcaseEl = document.getElementById('trophy-showcase');
+  if (showcaseEl) {
+    const top3 = [...badges].filter(b => b.tier > 0).sort((a, b) => b.tier - a.tier || b.progress - a.progress).slice(0, 3);
+    showcaseEl.innerHTML = top3.length > 0
+      ? top3.map(b => `
+          <div class="trophy-medal">
+            <div class="trophy-icon badge-tier-${b.tier}">${b.icon}</div>
+            <div class="trophy-name">${escAttr(b.name)}</div>
+            <div class="trophy-tier">${TIER_NAMES[b.tier]}</div>
+          </div>
+        `).join('')
+      : `<div class="trophy-empty">Note quelques films pour débloquer tes premiers trophées.</div>`;
+  }
 }
 
 // Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs

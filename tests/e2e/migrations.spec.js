@@ -26,7 +26,7 @@ test('des donnees ancienne forme sont migrees au chargement (version, sauvegarde
 
   // L'app fonctionne normalement avec les donnees migrees
   await page.click('#nav-history');
-  await expect(page.locator('.hist-title').first()).toContainText('Vieux Film');
+  await expect(page.locator('.hist-item .hist-item-open').first()).toHaveAttribute('aria-label', /Vieux Film/);
 });
 
 test('donnees deja a jour : aucune re-migration, pas de nouvelle sauvegarde', async ({ page }) => {

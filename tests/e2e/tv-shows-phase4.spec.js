@@ -1,11 +1,15 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
-// Series — Phase 4 : Historique scindé Films/Séries. Bascule façon
-// Détaillé/Rapide (pas un filtre dans une liste mélangée), comptage par
-// SÉRIE pas par saison, note globale affichée par carte, liste de
-// saisons dépliable, réouverture d'une saison pour la re-noter,
-// suppression d'une série avec confirmation.
+// Series — Historique scindé Films/Séries. Bascule façon Détaillé/Rapide
+// (pas un filtre dans une liste mélangée), comptage par SÉRIE pas par
+// saison, note globale affichée par carte, suppression d'une série avec
+// confirmation.
+//
+// Ludex 2.0 : passage en grille de posters — la liste de saisons dépliable
+// et la réouverture d'une saison ont migré vers la fiche détail (voir
+// buildSeasonProgressionSection, 19-tv-detail.js), donc ces tests ouvrent
+// désormais la fiche (clic sur la carte) plutôt que ".tv-show-seasons-fold".
 
 const TV_FIXTURE = [
   {
@@ -21,6 +25,12 @@ const TV_FIXTURE = [
   },
 ];
 
+const TV_DETAIL_FIXTURE = {
+  id: 4607, name: 'True Detective', poster_path: '/p1.jpg', first_air_date: '2014-01-12',
+  genres: [], credits: { crew: [], cast: [] }, external_ids: {},
+  seasons: [{ season_number: 1, name: 'Saison 1', episode_count: 8 }, { season_number: 2, name: 'Saison 2', episode_count: 8 }],
+};
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1600 });
   await page.addInitScript((fixture) => {
@@ -31,6 +41,7 @@ test.beforeEach(async ({ page }) => {
     localStorage.setItem('lbx_tv_shows', JSON.stringify(fixture));
   }, TV_FIXTURE);
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.route('**/api/search?tvId=4607*', route => route.fulfill({ json: TV_DETAIL_FIXTURE }));
 });
 
 async function goToTvHistory(page) {
@@ -58,26 +69,28 @@ test('badge affiche les deux comptes, films par defaut, bascule vers series', as
   await page.waitForTimeout(300);
   await expect(page.locator('#history-list')).toBeHidden();
   await expect(page.locator('#tv-history-list')).toBeVisible();
-  await expect(page.locator('.tv-show-card')).toHaveCount(1);
+  await expect(page.locator('#tv-history-list .hist-grid-card')).toHaveCount(1);
 });
 
-test('carte de serie : note globale correcte, saisons depliables', async ({ page }) => {
+test('carte de serie : note globale correcte, fiche détail montre les 2 saisons', async ({ page }) => {
   await goToTvHistory(page);
-  const cardScore = await page.locator('.tv-show-card-score').textContent();
-  expect(cardScore).toContain('9.0/10'); // 1 seule saison notee -> moyenne = sa propre note
-  expect(cardScore).toContain('1/2 saison');
+  // Ludex 2.0 : la note vit dans le badge superposé sur l'affiche.
+  const cardScore = await page.locator('#tv-history-list .hist-grid-badge').textContent();
+  expect(cardScore.trim()).toBe('9.0'); // 1 seule saison notee -> moyenne = sa propre note
 
-  await page.click('.tv-show-seasons-fold summary');
-  await page.waitForTimeout(200);
-  await expect(page.locator('.tv-season-row')).toHaveCount(2);
-  await expect(page.locator('.tv-season-row').nth(1)).toContainText('1/8 ép');
+  await page.click('.tv-show-card-open-btn');
+  await page.waitForSelector('#tv-detail-sheet.open');
+  await page.waitForTimeout(400);
+  await expect(page.locator('.tds-season-details')).toHaveCount(2);
+  await expect(page.locator('.tds-season-details').nth(1)).toContainText('1/8 ép');
 });
 
-test('reouvrir une saison depuis l\'historique repeuple le formulaire avec la vraie note', async ({ page }) => {
+test('reouvrir une saison depuis la fiche détail repeuple le formulaire avec la vraie note', async ({ page }) => {
   await goToTvHistory(page);
-  await page.click('.tv-show-seasons-fold summary');
-  await page.waitForTimeout(200);
-  await page.click('.tv-season-row >> nth=0'); // saison 1, notee
+  await page.click('.tv-show-card-open-btn');
+  await page.waitForSelector('#tv-detail-sheet.open');
+  await page.waitForTimeout(400);
+  await page.locator('.tds-season-details').first().locator('.tds-season-reopen-btn').click(); // saison 1, notee
   await page.waitForTimeout(400);
 
   await expect(page.locator('#tab-media-tv')).toHaveClass(/active/);
@@ -86,14 +99,14 @@ test('reouvrir une saison depuis l\'historique repeuple le formulaire avec la vr
 
 test('supprimer une serie retire la carte et met a jour le badge', async ({ page }) => {
   await goToTvHistory(page);
-  await expect(page.locator('.tv-show-card')).toHaveCount(1);
+  await expect(page.locator('#tv-history-list .hist-grid-card')).toHaveCount(1);
 
   await page.click('.tv-show-delete-btn');
   await page.waitForSelector('#modal.open', { state: 'visible' });
   await page.click('#modal-confirm');
   await page.waitForTimeout(300);
 
-  await expect(page.locator('.tv-show-card')).toHaveCount(0);
+  await expect(page.locator('#tv-history-list .hist-grid-card')).toHaveCount(0);
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
   expect(stored).toHaveLength(0);
   await expect(page.locator('#hist-count-badge')).toContainText('0 série');
@@ -103,8 +116,9 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
   test(`accessibilite historique series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await goToTvHistory(page);
-    await page.click('.tv-show-seasons-fold summary');
-    await page.waitForTimeout(200);
+    await page.click('.tv-show-card-open-btn');
+    await page.waitForSelector('#tv-detail-sheet.open');
+    await page.waitForTimeout(400);
     const results = await new AxeBuilder({ page }).analyze();
     const bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
     expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);

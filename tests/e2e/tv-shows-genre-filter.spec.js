@@ -76,8 +76,10 @@ test('genre capture directement a la selection, retrofit en arriere-plan pour un
 
   await page.click('.genre-chip:has-text("Policier")');
   await page.waitForTimeout(300);
-  const titles = await page.locator('.tv-show-card-title').allTextContents();
-  expect(titles).toEqual(['True Detective']);
+  // Ludex 2.0 : plus de texte visible sur la carte (grille de posters) — le
+  // titre vit dans aria-label de .tv-show-card-open-btn.
+  const labels = await page.locator('.tv-show-card-open-btn').evaluateAll(els => els.map(el => el.getAttribute('aria-label')));
+  expect(labels).toEqual(['Voir la fiche de True Detective']);
 });
 
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {

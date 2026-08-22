@@ -97,6 +97,10 @@ let activeContextTags = new Set();
 let historySearchQuery = ''; 
 let isFetchingMovie = false; 
 let activeScoreFilter = null; 
+// Ludex 2.0 : filtre "Coups de cœur" de l'Historique (films ET séries) —
+// déclaré ici, même raison que le reste de ce bloc (référencé avant que
+// 06a-history-list.js/18-tv-shows.js ne s'exécutent).
+let activeLikedFilter = false;
 
 // ═══════════════════════════════════════════
 //  STORAGE & DRAFT

@@ -63,7 +63,7 @@
        ailleurs. */
     color-scheme: dark;
 
-    --slider-thumb-size: 18px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
+    --slider-thumb-size: 14px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
     /* Ludex 2.0 — palette par défaut : inspirée de Technicolor (bleu nuit +
        or) mais redessinée pour ce rôle précis, une seule couleur chaude
        dominante plutôt que la palette Letterboxd (orange/bleu/vert)
@@ -417,22 +417,98 @@
      var(--bg) posé par la règle d'origine, donc le mécanisme de swipe/
      révélation n'est pas affecté par ce changement, seul le contour
      extérieur de la carte disparaît. */
-  #view-history .hist-item {
-    background: transparent; border: none; border-radius: 0;
-    margin-bottom: 0; border-bottom: 1px solid var(--border);
+  /* Ludex 2.0 : Historique passé de la liste à filets à une grille de
+     posters (voir ludex_historique_maquette.html envoyée par l'utilisateur)
+     — .hist-item reste le nom de classe (data-idx/data-saved-at toujours
+     lus ailleurs, voir 06b-history-actions.js), seul son HABILLAGE change
+     radicalement. Le swipe est retiré : une cellule de grille 2:3 n'a pas
+     la place pour révéler un indice en dessous — voir le garde-fou ajouté
+     dans 06b-history-actions.js (touchstart exige .hist-item-content, qui
+     n'existe plus dans ce balisage, neutralisant tout le reste du fichier
+     en cascade). Actions (modifier/supprimer) toujours visibles en overlay
+     plutôt qu'au tap : plus sûr sur tactile qu'un survol qui n'existe pas
+     vraiment sur mobile. */
+  .hist-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    margin-bottom: 4px;
   }
-  #view-history .hist-item:last-child {
-    border-bottom: none;
+  .hist-grid-card {
+    position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 2/3;
+    background: var(--surface2); cursor: pointer;
   }
-  #view-history .hist-item-content {
-    padding: 12px 4px;
+  .hist-grid-card .hist-item-open { display: block; width: 100%; height: 100%; }
+  .hist-grid-poster, .hist-grid-poster-ph {
+    width: 100%; height: 100%; object-fit: cover; display: block;
   }
+  .hist-grid-poster-ph {
+    display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid);
+  }
+  .hist-grid-badge {
+    position: absolute; top: 5px; right: 5px; background: rgba(14,17,22,0.75);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    padding: 3px 6px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.08); font-family: var(--font-mono);
+  }
+  /* Traitement vedette : coup de cœur OU note ≥ 8.5 (voir renderHistory(),
+     06a-history-list.js) — span 2×2 façon maquette, bordure + lueur douce
+     plutôt qu'un simple contour pour vraiment sauter aux yeux dans la
+     grille, pas juste "légèrement différent". */
+  .hist-grid-card-featured {
+    grid-column: span 2; grid-row: span 2;
+    border: 2px solid var(--gold); box-shadow: 0 0 16px color-mix(in srgb, var(--gold) 35%, transparent);
+  }
+  .hist-grid-card-featured::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(to top, rgba(14,17,22,0.85), transparent 45%);
+  }
+  .hist-grid-featured-badge {
+    position: absolute; bottom: 8px; left: 8px; z-index: 1;
+    background: var(--gold); color: var(--solid-fill-text, #0d1117);
+    padding: 4px 9px; border-radius: 999px; font-size: 0.64rem; font-weight: 700;
+    font-family: var(--font-mono); display: flex; align-items: center; gap: 3px;
+  }
+  .hist-grid-featured-badge .icon { width: 0.85em; height: 0.85em; }
+  /* Barre de progression intégrée en bas de l'affiche (séries uniquement) —
+     remplace le texte "3/4 saisons" par quelque chose de plus discret,
+     cohérent avec le reste des badges superposés sur l'affiche plutôt qu'à
+     côté. Pourcentage d'épisodes vus sur le total suivi, pas juste le
+     compte de saisons (plus fin — une saison à moitié vue compte). */
+  .hist-grid-progress {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    background: rgba(14,17,22,0.55);
+  }
+  .hist-grid-progress-fill {
+    height: 100%; background: var(--gold);
+    transition: width var(--dur-base) var(--ease-out);
+  }
+  /* Actions modifier/supprimer — coin opposé au badge de note, toujours
+     visibles (pas de hover tactile fiable). */
+  .hist-grid-card .hist-actions {
+    position: absolute; top: 5px; left: 5px; z-index: 1; display: flex; gap: 4px;
+  }
+  .hist-grid-card .hist-action-btn {
+    width: 24px; height: 24px; border-radius: 50%; background: rgba(14,17,22,0.75);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; color: var(--text-hi);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .hist-grid-card .hist-action-btn .icon { width: 12px; height: 12px; }
+  .hist-grid-card .hist-action-btn.del:hover, .hist-grid-card .hist-action-btn.del:active { color: var(--red); }
+
   /* Séparateur de mois, injecté par renderHistory() uniquement en tri
-     chronologique — voir 06a-history-list.js */
+     chronologique — voir 06a-history-list.js. Le récap (X films, moyenne)
+     partage la ligne plutôt que d'ajouter une rangée : le mois reste un
+     repère de navigation léger, pas une nouvelle section à part entière. */
   .hist-month-sep {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 18px 4px 8px; border-bottom: none;
+  }
+  .hist-month-label {
     font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--text-mid);
-    padding: 18px 4px 6px; border-bottom: none;
+    text-transform: uppercase; color: var(--gold); font-weight: 700;
+  }
+  .hist-month-recap {
+    font-size: 0.66rem; color: var(--text-mid); font-family: var(--font-mono);
   }
   .hist-month-sep:first-child {
     padding-top: 2px;
@@ -613,7 +689,7 @@
      (critiques, synopsis, titres) reste sélectionnable, lui. */
   .btn, .nav-btn, .icon-btn, .genre-chip, .filter-btn, .theme-card,
   .duel-side, .duel-skip, .hist-action-btn,
-  summary, .hist-swipe-hint, .stars {
+  summary, .stars {
     -webkit-user-select: none;
     user-select: none;
   }
@@ -871,9 +947,13 @@
   .search-wrap { position: relative; margin-bottom: 12px; width: 100%; }
   .search-row { display: grid; grid-template-columns: 1fr 140px auto; gap: 12px; width: 100%; }
   .search-input-wrap { position: relative; width: 100%; }
+  .search-input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    width: 16px; height: 16px; color: var(--text-mid); pointer-events: none;
+  }
   .search-input {
     background: var(--bg); border: 1px solid var(--blue);
-    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 36px 10px 14px;
+    border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 36px 10px 36px;
     font-family: var(--font-heading); font-size: 0.9rem; outline: none;
     width: 100%;
     box-shadow: var(--box-shadow-style, none);
@@ -902,6 +982,10 @@
     display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
+  /* Positionné en coin de l'en-tête plutôt qu'en ligne avec .mds-header-info
+     (dont le flex horizontal ne lui laisserait pas une place naturelle) —
+     même bouton, contexte différent de la barre de recherche du film. */
+  .tds-heart-btn { position: absolute; top: 12px; right: 12px; z-index: 2; }
 
   .search-status { font-size: 0.75rem; color: var(--blue); font-weight: 600; margin-top: 6px; display: none; }
 
@@ -930,9 +1014,9 @@
     transition: all var(--dur-fast);
   }
   .ctx-tag:hover { color: var(--text-hi); border-color: var(--border-hi); }
-  .ctx-tag.active { 
-      background: rgba(64,188,244,0.12); border-color: var(--blue); color: var(--blue);
-      box-shadow: 0 0 0 1px rgba(64,188,244,0.15); 
+  .ctx-tag.active {
+    background: var(--blue); border-color: var(--blue);
+    color: var(--solid-fill-text, #0d1117); font-weight: 700;
   }
 
   /* Dropdown suggestions */
@@ -1180,6 +1264,15 @@
   }
   .tds-season-progress-row::-webkit-details-marker { display: none; }
   .tds-season-progress-row:hover { background: var(--surface2); }
+  .tds-season-progress-right { display: flex; align-items: center; gap: 6px; }
+  .tds-season-delete-btn, .tds-season-reopen-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%; color: var(--text-mid);
+    background: transparent; border: none;
+  }
+  .tds-season-delete-btn:hover, .tds-season-delete-btn:active { color: var(--red); background: var(--surface); }
+  .tds-season-reopen-btn:hover, .tds-season-reopen-btn:active { color: var(--gold); background: var(--surface); }
+  .tds-season-delete-btn .icon, .tds-season-reopen-btn .icon { width: 13px; height: 13px; }
   .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
   .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
@@ -1227,6 +1320,25 @@
   }
   .tv-continue-check-btn svg { width: 18px; height: 18px; }
   .tv-continue-check-btn:active { transform: translateY(-50%) scale(0.88); }
+
+  /* Ludex 2.0 : protection anti-spoilers — le prochain épisode non vu mais
+     pas encore diffusé (voir renderTvContinueCard, 18-tv-shows.js) reste
+     visible dans la liste (on sait qu'une série est "en cours") mais sans
+     rien en révéler : opacité réduite, titre masqué au flou plutôt que
+     retiré du DOM (l'affiche et le nom de la série restent des repères
+     utiles), cadenas à la place du bouton de validation — aucune action de
+     notation possible tant que la date de diffusion n'est pas passée. */
+  .tv-continue-card.tv-continue-locked { opacity: 0.55; }
+  .tv-continue-ep-masked {
+    -webkit-filter: blur(3px); filter: blur(3px); user-select: none;
+  }
+  .tv-continue-lock-badge {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface); border: 1px solid var(--border-hi); color: var(--text-mid);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tv-continue-lock-badge svg { width: 16px; height: 16px; }
 
   .tv-continue-header {
     display: flex; align-items: center; justify-content: space-between; width: 100%;
@@ -1377,7 +1489,7 @@
   .affect-block .criterion-step-btn:hover { border-color: var(--blue); color: var(--blue); }
 
   input[type="range"] {
-    -webkit-appearance: none; width: 100%; height: 6px; flex: 1;
+    -webkit-appearance: none; width: 100%; height: 3px; flex: 1;
     /* Remplissage uni avec la couleur d'accent du thème, jusqu'à la valeur
        actuelle (--slider-pct, mis à jour par updateSliderPct() au chargement
        et à chaque glissement) — plus sobre qu'un dégradé multi-couleurs. */
@@ -1393,7 +1505,7 @@
     box-shadow: 0 0 0 3px rgba(255,128,0,0.45);
   }
   input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%);
+    -webkit-appearance: none; width: 14px; height: 14px; border-radius: var(--slider-thumb-radius, 50%);
     clip-path: var(--slider-thumb-clip, none);
     transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); border: 2px solid var(--orange); cursor: pointer;
@@ -1402,7 +1514,7 @@
   }
   input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
   input[type="range"]::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: var(--slider-thumb-radius, 50%);
+    width: 14px; height: 14px; border-radius: var(--slider-thumb-radius, 50%);
     clip-path: var(--slider-thumb-clip, none);
     transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); cursor: pointer; border: 2px solid var(--orange);
@@ -1517,9 +1629,8 @@
      change. La bordure de séparation passe donc du haut vers le bas. */
   .score-result { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--border); }
   .score-main {
-    display: flex; align-items: center; justify-content: center;
-    gap: 0; margin-bottom: 4px; background: var(--surface2); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 14px 20px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+    width: 168px; height: 168px; margin: 0 auto 4px;
   }
   /* Ludex 2.0 : reprend l'esprit du keyframe stampImpact (déjà utilisé par
      .mds-score-stamp) au moment de la sauvegarde — même timing/bounce, mais
@@ -1533,14 +1644,34 @@
     60% { transform: scale(0.96); }
     100% { transform: scale(1); }
   }
+  /* Anneau de progression : se remplit en direct à chaque glissement de
+     curseur (calculateScore() met à jour stroke-dashoffset à chaque
+     événement 'input', voir 05-rating-form.js) — remplace l'ancienne boîte
+     rectangulaire, même principe que l'anneau de score déjà présent sur les
+     fiches Duels. Circonférence = 2π×52 ≈ 326.7, pré-calculée dans le CSS
+     plutôt que recalculée en JS à chaque frame. */
+  .score-ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .score-ring-track { fill: none; stroke: var(--surface2); stroke-width: 8; }
+  .score-ring-fill {
+    fill: none; stroke: var(--gold); stroke-width: 8; stroke-linecap: round;
+    stroke-dasharray: 326.7; stroke-dashoffset: 163.35; /* 5.0/10 par défaut, cohérent avec le score initial */
+    transition: stroke-dashoffset var(--dur-base) var(--ease-out), stroke var(--dur-base);
+  }
+  .score-ring-fill.good { stroke: var(--green); }
+  .score-ring-fill.mid { stroke: var(--gold); }
+  .score-ring-fill.bad { stroke: var(--red); }
+  .score-ring-value {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
   .score-big {
-    font-family: var(--font-heading); font-size: 4rem; font-weight: 700;
-    line-height: 1; color: var(--text-hi); transition: color var(--dur-base); letter-spacing: -2px;
+    font-family: var(--font-heading); font-size: 2.6rem; font-weight: 700;
+    line-height: 1; color: var(--text-hi); transition: color var(--dur-base); letter-spacing: -1px;
   }
   .score-big.good { color: var(--green); }
   .score-big.mid { color: var(--gold); }
   .score-big.bad { color: var(--red); }
-  .score-denom { font-size: 1.2rem; color: var(--text); font-family: var(--font-mono); margin-top: 18px; margin-left: 4px; }
+  .score-denom { font-size: 0.8rem; color: var(--text); font-family: var(--font-mono); margin-top: 2px; }
   
   .stars-display { 
     text-align: center; font-size: 1.6rem; 
@@ -1623,107 +1754,53 @@
   /* ── HISTORY ── */
   .history-scroller { max-height: 550px; overflow-y: auto; overflow-x: hidden;}
   .hist-item {
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    margin-bottom: 8px; position: relative; transition: border-color var(--dur-fast), box-shadow var(--dur-fast), transform var(--dur-fast), opacity var(--dur-base) var(--ease-out);
-    width: 100%; overflow: hidden; touch-action: pan-y;
+    /* Ludex 2.0 : fusionné avec .hist-grid-card (voir plus haut dans ce
+       fichier) — une SEULE déclaration pour .hist-item désormais, pas deux
+       qui se battent sur les mêmes propriétés selon l'ordre du fichier
+       (piège déjà rencontré sur .mds-header, .wl-card, .mds-title cette
+       même session). Plus de fond/bordure de ligne : c'est une cellule de
+       grille de posters maintenant.
+       position:relative;overflow:hidden;border-radius:8px;aspect-ratio:2/3;
+       background:var(--surface2);cursor:pointer — voir la vraie
+       déclaration groupée avec .hist-grid-card plus haut. */
+    transition: transform var(--dur-fast), opacity var(--dur-base) var(--ease-out);
   }
   /* Rendu paresseux des longues listes : le navigateur ne calcule la mise en
      page et le dessin QUE des cartes proches de l'écran, au lieu de toutes les
      centaines de films de l'historique à chaque frame de défilement.
-     contain-intrinsic-size donne une hauteur estimée aux cartes hors-vue pour
-     que la barre de défilement reste stable. Gain majeur dès ~50 films. */
-  @supports (content-visibility: auto) {
-    .hist-item, .wl-card {
-      content-visibility: auto;
-      contain-intrinsic-size: auto 79px; /* hauteur mesurée d'une carte standard sans critique (les cartes avec critique font ~158px, mais l'estimation ne sert qu'aux cartes hors-vue et se corrige dès qu'elles approchent) */
-    }
-  }
+     Ludex 2.0 : .hist-item et .wl-card sont maintenant des cellules de
+     grille (3 colonnes) dont la hauteur réelle dépend de la largeur de
+     l'écran — une estimation contain-intrinsic-size fixe (pensée pour
+     l'ancienne liste à une colonne, hauteur de ligne prévisible) risquerait
+     de provoquer un décalage visible au lieu de le prévenir. Retirés de
+     cette optimisation par prudence plutôt que de deviner une valeur
+     probablement fausse sur certains écrans — aucun autre élément ne
+     reprend leur place ici, cette micro-optimisation est simplement
+     abandonnée pour ces deux grilles. */
   .hist-item-content { display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%; }
-  /* Ne couvre QUE l'affiche+les infos (pas les boutons modifier/supprimer,
-     restés des <button> séparés à côté) — un rôle "bouton" ne doit jamais
-     englober d'autres contrôles interactifs (règle d'accessibilité ; ça
-     perdait aussi silencieusement l'activation clavier, jamais câblée). */
-  .hist-item-open { display: flex; gap: 10px; flex: 1; min-width: 0; cursor: pointer; border-radius: var(--radius-sm); }
+  /* Ne couvre QUE l'affiche (pas les boutons modifier/supprimer, restés des
+     <button> séparés à côté) — un rôle "bouton" ne doit jamais englober
+     d'autres contrôles interactifs (règle d'accessibilité). */
   .hist-item-open:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .hist-item:not(.hist-dragging) .hist-item-content { transition: transform var(--dur-base) var(--ease-out); }
-  /* will-change UNIQUEMENT pendant le geste actif (classe posée par le JS au
-     drag, retirée au relâchement) : prévient le compositeur qu'une animation
-     de transform arrive, sans garder la mémoire GPU d'une couche promue en
-     permanence sur des centaines de cartes hors écran. */
-  .hist-item.hist-dragging .hist-item-content,
-  .hist-item.hist-swipe-armed-left .hist-item-content,
-  .hist-item.hist-swipe-armed-right .hist-item-content {
-    will-change: transform;
-  }
-  .hist-item.hist-swipe-out-left .hist-item-content,
-  .hist-item.hist-swipe-out-right .hist-item-content { transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out); opacity: 0; }
 
-  /* Indices révélés en glissant (rouge = supprimer, bleu = modifier), fixes
-     pendant que .hist-item-content glisse par-dessus — même mécanique que la
-     watchlist (voir .wl-swipe-hint). */
-  .hist-swipe-hint {
-    position: absolute; top: 0; bottom: 0; width: 120px; z-index: 0;
-    display: flex; align-items: center; gap: 6px; padding: 0 16px;
-    font-family: var(--font-heading); font-weight: 800; font-size: 0.78rem; color: #fff;
-    opacity: 0; transition: opacity var(--dur-fast) var(--ease-out);
-  }
-  .hist-swipe-hint .icon { width: 1.1em; height: 1.1em; }
-  .hist-swipe-hint-left { right: 0; background: var(--red); color: var(--red-fill-text, #fff); justify-content: flex-end; }
-  .hist-swipe-hint-right { left: 0; background: var(--blue); color: var(--blue-fill-text, #fff); }
-  .hist-item.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
-  .hist-item.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
-
-  /* Un swipe qui a atteint son seuil "s'arme" (piste révélée) au lieu
-     d'exécuter l'action tout de suite — un tap sur l'indice, maintenant
-     cliquable, confirme ; taper ailleurs annule. Le halo pulsé indique que
-     l'indice attend une confirmation. */
-  .hist-item.hist-swipe-armed-left .hist-swipe-hint-left,
-  .hist-item.hist-swipe-armed-right .hist-swipe-hint-right {
-    cursor: pointer;
-    animation: armedHintPulse 1s ease-in-out infinite;
-  }
-  @keyframes armedHintPulse {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.18); }
-  }
-
-  /* Anime l'entrée du film qu'on vient de sauvegarder/ajouter (historique et
-     watchlist), pour un rendu plus vivant qu'une simple apparition instantanée
-     — voir 05-rating-form.js / 08-watchlist.js pour le marquage de l'élément
-     concerné (un seul par rendu, pas toute la liste). */
+  /* Ludex 2.0 : tout le bloc swipe (indices révélés, armement, glissement en
+     cours) est mort depuis le passage de l'Historique en grille — retiré
+     plutôt que laissé en l'état, ces classes ne sont plus jamais posées par
+     le JS (voir le garde-fou dans 06b-history-actions.js). itemEnterIn et
+     .hist-cascade-in restent : toujours utilisés pour l'entrée en douceur
+     d'une nouvelle carte/cascade au premier affichage. */
   @keyframes itemEnterIn {
     from { opacity: 0; transform: translateY(-10px) scale(.97); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .hist-item-entering, .wl-card-entering { animation: itemEnterIn .35s cubic-bezier(.2,.8,.2,1) both; }
-  /* Ludex 2.0 : cascade d'entrée au tout premier affichage de l'Historique
-     groupé par mois — même keyframe qu'un ajout de film unique
-     (hist-item-entering), animation-delay posé en JS par ligne (voir
-     06a-history-list.js) plutôt qu'ici, puisqu'il dépend de la position
-     de chaque élément dans la liste rendue. */
   .hist-cascade-in { animation: itemEnterIn .3s cubic-bezier(.2,.8,.2,1) both; }
-  .hist-item.deleting { opacity: 0; transform: translateX(-30px); } 
-  .hist-item:hover { border-color: var(--border-hi); transform: translateX(2px); box-shadow: -3px 0 0 var(--orange); }
-  .hist-poster { width: 36px; height: 54px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
-  .hist-poster-ph { width: 36px; height: 54px; background: var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; flex-shrink: 0; }
-  .hist-body { flex: 1; min-width: 0; }
-  .hist-title { color: var(--text-hi); font-weight: 700; font-size: 0.88rem; font-family: var(--font-heading); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 46px; margin-bottom: 2px; }
-  .liked-badge { color: var(--red); display: inline-flex; vertical-align: -0.1em; }
-  .liked-badge .icon { width: 0.9em; height: 0.9em; }
-  .hist-meta { font-size: 0.74rem; color: var(--text); margin-bottom: 4px; line-height: 1.4; min-width: 0; }
-  .hist-meta-line { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .hist-score-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; min-width: 0; }
-  .hist-score-row .h-tag { flex-shrink: 0; }
-  .h-tag { background: var(--surface2); border: 1px solid var(--border); padding: 2px 6px; border-radius: 10px; font-size: 0.65rem; color: var(--text-mid); }
-  .hist-stars { font-size: 0.85rem; color: var(--star-color); text-shadow: var(--star-shadow); }
-  .hist-score { font-family: var(--font-mono); font-size: 0.74rem; color: var(--text); margin-left: 6px; }
-  .hist-review { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; margin-top: 8px; cursor: pointer; transition: all var(--dur-base); }
-  .hist-review:hover { border-color: var(--border-hi); }
-  .hist-review-content { font-size: 0.8rem; color: var(--text-mid); line-height: 1.5; font-family: var(--font-body); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-  .hist-review.expanded .hist-review-content { -webkit-line-clamp: unset; color: var(--text-hi); }
-  .hist-review-toggle { display: block; font-size: 0.65rem; color: var(--blue); margin-top: 4px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; font-family: var(--font-heading); }
-  .hist-review.expanded .hist-review-toggle::after { content: "Réduire"; }
-  .hist-review:not(.expanded) .hist-review-toggle::after { content: "Lire la critique"; }
+  .hist-item.deleting { opacity: 0; transform: scale(.9); }
+  /* Survol desktop adapté à une carte de grille (l'ancien translateX(2px)
+     n'avait de sens que pour une ligne de liste) — léger zoom plutôt qu'un
+     déplacement, cohérent avec .poster-min:hover ailleurs dans l'app. */
+  .hist-item:hover .hist-grid-poster { transform: scale(1.04); }
+  .hist-grid-poster { transition: transform var(--dur-fast) var(--ease-out); }
   .hist-actions { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; }
   .hist-action-btn { background: none; border: none; cursor: pointer; font-size: 0.82rem; padding: 3px 5px; border-radius: var(--radius-sm); color: var(--text); transition: background var(--dur-fast); position: relative; }
   /* Zone tactile étendue à ~44px (recommandation Apple/WCAG) sans changer
@@ -1756,6 +1833,26 @@
      Profil) plutôt qu'en écran autonome — moins d'espace réservé. */
   .empty-state-compact { padding: 4px 0; font-size: 0.8rem; color: var(--text-mid); }
   .empty-state-icon { font-size: 2rem; margin-bottom: 8px; }
+  /* Ludex 2.0 : suggestions concrètes sous le CTA générique — voir
+     renderWatchlistEmptySuggestions(), 08-watchlist.js. */
+  .wl-empty-suggestions { margin-top: 24px; text-align: left; }
+  .wl-empty-suggestions-title {
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-mid); font-family: var(--font-heading); font-weight: 700;
+    margin-bottom: 10px; text-align: center;
+  }
+  .wl-empty-suggestions-row { display: flex; gap: 10px; }
+  .wl-empty-sugg-card { flex: 1; text-align: center; }
+  .wl-empty-sugg-poster { width: 100%; aspect-ratio: 2/3; border-radius: 8px; object-fit: cover; background: var(--surface2); display: block; }
+  .wl-empty-sugg-title {
+    font-size: 0.68rem; color: var(--text-hi); margin: 6px 0 6px; line-height: 1.25;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .wl-empty-sugg-btn {
+    font-size: 0.62rem; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-pill);
+    background: var(--surface2); color: var(--gold); border: 1px solid var(--gold); cursor: pointer;
+  }
+  .wl-empty-sugg-btn:active { transform: scale(0.95); }
   .empty-state-cta {
     display: block; margin: 16px auto 0; padding: 10px 20px; border: none; border-radius: var(--radius-sm);
     background: var(--orange); color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading); font-weight: 800;
@@ -1775,6 +1872,19 @@
 
   /* Sélecteur de listes "À voir" multiples (pastilles, scroll horizontal) */
   .wl-lists-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 4px; min-width: 0; }
+  /* Ludex 2.0 : tri/filtre — même vocabulaire de pilules que .genre-chip
+     (déjà utilisé dans Historique), mais sa propre rangée puisque le
+     sens est différent ici (trier, pas juste filtrer par genre). */
+  .wl-sort-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .wl-sort-btn {
+    flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
+    font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    transition: all var(--dur-fast);
+  }
+  .wl-sort-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
+  .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--solid-fill-text, #0d1117); }
+  .wl-sort-btn-filter { margin-left: auto; }
   .wl-list-pill {
     flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
@@ -2129,6 +2239,14 @@
      les autres et l'ordre du DOM faisait passer #settings-modal par-dessus,
      rendant "Supprimer"/"Annuler" incliquables. */
   #modal { z-index: 10010; }
+  /* Même piège que #modal ci-dessus, pour la fiche personne (voir
+     commentaire au-dessus) : ouverte DEPUIS une fiche film OU série déjà
+     ouverte, elle doit toujours passer par-dessus, peu importe l'ordre où
+     les trois fiches apparaissent dans le HTML — l'ordre du DOM plaçait
+     #tv-detail-sheet après #person-detail-sheet, donc la fiche personne
+     s'ouvrait cachée DERRIÈRE la fiche série (jamais remarqué côté film,
+     où l'ordre du DOM se trouvait être le bon par hasard). */
+  #person-detail-sheet { z-index: 10011; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
   .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
   .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }
@@ -2588,7 +2706,6 @@
   .strip-rating-icon { font-size: 0.75rem; color: #fff; }
   .strip-rating-src  { font-size: 0.68rem; opacity: 0.85; font-weight: 400; color: #fff;}
   .strip-votes { font-size: 0.74rem; color: var(--text); }
-  .hist-tmdb { display: inline-flex; align-items: center; gap: 3px; background: #01b4e4; border-radius: 3px; padding: 1px 5px; font-size: 0.68rem; font-weight: 700; color: #fff; margin-left: 6px; vertical-align: middle; font-family: sans-serif; }
 
   .kpi-row { display: flex; gap: 10px; margin-bottom: 16px; width: 100%; }
   .kpi-card { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
@@ -2606,15 +2723,72 @@
 
   .badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
   .badge-item {
-    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
-    padding: 12px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+    padding: 12px 8px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg);
   }
   .badge-item.unlocked { border-color: var(--gold); }
-  .badge-item.unlocked .badge-icon { color: var(--gold); }
-  .badge-item.locked { opacity: 0.35; filter: grayscale(1); }
-  .badge-icon { width: 28px; height: 28px; color: var(--text-mid); }
-  .badge-icon .icon { width: 100%; height: 100%; }
-  .badge-label { font-size: 0.7rem; color: var(--text-mid); line-height: 1.2; }
+  .badge-item.locked { opacity: 0.4; filter: grayscale(1); }
+  /* Ludex 2.0 : icônes emoji (voir computeBadges(), 03b-pure-logic.js) —
+     plus une icône SVG unique partagée par tous les badges (ancien système
+     à seuil unique) : chaque trophée a maintenant sa propre identité
+     visuelle. */
+  .badge-icon { font-size: 1.6rem; line-height: 1; margin-bottom: 2px; }
+  .badge-label { font-size: 0.68rem; color: var(--text-mid); line-height: 1.2; font-weight: 600; }
+  .badge-item.unlocked .badge-label { color: var(--text-hi); }
+  /* Palier bronze/argent/or : léger halo qui s'intensifie avec le palier —
+     un badge tout juste débloqué (palier I) reste discret, un palier III
+     se distingue vraiment au premier coup d'œil dans la grille. */
+  .badge-tier-1 { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--gold) 40%, transparent)); }
+  .badge-tier-2 { filter: drop-shadow(0 0 4px color-mix(in srgb, var(--gold) 65%, transparent)); }
+  .badge-tier-3 { filter: drop-shadow(0 0 7px var(--gold)); }
+  .badge-progress-track {
+    width: 100%; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-top: 2px;
+  }
+  .badge-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width var(--dur-base) var(--ease-out); }
+  .badge-progress-text { font-size: 0.6rem; color: var(--text-mid); font-family: var(--font-mono); }
+  .badge-progress-text.badge-maxed { color: var(--gold); font-weight: 700; }
+
+  /* ── Vitrine de trophées (voir ludex_profil_maquette.html) — toujours
+     visible, distincte de la grille complète juste en dessous. ── */
+  .trophy-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .trophy-medal {
+    flex: 1; text-align: center; background: var(--bg); border: 1px solid var(--gold);
+    border-radius: var(--radius-sm); padding: 14px 6px;
+  }
+  .trophy-icon { font-size: 1.8rem; margin-bottom: 6px; }
+  .trophy-name { font-size: 0.68rem; color: var(--text-hi); font-weight: 700; line-height: 1.25; }
+  .trophy-tier { font-size: 0.6rem; color: var(--gold); margin-top: 3px; font-family: var(--font-mono); }
+  .trophy-empty { font-size: 0.8rem; color: var(--text-mid); text-align: center; padding: 12px 0; grid-column: 1 / -1; }
+
+  /* ── Hero Header (voir ludex_profil_maquette.html) ── */
+  .profile-hero-header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .profile-hero-avatar {
+    width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
+    background: var(--surface2); border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center; color: var(--gold);
+  }
+  .profile-hero-avatar .icon { width: 22px; height: 22px; }
+  .profile-hero-bento { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; min-width: 0; }
+  .profile-hero-bento-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 8px 10px; text-align: center;
+  }
+  .profile-hero-bento-wide { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; text-align: left; }
+  .profile-hero-bento-wide .kpi-val { font-size: 1.2rem; }
+  .profile-hero-bento-sub { font-size: 0.62rem; color: var(--gold); margin-top: 2px; font-family: var(--font-mono); }
+  .profile-hero-sub { font-size: 0.74rem; color: var(--text-mid); margin-bottom: 18px; padding-left: 2px; }
+
+  /* ── Bouton de partage (voir profile-share-btn, 06d-profile-share-cards.js) ── */
+  .btn-share-gradient {
+    width: 100%; margin-top: 12px; padding: 14px; border: none; border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--red), var(--gold)); color: #fff; font-weight: 800;
+    font-size: 0.88rem; font-family: var(--font-heading); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 15px color-mix(in srgb, var(--red) 30%, transparent);
+    transition: transform var(--dur-fast);
+  }
+  .btn-share-gradient:active { transform: scale(0.97); }
+
   .dash-box-title { font-size: var(--text-xs); font-family: var(--font-heading); font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
   .dash-box.full-width { grid-column: 1 / -1; }
   
@@ -2926,27 +3100,23 @@
     .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
     
     /* Hitboxes tactiles agrandies pour les curseurs de notation */
-    :root { --slider-thumb-size: 24px; } /* doit suivre la taille réelle du curseur ci-dessous, pour les graduations */
-    input[type="range"]::-webkit-slider-thumb { width: 24px; height: 24px; }
-    input[type="range"]::-moz-range-thumb { width: 24px; height: 24px; }
-    
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-    .kpi-card { padding: 8px 4px; }
+    :root { --slider-thumb-size: 18px; } /* doit suivre la taille réelle du curseur ci-dessous, pour les graduations */
+    input[type="range"]::-webkit-slider-thumb { width: 18px; height: 18px; }
+    input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; }
+
+    /* Ludex 2.0 : .kpi-row/.kpi-card ont disparu avec le Hero Header (voir
+       .profile-hero-bento plus haut, qui gère déjà son propre responsive en
+       grid 2 colonnes fixe) — .kpi-val/.kpi-label restent utilisées à
+       l'intérieur de ce nouveau bloc, donc gardées, juste sans wrapper à
+       redimensionner ici. */
     .kpi-val { font-size: 1.25rem; }
     .kpi-label { font-size: 0.65rem; }
   }
 
   @media (max-width: 480px) {
     .dashboard-grid { grid-template-columns: 1fr; }
-    .kpi-row { grid-template-columns: 1fr; gap: 10px; }
     .theme-grid { grid-template-columns: 1fr; }
     .theme-card:last-child:nth-child(odd) { max-width: none; }
-    .score-big { font-size: 3.2rem; }
-    .score-main { padding: 10px 14px; }
     .rating-stars label { font-size: 2.8rem; }
 
     /* Barre "Rechercher un film à ajouter" + bouton : empilée pour éviter que le champ soit écrasé */

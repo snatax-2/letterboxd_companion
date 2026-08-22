@@ -8,19 +8,6 @@
 // toast) vivent dans 06b-history-actions.js ; les statistiques du
 // Profil et les cartes à partager dans 06c/06d.
 
-function renderTagLabel(tagText) {
-  const CONTEXT_TAG_ICONS = {
-    '🍿': ICONS.popcorn,
-    '🔄': ICONS.refresh,
-    '📝': ICONS.edit,
-    '🛋️': ICONS.sofa,
-    '🛋': ICONS.sofa,
-  };
-  const [emoji, ...rest] = tagText.split(' ');
-  const icon = CONTEXT_TAG_ICONS[emoji];
-  return icon ? `${icon} ${rest.join(' ')}` : tagText;
-}
-
 // Ludex 2.0 : la composition "entrée vedette + liste groupée par mois" est
 // spécifique au thème par défaut (voir "Vers Ludex 2.0" §01 — les 6 autres
 // thèmes gardent leur liste de cartes intacte). isDefaultComposition() vit
@@ -158,6 +145,13 @@ function getSorted(history) {
     h = h.filter(item => isScoreInActiveRange(item.score));
   }
 
+  // Ludex 2.0 : filtre "Coups de cœur" — réutilise item.liked, déjà posé par
+  // le cœur du formulaire Noter (voir 05-rating-form.js), aucune nouvelle
+  // donnée à créer.
+  if (activeLikedFilter) {
+    h = h.filter(item => item.liked);
+  }
+
   if (historySearchQuery) {
     // Une requête à 4 chiffres (ex: "1994") matche aussi l'année du film, et
     // "199" les années 1990-1999 : la recherche sert ainsi de filtre par
@@ -203,8 +197,8 @@ function renderHistory() {
 
   const badge = document.getElementById('hist-count-badge');
   const showCount = loadTvShows().length;
-  const tvFragment = ` · ${showCount} série${showCount > 1 ? 's' : ''}`;
-  if (activeGenre || historySearchQuery || activeScoreFilter) {
+  const tvFragment = ` \u00b7 ${showCount} s\u00e9rie${showCount > 1 ? 's' : ''}`;
+  if (activeGenre || historySearchQuery || activeScoreFilter || activeLikedFilter) {
     badge.textContent = `${sorted.length} / ${history.length} film${history.length > 1 ? 's' : ''}${tvFragment}`;
     badge.style.color = 'var(--orange)';
   } else {
@@ -217,14 +211,14 @@ function renderHistory() {
 
   if (history.length === 0) {
     document.getElementById('history-hero').innerHTML = '';
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide… Note ton premier film pour lancer la séance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>La salle est vide\u2026 Note ton premier film pour lancer la s\u00e9ance !<button type="button" class="empty-state-cta" id="empty-state-history-cta">Rechercher mon premier film</button></div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
 
   if (sorted.length === 0) {
     document.getElementById('history-hero').innerHTML = '';
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien à l'affiche sous ce nom.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Rien \u00e0 l'affiche sous ce filtre.</div>`;
     window._justSavedHistoryTitle = null;
     return;
   }
@@ -233,21 +227,30 @@ function renderHistory() {
 
   const groupByMonth = isDefaultComposition() && sortOrder === 'date';
   let lastMonthKey = null;
-  // Cascade d'entrée réservée au tout premier affichage de l'onglet Historique
-  // dans cette session (pas à chaque changement de filtre/tri, qui redessine
-  // aussi la liste — même principe déjà appliqué à hist-item-entering
-  // juste en dessous, pour ne jamais rejouer une animation sur toute une
-  // longue liste à cause d'une simple interaction de filtrage).
-  // Cascade d'entrée réservée au tout premier affichage RÉEL de l'onglet
-  // Historique (pas un rendu déclenché en arrière-plan par renderAll() au
-  // démarrage pendant qu'un autre onglet est affiché — l'animation serait
-  // consommée silencieusement sans jamais être vue). Même principe que
+  // Cascade d'entr\u00e9e r\u00e9serv\u00e9e au tout premier affichage R\u00c9EL de l'onglet
+  // Historique (pas un rendu d\u00e9clench\u00e9 en arri\u00e8re-plan par renderAll() au
+  // d\u00e9marrage pendant qu'un autre onglet est affich\u00e9 \u2014 l'animation serait
+  // consomm\u00e9e silencieusement sans jamais \u00eatre vue). M\u00eame principe que
   // renderStats()/statsDirty pour Profil, voir 06c-profile-stats.js.
   const historyViewVisible = document.getElementById('view-history')?.classList.contains('active');
   const cascadeEntrance = groupByMonth && historyViewVisible && !window._historyFirstRenderDone;
   if (groupByMonth && historyViewVisible) window._historyFirstRenderDone = true;
 
+  // Ludex 2.0 : r\u00e9cap mensuel (X films, moyenne) \u2014 calcul\u00e9 une fois sur
+  // l'ensemble affich\u00e9 (sorted, donc d\u00e9j\u00e0 pass\u00e9 par les filtres actifs),
+  // pas re-parcouru \u00e0 chaque s\u00e9parateur.
+  const monthStats = {};
+  if (groupByMonth) {
+    sorted.forEach(item => {
+      const key = monthKeyOf(item);
+      const s = (monthStats[key] = monthStats[key] || { count: 0, sum: 0 });
+      s.count++;
+      s.sum += parseFloat(item.score) || 0;
+    });
+  }
+
   container.innerHTML = '';
+  let gridEl = null; // conteneur .hist-grid courant \u2014 recr\u00e9\u00e9 \u00e0 chaque nouveau mois
   sorted.forEach((item, i) => {
     const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
 
@@ -256,89 +259,61 @@ function renderHistory() {
       if (key !== lastMonthKey) {
         const sep = document.createElement('div');
         sep.className = 'hist-month-sep';
-        sep.textContent = monthLabelOf(key);
+        const stats = monthStats[key];
+        const avg = stats.count > 0 ? (stats.sum / stats.count).toFixed(1) : null;
+        sep.innerHTML = `<span class="hist-month-label">${escAttr(monthLabelOf(key))}</span><span class="hist-month-recap">${stats.count} film${stats.count > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
         if (cascadeEntrance) sep.classList.add('hist-cascade-in');
         container.appendChild(sep);
         lastMonthKey = key;
+        gridEl = document.createElement('div');
+        gridEl.className = 'hist-grid';
+        container.appendChild(gridEl);
       }
-    }
-
-    const div = document.createElement('div');
-    div.className = 'hist-item';
-    div.dataset.idx = realIdx;
-    div.dataset.savedAt = item.savedAt || '';
-    div.dataset.titleKey = item.title.toLowerCase();
-    // Anime l'entrée du film qu'on vient tout juste de sauvegarder (voir
-    // 05-rating-form.js), pas les autres — sinon toute la liste rejouerait
-    // l'animation à chaque re-rendu (changement de filtre, etc.).
-    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
-      div.classList.add('hist-item-entering');
-    } else if (cascadeEntrance) {
-      // Délai croissant plafonné : au-delà d'une vingtaine de lignes, les
-      // faire toutes attendre leur tour rendrait l'affichage perceptiblement
-      // lent à se stabiliser — les suivantes entrent toutes au même instant,
-      // dernier de la cascade.
-      div.classList.add('hist-cascade-in');
-      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
+    } else if (!gridEl) {
+      // Genre/recherche/coups de c\u0153ur actifs, ou tri diff\u00e9rent de "R\u00e9cents" :
+      // pas de s\u00e9parateurs de mois, mais la grille reste \u2014 un seul bloc continu.
+      gridEl = document.createElement('div');
+      gridEl.className = 'hist-grid';
+      container.appendChild(gridEl);
     }
 
     const scoreNum = parseFloat(item.score);
     let scoreColor = 'var(--red)';
-    if(scoreNum >= 7.5) scoreColor = 'var(--green)';
-    else if(scoreNum >= 5.0) scoreColor = 'var(--gold)';
+    if (scoreNum >= 7.5) scoreColor = 'var(--green)';
+    else if (scoreNum >= 5.0) scoreColor = 'var(--gold)';
+    const isHighScore = scoreNum >= 8.5;
+    // Ludex 2.0 : traitement "vedette" (2\u00d72, bordure) pour un coup de c\u0153ur
+    // OU une note \u2265 8.5 \u2014 les deux crit\u00e8res d\u00e9j\u00e0 utilis\u00e9s c\u00f4t\u00e9 D\u00e9couvrir/
+    // Watchlist pour ce m\u00eame genre de mise en avant, gard\u00e9s coh\u00e9rents ici.
+    const isFeatured = !!item.liked || isHighScore;
 
-    const imgHtml = item.poster
-      ? `<img class="hist-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-poster-ph\\'>🎬</div>'">`
-      : `<div class="hist-poster-ph">${ICONS.clapper}</div>`;
-
-    const tmdbHtml = item.tmdbScore
-      ? `<span class="hist-tmdb">★ ${item.tmdbScore} TMDb</span>`
-      : '';
-
-    // Chaque segment est une LIGNE bornée (ellipse au-delà) : les cartes ont
-    // ainsi un rythme vertical uniforme, quel que soit le nombre de genres ou
-    // d'acteurs — c'était la cause des hauteurs disparates dans la liste.
-    let metaHTML = '';
-    const metaLine1 = [item.year, item.runtime, escAttr(item.genre || '')].filter(Boolean).join(' · ');
-    if (metaLine1) metaHTML += `<span class="hist-meta-line">${metaLine1}</span>`;
-    if (item.director) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Réalisé par <b>${escAttr(item.director)}</b></span>`;
-    if (item.actors) metaHTML += `<span class="hist-meta-line" style="color:var(--text-mid)">Avec <b>${escAttr(item.actors)}</b></span>`;
-
-    // Tags de contexte INTÉGRÉS à la ligne de score (plus de rangée dédiée) :
-    // c'était la dernière source de hauteurs inégales entre cartes — un film
-    // avec un tag "À la maison" prenait une rangée de plus que ses voisins.
-    const tagsInline = (item.contextTags || []).map(t => `<span class="h-tag">${renderTagLabel(t)}</span>`).join('');
-
-    let reviewHTML = '';
-    if (item.review) {
-      reviewHTML = `
-        <div class="hist-review" onclick="this.classList.toggle('expanded')">
-          <div class="hist-review-content">"${escAttr(item.review)}"</div>
-          <span class="hist-review-toggle"></span>
-        </div>
-      `;
+    const div = document.createElement('div');
+    div.className = 'hist-item hist-grid-card' + (isFeatured ? ' hist-grid-card-featured' : '');
+    div.dataset.idx = realIdx;
+    div.dataset.savedAt = item.savedAt || '';
+    div.dataset.titleKey = item.title.toLowerCase();
+    if (window._justSavedHistoryTitle && item.title.toLowerCase() === window._justSavedHistoryTitle) {
+      div.classList.add('hist-item-entering');
+    } else if (cascadeEntrance) {
+      div.classList.add('hist-cascade-in');
+      div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
     }
 
+    const imgHtml = item.poster
+      ? `<img class="hist-grid-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
+      : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
+
     div.innerHTML = `
-      <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-      <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-      <div class="hist-item-content">
-        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
-          ${imgHtml}
-          <div class="hist-body">
-            <div class="hist-title">${escAttr(item.title)}${item.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
-            <div class="hist-meta">${metaHTML}</div>
-            <div class="hist-score-row"><span style="color:${scoreColor};font-weight:700;">${item.score}/10</span>${tmdbHtml}${tagsInline}</div>
-            <div class="hist-stars">${item.stars || ''}<span class="hist-score"></span></div>
-            ${reviewHTML}
-          </div>
-        </div>
-        <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
-        </div>
+      <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        ${imgHtml}
+      </div>
+      <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
+      ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
+      <div class="hist-actions">
+        <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+        <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
       </div>`;
-    container.appendChild(div);
+    gridEl.appendChild(div);
     applyPosterAccent(item.poster, div);
   });
   window._justSavedHistoryTitle = null;
@@ -353,43 +328,23 @@ function renderHistory() {
 // mais à partir des données SAUVEGARDÉES d'un film (pas besoin de le charger
 // dans le formulaire d'abord). Garde les deux textes strictement identiques.
 document.getElementById('filter-row').addEventListener('click', e => {
-  const btn = e.target.closest('.filter-btn');
+  // Le bouton "Coups de cœur" est un TOGGLE indépendant du tri (pas de
+  // data-sort) — traité à part, sinon la logique générique ci-dessous lui
+  // assignerait sortOrder = undefined et retirerait "active" du vrai bouton
+  // de tri actuellement sélectionné.
+  const likedBtn = e.target.closest('#hist-liked-filter-btn');
+  if (likedBtn) {
+    activeLikedFilter = !activeLikedFilter;
+    likedBtn.classList.toggle('active', activeLikedFilter);
+    renderActiveHistoryView();
+    return;
+  }
+  const btn = e.target.closest('.filter-btn[data-sort]');
   if (!btn) return;
   sortOrder = btn.dataset.sort;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.filter-btn[data-sort]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderActiveHistoryView();
 });
 
-// ── Découvrabilité du swipe ──
-// Les gestes de glissement (noter à nouveau / supprimer) sont puissants mais
-// invisibles : rien n'indique qu'ils existent. À la PREMIÈRE visite de
-// l'historique (avec au moins un film), la première carte fait un petit
-// aperçu automatique — elle glisse brièvement, révélant l'action cachée
-// dessous, puis revient. Une seule fois, jamais plus (clé localStorage).
-const SWIPE_HINT_KEY = 'lbx_swipe_hint_seen';
-function maybePlaySwipeHint() {
-  if (localStorage.getItem(SWIPE_HINT_KEY)) return;
-  const firstItem = document.querySelector('.hist-item');
-  if (!firstItem) return; // pas de film : on retentera à une prochaine visite
-  const content = firstItem.querySelector('.hist-item-content');
-  if (!content) return;
-  localStorage.setItem(SWIPE_HINT_KEY, '1');
-
-  // Respecte la préférence de réduction des animations
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  setTimeout(() => {
-    firstItem.classList.add('hist-swipe-left'); // révèle l'indice visuel sous la carte
-    content.style.transition = 'transform var(--dur-slow) var(--ease-out)';
-    content.style.transform = 'translateX(-56px)';
-    setTimeout(() => {
-      content.style.transform = '';
-      setTimeout(() => {
-        firstItem.classList.remove('hist-swipe-left');
-        content.style.transition = '';
-      }, 450);
-    }, 900);
-  }, 600);
-}
 // ── Rendu des trois cartes Profil ajoutées (Il y a un an / Heatmap / Décennies) ──

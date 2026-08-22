@@ -54,10 +54,10 @@ function switchRightTab(tabName) {
   if (tabName === 'profile' && typeof renderProfileIfDirty === 'function') {
     renderProfileIfDirty();
   }
-  // Aperçu unique du geste de swipe à la première visite de l'historique
-  if (tabName === 'history' && typeof maybePlaySwipeHint === 'function') {
-    maybePlaySwipeHint();
-  }
+  // Ludex 2.0 : l'aperçu de swipe n'a plus lieu d'être — l'Historique est
+  // passé en grille, il n'y a plus de geste caché à révéler (voir
+  // 06b-history-actions.js). maybePlaySwipeHint() reste définie
+  // (06a-history-list.js) mais n'est plus appelée nulle part.
 }
 
 tabHistBtn.addEventListener('click', () => switchRightTab('history'));

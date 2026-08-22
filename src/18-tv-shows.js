@@ -404,6 +404,9 @@ function getSortedTvShows() {
   if (activeGenre) {
     s = s.filter(sh => sh.genre && sh.genre.split(',').map(g => g.trim()).includes(activeGenre));
   }
+  if (activeLikedFilter) {
+    s = s.filter(sh => sh.liked);
+  }
   const avg = (sh) => computeShowAverageScore(sh);
   if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
   if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
@@ -427,7 +430,7 @@ function renderTvHistory() {
   const badge = document.getElementById('hist-count-badge');
   const filmCount = loadHistory().length;
   const filmFragment = `${filmCount} film${filmCount > 1 ? 's' : ''}`;
-  if (historySearchQuery || activeScoreFilter) {
+  if (historySearchQuery || activeScoreFilter || activeLikedFilter) {
     badge.textContent = `${filmFragment} · ${shows.length} / ${allShows.length} série${allShows.length > 1 ? 's' : ''}`;
     badge.style.color = 'var(--orange)';
   } else {
@@ -444,11 +447,11 @@ function renderTvHistory() {
     return;
   }
 
-  container.innerHTML = shows.map(renderTvShowCard).join('');
+  container.innerHTML = `<div class="hist-grid">${shows.map(renderTvShowCard).join('')}</div>`;
 
-  container.querySelectorAll('.tv-show-card').forEach((cardEl, i) => {
-    const posterUrl = tmdbImage(shows[i]?.poster_path, 'w154');
-    applyPosterAccent(posterUrl, cardEl);
+  container.querySelectorAll('.hist-grid-card[data-show-id]').forEach((cardEl) => {
+    const show = shows.find(s => String(s.tmdbTvId) === cardEl.dataset.showId);
+    applyPosterAccent(tmdbImage(show?.poster_path, 'w154'), cardEl);
   });
 
   container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
@@ -476,20 +479,6 @@ function renderTvHistory() {
       );
     });
   });
-
-  container.querySelectorAll('.tv-season-reopen-btn').forEach(btn => {
-    btn.addEventListener('click', () => reopenTvSeason(btn.dataset.showId, btn.dataset.seasonKey));
-  });
-
-  container.querySelectorAll('.tv-season-delete-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      deleteTvSeasonWithConfirm(btn.dataset.showId, btn.dataset.seasonKey);
-    });
-  });
-
-  initTvSeasonSwipeGestures(container);
-  initTvShowCardSwipeGestures(container);
 }
 
 function deleteTvSeasonWithConfirm(showId, seasonKey) {
@@ -516,6 +505,17 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
       }
       saveTvShows(remaining);
       renderTvHistory();
+      // Ludex 2.0 : ce bouton est désormais accessible DEPUIS la fiche
+      // détail (voir 19-tv-detail.js) — la rouvrir sur elle-même après
+      // suppression pour que sa liste de saisons reflète le changement,
+      // pas seulement la grille en arrière-plan. tdsCurrentData n'existe
+      // que si ce fichier est chargé (toujours vrai ici) et qu'une fiche
+      // série est actuellement ouverte.
+      if (typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id && remaining.find(s => String(s.tmdbTvId) === String(showId))) {
+        openTvDetailSheet(showId);
+      } else if (typeof closeTvDetailSheet === 'function' && typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id === Number(showId)) {
+        closeTvDetailSheet(); // la série entière vient de disparaître avec sa dernière saison
+      }
       showToast(`"${seasonName}" retirée`);
       if (typeof statsDirty !== 'undefined') statsDirty = true;
     },
@@ -523,45 +523,44 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
   );
 }
 
+// Ludex 2.0 : la carte devient une cellule de grille (poster + badges) —
+// la liste extensible par saison (Voir les X saisons, avec rouvrir/
+// supprimer) a migré dans la fiche détail (voir buildSeasonProgressionSection,
+// 19-tv-detail.js), qui affichait déjà la progression par saison mais sans
+// ces deux actions avant ce changement. Un tap ouvre directement la fiche —
+// plus de repli "tout gérer depuis la grille".
 function renderTvShowCard(show) {
   const avg = computeShowAverageScore(show);
   const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
-  const ratedCount = seasons.filter(([, s]) => s.rating).length;
+  const seasonsWithProgress = seasons.filter(([, s]) => s.totalEpisodes > 0);
+  const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
+  const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
+  const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const posterUrl = tmdbImage(show.poster_path, 'w154');
 
+  const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
+  const isHighScore = avg != null && avg >= 8.5;
+  const isFeatured = !!show.liked || isHighScore;
+
+  const imgHtml = posterUrl
+    ? `<img class="hist-grid-poster" src="${posterUrl}" alt="Affiche de ${escAttr(show.title)}" loading="lazy" decoding="async">`
+    : `<div class="hist-grid-poster-ph">${ICONS.tv || ICONS.clapper}</div>`;
+
   return `
-    <div class="tv-show-card">
-      <div class="tv-show-card-header-wrap" data-show-id="${show.tmdbTvId}">
-        <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-        <div class="tv-show-card-header">
-          <button type="button" class="tv-show-card-open-btn" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
-            ${posterUrl ? `<img class="tv-show-card-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-show-card-poster tv-show-card-poster-ph">${ICONS.tv || '📺'}</div>`}
-            <div class="tv-show-card-info">
-              <div class="tv-show-card-title">${escAttr(show.title)}</div>
-              <div class="tv-show-card-score">${avg != null ? `${avg.toFixed(1)}/10` : 'Pas encore notée'} <span class="tv-show-card-count">(${ratedCount}/${seasons.length} saison${seasons.length > 1 ? 's' : ''} notée${ratedCount > 1 ? 's' : ''})</span></div>
-            </div>
-          </button>
-          <button type="button" class="tv-show-delete-btn" data-show-id="${show.tmdbTvId}" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
+    <div class="hist-item hist-grid-card${isFeatured ? ' hist-grid-card-featured' : ''}" data-show-id="${show.tmdbTvId}">
+      <button type="button" class="tv-show-card-open-btn hist-item-open" data-show-id="${show.tmdbTvId}" aria-label="Voir la fiche de ${escAttr(show.title)}">
+        ${imgHtml}
+      </button>
+      <div class="hist-grid-badge" style="color:${scoreColor}">${avg != null ? avg.toFixed(1) : '—'}</div>
+      ${isFeatured ? `<div class="hist-grid-featured-badge">${show.liked ? `${ICONS.heart} Coup de cœur` : `★ ${avg.toFixed(1)}`}</div>` : ''}
+      ${totalEpisodes > 0 ? `
+        <div class="hist-grid-progress" title="${watchedEpisodes}/${totalEpisodes} épisodes vus" aria-hidden="true">
+          <div class="hist-grid-progress-fill" style="width:${progressPct}%"></div>
         </div>
+      ` : ''}
+      <div class="hist-actions">
+        <button type="button" class="hist-action-btn del tv-show-delete-btn" data-show-id="${show.tmdbTvId}" title="Retirer" aria-label="Retirer ${escAttr(show.title)}">${ICONS.trash}</button>
       </div>
-      <details class="tv-show-seasons-fold">
-        <summary>Voir les ${seasons.length} saison${seasons.length > 1 ? 's' : ''}</summary>
-        <div class="tv-show-seasons-list">
-          ${seasons.map(([key, s]) => `
-            <div class="tv-season-row" data-show-id="${show.tmdbTvId}" data-season-key="${key}">
-              <div class="hist-swipe-hint hist-swipe-hint-left" aria-hidden="true">${ICONS.trash} Supprimer</div>
-              <div class="hist-swipe-hint hist-swipe-hint-right" aria-hidden="true">${ICONS.edit} Modifier</div>
-              <div class="tv-season-row-content">
-                <button type="button" class="tv-season-reopen-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Rouvrir ${escAttr(s.seasonName)} pour la noter">
-                  <span>${escAttr(s.seasonName)}</span>
-                  <span>${s.rating ? `${s.rating.score}/10` : `${s.watchedEpisodes.length}/${s.totalEpisodes} ép.`}</span>
-                </button>
-                <button type="button" class="tv-season-delete-btn" data-show-id="${show.tmdbTvId}" data-season-key="${key}" aria-label="Retirer ${escAttr(s.seasonName)}">${ICONS.trash}</button>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </details>
     </div>
   `;
 }
@@ -939,7 +938,10 @@ function renderTvStats() {
   const yearShowsCount = shows.filter(s =>
     Object.values(s.seasons || {}).some(se => se.rating?.date?.startsWith(currentYear))
   ).length;
-  animateCountUp(document.getElementById('kpi-year'), yearShowsCount);
+  // Ludex 2.0 : #kpi-year a disparu (voir le même correctif côté films dans
+  // 06c-profile-stats.js) — sous-texte du Hero Header à la place.
+  const heroYearSubEl = document.getElementById('profile-hero-year-sub');
+  if (heroYearSubEl) heroYearSubEl.textContent = `+${yearShowsCount} en ${currentYear}`;
 
   const allRatings = getAllTvSeasonRatings();
 
@@ -962,9 +964,8 @@ function renderTvStats() {
     }
   }
 
-  // Timeline fusionnée (films + séries), identique à ce qu'affiche le mode
-  // Films — voir le commentaire en tête de section.
-  document.getElementById('timeline-chart-container').innerHTML = createTimelineSVG(loadHistory().concat(allRatings));
+  // Ludex 2.0 : timeline retirée (voir index.html) — la heatmap couvre déjà
+  // ce rôle, films et séries confondus.
 
   const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
   allRatings.forEach(r => {
@@ -1064,8 +1065,52 @@ async function resolveNextTvEpisode(cand) {
   } catch { return null; }
 }
 
+// Texte engageant selon la proximité de diffusion — "Demain", "J-3", ou la
+// date complète au-delà d'une semaine (pas la peine d'un compte à rebours
+// pour un épisode encore loin).
+function formatAirCountdown(airDateStr) {
+  const airDate = new Date(airDateStr + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((airDate - today) / 86400000);
+  if (diffDays <= 0) return 'Diffusion imminente';
+  if (diffDays === 1) return 'Demain';
+  if (diffDays <= 13) return `J-${diffDays}`;
+  return `Diffusion le ${airDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}`;
+}
+
 function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   const posterUrl = tmdbImage(show.poster_path, 'w154');
+
+  // Ludex 2.0 : protection anti-spoilers — un épisode déjà présent dans la
+  // liste de la saison (donc "next unwatched" au sens strict) mais dont la
+  // date de diffusion n'est pas encore passée reste verrouillé : ni titre,
+  // ni synopsis, ni action de notation. episode.air_date vient de la même
+  // réponse saison déjà chargée (pas d'appel réseau supplémentaire) —
+  // équivalent en pratique à next_episode_to_air pour cet usage précis :
+  // le prochain épisode non vu ET pas encore diffusé est justement celui
+  // que next_episode_to_air désignerait.
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const airDate = episode.air_date ? new Date(episode.air_date + 'T00:00:00') : null;
+  const isLocked = !airDate || airDate > today;
+
+  if (isLocked) {
+    const countdown = episode.air_date ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+    return `
+      <div class="tv-continue-card tv-continue-locked">
+        ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
+        <div class="tv-continue-info">
+          <div class="tv-continue-show-title">${escAttr(show.title)}</div>
+          <div class="tv-continue-ep-title"><span class="tv-continue-ep-masked">Épisode à venir</span></div>
+          <div class="tv-continue-meta">${escAttr(countdown)}</div>
+        </div>
+        <div class="tv-continue-lock-badge" aria-label="Épisode pas encore diffusé, notation indisponible" title="Pas encore diffusé">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        </div>
+      </div>
+    `;
+  }
+
   const meta = [
     episode.air_date ? new Date(episode.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
     episode.runtime ? `${episode.runtime} min` : '',

@@ -1,10 +1,17 @@
 // Reproduit le bug trouvé via les captures d'écran envoyées : deux
-// suppressions/modifications confirmées par glissement, l'une juste après
-// l'autre, avant que le délai de la première (~500ms, deux animations
-// cumulées) n'ait eu le temps de se terminer. L'index du second film était
-// capturé AVANT que le premier ne se supprime — une fois le premier
-// effectivement supprimé, tous les index suivants décalent, et l'ancien
-// index capturé pour le second ne correspond plus au bon film.
+// suppressions confirmées coup sur coup, avant que le délai de la première
+// (300ms, voir deleteItem() dans 06b-history-actions.js) n'ait eu le temps
+// de se terminer. L'index du second film était capturé AVANT que le
+// premier ne se supprime — une fois le premier effectivement supprimé,
+// tous les index suivants décalent, et l'ancien index capturé pour le
+// second ne correspond plus au bon film.
+//
+// Ludex 2.0 : re-déclenché ici via les boutons "Supprimer" au tap (voir
+// .hist-action-btn.del, l'Historique étant passé en grille sans swipe) —
+// mais le bug lui-même n'a rien à voir avec swipe vs tap : c'est le délai
+// de 300ms entre le clic et la vraie suppression du tableau qui est en
+// cause, donc toujours aussi pertinent à vérifier avec la nouvelle
+// interaction.
 const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
@@ -20,42 +27,25 @@ test.beforeEach(async ({ page }) => {
   await page.click('#nav-history');
 });
 
-async function armAndConfirmDelete(page, titleSubstring) {
-  const item = page.locator('.hist-item', { hasText: titleSubstring });
-  console.log('BEFORE ARM', titleSubstring, 'idx=', await item.getAttribute('data-idx'), 'count=', await item.count());
-  const box = await item.boundingBox();
-  await item.evaluate((el, box) => {
-    function touchEvent(type, x, y) {
-      const ev = new Event(type, { bubbles: true });
-      ev.touches = [{ clientX: x, clientY: y }];
-      return ev;
-    }
-    const y = box.y + box.height / 2;
-    el.dispatchEvent(touchEvent('touchstart', box.x + box.width - 20, y));
-    el.dispatchEvent(touchEvent('touchmove', box.x + 20, y));
-    el.dispatchEvent(new Event('touchend', { bubbles: true }));
-  }, box);
-  console.log('AFTER ARM', titleSubstring, 'class=', await item.evaluate(el => el.className));
-  await page.waitForTimeout(250); // laisse la transition CSS de mise en place de l'indice (.2s) se terminer avant de taper dessus
-  // Tap sur l'indice "Supprimer" maintenant révélé, pour confirmer.
-  await item.locator('.hist-swipe-hint-left').click({ force: true });
-  console.log('CONFIRMED', titleSubstring);
+async function clickDelete(page, titleSubstring) {
+  const item = page.locator('.hist-item', { has: page.locator(`.hist-item-open[aria-label*="${titleSubstring}"]`) });
+  await item.locator('.hist-action-btn.del').click();
 }
 
-test('deux suppressions confirmées coup sur coup suppriment les BONS films (pas de decalage d\'index)', async ({ page }) => {
+test('deux suppressions confirmées coup sur coup suppriment les BONS films (pas de décalage d\'index)', async ({ page }) => {
   // Film A est affiché en DERNIER (le plus ancien), Film C en PREMIER (le plus récent).
   // On confirme A (index réel bas) PUIS immédiatement C (index réel plus haut) —
   // exactement l'ordre qui expose le bug : la suppression de A décale l'index de C.
-  await armAndConfirmDelete(page, 'Film A');
-  await armAndConfirmDelete(page, 'Film C');
+  await clickDelete(page, 'Film A');
+  await clickDelete(page, 'Film C');
 
-  // Laisse les deux délais (200ms + 300ms cumulés) se terminer.
+  // Laisse les deux délais (300ms + 300ms cumulés) se terminer.
   await page.waitForTimeout(700);
 
-  const remainingTitles = await page.locator('.hist-title').allTextContents();
-  console.log('REMAINING TITLES:', JSON.stringify(remainingTitles));
-  expect(remainingTitles.some(t => t.includes('Film B'))).toBe(true);
-  expect(remainingTitles.some(t => t.includes('Film A'))).toBe(false);
-  expect(remainingTitles.some(t => t.includes('Film C'))).toBe(false);
-  expect(remainingTitles.length).toBe(1); // uniquement Film B doit rester
+  const remainingLabels = await page.locator('.hist-item .hist-item-open').evaluateAll(els => els.map(el => el.getAttribute('aria-label')).join(' | '));
+  console.log('RESTANTS:', remainingLabels);
+  expect(remainingLabels).toContain('Film B');
+  expect(remainingLabels).not.toContain('Film A');
+  expect(remainingLabels).not.toContain('Film C');
+  expect(await page.locator('.hist-item').count()).toBe(1); // uniquement Film B doit rester
 });

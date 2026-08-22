@@ -45,8 +45,10 @@ test('chercher "199" dans l\'historique filtre par decennie 1990', async ({ page
 
   const visible = await page.locator('.hist-item').count();
   expect(visible).toBe(2);
-  const titles = await page.locator('.hist-item .hist-title').allTextContents();
-  expect(titles.join(' ')).not.toContain('Dune');
+  // Ludex 2.0 : titre désormais dans aria-label (grille de posters, plus de
+  // texte visible sur la carte) — voir xss.spec.js pour la même adaptation.
+  const ariaLabels = await page.locator('.hist-item .hist-item-open').evaluateAll(els => els.map(el => el.getAttribute('aria-label')).join(' '));
+  expect(ariaLabels).not.toContain('Dune');
 });
 
 test('le badge hors-ligne apparait quand le reseau tombe', async ({ page, context }) => {

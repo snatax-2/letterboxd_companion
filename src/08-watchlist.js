@@ -85,6 +85,80 @@ function saveWatchlist(list, listId) {
   localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
 }
 
+// ── Ludex 2.0 : tri et filtre (voir Ludex_Specifications_Watchlist) ──
+// État séparé de celui de l'Historique (activeGenre/activeScoreFilter,
+// 06a-history-list.js) — même vocabulaire visuel (.genre-chip) mais deux
+// écrans indépendants, sinon choisir un genre ici filtrerait aussi
+// l'Historique par erreur.
+let wlSortOrder = 'recent';
+let wlActiveGenre = null;
+let wlDurationFilterOn = false;
+
+function sortWatchlist(list) {
+  if (wlSortOrder === 'rating') {
+    // Les films sans note connue (ajoutés avant ce champ, ou échec réseau
+    // au moment de l'ajout) descendent en fin de liste plutôt que de
+    // fausser le tri en tête à cause d'un `undefined` traité comme 0.
+    return [...list].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  }
+  if (wlSortOrder === 'year') {
+    return [...list].sort((a, b) => (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0));
+  }
+  return list; // 'recent' = déjà l'ordre de stockage (unshift à l'ajout)
+}
+
+function filterWatchlist(list) {
+  return list.filter(item => {
+    if (wlActiveGenre && !(item.genre || '').split(',').map(g => g.trim()).includes(wlActiveGenre)) return false;
+    if (wlDurationFilterOn && !(typeof item.runtime === 'number' && item.runtime < 120)) return false;
+    return true;
+  });
+}
+
+function renderWlGenreChips(list) {
+  const genres = getGenres(list);
+  const row = document.getElementById('wl-genre-fold');
+  const chips = document.getElementById('wl-genre-chips');
+  const currentLabel = document.getElementById('wl-genre-fold-current');
+  if (!row || !chips) return;
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  if (currentLabel) currentLabel.textContent = wlActiveGenre || 'Tous';
+  chips.innerHTML = '';
+
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (wlActiveGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { wlActiveGenre = null; renderWatchlist(); });
+  chips.appendChild(allChip);
+
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (wlActiveGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => {
+      wlActiveGenre = (wlActiveGenre === g) ? null : g;
+      renderWatchlist();
+    });
+    chips.appendChild(chip);
+  });
+}
+
+document.getElementById('wl-sort-row')?.addEventListener('click', (e) => {
+  const durationBtn = e.target.closest('#wl-duration-filter');
+  if (durationBtn) {
+    wlDurationFilterOn = !wlDurationFilterOn;
+    durationBtn.classList.toggle('active', wlDurationFilterOn);
+    renderWatchlist();
+    return;
+  }
+  const sortBtn = e.target.closest('.wl-sort-btn[data-sort]');
+  if (!sortBtn) return;
+  wlSortOrder = sortBtn.dataset.sort;
+  document.querySelectorAll('#wl-sort-row .wl-sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b === sortBtn));
+  renderWatchlist();
+});
+
 
 // Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
 // "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
@@ -184,20 +258,78 @@ function attachWatchlistSwipeHandlers(cardEl, idx) {
   }, true);
 }
 
+// Ludex 2.0 : suggestions concrètes dans l'état vide — plutôt qu'un bouton
+// "Découvrir" générique qui renvoie l'utilisateur bredouille à un autre
+// onglet, 3 films populaires directement ajoutables en un tap. Réutilise le
+// même endpoint tendances que Découvrir (trending=true), pas de nouvelle
+// route à créer. Mise en cache mémoire simple : ne re-fetch pas à chaque
+// fois que la watchlist active repasse à vide dans la même session.
+let _wlEmptySuggestionsCache = null;
+async function renderWatchlistEmptySuggestions() {
+  const wrap = document.getElementById('wl-empty-suggestions');
+  if (!wrap) return;
+  try {
+    let items = _wlEmptySuggestionsCache;
+    if (!items) {
+      const res = await fetch('/api/search?trending=true');
+      const data = await res.json();
+      items = (data.results || []).filter(m => m.media_type === 'movie' && m.poster_path).slice(0, 3);
+      _wlEmptySuggestionsCache = items;
+    }
+    if (items.length === 0) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="wl-empty-suggestions-title">Quelques suggestions pour commencer :</div>
+      <div class="wl-empty-suggestions-row">
+        ${items.map(m => `
+          <div class="wl-empty-sugg-card">
+            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+            <div class="wl-empty-sugg-title">${escAttr(m.title)}</div>
+            <button type="button" class="wl-empty-sugg-btn" data-movie-id="${m.id}" data-movie-title="${escAttr(m.title)}" data-movie-year="${(m.release_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    console.warn('Impossible de charger les suggestions', e);
+    wrap.innerHTML = '';
+  }
+}
+// Délégué depuis #watchlist-list (toujours présent), pas depuis
+// #wl-empty-suggestions lui-même — cet élément n'existe qu'une fois la
+// liste vide effectivement rendue, jamais au moment où ce script s'exécute.
+document.getElementById('watchlist-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-empty-sugg-btn');
+  if (!btn) return;
+  addToWatchlistFromTMDb(
+    { id: Number(btn.dataset.movieId), title: btn.dataset.movieTitle, poster_path: btn.dataset.poster },
+    btn.dataset.movieYear
+  );
+});
+
 function renderWatchlist() {
   const list = loadWatchlist();
   const container = document.getElementById('watchlist-list');
   const badge = document.getElementById('watchlist-count-badge');
   badge.textContent = list.length + ' film' + (list.length > 1 ? 's' : '');
 
+  renderWlGenreChips(list);
+  document.getElementById('wl-sort-row').style.display = list.length === 0 ? 'none' : 'flex';
+
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les films que tu veux voir.<button type="button" class="empty-state-cta" id="empty-state-watchlist-cta">Découvrir des films à ajouter</button></div><div class="wl-empty-suggestions" id="wl-empty-suggestions"></div>`;
+    window._justSavedWatchlistTitle = null;
+    renderWatchlistEmptySuggestions();
+    return;
+  }
+
+  const visible = filterWatchlist(sortWatchlist(list));
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucun film ne correspond à ce filtre.</div>`;
     window._justSavedWatchlistTitle = null;
     return;
   }
 
   container.innerHTML = '';
-  list.forEach((item, i) => {
+  visible.forEach((item) => {
+    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent (voir attributs onclick plus bas), pas la position affichée après tri/filtre.
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
@@ -326,11 +458,17 @@ async function addToSpecificWatchlist(movie, year, listId) {
     return;
   }
 
-  let genre = '';
+  // Ludex 2.0 : note et durée capturées ici, réutilisant cet appel déjà fait
+  // pour le genre — aucun appel réseau supplémentaire — pour alimenter le
+  // tri "Note TMDb" et le filtre "− de 2h" sans jamais avoir à refaire cette
+  // requête plus tard au moment d'afficher la liste.
+  let genre = '', rating = null, runtime = null;
   try {
     const res = await fetch(`/api/search?id=${movie.id}`);
     const data = await res.json();
     genre = data.genres?.map(g => g.name).join(', ') || '';
+    rating = typeof data.vote_average === 'number' ? data.vote_average : null;
+    runtime = typeof data.runtime === 'number' ? data.runtime : null;
   } catch {}
 
   list.unshift({
@@ -338,6 +476,8 @@ async function addToSpecificWatchlist(movie, year, listId) {
     year,
     poster: tmdbImage(movie.poster_path, 'w185'),
     genre,
+    rating,
+    runtime,
     tmdbId: movie.id,
     addedAt: new Date().toISOString()
   });
@@ -658,4 +798,256 @@ document.getElementById('wl-list-modal-cancel').addEventListener('click', () => 
 
 renderWatchlistTabs();
 renderWatchlist();
+
+// ═══════════════════════════════════════════
+//  WATCHLIST SÉRIES (Ludex 2.0)
+// ═══════════════════════════════════════════
+// Une seule liste (pas le système à listes multiples nommées des films —
+// portée volontairement réduite pour ce premier passage). Stockage et
+// logique séparés, mais même vocabulaire visuel (.wl-card, .wl-poster,
+// tri/filtre) que la watchlist films, pour que les deux se ressemblent à
+// l'usage sans être la même donnée.
+const TV_WATCHLIST_KEY = 'lbx_tv_watchlist';
+const TV_WATCHLIST_TOMBSTONES_KEY = 'lbx_tv_watchlist_tombstones';
+
+function loadTvWatchlist() {
+  try { return JSON.parse(localStorage.getItem(TV_WATCHLIST_KEY)) || []; } catch { return []; }
+}
+function saveTvWatchlist(list) {
+  localStorage.setItem(TV_WATCHLIST_KEY, JSON.stringify(list));
+}
+function tvWatchlistItemKey(item) { return (item.title + '|' + (item.year || '')).toLowerCase(); }
+
+let wlTvSortOrder = 'recent';
+let wlTvActiveGenre = null;
+
+function sortTvWatchlist(list) {
+  if (wlTvSortOrder === 'rating') return [...list].sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
+  if (wlTvSortOrder === 'year') return [...list].sort((a, b) => (parseInt(b.year, 10) || 0) - (parseInt(a.year, 10) || 0));
+  return list;
+}
+function filterTvWatchlist(list) {
+  if (!wlTvActiveGenre) return list;
+  return list.filter(item => (item.genre || '').split(',').map(g => g.trim()).includes(wlTvActiveGenre));
+}
+function renderWlTvGenreChips(list) {
+  const genres = getGenres(list);
+  const row = document.getElementById('wl-tv-genre-fold');
+  const chips = document.getElementById('wl-tv-genre-chips');
+  const currentLabel = document.getElementById('wl-tv-genre-fold-current');
+  if (!row || !chips) return;
+  if (genres.length === 0) { row.style.display = 'none'; return; }
+  row.style.display = 'block';
+  if (currentLabel) currentLabel.textContent = wlTvActiveGenre || 'Tous';
+  chips.innerHTML = '';
+  const allChip = document.createElement('button');
+  allChip.className = 'genre-chip all-chip' + (wlTvActiveGenre === null ? ' active' : '');
+  allChip.textContent = 'Tous';
+  allChip.addEventListener('click', () => { wlTvActiveGenre = null; renderTvWatchlist(); });
+  chips.appendChild(allChip);
+  genres.forEach(g => {
+    const chip = document.createElement('button');
+    chip.className = 'genre-chip' + (wlTvActiveGenre === g ? ' active' : '');
+    chip.textContent = g;
+    chip.addEventListener('click', () => { wlTvActiveGenre = (wlTvActiveGenre === g) ? null : g; renderTvWatchlist(); });
+    chips.appendChild(chip);
+  });
+}
+
+document.getElementById('wl-tv-sort-row')?.addEventListener('click', (e) => {
+  const sortBtn = e.target.closest('.wl-sort-btn[data-sort]');
+  if (!sortBtn) return;
+  wlTvSortOrder = sortBtn.dataset.sort;
+  document.querySelectorAll('#wl-tv-sort-row .wl-sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b === sortBtn));
+  renderTvWatchlist();
+});
+
+function renderTvWatchlist() {
+  const list = loadTvWatchlist();
+  const container = document.getElementById('wl-tv-list');
+  if (!container) return;
+
+  renderWlTvGenreChips(list);
+  document.getElementById('wl-tv-sort-row').style.display = list.length === 0 ? 'none' : 'flex';
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>`;
+    return;
+  }
+
+  const visible = filterTvWatchlist(sortTvWatchlist(list));
+  if (visible.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.search}</div>Aucune série ne correspond à ce filtre.</div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  visible.forEach((item) => {
+    const i = list.indexOf(item);
+    const div = document.createElement('div');
+    div.className = 'wl-card';
+    if (window._justSavedTvWatchlistTitle && item.title.toLowerCase() === window._justSavedTvWatchlistTitle) {
+      div.classList.add('wl-card-entering');
+    }
+    const posterHtml = item.poster
+      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+      : `<div class="wl-poster">${ICONS.clapper}</div>`;
+    div.innerHTML = `
+      <div class="wl-card-content">
+        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+          ${posterHtml}
+        </div>
+        <div class="wl-actions">
+          <button class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
+          <button class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+        </div>
+      </div>`;
+    div.querySelector('.wl-card-open').addEventListener('click', () => openTvDetailSheet(item.tmdbId));
+    container.appendChild(div);
+    applyPosterAccent(item.poster, div);
+  });
+  window._justSavedTvWatchlistTitle = null;
+}
+
+document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-btn[data-tv-idx]');
+  if (!btn) return;
+  const idx = Number(btn.dataset.tvIdx);
+  const list = loadTvWatchlist();
+  const item = list[idx];
+  if (!item) return;
+
+  if (btn.dataset.action === 'remove') {
+    list.splice(idx, 1);
+    saveTvWatchlist(list);
+    recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+    renderTvWatchlist();
+    return;
+  }
+
+  // "Commencer à suivre" : même principe que watchlistToForm() côté films —
+  // relance la recherche (ici sur le champ séries), retire l'item de la
+  // watchlist, bascule vers Noter en mode Séries.
+  list.splice(idx, 1);
+  saveTvWatchlist(list);
+  recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+  renderTvWatchlist();
+
+  if (typeof setMediaType === 'function') setMediaType('tv');
+  const tvSearchEl = document.getElementById('tv-search');
+  if (tvSearchEl) {
+    tvSearchEl.value = item.title;
+    tvSearchEl.dispatchEvent(new Event('input'));
+  }
+  if (window.innerWidth <= 860) switchMobileNav('rating');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast(`Recherche lancée pour "${item.title}"`);
+});
+
+async function addToTvWatchlist(show, year) {
+  const list = loadTvWatchlist();
+  const key = (show.name + '|' + year).toLowerCase();
+  if (list.find(i => (i.title + '|' + (i.year || '')).toLowerCase() === key)) {
+    showToast('Déjà dans la watchlist séries.');
+    return;
+  }
+  let genre = '', rating = null;
+  try {
+    const res = await fetch(`/api/search?tvId=${show.id}`);
+    const data = await res.json();
+    genre = data.genres?.map(g => g.name).join(', ') || '';
+    rating = typeof data.vote_average === 'number' ? data.vote_average : null;
+  } catch { /* pas bloquant : la série s'ajoute quand même, juste sans genre/note pour le tri */ }
+
+  list.unshift({
+    title: show.name,
+    year,
+    poster: tmdbImage(show.poster_path, 'w185'),
+    genre,
+    rating,
+    tmdbId: show.id,
+    addedAt: new Date().toISOString(),
+  });
+  saveTvWatchlist(list);
+  window._justSavedTvWatchlistTitle = show.name.toLowerCase();
+  renderTvWatchlist();
+  showToast(`"${show.name}" ajoutée à la watchlist séries 🎯`);
+}
+
+// ── Recherche séries (mêmes suggestions à affiches, même pattern que le
+// champ films juste au-dessus) ──
+const wlTvInput = document.getElementById('wl-tv-input');
+const wlTvSuggestEl = document.getElementById('wl-tv-suggestions');
+let wlTvSearchTimer;
+
+wlTvInput?.addEventListener('input', () => {
+  clearTimeout(wlTvSearchTimer);
+  const q = wlTvInput.value.trim();
+  if (q.length < 2) { wlTvSuggestEl.style.display = 'none'; return; }
+  wlTvSearchTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`/api/search?tvQuery=${encodeURIComponent(q)}`);
+      const data = await readApiJson(res);
+      if (!data.results?.length) { wlTvSuggestEl.style.display = 'none'; return; }
+      wlTvSuggestEl.innerHTML = '';
+      wlTvSuggestEl.style.display = 'block';
+      data.results.slice(0, 5).forEach(s => {
+        const year = s.first_air_date?.slice(0, 4) || '';
+        const el = document.createElement('div');
+        el.className = 'wl-suggest-item';
+        el.innerHTML = `
+          ${s.poster_path
+            ? `<img class="wl-suggest-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="Affiche de ${escAttr(s.name)}" loading="lazy">`
+            : `<div class="wl-suggest-poster" style="display:flex;align-items:center;justify-content:center;">${ICONS.clapper}</div>`}
+          <div>
+            <div class="wl-suggest-title">${escAttr(s.name)}</div>
+            <div class="wl-suggest-year">${year}</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          wlTvSuggestEl.style.display = 'none';
+          wlTvInput.value = '';
+          addToTvWatchlist(s, year);
+        });
+        wlTvSuggestEl.appendChild(el);
+      });
+    } catch (err) {
+      wlTvSuggestEl.style.display = 'none';
+      showToast(describeApiFailure(err));
+    }
+  }, 280);
+});
+document.addEventListener('click', e => {
+  if (wlTvInput && wlTvSuggestEl && !wlTvInput.contains(e.target) && !wlTvSuggestEl.contains(e.target)) {
+    wlTvSuggestEl.style.display = 'none';
+  }
+});
+document.getElementById('wl-tv-add-btn')?.addEventListener('click', () => {
+  const val = wlTvInput.value.trim();
+  if (!val) return;
+  wlTvSuggestEl.style.display = 'none';
+  const list = loadTvWatchlist();
+  if (list.find(i => i.title.toLowerCase() === val.toLowerCase())) { showToast('Déjà dans la liste.'); wlTvInput.value = ''; return; }
+  list.unshift({ title: val, year: '', poster: '', genre: '', tmdbId: null, addedAt: new Date().toISOString() });
+  saveTvWatchlist(list);
+  window._justSavedTvWatchlistTitle = val.toLowerCase();
+  renderTvWatchlist();
+  wlTvInput.value = '';
+});
+
+// ── Toggle Films/Séries ──
+document.getElementById('wl-tab-movie')?.addEventListener('click', () => {
+  document.getElementById('wl-tab-movie').classList.add('active');
+  document.getElementById('wl-tab-tv').classList.remove('active');
+  document.getElementById('wl-movie-section').style.display = '';
+  document.getElementById('wl-tv-section').style.display = 'none';
+});
+document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
+  document.getElementById('wl-tab-tv').classList.add('active');
+  document.getElementById('wl-tab-movie').classList.remove('active');
+  document.getElementById('wl-tv-section').style.display = '';
+  document.getElementById('wl-movie-section').style.display = 'none';
+  renderTvWatchlist();
+});
+
+renderTvWatchlist();
 

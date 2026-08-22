@@ -454,6 +454,31 @@ function computeWeekStreak(history, referenceDate = new Date()) {
   return streak;
 }
 
+// Nombre de JOURS consécutifs (en remontant depuis AUJOURD'HUI) avec au
+// moins une note ajoutée — granularité plus fine que computeWeekStreak
+// (semaines ISO), nécessaire pour le succès "Fidélité" (3/10/30 jours) qui
+// parle explicitement de jours, pas de semaines. Fonctions séparées plutôt
+// que fusionnées : le streak hebdomadaire (déjà affiché ailleurs dans le
+// Profil) reste inchangé, celui-ci sert uniquement au nouveau succès.
+function computeDayStreak(history, referenceDate = new Date()) {
+  const daysWithActivity = new Set();
+  history.forEach(h => {
+    const raw = h.savedAt || h.date;
+    if (!raw) return;
+    const d = new Date(raw);
+    if (isNaN(d)) return;
+    daysWithActivity.add(d.toISOString().slice(0, 10));
+  });
+
+  let streak = 0;
+  const cursor = new Date(referenceDate);
+  while (daysWithActivity.has(cursor.toISOString().slice(0, 10))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
 // Badges débloqués selon l'historique — chaque entrée est indépendante,
 // aucune ne dépend d'un ordre de déblocage particulier.
 // ─── Rétrospective annuelle ("Wrapped") ─────────────────────────────────────
@@ -667,16 +692,37 @@ function computeWrappedStats(history, year) {
   };
 }
 
+// Ludex 2.0 : système de paliers (I/II/III, bronze/argent/or) — voir
+// Ludex_Gamification_Succes.pdf. Chaque badge a 3 seuils au lieu d'un seul ;
+// tierify() calcule où on en est. Remplace l'ancien système à seuil unique
+// dans son intégralité (mêmes id que les tiers eux-mêmes n'existaient pas
+// avant, donc rien à migrer côté stockage — les badges sont toujours
+// recalculés à la volée, jamais une donnée primaire).
+function tierify(value, tiers) {
+  let tier = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    if (value >= tiers[i]) tier = i + 1;
+  }
+  const maxed = tier >= tiers.length;
+  const nextThreshold = maxed ? null : tiers[tier];
+  // Palier 0 : progression vers le PREMIER seuil (pas vers un seuil déjà
+  // dépassé) — value/tiers[0], jamais value/nextThreshold quand tier>0 (le
+  // dénominateur serait alors le seuil déjà franchi, pas le suivant).
+  const progress = maxed ? 1 : Math.min(1, value / nextThreshold);
+  return { value, tier, maxed, nextThreshold, progress };
+}
+
+// Première vague de succès à paliers (voir Ludex_Gamification_Succes.pdf) —
+// seuls les trophées calculables avec les données déjà stockées aujourd'hui.
+// Le reste du document (récompenses, popularité TMDb à l'instant T, langue
+// originale, franchises, minutage par épisode...) demande de nouvelles
+// données jamais suivies jusqu'ici — repoussé à une vague suivante plutôt
+// que deviné approximativement.
 function computeBadges(history, extras = {}) {
-  // Déclaré ICI (local, pas en haut du fichier) : même bug que
-  // CRITERIA_SHORT_LABELS et CONTEXT_TAG_ICONS rencontré précédemment — un
-  // `const` top-level serait dans sa "zone morte temporelle" tant que
-  // l'exécution n'a pas atteint cette ligne, or `renderAll()` est appelée de
-  // façon précoce (03-foundation.js) avant même que 03b-pure-logic.js n'ait
-  // fini de s'exécuter.
-  const GENRE_BADGE_THRESHOLD = 5;
   const totalMinutes = extras.totalMinutes || 0;
-  const streak = extras.streak || 0;
+  const dayStreak = extras.dayStreak || 0;
+  const tvRatings = extras.tvRatings || []; // { score, date } par saison notée — voir getAllTvSeasonRatings()
+
   const genreSet = new Set();
   const genreCounts = {};
   history.forEach(h => {
@@ -686,32 +732,65 @@ function computeBadges(history, extras = {}) {
       genreCounts[t] = (genreCounts[t] || 0) + 1;
     });
   });
-  const reviewCount = history.filter(h => h.review && h.review.trim().length > 0).length;
+
+  const scores = history.map(h => parseFloat(h.score)).filter(s => !isNaN(s));
+  const masterpieceCount = scores.filter(s => s >= 9).length;
+  const demonCount = scores.filter(s => s < 3).length;
+  const likedCount = history.filter(h => h.liked).length;
+
+  // "Le Difficile" / "Le Bon Public" : compte de tranches COMPLÈTES et
+  // DISJOINTES de 20 notes consécutives (par ordre chronologique
+  // d'ajout) dont la moyenne franchit le seuil — pas une fenêtre glissante
+  // (qui compterait la même série de bons/mauvais films des dizaines de
+  // fois de suite), une vraie répétition de la performance sur des lots
+  // différents.
+  const chronological = [...history].sort((a, b) => (a.savedAt || a.date || '').localeCompare(b.savedAt || b.date || ''));
+  let hardCount = 0, crowdPleaserCount = 0;
+  for (let i = 0; i + 20 <= chronological.length; i += 20) {
+    const slice = chronological.slice(i, i + 20);
+    const sliceAvg = slice.reduce((sum, h) => sum + (parseFloat(h.score) || 0), 0) / slice.length;
+    if (sliceAvg < 5) hardCount++;
+    if (sliceAvg > 8) crowdPleaserCount++;
+  }
+
+  // "Le Puriste" : plus longue série de films notés d'affilée SANS le bonus
+  // coup de cœur (ordre chronologique) — l'inverse exact de Coup de Foudre.
+  let purestStreak = 0, purestMax = 0;
+  chronological.forEach(h => {
+    if (h.liked) { purestStreak = 0; } else { purestStreak++; purestMax = Math.max(purestMax, purestStreak); }
+  });
 
   const defs = [
-    { id: 'films_10',  label: '10 films notés',        unlocked: history.length >= 10 },
-    { id: 'films_50',  label: '50 films notés',         unlocked: history.length >= 50 },
-    { id: 'films_100', label: '100 films notés',        unlocked: history.length >= 100 },
-    { id: 'genres_5',  label: '5 genres différents',    unlocked: genreSet.size >= 5 },
-    { id: 'genres_10', label: '10 genres différents',   unlocked: genreSet.size >= 10 },
-    { id: 'reviews_10',label: '10 critiques écrites',   unlocked: reviewCount >= 10 },
-    { id: 'streak_4',  label: '4 semaines de suite',    unlocked: streak >= 4 },
-    { id: 'marathon',  label: 'Marathon (24h de films)',unlocked: totalMinutes >= 24 * 60 },
-    { id: 'cinephile', label: 'Cinéphile (7j de films)',unlocked: totalMinutes >= 7 * 24 * 60 },
+    { id: 'critique',   name: 'Le Critique',   icon: '🎬', ...tierify(history.length + tvRatings.length, [10, 100, 500]) },
+    { id: 'marathonien',name: 'Marathonien',    icon: '⏱️', ...tierify(totalMinutes, [24 * 60, 100 * 60, 500 * 60]) },
+    { id: 'fidelite',   name: 'Fidélité',       icon: '🔥', ...tierify(dayStreak, [3, 10, 30]) },
+    { id: 'chef_oeuvre',name: 'Chef-d\'Œuvre',  icon: '🏆', ...tierify(masterpieceCount, [5, 25, 50]) },
+    { id: 'ame_demon',  name: 'L\'Âme du Démon',icon: '😈', ...tierify(demonCount, [1, 10, 25]) },
+    { id: 'difficile',  name: 'Le Difficile',   icon: '📉', ...tierify(hardCount, [1, 5, 10]) },
+    { id: 'bon_public', name: 'Le Bon Public',  icon: '📈', ...tierify(crowdPleaserCount, [1, 5, 10]) },
+    { id: 'coup_foudre',name: 'Coup de Foudre', icon: '❤️', ...tierify(likedCount, [5, 25, 50]) },
+    { id: 'puriste',    name: 'Le Puriste',     icon: '🎭', ...tierify(purestMax, [20, 50, 100]) },
   ];
 
-  // Un badge par genre RÉELLEMENT exploré (au moins un film), pas une liste
-  // figée de tous les genres TMDb possibles — évite d'afficher des dizaines
-  // de badges verrouillés pour des genres jamais regardés. Triés du plus au
-  // moins regardé, pour mettre en avant ce qui définit vraiment les goûts de
-  // l'utilisateur.
+  // Noms "flavor" repris du document quand ils existent pour ce genre
+  // précis ; repli générique "Fan de X" sinon — un genre exploré mais non
+  // listé dans le document (ex: "Fantastique" seul, sans le "Dark" de
+  // "Chasseur de Démons") reste un badge normal, pas un badge absent.
+  const GENRE_FLAVOR_NAMES = {
+    'Horreur': 'Livre des Morts', 'Comédie': 'Rire en Boîte',
+    'Science-Fiction': 'Sabres & Lasers', 'Drame': 'Départ Soudain',
+    'Animation': 'Otaku', 'Romance': 'Le Romantique',
+    'Aventure': 'Cape et Épée', 'Documentaire': 'Documentaliste',
+    'Musique': 'Symphonie', 'Western': 'Westerner',
+  };
   const genreBadges = Object.entries(genreCounts)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 8) // les 8 genres les plus regardés seulement, pour ne pas surcharger la grille
     .map(([genre, count]) => ({
       id: 'genre_' + genre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '_'),
-      label: `Fan de ${genre} (${Math.min(count, GENRE_BADGE_THRESHOLD)}/${GENRE_BADGE_THRESHOLD})`,
-      unlocked: count >= GENRE_BADGE_THRESHOLD,
+      name: GENRE_FLAVOR_NAMES[genre] || `Fan de ${genre}`,
+      icon: '🎞️',
+      ...tierify(count, [5, 50, 100]),
     }));
 
   return defs.concat(genreBadges);
@@ -740,6 +819,8 @@ if (typeof module !== 'undefined' && module.exports) {
     formatWatchTime,
     getISOWeekKey,
     computeWeekStreak,
+    computeDayStreak,
+    tierify,
     computeBadges,
     computeWrappedStats,
     computeEloUpdate,

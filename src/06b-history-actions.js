@@ -287,7 +287,15 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
-    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    // Ludex 2.0 : Historique passé en grille — plus de swipe possible (une
+    // cellule de grille n'a pas la place pour révéler un indice en dessous).
+    // .hist-item-content n'existe plus dans le nouveau balisage (voir
+    // renderHistory(), 06a-history-list.js) : sa seule présence sert donc de
+    // signal fiable "ce geste est pertinent ici" — jamais vrai désormais,
+    // ce qui laisse pressedItem/pressedContent à null et neutralise en
+    // cascade tout le reste de ce fichier (touchmove/touchend gardent déjà
+    // `if (!pressedItem) return;`) sans avoir à toucher chacun séparément.
+    if (!item || !item.querySelector('.hist-item-content') || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
     // NOTE : ne PAS annuler ici un item armé — un simple tap déclenche
     // touchstart AVANT click, et annuler dès le toucher tuait l'état armé
