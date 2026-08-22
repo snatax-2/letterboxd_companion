@@ -5,7 +5,13 @@ function setTodayDate() {
   const today = new Date();
   const offset = today.getTimezoneOffset() * 60000;
   const localISOTime = (new Date(today - offset)).toISOString().slice(0, -1);
-  document.getElementById('view-date').value = localISOTime.split('T')[0];
+  const todayStr = localISOTime.split('T')[0];
+  document.getElementById('view-date').value = todayStr;
+  // Ludex 2.0 : même défaut appliqué au champ séries (voir tv-view-date,
+  // index.html) — les deux se remettent à aujourd'hui aux mêmes moments,
+  // pas de logique séparée à maintenir en double.
+  const tvDateEl = document.getElementById('tv-view-date');
+  if (tvDateEl) tvDateEl.value = todayStr;
 }
 
 // ═══════════════════════════════════════════
