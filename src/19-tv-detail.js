@@ -512,6 +512,10 @@ async function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisod
     updateTdsRateButtonVisibility(container, showId, seasonKey);
     updateSeasonProgressRowStatus(showId, seasonKey);
     if (typeof statsDirty !== 'undefined') statsDirty = true;
+    // Ludex 2.0 : même correctif que le bouton "à regarder ensuite" plus
+    // haut dans ce fichier — le widget "En cours" de l'écran Noter ne se
+    // mettait pas à jour quand un épisode était (dé)coché depuis ici.
+    if (typeof renderTvContinueList === 'function') renderTvContinueList();
     return;
   }
 
@@ -542,6 +546,7 @@ async function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisod
   updateTdsRateButtonVisibility(container, showId, seasonKey);
   updateSeasonProgressRowStatus(showId, seasonKey);
   if (typeof statsDirty !== 'undefined') statsDirty = true;
+  if (typeof renderTvContinueList === 'function') renderTvContinueList();
 }
 
 function updateTdsRateButtonVisibility(container, showId, seasonKey) {
@@ -645,6 +650,12 @@ tdsEl.addEventListener('click', async (e) => {
       // (voir plus haut) — elle sait déjà ne rafraîchir que si la saison
       // concernée est celle actuellement affichée dans les onglets.
       updateSeasonProgressRowStatus(showId, seasonKey);
+      // Ludex 2.0 : le widget "En cours" de l'écran Noter n'était informé
+      // d'aucun changement fait depuis la fiche détail — cocher un épisode
+      // ici laissait sa carte affichée avec un état périmé jusqu'au
+      // prochain rendu spontané. Rafraîchi explicitement, comme déjà fait
+      // pour "Commencer la série" un peu plus bas dans ce même fichier.
+      if (typeof renderTvContinueList === 'function') renderTvContinueList();
     }
     return;
   }
