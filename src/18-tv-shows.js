@@ -1068,19 +1068,33 @@ async function renderTvContinueList() {
   document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
   container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
 
-  candidates.forEach(async (cand, idx) => {
+  // Bug corrigé (signalé par l'utilisateur : notes/coup de cœur qui
+  // disparaissent en validant une saison depuis ce widget) : ce bloc
+  // lançait toutes les résolutions EN PARALLÈLE (forEach + async, jamais
+  // attendu). resolveNextTvEpisode() fait son propre load→modifie→save sur
+  // localStorage — avec plusieurs séries "En cours" en même temps
+  // (notamment celles qui déclenchent needsNextSeasonCheck), deux
+  // résolutions pouvaient se chevaucher : la seconde lit l'état AVANT que
+  // la première n'ait fini d'écrire, puis sauvegarde par-dessus une copie
+  // périmée qui ne contient pas encore le changement de la première —
+  // silencieusement perdu. Boucle séquentielle (une résolution complète
+  // avant que la suivante ne démarre) plutôt que tout lancer d'un coup :
+  // élimine structurellement le chevauchement, pas juste dans les cas où
+  // j'ai réussi à le reproduire.
+  for (let idx = 0; idx < candidates.length; idx++) {
+    const cand = candidates[idx];
     const resolved = await resolveNextTvEpisode(cand);
     const placeholder = container.querySelector(`[data-continue-idx="${idx}"]`);
-    if (!placeholder) return; // le conteneur a pu être reconstruit entre-temps
+    if (!placeholder) continue; // le conteneur a pu être reconstruit entre-temps
     if (!resolved) {
       placeholder.remove();
       if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
-      return;
+      continue;
     }
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderTvContinueCard(resolved);
     placeholder.replaceWith(wrapper.firstElementChild);
-  });
+  }
 }
 
 async function resolveNextTvEpisode(cand) {
