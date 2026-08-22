@@ -309,3 +309,62 @@ function describeApiFailure(err) {
   const isGeneric = !msg || /Failed to fetch|NetworkError/i.test(msg);
   return isGeneric ? 'Service indisponible pour le moment, réessaie dans un instant.' : msg;
 }
+
+// Ludex 2.0 : plateformes de streaming dans les fiches détail film/série
+// (voir Ludex_Audit_Fiches.pdf — "où le voir ? C'est la donnée la plus
+// recherchée") — jusqu'ici cette info n'existait que sur les cartes
+// Watchlist, jamais dans la fiche elle-même. Généralisation de l'ancienne
+// fetchProviders() (08-watchlist.js, gardée telle quelle pour la
+// Watchlist) : mêmes règles (filtre sur les plateformes possédées,
+// distinction "pas en streaming" / "en streaming mais pas chez toi"), mais
+// réutilisable film ET série via mediaType, et ciblant n'importe quel id
+// d'élément plutôt qu'un pattern figé `wl-providers-${idx}`.
+async function fetchAndRenderProviders(tmdbId, targetElId, mediaType = 'movie') {
+  const el = document.getElementById(targetElId);
+  if (!el || !tmdbId) return;
+  try {
+    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE&mediaType=${mediaType}`);
+    const data = await res.json();
+
+    const providerRoot = data['watch/providers']?.results?.BE
+                      || data.providers?.results?.BE
+                      || data.watchProviders?.BE
+                      || null;
+
+    if (!providerRoot) {
+      el.innerHTML = '';
+      el.style.display = 'none';
+      return;
+    }
+
+    const owned = loadOwnedProviders().map(normalizeProviderName);
+    const filterOwned = (list) => owned.length === 0 ? list : list.filter(p => {
+      const n = normalizeProviderName(p.provider_name);
+      return owned.some(o => n.includes(o) || o.includes(n));
+    });
+
+    const allFlat = providerRoot.flatrate || [];
+    const allRent = providerRoot.rent || [];
+    const flat = filterOwned(allFlat);
+    const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
+
+    let html = '';
+    flat.slice(0, 5).forEach(p => {
+      html += `<span class="mds-provider-pill flatrate"><img class="mds-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" alt="" loading="lazy">${escAttr(p.provider_name)}</span>`;
+    });
+    rentOnly.slice(0, 3).forEach(p => {
+      html += `<span class="mds-provider-pill rent"><img class="mds-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" alt="" loading="lazy">${escAttr(p.provider_name)} (location)</span>`;
+    });
+
+    if (!html) {
+      const availableElsewhere = owned.length > 0 && (allFlat.length > 0 || allRent.length > 0);
+      html = availableElsewhere
+        ? `<span class="mds-provider-none">Disponible, mais pas sur tes plateformes</span>`
+        : `<span class="mds-provider-none">Non disponible en streaming 🇧🇪</span>`;
+    }
+    el.innerHTML = html;
+    el.style.display = 'flex';
+  } catch {
+    el.style.display = 'none';
+  }
+}

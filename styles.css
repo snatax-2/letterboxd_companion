@@ -592,8 +592,10 @@
   }
 
   /* L'ancien tricolore Letterboxd de l'onglet actif est retiré : l'indicateur
-     actif est désormais une capsule pleine, partagée par tous les thèmes
-     (voir .nav-btn.active dans le bloc nav commun). */
+     actif est désormais une simple teinte de couleur (icône + libellé),
+     partagée par tous les thèmes (voir .nav-btn.active dans le bloc nav
+     commun) — remplace elle-même l'ancienne capsule pleine, jugée trop
+     appuyée à l'usage. */
 
   /* ── Film Noir : clair-obscur ── */
   /* Vignettage permanent, comme un tirage argentique contrasté */
@@ -896,21 +898,43 @@
     color: var(--text); font-family: var(--font-heading);
     font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; gap: 3px; transition: color var(--dur-base), background var(--dur-base);
+    align-items: center; gap: 3px; transition: color var(--dur-base);
     letter-spacing: 0.02em; border-radius: 999px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  /* Indicateur d'état actif partagé par les 6 thèmes : une capsule pleine
-     plutôt qu'un simple changement de couleur de texte — repéré comme un
-     vrai souci d'accessibilité perçue (l'onglet actif se distinguait à
-     peine). Remplace l'ancien soulignement tricolore spécifique au thème
-     par défaut. */
-  .nav-btn.active {
-    color: var(--bg);
-    background: var(--orange);
-  }
-  .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; }
+  /* Ludex 2.0 : la capsule pleine inversée (fond coloré, texte inversé)
+     s'est avérée trop appuyée à l'usage — remplacée par une simple teinte
+     de couleur, plus discrète mais toujours nette (confirmé après
+     comparaison avant/après). Les icônes qui le permettent basculent aussi
+     de contour à pleine (voir .icon-outline/.icon-solid ci-dessous) —
+     Découvrir est déjà pleine au repos (rien à basculer), Historique reste
+     un pictogramme à traits (3 barres verticales, pas de forme à remplir). */
+  .nav-btn.active { color: var(--orange); background: none; }
+  .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; position: relative; }
   .nav-btn:hover:not(.active) { color: var(--text-hi); }
+
+  /* Bascule contour → pleine : les deux SVG sont superposés dans le HTML,
+     un seul affiché à la fois selon l'état actif — pas de changement de
+     `fill`/`stroke` en CSS sur un même tracé (les deux glyphes ont des
+     géométries différentes, un simple remplissage n'aurait pas le même
+     rendu qu'une vraie version pleine dessinée pour ça). */
+  .nav-btn-icon .icon-solid { display: none; }
+  .nav-btn.active .nav-btn-icon .icon-outline { display: none; }
+  .nav-btn.active .nav-btn-icon .icon-solid { display: block; }
+
+  /* Ludex 2.0 : "Shifting Tab Bar" — le libellé texte n'apparaît en clair
+     que sous l'onglet actif, avec un léger élargissement animé (voir
+     Ludex_Navigation_Audit.pdf). Le texte reste TOUJOURS présent dans le
+     DOM (jamais display:none) : seul l'affichage VISUEL se réduit à rien
+     pour les onglets inactifs — un lecteur d'écran continue de l'annoncer
+     normalement quel que soit l'état, ça ne retire rien à l'accessibilité,
+     contrairement à la version stricte du document. */
+  .nav-btn-label {
+    display: block; max-width: 0; opacity: 0; overflow: hidden;
+    transition: max-width var(--dur-base) var(--ease-out), opacity var(--dur-fast), margin-top var(--dur-base);
+    font-size: 0.64rem;
+  }
+  .nav-btn.active .nav-btn-label { max-width: 90px; opacity: 1; margin-top: 1px; }
 
   /* ── CARDS ── */
   .card {
@@ -1259,11 +1283,10 @@
   .tds-season-details:last-child { border-bottom: none; }
   .tds-season-progress-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 4px; font-size: 0.85rem; color: var(--text-hi); cursor: pointer;
+    padding: 9px 4px; font-size: 0.85rem; color: var(--text-hi);
     border-radius: 4px; list-style: none;
   }
   .tds-season-progress-row::-webkit-details-marker { display: none; }
-  .tds-season-progress-row:hover { background: var(--surface2); }
   .tds-season-progress-right { display: flex; align-items: center; gap: 6px; }
   .tds-season-delete-btn, .tds-season-reopen-btn {
     display: flex; align-items: center; justify-content: center;
@@ -1273,6 +1296,22 @@
   .tds-season-delete-btn:hover, .tds-season-delete-btn:active { color: var(--red); background: var(--surface); }
   .tds-season-reopen-btn:hover, .tds-season-reopen-btn:active { color: var(--gold); background: var(--surface); }
   .tds-season-delete-btn .icon, .tds-season-reopen-btn .icon { width: 13px; height: 13px; }
+  /* Ludex 2.0 : onglets horizontaux (voir Ludex_Audit_Fiches.pdf — "une
+     liste verticale crée un scroll interminable, surtout pour une série de
+     10 saisons") — remplace la liste de <details> empilés. Défilement
+     natif (overflow-x + scroll-snap), pas de bibliothèque JS, comme
+     suggéré par le document pour rester fluide sur mobile. */
+  .tds-season-tabs {
+    display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px;
+    scroll-snap-type: x proximity; border-bottom: 1px solid var(--border);
+  }
+  .tds-season-tab {
+    flex-shrink: 0; scroll-snap-align: start; padding: 7px 16px; border-radius: 999px;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text-mid);
+    font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem;
+  }
+  .tds-season-tab.active { background: var(--gold); border-color: var(--gold); color: var(--solid-fill-text, #0d1117); }
+  #tds-season-status-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px 10px; font-size: 0.85rem; color: var(--text-hi); }
   .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
   .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
@@ -2528,6 +2567,70 @@
   .mds-personal-score { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--text-hi); }
   .mds-personal-stars { color: var(--star-color); font-size: 0.9rem; }
   .mds-personal-review { font-size: 0.84rem; color: var(--text); font-style: italic; margin-top: 6px; line-height: 1.4; }
+
+  /* Ludex 2.0 : "Ta note" devient elle-même le bouton "Modifier" (voir
+     Ludex_Audit_Fiches_Suggestions.pdf — "fusionner l'affichage et
+     l'action") — étoiles gardées telles quelles, juste rendues cliquables
+     avec une icône crayon discrète en indice plutôt qu'un vrai bouton
+     séparé qui poussait le reste du contenu vers le bas. */
+  .mds-personal-score-btn {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    background: none; border: none; padding: 0; cursor: pointer; text-align: left;
+  }
+  .mds-personal-edit-hint { color: var(--text-mid); flex-shrink: 0; margin-left: 10px; }
+  .mds-personal-edit-hint .icon { width: 14px; height: 14px; }
+  .mds-personal-score-btn:hover .mds-personal-edit-hint, .mds-personal-score-btn:active .mds-personal-edit-hint { color: var(--gold); }
+
+  /* Comparatif visuel Ta note vs TMDb — deux repères sur une même piste,
+     plus parlant qu'un chiffre à côté de l'autre en texte. */
+  .mds-score-compare { margin-top: 10px; }
+  .mds-score-compare-track { position: relative; height: 4px; background: var(--border); border-radius: 2px; }
+  .mds-score-compare-mark { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); }
+  .mds-score-compare-mark.tmdb { background: var(--text-hi); }
+  .mds-score-compare-mark.mine { background: var(--gold); box-shadow: 0 0 0 2px var(--surface2); }
+  .mds-score-compare-legend { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-mid); margin-top: 5px; font-family: var(--font-mono); }
+
+  /* Plateformes de streaming (voir fetchAndRenderProviders(),
+     03-foundation.js) — remontées juste sous les CTA, films ET séries. */
+  .mds-providers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .mds-provider-pill {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px;
+    background: var(--surface2); border-radius: 999px; font-size: 0.7rem; color: var(--text-hi);
+  }
+  .mds-provider-pill.rent { color: var(--text-mid); }
+  .mds-provider-logo { width: 18px; height: 18px; border-radius: 5px; object-fit: cover; }
+  .mds-provider-none { font-size: 0.72rem; color: var(--text-mid); font-style: italic; }
+
+  /* Badge de statut coloré (séries) — vert en cours, rouge arrêtée. */
+  .tds-status-badge {
+    display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+    border-radius: 999px; background: var(--surface2); font-size: 0.66rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 6px; color: var(--text-hi);
+  }
+  .tds-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-mid); }
+  .tds-status-badge.ongoing .tds-status-dot { background: var(--green); }
+  .tds-status-badge.ended .tds-status-dot { background: var(--red); }
+
+  /* "À regarder ensuite" dans la fiche elle-même (voir populateTdsUpNext(),
+     19-tv-detail.js) — même esprit que le widget de l'écran Noter, mais
+     autonome (une seule série connue, pas une liste). */
+  .tds-upnext {
+    display: flex; align-items: center; gap: 12px; background: var(--surface2);
+    border: 1px solid var(--gold); border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 14px;
+  }
+  .tds-upnext-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); font-weight: 700; }
+  .tds-upnext-title { font-size: 0.82rem; color: var(--text-hi); margin-top: 2px; font-family: var(--font-heading); font-weight: 600; }
+  .tds-upnext-meta { font-size: 0.7rem; color: var(--text-mid); margin-top: 2px; }
+  .tds-upnext-check {
+    margin-left: auto; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: var(--gold); border: none; color: var(--solid-fill-text, #0d1117);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .tds-upnext-check svg { width: 16px; height: 16px; }
+  .tds-upnext-check:active { transform: scale(0.9); }
+  .tds-upnext-locked { opacity: 0.6; border-color: var(--border); }
+  .tds-upnext-masked { filter: blur(3px); user-select: none; }
 
   .mds-error { font-size: 0.88rem; color: var(--text-mid); text-align: center; padding: 20px 0; }
 

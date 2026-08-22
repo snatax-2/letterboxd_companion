@@ -90,10 +90,30 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   let personalHtml = '';
   if (localMatch) {
     const critBreakdown = buildCriteriaBreakdown(localMatch);
+    // Ludex 2.0 : le bloc "Ta note" devient lui-même le bouton "Modifier"
+    // (voir Ludex_Audit_Fiches_Suggestions.pdf — "fusionner l'affichage et
+    // l'action") plutôt qu'un bouton séparé dans .mds-actions. Étoiles
+    // gardées telles quelles (confirmé). Comparatif visuel avec la note
+    // TMDb quand elle existe — deux petits repères sur une même piste,
+    // plus parlant qu'un chiffre à côté de l'autre.
+    const myScore = parseFloat(localMatch.score);
+    const tmdbScore = data.vote_average;
+    const comparHtml = (tmdbScore && !isNaN(myScore)) ? `
+      <div class="mds-score-compare">
+        <div class="mds-score-compare-track">
+          <div class="mds-score-compare-mark tmdb" style="left:${Math.min(100, tmdbScore * 10)}%" title="Note TMDb : ${tmdbScore.toFixed(1)}"></div>
+          <div class="mds-score-compare-mark mine" style="left:${Math.min(100, myScore * 10)}%" title="Ta note : ${myScore.toFixed(1)}"></div>
+        </div>
+        <div class="mds-score-compare-legend"><span>Toi</span><span>TMDb ${tmdbScore.toFixed(1)}</span></div>
+      </div>` : '';
     personalHtml = `
       <div class="mds-section mds-personal" style="animation-delay:.05s">
         <div class="mds-section-title">Ta note</div>
-        <div class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</div>
+        <button type="button" class="mds-personal-score-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note" aria-label="Modifier ma note pour ${escAttr(data.title)}">
+          <span class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</span>
+          <span class="mds-personal-edit-hint">${ICONS.edit}</span>
+        </button>
+        ${comparHtml}
         ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
       </div>
       ${critBreakdown}
@@ -121,11 +141,19 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
 
     <div class="mds-actions" style="animation-delay:.02s">
       ${localMatch
-        ? `<button type="button" class="mds-action-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note">${ICONS.edit} Modifier ma note</button>`
+        ? '' /* le bloc "Ta note" cliquable (personalHtml plus bas) remplace ce bouton */
         : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
            <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
       }
     </div>
+
+    <!-- Ludex 2.0 : plateformes de streaming, remontées juste sous les CTA
+         (voir Ludex_Specifications_Fiches.pdf — "où le voir ? C'est la
+         donnée la plus recherchée"), chargées en arrière-plan comme les
+         notes externes juste au-dessus. Masqué par défaut (display:none
+         inline) tant que fetchAndRenderProviders() n'a pas de résultat à
+         montrer — voir 03-foundation.js. -->
+    <div class="mds-providers" id="mds-providers" style="display:none;"></div>
 
     ${personalHtml}
 
@@ -408,6 +436,7 @@ async function openMovieDetailSheet(tmdbId) {
     applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
+    fetchAndRenderProviders(data.id, 'mds-providers', 'movie');
     if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
   } catch (e) {
     mdsCurrentData = null;

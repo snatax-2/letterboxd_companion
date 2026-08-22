@@ -33,6 +33,64 @@ function buildTdsSkeleton() {
   `;
 }
 
+// Ludex 2.0 : "à regarder ensuite" dans la fiche elle-même — même
+// résolution que le widget de l'écran Noter (resolveNextTvEpisode(),
+// 18-tv-shows.js), reconstruit ici pour UNE SEULE série connue au lieu
+// d'itérer sur toutes celles en cours. Même construction de candidat
+// (saison partielle la plus récente, ou la plus récente saison complète
+// avec vérification de la saison suivante) que ce que fait déjà
+// buildTvContinueList() pour le widget — gardé volontairement identique
+// plutôt que réinventé, pour que les deux se comportent pareil.
+async function populateTdsUpNext(localShow) {
+  const container = document.getElementById('tds-up-next');
+  if (!container || !localShow) { if (container) container.style.display = 'none'; return; }
+
+  const entries = Object.entries(localShow.seasons || {});
+  const partial = entries
+    .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes && !s.paused)
+    .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+  let cand = null;
+  if (partial) {
+    cand = { show: localShow, seasonKey: partial[0], seasonEntry: partial[1] };
+  } else {
+    const complete = entries
+      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length >= s.totalEpisodes)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
+    if (complete) cand = { show: localShow, seasonKey: complete[0], seasonEntry: complete[1], needsNextSeasonCheck: true };
+  }
+  if (!cand) { container.style.display = 'none'; return; }
+
+  const resolved = await resolveNextTvEpisode(cand);
+  if (!resolved) { container.style.display = 'none'; return; }
+
+  const { seasonKey, seasonEntry, episode } = resolved;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const airDate = episode.air_date ? new Date(episode.air_date + 'T00:00:00') : null;
+  const isLocked = !airDate || airDate > today;
+
+  if (isLocked) {
+    const countdown = episode.air_date ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+    container.innerHTML = `
+      <div class="tds-upnext tds-upnext-locked">
+        <div class="tds-upnext-label">À venir</div>
+        <div class="tds-upnext-title"><span class="tds-upnext-masked">Épisode à venir</span></div>
+        <div class="tds-upnext-meta">${escAttr(countdown)}</div>
+      </div>`;
+  } else {
+    container.innerHTML = `
+      <div class="tds-upnext">
+        <div>
+          <div class="tds-upnext-label">À regarder</div>
+          <div class="tds-upnext-title">S${String(seasonKey).padStart(2, '0')}E${String(episode.episode_number).padStart(2, '0')} — ${escAttr(episode.name || 'Sans titre')}</div>
+        </div>
+        <button type="button" class="tds-upnext-check" data-show-id="${localShow.tmdbTvId}" data-season-key="${seasonKey}" data-episode="${episode.episode_number}" data-season-name="${escAttr(seasonEntry.seasonName)}" data-episode-count="${seasonEntry.totalEpisodes}" aria-label="Marquer l'épisode ${episode.episode_number} comme vu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg>
+        </button>
+      </div>`;
+  }
+  container.style.display = 'block';
+}
+
 function buildSeasonProgressionSection(data, localShow) {
   const tmdbSeasons = (data.seasons || []).filter(s => s.season_number > 0 && s.episode_count > 0);
   if (tmdbSeasons.length === 0) return '';
@@ -42,31 +100,23 @@ function buildSeasonProgressionSection(data, localShow) {
     ? `<div class="mds-personal-score">${avg.toFixed(1)}/10 <span class="mds-personal-stars">note globale</span></div>`
     : `<div class="mds-row"><span class="mds-label">—</span><span>Pas encore notée</span></div>`;
 
-  const rowsHtml = tmdbSeasons.map(ts => {
-    const key = String(ts.season_number);
-    const localSeason = localShow?.seasons?.[key];
-    let statusHtml;
-    if (localSeason?.rating) {
-      statusHtml = `<span class="tds-season-status tds-season-rated">${localSeason.rating.score}/10</span>`;
-    } else if (localSeason) {
-      statusHtml = `<span class="tds-season-status">${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} ép.</span>`;
-    } else {
-      statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
-    }
-    return `
-      <details class="tds-season-details" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">
-        <summary class="tds-season-progress-row">
-          <span>${escAttr(ts.name)}</span>
-          <span class="tds-season-progress-right">
-            ${statusHtml}
-            ${localSeason ? `<button type="button" class="tds-season-reopen-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Rouvrir pour noter" aria-label="Rouvrir ${escAttr(ts.name)} pour la noter">${ICONS.star}</button>` : ''}
-            ${localSeason ? `<button type="button" class="tds-season-delete-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Retirer cette saison" aria-label="Retirer ${escAttr(ts.name)}">${ICONS.trash}</button>` : ''}
-          </span>
-        </summary>
-        <div class="tds-season-episodes" data-loaded="false"></div>
-      </details>
-    `;
-  }).join('');
+  // Ludex 2.0 : onglets horizontaux au lieu d'une liste de <details> empilés
+  // (voir Ludex_Audit_Fiches.pdf — "un scroll interminable, surtout pour
+  // une série de 10 saisons"). Un seul conteneur d'épisodes en dessous,
+  // rechargé au clic (voir wireSeasonTabs()) plutôt qu'un par saison.
+  // Onglet actif par défaut : la saison la plus avancée déjà suivie, sinon
+  // la première — cohérent avec "à regarder ensuite" juste au-dessus.
+  const trackedKeys = Object.keys(localShow?.seasons || {}).map(Number);
+  const defaultSeasonNum = trackedKeys.length > 0 ? Math.max(...trackedKeys) : tmdbSeasons[0].season_number;
+
+  const tabsHtml = tmdbSeasons.map(ts => `
+    <button type="button" class="tds-season-tab${ts.season_number === defaultSeasonNum ? ' active' : ''}" data-season-number="${ts.season_number}" data-episode-count="${ts.episode_count}" data-season-name="${escAttr(ts.name)}" data-season-poster="${escAttr(ts.poster_path || data.poster_path || '')}">S${ts.season_number}</button>
+  `).join('');
+
+  const activeSeasonMeta = tmdbSeasons.find(ts => ts.season_number === defaultSeasonNum);
+  const activeKey = String(defaultSeasonNum);
+  const activeLocalSeason = localShow?.seasons?.[activeKey];
+  const statusRowHtml = buildSeasonStatusRow(localShow, activeSeasonMeta, activeLocalSeason);
 
   return `
     <div class="mds-section mds-personal" style="animation-delay:.05s">
@@ -75,8 +125,34 @@ function buildSeasonProgressionSection(data, localShow) {
     </div>
     <div class="mds-section" style="animation-delay:.08s">
       <div class="mds-section-title">Détail par saison</div>
-      <div class="tds-season-progress-list">${rowsHtml}</div>
+      <div class="tds-season-tabs" id="tds-season-tabs">${tabsHtml}</div>
+      <div class="tds-season-status-row" id="tds-season-status-row">${statusRowHtml}</div>
+      <div class="tds-season-episodes" id="tds-season-episodes" data-loaded-season="">Chargement…</div>
     </div>
+  `;
+}
+
+// Ligne d'état + actions pour la saison actuellement sélectionnée dans les
+// onglets — extrait dans sa propre fonction pour être régénéré au clic sur
+// un onglet SANS reconstruire toute la section (voir wireSeasonTabs()).
+function buildSeasonStatusRow(localShow, seasonMeta, localSeason) {
+  if (!seasonMeta) return '';
+  const key = String(seasonMeta.season_number);
+  let statusHtml;
+  if (localSeason?.rating) {
+    statusHtml = `<span class="tds-season-status tds-season-rated">${localSeason.rating.score}/10</span>`;
+  } else if (localSeason) {
+    statusHtml = `<span class="tds-season-status">${localSeason.watchedEpisodes.length}/${localSeason.totalEpisodes} ép.</span>`;
+  } else {
+    statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
+  }
+  return `
+    <span>${escAttr(seasonMeta.name)}</span>
+    <span class="tds-season-progress-right">
+      ${statusHtml}
+      ${localSeason ? `<button type="button" class="tds-season-reopen-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Rouvrir pour noter" aria-label="Rouvrir ${escAttr(seasonMeta.name)} pour la noter">${ICONS.star}</button>` : ''}
+      ${localSeason ? `<button type="button" class="tds-season-delete-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Retirer cette saison" aria-label="Retirer ${escAttr(seasonMeta.name)}">${ICONS.trash}</button>` : ''}
+    </span>
   `;
 }
 
@@ -95,6 +171,10 @@ function buildTdsContent(data, localShow) {
     : 'Inconnue';
   const statusLabels = { 'Returning Series': 'En cours', 'Ended': 'Terminée', 'Canceled': 'Annulée' };
   const statusStr = statusLabels[data.status] || data.status || 'Inconnu';
+  // Vert = en cours (nouveaux épisodes à venir), rouge = arrêtée (terminée
+  // ou annulée) — même distinction, deux raisons différentes, mais aucune
+  // des deux ne dit "reviens régulièrement", contrairement à "En cours".
+  const TDS_STATUS_CLASS = { 'Returning Series': 'ongoing', 'Ended': 'ended', 'Canceled': 'ended' };
   const seasonCount = (data.seasons || []).filter(s => s.season_number > 0).length;
 
   return `
@@ -110,6 +190,10 @@ function buildTdsContent(data, localShow) {
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="tds-title">${escAttr(data.name)}</div>
+        <!-- Ludex 2.0 : badge de statut coloré (voir Ludex_Audit_Fiches.pdf)
+             — remplace le texte brut qui vivait jusqu'ici dans une simple
+             ligne d'info plus bas dans la fiche. -->
+        <div class="tds-status-badge ${TDS_STATUS_CLASS[data.status] || 'neutral'}"><span class="tds-status-dot"></span>${escAttr(statusStr)}</div>
         <div class="mds-meta">${[year, `${seasonCount} saison${seasonCount > 1 ? 's' : ''}`, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
         <div class="mds-external-ratings" id="tds-external-ratings"></div>
         ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
@@ -131,6 +215,17 @@ function buildTdsContent(data, localShow) {
       <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>
     </div>
     ` : ''}
+
+    <div class="mds-providers" id="tds-providers" style="display:none;"></div>
+
+    <!-- Ludex 2.0 : "à regarder ensuite" directement dans la fiche (voir
+         Ludex_Audit_Fiches_Suggestions.pdf — "il n'y a pas d'appel à
+         l'action immédiat pour continuer sa série") — jusqu'ici cette info
+         n'existait que sur le widget de l'écran Noter, séparément. Peuplé
+         de façon asynchrone juste après l'insertion (voir
+         populateTdsUpNext() plus bas), masqué tant qu'il n'y a rien à
+         montrer (série pas commencée, ou totalement à jour). -->
+    <div id="tds-up-next" style="display:none;"></div>
 
     ${buildSeasonProgressionSection(data, localShow)}
 
@@ -289,7 +384,9 @@ async function openTvDetailSheet(tmdbTvId) {
     setupTdsOverviewToggle();
     setupStickyHeader(tdsEl);
     if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
-    wireSeasonDetailsToggles();
+    fetchAndRenderProviders(data.id, 'tds-providers', 'tv');
+    populateTdsUpNext(localShow);
+    wireSeasonTabs();
   } catch (e) {
     tdsCurrentData = null;
     tdsContentEl.innerHTML = `
@@ -306,20 +403,33 @@ async function openTvDetailSheet(tmdbTvId) {
 // temps à l'ouverture de la fiche) — même mécanique de coche/rattrapage que
 // ce qui existait avant dans Noter, juste déplacée ici.
 
-function wireSeasonDetailsToggles() {
-  tdsContentEl.querySelectorAll('.tds-season-details').forEach(details => {
-    details.addEventListener('toggle', () => {
-      if (!details.open) return;
-      const episodesContainer = details.querySelector('.tds-season-episodes');
-      if (episodesContainer.dataset.loaded === 'true') return;
-      loadAndRenderSeasonEpisodes(details, episodesContainer);
-    });
+function wireSeasonTabs() {
+  const tabsEl = document.getElementById('tds-season-tabs');
+  if (!tabsEl) return;
+  tabsEl.addEventListener('click', (e) => {
+    const tab = e.target.closest('.tds-season-tab');
+    if (!tab || tab.classList.contains('active')) return;
+    tabsEl.querySelectorAll('.tds-season-tab').forEach(t => t.classList.toggle('active', t === tab));
+
+    const localShow = loadTvShows().find(s => String(s.tmdbTvId) === String(tdsCurrentData?.id));
+    const key = tab.dataset.seasonNumber;
+    const seasonMeta = { season_number: Number(key), name: tab.dataset.seasonName, episode_count: Number(tab.dataset.episodeCount) };
+    const statusRowEl = document.getElementById('tds-season-status-row');
+    if (statusRowEl) statusRowEl.innerHTML = buildSeasonStatusRow(localShow, seasonMeta, localShow?.seasons?.[key]);
+
+    loadAndRenderSeasonEpisodes(tab.dataset.seasonNumber, tab.dataset.seasonName);
   });
+  // Charge la saison active par défaut au premier affichage — pas besoin
+  // d'attendre un clic sur un onglet pour voir apparaître des épisodes.
+  const activeTab = tabsEl.querySelector('.tds-season-tab.active');
+  if (activeTab) loadAndRenderSeasonEpisodes(activeTab.dataset.seasonNumber, activeTab.dataset.seasonName);
 }
 
-async function loadAndRenderSeasonEpisodes(detailsEl, container) {
+async function loadAndRenderSeasonEpisodes(seasonNumber, seasonName) {
+  const container = document.getElementById('tds-season-episodes');
+  if (!container || !tdsCurrentData) return;
+  if (container.dataset.loadedSeason === String(seasonNumber)) return; // déjà affichée, pas de re-fetch
   const showId = tdsCurrentData.id;
-  const seasonNumber = detailsEl.dataset.seasonNumber;
   container.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
   try {
     const data = await fetch(`/api/search?tvSeasonShowId=${showId}&tvSeasonNumber=${seasonNumber}`).then(readApiJson);
@@ -328,8 +438,8 @@ async function loadAndRenderSeasonEpisodes(detailsEl, container) {
       container.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
       return;
     }
-    renderTdsEpisodeChecklist(container, showId, String(seasonNumber), detailsEl.dataset.seasonName, episodes);
-    container.dataset.loaded = 'true';
+    renderTdsEpisodeChecklist(container, showId, String(seasonNumber), seasonName, episodes);
+    container.dataset.loadedSeason = String(seasonNumber);
   } catch (err) {
     container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
   }
@@ -443,8 +553,13 @@ function updateSeasonProgressRowStatus(showId, seasonKey) {
   const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
   const seasonEntry = showEntry?.seasons?.[seasonKey];
   if (!seasonEntry || seasonEntry.rating) return;
-  const details = tdsContentEl.querySelector(`.tds-season-details[data-season-number="${seasonKey}"]`);
-  const statusEl = details?.querySelector('.tds-season-status');
+  // Ludex 2.0 : une seule ligne de statut pour la saison ACTIVE des onglets
+  // (voir buildSeasonStatusRow(), plus haut) — ne met à jour que si c'est
+  // bien la saison affichée qui vient de changer, sinon rien à faire ici
+  // (la mise à jour se refera d'elle-même au clic sur cet onglet).
+  const activeTab = document.getElementById('tds-season-tabs')?.querySelector('.tds-season-tab.active');
+  if (!activeTab || activeTab.dataset.seasonNumber !== String(seasonKey)) return;
+  const statusEl = document.getElementById('tds-season-status-row')?.querySelector('.tds-season-status');
   if (statusEl) statusEl.textContent = `${seasonEntry.watchedEpisodes.length}/${seasonEntry.totalEpisodes} ép.`;
 }
 
@@ -502,6 +617,33 @@ tdsEl.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     reopenTvSeason(seasonReopenBtn.dataset.showId, seasonReopenBtn.dataset.seasonKey);
+    return;
+  }
+
+  // Ludex 2.0 : bouton "vu" du bloc "à regarder ensuite" — marque
+  // l'épisode, puis rafraîchit à la fois ce bloc (pour révéler le suivant)
+  // et la section "Détail par saison" (le compte d'épisodes vus y change
+  // aussi). Mutation directe plutôt que onTdsEpisodeCheckClick() : cette
+  // fonction est pensée pour la liste d'épisodes dépliée, avec ses propres
+  // mises à jour DOM ciblées — pas le contexte ici.
+  const upNextCheckBtn = e.target.closest('.tds-upnext-check[data-show-id]');
+  if (upNextCheckBtn) {
+    const { showId, seasonKey, episode: epNum } = upNextCheckBtn.dataset;
+    const shows = loadTvShows();
+    const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
+    if (showEntry?.seasons?.[seasonKey]) {
+      const seasonEntry = showEntry.seasons[seasonKey];
+      const num = Number(epNum);
+      if (!seasonEntry.watchedEpisodes.includes(num)) seasonEntry.watchedEpisodes.push(num);
+      saveTvShows(shows);
+      if (typeof statsDirty !== 'undefined') statsDirty = true;
+      hapticPulse(upNextCheckBtn, 'medium');
+      populateTdsUpNext(showEntry);
+      // Réutilise la même fonction que le reste des mises à jour de statut
+      // (voir plus haut) — elle sait déjà ne rafraîchir que si la saison
+      // concernée est celle actuellement affichée dans les onglets.
+      updateSeasonProgressRowStatus(showId, seasonKey);
+    }
     return;
   }
 

@@ -151,9 +151,11 @@ export default async function handler(req, res) {
       return res.status(200).json(recData);
 
     } else if (id && providers) {
-      // Cas 3 : Watch providers pour un film donné, filtrés par région (ex: BE)
+      // Cas 3 : Watch providers pour un film OU une série, filtrés par
+      // région (ex: BE) — mediaType='tv' bascule vers l'endpoint séries,
+      // même paramètre déjà utilisé ailleurs dans ce fichier.
       const provRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${TMDB_KEY}`
+        `https://api.themoviedb.org/3/${tmdbMediaType}/${id}/watch/providers?api_key=${TMDB_KEY}`
       );
       const provData = await provRes.json();
       // Retourner uniquement la région demandée pour alléger la réponse
