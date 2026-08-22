@@ -431,6 +431,18 @@
   .hist-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
     margin-bottom: 4px;
+    /* Ludex 2.0 : une carte vedette (2×2, voir .hist-grid-card-featured
+       plus bas) qui tombe en position 3 d'une ligne à 3 colonnes ne peut
+       pas y démarrer — le placement automatique la renvoie entièrement à
+       la ligne suivante, laissant un trou vide non comblé sur la ligne
+       d'avant. "dense" autorise le navigateur à piocher une carte NORMALE
+       plus loin dans la liste pour combler ce trou plutôt que le laisser
+       vide — au prix d'un léger désordre chronologique possible, mais
+       toujours contenu à l'intérieur d'un même mois (chaque mois a son
+       propre conteneur .hist-grid séparé, jamais partagé avec un autre —
+       voir renderHistory(), 06a-history-list.js) : la portée du décalage
+       reste donc toujours de quelques semaines maximum, jamais plus. */
+    grid-auto-flow: dense;
   }
   .hist-grid-card {
     position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 2/3;
@@ -457,28 +469,39 @@
     grid-column: span 2; grid-row: span 2;
     border: 2px solid var(--gold); box-shadow: 0 0 16px color-mix(in srgb, var(--gold) 35%, transparent);
   }
+  /* Ludex 2.0 : dégradé affiné — partait sec du noir opaque au transparent
+     sur 45% de la hauteur ; une transition plus longue et plus douce évite
+     l'effet "bandeau collé" et laisse mieux respirer l'affiche derrière,
+     tout en gardant le texte du badge parfaitement lisible en bas. */
   .hist-grid-card-featured::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: linear-gradient(to top, rgba(14,17,22,0.85), transparent 45%);
+    background: linear-gradient(to top, rgba(14,17,22,0.88) 0%, rgba(14,17,22,0.5) 30%, transparent 65%);
   }
   .hist-grid-featured-badge {
-    position: absolute; bottom: 8px; left: 8px; z-index: 1;
+    position: absolute; bottom: 15px; left: 8px; z-index: 1;
     background: var(--gold); color: var(--solid-fill-text, #0d1117);
     padding: 4px 9px; border-radius: 999px; font-size: 0.64rem; font-weight: 700;
     font-family: var(--font-mono); display: flex; align-items: center; gap: 3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   }
   .hist-grid-featured-badge .icon { width: 0.85em; height: 0.85em; }
   /* Barre de progression intégrée en bas de l'affiche (séries uniquement) —
      remplace le texte "3/4 saisons" par quelque chose de plus discret,
      cohérent avec le reste des badges superposés sur l'affiche plutôt qu'à
      côté. Pourcentage d'épisodes vus sur le total suivi, pas juste le
-     compte de saisons (plus fin — une saison à moitié vue compte). */
+     compte de saisons (plus fin — une saison à moitié vue compte).
+     Ludex 2.0 : z-index ajouté — sans lui, le dégradé ::after des cartes
+     vedettes (coup de cœur/note ≥8.5) passait par-dessus, la rendant
+     quasiment invisible pile là où le dégradé est le plus sombre (repéré
+     par l'utilisateur). Légèrement rehaussée (bottom:3px, pas 0) pour ne
+     plus toucher le bord de l'affiche et rester nette sur les coins arrondis. */
   .hist-grid-progress {
-    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
-    background: rgba(14,17,22,0.55);
+    position: absolute; bottom: 3px; left: 3px; right: 3px; height: 4px;
+    background: rgba(0,0,0,0.4); border-radius: 2px; overflow: hidden; z-index: 1;
   }
   .hist-grid-progress-fill {
     height: 100%; background: var(--gold);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--gold) 60%, transparent);
     transition: width var(--dur-base) var(--ease-out);
   }
   /* Actions modifier/supprimer — coin opposé au badge de note, toujours

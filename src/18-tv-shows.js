@@ -510,12 +510,50 @@ function getSortedTvShows() {
   return [...s].sort((a, b) => lastUpdate(b).localeCompare(lastUpdate(a)));
 }
 
+// Ludex 2.0 : vedette "dernière série notée" côté Séries — même
+// emplacement (#history-hero) que "dernier film noté" côté Films, mais
+// jamais alimenté pour les séries jusqu'ici : en basculant sur l'onglet
+// Séries, l'ancien film restait affiché en haut, même invisible logiquement
+// (repéré par l'utilisateur). Basé sur la date de la dernière NOTE de
+// saison (pas la dernière case cochée) — cohérent avec le choix déjà fait
+// côté film, et évite d'ajouter un nouvel horodatage par épisode.
+function renderTvHistoryHero(shows) {
+  const hero = document.getElementById('history-hero');
+  if (!hero) return;
+  if (!isDefaultComposition() || sortOrder !== 'date') { hero.innerHTML = ''; return; }
+
+  let latest = null; // { show, seasonKey, season }
+  shows.forEach(show => {
+    Object.entries(show.seasons || {}).forEach(([seasonKey, season]) => {
+      if (!season.rating?.date) return;
+      if (!latest || season.rating.date > latest.season.rating.date) latest = { show, seasonKey, season };
+    });
+  });
+  if (!latest) { hero.innerHTML = ''; return; }
+
+  const posterUrl = tmdbImage(latest.show.poster_path, 'w185');
+  const imgHtml = posterUrl
+    ? `<img class="hero-entry-poster" src="${posterUrl}" alt="Affiche de ${escAttr(latest.show.title)}" loading="lazy" decoding="async">`
+    : `<div class="hero-entry-poster"></div>`;
+  hero.innerHTML = `
+    <div class="hero-entry">
+      ${imgHtml}
+      <div class="hero-entry-body">
+        <div class="hero-entry-eyebrow">Dernière série notée</div>
+        <div class="hero-entry-title">${escAttr(latest.show.title)} <span style="opacity:.7;font-weight:600;">— ${escAttr(latest.season.seasonName)}</span></div>
+        <div class="hero-entry-score">${latest.season.rating.score}<small>/10</small></div>
+      </div>
+    </div>`;
+}
+
 function renderTvHistory() {
   const allShows = loadTvShows();
   const shows = getSortedTvShows();
   const container = document.getElementById('tv-history-list');
   renderGenreChips(allShows, renderTvHistory);
   document.getElementById('filter-row').style.display = allShows.length === 0 ? 'none' : '';
+
+  renderTvHistoryHero(allShows);
 
   const badge = document.getElementById('hist-count-badge');
   const filmCount = loadHistory().length;
@@ -624,11 +662,14 @@ function renderTvShowCard(show) {
   const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
   const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
-  const posterUrl = tmdbImage(show.poster_path, 'w154');
-
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
   const isHighScore = avg != null && avg >= 8.5;
   const isFeatured = !!show.liked || isHighScore;
+  // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
+  // URL déjà dimensionnée) — demander une taille plus grande pour les
+  // cartes vedettes 2×2 ne demande donc qu'un paramètre différent ici, pas
+  // de substitution de chaîne comme côté films.
+  const posterUrl = tmdbImage(show.poster_path, isFeatured ? 'w342' : 'w154');
 
   const imgHtml = posterUrl
     ? `<img class="hist-grid-poster" src="${posterUrl}" alt="Affiche de ${escAttr(show.title)}" loading="lazy" decoding="async">`

@@ -299,8 +299,15 @@ function renderHistory() {
       div.style.animationDelay = `${Math.min(i, 20) * 25}ms`;
     }
 
-    const imgHtml = item.poster
-      ? `<img class="hist-grid-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
+    // Ludex 2.0 : les affiches sont enregistrées en w185 (pensé pour une
+    // case de grille normale) — une carte vedette 2×2 fait le double de
+    // largeur, l'affiche s'étire donc et perd en netteté. Remplace juste
+    // le segment de taille dans l'URL déjà stockée plutôt que de changer
+    // ce qui est sauvegardé (aucune migration nécessaire, fonctionne aussi
+    // sur les films déjà notés avant ce correctif).
+    const posterSrc = isFeatured && item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
+    const imgHtml = posterSrc
+      ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
       : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
 
     div.innerHTML = `

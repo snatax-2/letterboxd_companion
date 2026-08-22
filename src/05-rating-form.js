@@ -696,7 +696,14 @@ focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
   let startX = 0, startY = 0, tracking = false;
 
   criteriaListEl.addEventListener('touchstart', e => {
-    if (!focusModeOn) { tracking = false; return; }
+    // Ludex 2.0 : un glissement qui démarre SUR le curseur (pour ajuster la
+    // note) déclenchait aussi ce geste — la main bouge forcément à
+    // l'horizontale en faisant glisser un slider, dépassant très vite le
+    // seuil de swipe et changeant de critère en plein réglage. Réutilise
+    // la même zone d'exclusion que le swipe global de navigation (voir
+    // isExcludedTarget(), 01-navigation.js), qui exclut déjà
+    // input[type="range"] pour cette même raison.
+    if (!focusModeOn || isExcludedTarget(e.target)) { tracking = false; return; }
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     tracking = true;
