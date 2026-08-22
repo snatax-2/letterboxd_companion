@@ -198,16 +198,10 @@ function buildTdsContent(data, localShow) {
         <div class="mds-external-ratings" id="tds-external-ratings"></div>
         ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
       </div>
-      ${localShow ? `
-        <!-- Ludex 2.0 : "coup de cœur" pour les séries (voir
-             Ludex_Specifications_Historique) — au niveau de LA SÉRIE entière
-             (localShow.liked), pas par saison : plus simple, et cohérent
-             avec la carte vedette de l'Historique qui représente une série
-             en un seul bloc, pas saison par saison. Seulement visible une
-             fois la série suivie (localShow existe) — se marquer "coup de
-             cœur" sur une série qu'on n'a pas encore commencée n'a pas de sens. -->
-        <button type="button" class="heart-btn tds-heart-btn ${localShow.liked ? 'active' : ''}" id="tds-heart-btn" data-show-id="${escAttr(String(data.id))}" title="Marquer comme coup de cœur" aria-label="Marquer ${escAttr(data.name)} comme coup de cœur" aria-pressed="${localShow.liked ? 'true' : 'false'}"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-      ` : ''}
+      <!-- Ludex 2.0 : le bouton "coup de cœur" a migré vers le formulaire
+           Noter (voir #tv-heart-btn, 18-tv-shows.js) — harmonisé avec le
+           film, dont le cœur vit dans Noter, jamais dans la fiche détail.
+           Reste par SÉRIE entière (confirmé), juste déplacé d'endroit. -->
     </div>
 
     ${!localShow ? `
@@ -582,21 +576,6 @@ tdsEl.addEventListener('click', (e) => {
 
   const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
   if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
-
-  const heartBtn = e.target.closest('#tds-heart-btn[data-show-id]');
-  if (heartBtn) {
-    const shows = loadTvShows();
-    const show = shows.find(s => String(s.tmdbTvId) === String(heartBtn.dataset.showId));
-    if (show) {
-      show.liked = !show.liked;
-      saveTvShows(shows);
-      heartBtn.classList.toggle('active', show.liked);
-      heartBtn.setAttribute('aria-pressed', String(show.liked));
-      hapticPulse(heartBtn, 'medium');
-      if (typeof statsDirty !== 'undefined') statsDirty = true;
-    }
-    return;
-  }
 
   // Ludex 2.0 : le bouton supprimer d'une saison a migré ici depuis
   // l'ancienne carte extensible de l'Historique (retirée avec le passage en

@@ -1113,7 +1113,13 @@ function setTodayDate() {
   const today = new Date();
   const offset = today.getTimezoneOffset() * 60000;
   const localISOTime = (new Date(today - offset)).toISOString().slice(0, -1);
-  document.getElementById('view-date').value = localISOTime.split('T')[0];
+  const todayStr = localISOTime.split('T')[0];
+  document.getElementById('view-date').value = todayStr;
+  // Ludex 2.0 : même défaut appliqué au champ séries (voir tv-view-date,
+  // index.html) — les deux se remettent à aujourd'hui aux mêmes moments,
+  // pas de logique séparée à maintenir en double.
+  const tvDateEl = document.getElementById('tv-view-date');
+  if (tvDateEl) tvDateEl.value = todayStr;
 }
 
 // ═══════════════════════════════════════════
@@ -9076,6 +9082,42 @@ function wireAnalysisSection(movieId, movieTitle) {
 // accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
 let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
 
+// Ludex 2.0 : cœur "coup de cœur" du formulaire Noter séries — même
+// principe visuel que #heart-btn côté film, mais écrit directement sur
+// show.liked dès le clic (pas au moment de sauvegarder une note) : la
+// série entière est la donnée concernée, indépendante de la saison en
+// cours de notation, donc pas de sens à la faire attendre un
+// enregistrement de saison pour prendre effet. Migré depuis la fiche
+// détail (#tds-heart-btn, 19-tv-detail.js) — même comportement, juste
+// déplacé pour être au même endroit que côté film.
+document.getElementById('tv-heart-btn')?.addEventListener('click', () => {
+  const btn = document.getElementById('tv-heart-btn');
+  if (!selectedShow) { showToast('Choisis une série avant de la marquer comme coup de cœur.'); return; }
+  const shows = loadTvShows();
+  const show = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  if (!show) { showToast('Commence à suivre cette série avant de la marquer comme coup de cœur.'); return; }
+  show.liked = !show.liked;
+  saveTvShows(shows);
+  btn.classList.toggle('active', show.liked);
+  btn.setAttribute('aria-pressed', String(show.liked));
+  hapticPulse(btn, 'medium');
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+});
+
+// Reflète l'état liked de la série actuelle sur le bouton — appelé chaque
+// fois qu'une série est sélectionnée ou qu'une saison est chargée (voir
+// selectShow()/loadAndDisplaySeason() plus bas), pour que le cœur affiche
+// toujours le bon état au lieu de rester figé sur la série précédente.
+function refreshTvHeartBtnState() {
+  const btn = document.getElementById('tv-heart-btn');
+  if (!btn) return;
+  const shows = loadTvShows();
+  const show = selectedShow ? shows.find(s => String(s.tmdbTvId) === String(selectedShow.id)) : null;
+  const liked = !!show?.liked;
+  btn.classList.toggle('active', liked);
+  btn.setAttribute('aria-pressed', String(liked));
+}
+
 function setMediaType(type) {
   currentMediaType = type;
   document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
@@ -9181,6 +9223,7 @@ async function fetchTvSuggestions(q) {
 
 async function selectShow(show) {
   selectedShow = show;
+  refreshTvHeartBtnState();
   tvSuggestEl.style.display = 'none';
   tvSearchEl.value = show.name;
   document.getElementById('tv-season-strip').style.display = 'none';
@@ -9363,7 +9406,10 @@ function saveTvSeasonRating() {
     score: score.toFixed(1),
     stars: document.getElementById('stars-display').textContent,
     review: document.getElementById('review-text').value.trim(),
-    date: new Date().toISOString(),
+    // Ludex 2.0 : date choisie par l'utilisateur (voir #tv-view-date,
+    // index.html) plutôt que l'instant de sauvegarde imposé — même format
+    // "YYYY-MM-DD" que le film (#view-date), pas un horodatage complet.
+    date: document.getElementById('tv-view-date')?.value || new Date().toISOString().slice(0, 10),
   };
   saveTvShows(shows);
   document.getElementById('tv-season-complete-banner').style.display = 'none';
@@ -9395,6 +9441,7 @@ document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
     switchMobileNav('rating');
     setMediaType('tv');
     selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+    refreshTvHeartBtnState();
     document.getElementById('tv-search').value = show.title;
     document.getElementById('tv-season-picker').style.display = 'none';
     const seasonData = show.seasons[seasonKey];
@@ -9940,9 +9987,17 @@ function reopenTvSeason(showId, seasonKey) {
   switchMobileNav('rating');
   setMediaType('tv');
   selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+  refreshTvHeartBtnState();
   document.getElementById('tv-search').value = show.title;
   document.getElementById('tv-season-picker').style.display = 'none';
   const seasonData = show.seasons[seasonKey];
+  // Ludex 2.0 : pré-remplit la date au format attendu par <input type="date">
+  // (YYYY-MM-DD) si cette saison a déjà été notée — même principe que
+  // loadItem() côté film (05-rating-form.js). Repart sur aujourd'hui sinon.
+  const dateInput = document.getElementById('tv-view-date');
+  if (dateInput) {
+    dateInput.value = seasonData.rating?.date ? seasonData.rating.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  }
   selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
   document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -10480,16 +10535,10 @@ function buildTdsContent(data, localShow) {
         <div class="mds-external-ratings" id="tds-external-ratings"></div>
         ${creators ? `<div class="mds-header-director"><span class="mds-director-label">Créée par</span> <b>${creators}</b></div>` : ''}
       </div>
-      ${localShow ? `
-        <!-- Ludex 2.0 : "coup de cœur" pour les séries (voir
-             Ludex_Specifications_Historique) — au niveau de LA SÉRIE entière
-             (localShow.liked), pas par saison : plus simple, et cohérent
-             avec la carte vedette de l'Historique qui représente une série
-             en un seul bloc, pas saison par saison. Seulement visible une
-             fois la série suivie (localShow existe) — se marquer "coup de
-             cœur" sur une série qu'on n'a pas encore commencée n'a pas de sens. -->
-        <button type="button" class="heart-btn tds-heart-btn ${localShow.liked ? 'active' : ''}" id="tds-heart-btn" data-show-id="${escAttr(String(data.id))}" title="Marquer comme coup de cœur" aria-label="Marquer ${escAttr(data.name)} comme coup de cœur" aria-pressed="${localShow.liked ? 'true' : 'false'}"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button>
-      ` : ''}
+      <!-- Ludex 2.0 : le bouton "coup de cœur" a migré vers le formulaire
+           Noter (voir #tv-heart-btn, 18-tv-shows.js) — harmonisé avec le
+           film, dont le cœur vit dans Noter, jamais dans la fiche détail.
+           Reste par SÉRIE entière (confirmé), juste déplacé d'endroit. -->
     </div>
 
     ${!localShow ? `
@@ -10864,21 +10913,6 @@ tdsEl.addEventListener('click', (e) => {
 
   const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
   if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
-
-  const heartBtn = e.target.closest('#tds-heart-btn[data-show-id]');
-  if (heartBtn) {
-    const shows = loadTvShows();
-    const show = shows.find(s => String(s.tmdbTvId) === String(heartBtn.dataset.showId));
-    if (show) {
-      show.liked = !show.liked;
-      saveTvShows(shows);
-      heartBtn.classList.toggle('active', show.liked);
-      heartBtn.setAttribute('aria-pressed', String(show.liked));
-      hapticPulse(heartBtn, 'medium');
-      if (typeof statsDirty !== 'undefined') statsDirty = true;
-    }
-    return;
-  }
 
   // Ludex 2.0 : le bouton supprimer d'une saison a migré ici depuis
   // l'ancienne carte extensible de l'Historique (retirée avec le passage en

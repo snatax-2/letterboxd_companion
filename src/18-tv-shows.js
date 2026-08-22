@@ -16,6 +16,42 @@
 // accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
 let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
 
+// Ludex 2.0 : cœur "coup de cœur" du formulaire Noter séries — même
+// principe visuel que #heart-btn côté film, mais écrit directement sur
+// show.liked dès le clic (pas au moment de sauvegarder une note) : la
+// série entière est la donnée concernée, indépendante de la saison en
+// cours de notation, donc pas de sens à la faire attendre un
+// enregistrement de saison pour prendre effet. Migré depuis la fiche
+// détail (#tds-heart-btn, 19-tv-detail.js) — même comportement, juste
+// déplacé pour être au même endroit que côté film.
+document.getElementById('tv-heart-btn')?.addEventListener('click', () => {
+  const btn = document.getElementById('tv-heart-btn');
+  if (!selectedShow) { showToast('Choisis une série avant de la marquer comme coup de cœur.'); return; }
+  const shows = loadTvShows();
+  const show = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  if (!show) { showToast('Commence à suivre cette série avant de la marquer comme coup de cœur.'); return; }
+  show.liked = !show.liked;
+  saveTvShows(shows);
+  btn.classList.toggle('active', show.liked);
+  btn.setAttribute('aria-pressed', String(show.liked));
+  hapticPulse(btn, 'medium');
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+});
+
+// Reflète l'état liked de la série actuelle sur le bouton — appelé chaque
+// fois qu'une série est sélectionnée ou qu'une saison est chargée (voir
+// selectShow()/loadAndDisplaySeason() plus bas), pour que le cœur affiche
+// toujours le bon état au lieu de rester figé sur la série précédente.
+function refreshTvHeartBtnState() {
+  const btn = document.getElementById('tv-heart-btn');
+  if (!btn) return;
+  const shows = loadTvShows();
+  const show = selectedShow ? shows.find(s => String(s.tmdbTvId) === String(selectedShow.id)) : null;
+  const liked = !!show?.liked;
+  btn.classList.toggle('active', liked);
+  btn.setAttribute('aria-pressed', String(liked));
+}
+
 function setMediaType(type) {
   currentMediaType = type;
   document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
@@ -121,6 +157,7 @@ async function fetchTvSuggestions(q) {
 
 async function selectShow(show) {
   selectedShow = show;
+  refreshTvHeartBtnState();
   tvSuggestEl.style.display = 'none';
   tvSearchEl.value = show.name;
   document.getElementById('tv-season-strip').style.display = 'none';
@@ -303,7 +340,10 @@ function saveTvSeasonRating() {
     score: score.toFixed(1),
     stars: document.getElementById('stars-display').textContent,
     review: document.getElementById('review-text').value.trim(),
-    date: new Date().toISOString(),
+    // Ludex 2.0 : date choisie par l'utilisateur (voir #tv-view-date,
+    // index.html) plutôt que l'instant de sauvegarde imposé — même format
+    // "YYYY-MM-DD" que le film (#view-date), pas un horodatage complet.
+    date: document.getElementById('tv-view-date')?.value || new Date().toISOString().slice(0, 10),
   };
   saveTvShows(shows);
   document.getElementById('tv-season-complete-banner').style.display = 'none';
@@ -335,6 +375,7 @@ document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
     switchMobileNav('rating');
     setMediaType('tv');
     selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+    refreshTvHeartBtnState();
     document.getElementById('tv-search').value = show.title;
     document.getElementById('tv-season-picker').style.display = 'none';
     const seasonData = show.seasons[seasonKey];
@@ -880,9 +921,17 @@ function reopenTvSeason(showId, seasonKey) {
   switchMobileNav('rating');
   setMediaType('tv');
   selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
+  refreshTvHeartBtnState();
   document.getElementById('tv-search').value = show.title;
   document.getElementById('tv-season-picker').style.display = 'none';
   const seasonData = show.seasons[seasonKey];
+  // Ludex 2.0 : pré-remplit la date au format attendu par <input type="date">
+  // (YYYY-MM-DD) si cette saison a déjà été notée — même principe que
+  // loadItem() côté film (05-rating-form.js). Repart sur aujourd'hui sinon.
+  const dateInput = document.getElementById('tv-view-date');
+  if (dateInput) {
+    dateInput.value = seasonData.rating?.date ? seasonData.rating.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  }
   selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
   document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
