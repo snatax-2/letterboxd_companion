@@ -146,11 +146,19 @@ function buildSeasonStatusRow(localShow, seasonMeta, localSeason) {
   } else {
     statusHtml = `<span class="tds-season-status tds-season-untracked">Non suivie</span>`;
   }
+  // Bug corrigé (voir tests) : ce bouton s'affichait pour TOUTE saison
+  // suivie, y compris une saison tout juste commencée avec 0 épisode vu —
+  // "Rouvrir pour noter" promettait alors la note mais selectSeason()
+  // refuse en réalité de l'afficher tant que la saison n'est pas complète
+  // (voir 18-tv-shows.js), retombant silencieusement sur le message "en
+  // cours" à la place. Même condition ici que le isComplete de
+  // selectSeason(), pour ne montrer ce bouton que quand il tient sa promesse.
+  const canRate = localSeason && (localSeason.rating || (localSeason.totalEpisodes > 0 && localSeason.watchedEpisodes.length >= localSeason.totalEpisodes));
   return `
     <span>${escAttr(seasonMeta.name)}</span>
     <span class="tds-season-progress-right">
       ${statusHtml}
-      ${localSeason ? `<button type="button" class="tds-season-reopen-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Rouvrir pour noter" aria-label="Rouvrir ${escAttr(seasonMeta.name)} pour la noter">${ICONS.star}</button>` : ''}
+      ${canRate ? `<button type="button" class="tds-season-reopen-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Rouvrir pour noter" aria-label="Rouvrir ${escAttr(seasonMeta.name)} pour la noter">${ICONS.star}</button>` : ''}
       ${localSeason ? `<button type="button" class="tds-season-delete-btn" data-show-id="${escAttr(String(localShow.tmdbTvId))}" data-season-key="${key}" title="Retirer cette saison" aria-label="Retirer ${escAttr(seasonMeta.name)}">${ICONS.trash}</button>` : ''}
     </span>
   `;
@@ -553,8 +561,15 @@ function updateSeasonProgressRowStatus(showId, seasonKey) {
   // (la mise à jour se refera d'elle-même au clic sur cet onglet).
   const activeTab = document.getElementById('tds-season-tabs')?.querySelector('.tds-season-tab.active');
   if (!activeTab || activeTab.dataset.seasonNumber !== String(seasonKey)) return;
-  const statusEl = document.getElementById('tds-season-status-row')?.querySelector('.tds-season-status');
-  if (statusEl) statusEl.textContent = `${seasonEntry.watchedEpisodes.length}/${seasonEntry.totalEpisodes} ép.`;
+  const statusRowEl = document.getElementById('tds-season-status-row');
+  if (!statusRowEl) return;
+  // Ré-rend TOUTE la ligne (pas juste le texte du compteur) : le bouton
+  // "rouvrir pour noter" doit apparaître dès que cocher le dernier épisode
+  // rend la saison notable, sans attendre de fermer/rouvrir la fiche —
+  // un simple textContent laissait le bouton absent jusque-là (repéré en
+  // testant le parcours complet de bout en bout).
+  const seasonMeta = { season_number: Number(seasonKey), name: activeTab.dataset.seasonName, episode_count: Number(activeTab.dataset.episodeCount) };
+  statusRowEl.innerHTML = buildSeasonStatusRow(showEntry, seasonMeta, seasonEntry);
 }
 
 function closeTvDetailSheet() {
