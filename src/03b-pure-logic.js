@@ -99,12 +99,24 @@ function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
     const key = tvShowItemKey(show);
     if (!key || key === 'undefined') continue;
     if (!byId.has(key)) {
-      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, seasons: {} });
+      // Bug corrigé : `liked` (coup de cœur, voir Ludex_Specifications_Noter)
+      // était totalement absent de cet objet reconstruit — silencieusement
+      // perdu à CHAQUE synchro, peu importe sa valeur des deux côtés. Ce
+      // champ n'existait pas encore quand cette fonction de fusion a été
+      // écrite, jamais mis à jour depuis. `!!` normalise undefined/absent
+      // en false plutôt que de laisser passer une valeur bizarre.
+      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, liked: !!show.liked, seasons: {} });
     }
     const target = byId.get(key);
     if (show.title) target.title = show.title;
     if (show.poster_path) target.poster_path = show.poster_path;
     if (show.genre) target.genre = show.genre;
+    // Un `true` de n'importe quel côté l'emporte plutôt qu'un simple
+    // "dernier arrivé écrase" — aucun horodatage fiable pour trancher
+    // "coup de cœur" comme pour les notes (voir plus bas), et redevenir
+    // liked=true après l'avoir DÉCOCHÉ n'est pas un vrai souci pratique,
+    // contrairement à le perdre alors qu'on venait de le cocher.
+    if (show.liked) target.liked = true;
 
     for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
       const existing = target.seasons[seasonKey];
