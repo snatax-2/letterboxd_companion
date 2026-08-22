@@ -558,22 +558,29 @@
      à spécificité égale et ordre de source plus tardif. Même piège que
      celui rencontré sur .mds-header — tout le bloc en a été touché, pas
      seulement les infos qu'on voulait masquer. */
-  #watchlist-list {
+  /* Ludex 2.0 : généralisé de #watchlist-list (films uniquement) vers
+     .watchlist-scroller (films ET séries) — c'était la vraie cause de la
+     différence visuelle repérée entre les deux (captures d'écran à
+     l'appui) : #wl-tv-list ne récupérait aucune de ces règles, retombant
+     sur l'ancien style de ligne bordée avec vignette+étoile+croix jamais
+     retiré. Une seule source, plus de risque de désynchronisation future
+     entre films et séries. */
+  .watchlist-scroller {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   }
-  #watchlist-list .wl-card {
+  .watchlist-scroller .wl-card {
     background: transparent; border: none; margin-bottom: 0;
   }
-  #watchlist-list .wl-card-content {
+  .watchlist-scroller .wl-card-content {
     flex-direction: column; padding: 0; gap: 6px;
   }
-  #watchlist-list .wl-card-open {
+  .watchlist-scroller .wl-card-open {
     flex-direction: column; gap: 6px;
   }
-  #watchlist-list .wl-poster {
+  .watchlist-scroller .wl-poster {
     width: 100%; height: auto; aspect-ratio: 2/3; border-radius: 8px; font-size: 2rem;
   }
-  #watchlist-list .wl-poster img {
+  .watchlist-scroller .wl-poster img {
     width: 100%; height: 100%; border-radius: 8px;
   }
   /* Juste l'affiche dans la grille — plus de titre ni d'infos en dessous.
@@ -581,12 +588,12 @@
      dans sa fiche (déjà accessible en un tap sur la vignette) ; l'affiche
      seule est plus proche d'une étagère de films que d'une liste, cohérent
      avec l'esprit "ça se parcourt des yeux" du reste de la composition. */
-  #watchlist-list .wl-title,
-  #watchlist-list .wl-meta,
-  #watchlist-list .wl-providers {
+  .watchlist-scroller .wl-title,
+  .watchlist-scroller .wl-meta,
+  .watchlist-scroller .wl-providers {
     display: none;
   }
-  #watchlist-list .wl-actions {
+  .watchlist-scroller .wl-actions {
     top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
     backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
   }

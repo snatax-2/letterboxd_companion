@@ -768,23 +768,22 @@
     
     <div class="right-view" id="view-watchlist">
       <div class="card" id="watchlist-card">
-        <div class="card-title">
-          <span id="watchlist-active-name">À voir</span>
-          <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
-        </div>
-
         <!-- Ludex 2.0 : toggle Films/Séries — même principe que Découvrir et
-             Historique (voir Ludex_Specifications_Watchlist). Les listes
-             nommées multiples (À voir, Halloween...) restent FILMS
-             UNIQUEMENT : la watchlist séries est une seule liste, pas
-             encore ce système à listes multiples — portée volontairement
-             réduite pour ce premier passage. -->
+             Historique. Titre + badge compteur déplacés DANS chaque
+             section (un jeu par média) plutôt que partagés en haut : le
+             jeu partagé restait bloqué sur les infos films même en
+             basculant vers Séries — un des symptômes de désynchronisation
+             signalés (voir Ludex_Specifications_Watchlist). -->
         <div class="mode-tabs" id="wl-media-tabs">
           <button type="button" class="mode-tab active" id="wl-tab-movie">Films</button>
           <button type="button" class="mode-tab" id="wl-tab-tv">Séries</button>
         </div>
 
         <div id="wl-movie-section">
+          <div class="card-title">
+            <span id="watchlist-active-name">À voir</span>
+            <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
+          </div>
           <div class="wl-lists-row" id="wl-lists-row"></div>
           <div class="wl-sort-row" id="wl-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récents</button>
@@ -811,6 +810,11 @@
         </div>
 
         <div id="wl-tv-section" style="display:none;">
+          <div class="card-title">
+            <span id="wl-tv-active-name">À voir</span>
+            <span class="card-title-badge" id="wl-tv-count-badge">0 série</span>
+          </div>
+          <div class="wl-lists-row" id="wl-tv-lists-row"></div>
           <div class="wl-sort-row" id="wl-tv-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récentes</button>
             <button type="button" class="wl-sort-btn" data-sort="rating">Note TMDb</button>

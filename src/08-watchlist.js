@@ -9,80 +9,100 @@
 // implicitement la liste ACTIVE — tout le code existant (rendu, swipe,
 // synchro cloud, Découvrir) continue de fonctionner sans modification, sans
 // savoir qu'il y a désormais plusieurs listes possibles.
-const WATCHLISTS_META_KEY = 'lbx_watchlists_meta';
-const ACTIVE_WATCHLIST_KEY = 'lbx_active_watchlist_id';
-const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique), migrée au premier chargement
+//
+// Ludex 2.0 : chaque fonction accepte maintenant un `mediaType` optionnel
+// ('movie' par défaut) plutôt que d'être dupliquée en versions Tv séparées
+// (voir Ludex_Specifications_Watchlist — "harmoniser en prenant comme
+// modèle la watchlist des films") — c'est justement l'absence de source
+// commune qui avait fait diverger films et séries la première fois
+// (repéré via deux captures d'écran montrant des mises en page
+// différentes). La valeur par défaut 'movie' préserve à l'identique tous
+// les appels existants dans ce fichier : aucun n'a eu besoin d'être
+// modifié pour ce changement, seuls les NOUVEAUX appels séries passent
+// explicitement 'tv'.
+function watchlistsMetaKey(mediaType = 'movie') { return mediaType === 'tv' ? 'lbx_tv_watchlists_meta' : 'lbx_watchlists_meta'; }
+function activeWatchlistKey(mediaType = 'movie') { return mediaType === 'tv' ? 'lbx_active_tv_watchlist_id' : 'lbx_active_watchlist_id'; }
+const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique, films), migrée au premier chargement
+const LEGACY_TV_WATCHLIST_KEY = 'lbx_tv_watchlist'; // ancienne clé (liste unique, séries — voir migration plus bas)
 
-function loadWatchlistsMeta() {
-  try { return JSON.parse(localStorage.getItem(WATCHLISTS_META_KEY)) || []; } catch { return []; }
+function loadWatchlistsMeta(mediaType = 'movie') {
+  try { return JSON.parse(localStorage.getItem(watchlistsMetaKey(mediaType))) || []; } catch { return []; }
 }
-function saveWatchlistsMeta(meta) {
-  localStorage.setItem(WATCHLISTS_META_KEY, JSON.stringify(meta));
+function saveWatchlistsMeta(meta, mediaType = 'movie') {
+  localStorage.setItem(watchlistsMetaKey(mediaType), JSON.stringify(meta));
 }
-function watchlistStorageKey(id) { return `lbx_watchlist_${id}`; }
-function watchlistTombstonesKey(id) { return `lbx_watchlist_tombstones_${id}`; }
-const WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_watchlist_list_tombstones'; // listes ENTIÈRES supprimées (pas juste des items)
+function watchlistStorageKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_${id}` : `lbx_watchlist_${id}`; }
+function watchlistTombstonesKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_tombstones_${id}` : `lbx_watchlist_tombstones_${id}`; }
+const WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_watchlist_list_tombstones'; // listes ENTIÈRES supprimées (pas juste des items) — films
+const TV_WATCHLIST_LIST_TOMBSTONES_KEY = 'lbx_tv_watchlist_list_tombstones'; // idem, séries
 const LEGACY_WATCHLIST_TOMBSTONES_KEY = 'lbx_watchlist_tombstones'; // ancienne clé (liste unique), migrée avec le reste
 
 // Migration ponctuelle : si l'ancienne clé unique existe et qu'aucune liste
 // nommée n'a encore été créée, on la transforme en une première liste "À voir"
-// — aucune perte de données pour les utilisateurs déjà en place.
-(function migrateLegacyWatchlist() {
-  if (loadWatchlistsMeta().length > 0) return; // déjà migré
+// — aucune perte de données pour les utilisateurs déjà en place. Fonction
+// générique (mediaType) plutôt que dupliquée : appelée une fois pour les
+// films, une fois pour les séries, juste en dessous.
+function migrateLegacyWatchlist(mediaType = 'movie') {
+  if (loadWatchlistsMeta(mediaType).length > 0) return; // déjà migré
+  const legacyKey = mediaType === 'tv' ? LEGACY_TV_WATCHLIST_KEY : LEGACY_WATCHLIST_KEY;
   let legacyItems = [];
-  try { legacyItems = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_KEY)) || []; } catch {}
+  try { legacyItems = JSON.parse(localStorage.getItem(legacyKey)) || []; } catch {}
   let legacyTombstones = [];
-  try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+  if (mediaType === 'movie') {
+    try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+  }
   const defaultId = 'default';
-  saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }]);
-  localStorage.setItem(watchlistStorageKey(defaultId), JSON.stringify(legacyItems));
-  localStorage.setItem(watchlistTombstonesKey(defaultId), JSON.stringify(legacyTombstones));
-  localStorage.setItem(ACTIVE_WATCHLIST_KEY, defaultId);
-})();
+  saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }], mediaType);
+  localStorage.setItem(watchlistStorageKey(defaultId, mediaType), JSON.stringify(legacyItems));
+  localStorage.setItem(watchlistTombstonesKey(defaultId, mediaType), JSON.stringify(legacyTombstones));
+  localStorage.setItem(activeWatchlistKey(mediaType), defaultId);
+}
+migrateLegacyWatchlist('movie');
+migrateLegacyWatchlist('tv');
 
-function getActiveWatchlistId() {
-  let id = localStorage.getItem(ACTIVE_WATCHLIST_KEY);
-  const meta = loadWatchlistsMeta();
+function getActiveWatchlistId(mediaType = 'movie') {
+  let id = localStorage.getItem(activeWatchlistKey(mediaType));
+  const meta = loadWatchlistsMeta(mediaType);
   if (!id || !meta.find(l => l.id === id)) {
     id = meta[0]?.id || 'default';
-    localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+    localStorage.setItem(activeWatchlistKey(mediaType), id);
   }
   return id;
 }
-function setActiveWatchlistId(id) {
-  localStorage.setItem(ACTIVE_WATCHLIST_KEY, id);
+function setActiveWatchlistId(id, mediaType = 'movie') {
+  localStorage.setItem(activeWatchlistKey(mediaType), id);
 }
 
-function createWatchlistList(name) {
-  const meta = loadWatchlistsMeta();
+function createWatchlistList(name, mediaType = 'movie') {
+  const meta = loadWatchlistsMeta(mediaType);
   const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   meta.push({ id, name: name.trim() || 'Nouvelle liste' });
-  saveWatchlistsMeta(meta);
-  localStorage.setItem(watchlistStorageKey(id), JSON.stringify([]));
+  saveWatchlistsMeta(meta, mediaType);
+  localStorage.setItem(watchlistStorageKey(id, mediaType), JSON.stringify([]));
   return id;
 }
-function renameWatchlistList(id, newName) {
-  const meta = loadWatchlistsMeta();
+function renameWatchlistList(id, newName, mediaType = 'movie') {
+  const meta = loadWatchlistsMeta(mediaType);
   const entry = meta.find(l => l.id === id);
-  if (entry) { entry.name = newName.trim() || entry.name; saveWatchlistsMeta(meta); }
+  if (entry) { entry.name = newName.trim() || entry.name; saveWatchlistsMeta(meta, mediaType); }
 }
-function deleteWatchlistList(id) {
-  let meta = loadWatchlistsMeta();
+function deleteWatchlistList(id, mediaType = 'movie') {
+  let meta = loadWatchlistsMeta(mediaType);
   if (meta.length <= 1) return false; // toujours garder au moins une liste
   meta = meta.filter(l => l.id !== id);
-  saveWatchlistsMeta(meta);
-  localStorage.removeItem(watchlistStorageKey(id));
-  localStorage.removeItem(watchlistTombstonesKey(id));
-  recordTombstone(WATCHLIST_LIST_TOMBSTONES_KEY, id); // pour que la suppression de la LISTE elle-même se propage via la synchro
-  if (getActiveWatchlistId() === id) setActiveWatchlistId(meta[0].id);
+  saveWatchlistsMeta(meta, mediaType);
+  localStorage.removeItem(watchlistStorageKey(id, mediaType));
+  localStorage.removeItem(watchlistTombstonesKey(id, mediaType));
+  recordTombstone(mediaType === 'tv' ? TV_WATCHLIST_LIST_TOMBSTONES_KEY : WATCHLIST_LIST_TOMBSTONES_KEY, id); // pour que la suppression de la LISTE elle-même se propage via la synchro
+  if (getActiveWatchlistId(mediaType) === id) setActiveWatchlistId(meta[0].id, mediaType);
   return true;
 }
 
-function loadWatchlist(listId) {
-  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId()))) || []; } catch { return []; }
+function loadWatchlist(listId, mediaType = 'movie') {
+  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType))) || []; } catch { return []; }
 }
-function saveWatchlist(list, listId) {
-  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId()), JSON.stringify(list));
+function saveWatchlist(list, listId, mediaType = 'movie') {
+  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), JSON.stringify(list));
 }
 
 // ── Ludex 2.0 : tri et filtre (voir Ludex_Specifications_Watchlist) ──
@@ -698,36 +718,36 @@ document.getElementById('watchlist-list').addEventListener('click', e => {
 });
 
 // ─── Sélecteur de listes (onglets) ───────────────────────────────────────────
-function renderWatchlistTabs() {
-  const meta = loadWatchlistsMeta();
-  const activeId = getActiveWatchlistId();
+function renderWatchlistTabs(mediaType = 'movie') {
+  const meta = loadWatchlistsMeta(mediaType);
+  const activeId = getActiveWatchlistId(mediaType);
   const activeMeta = meta.find(l => l.id === activeId) || meta[0];
-  const nameEl = document.getElementById('watchlist-active-name');
+  const nameEl = document.getElementById(mediaType === 'tv' ? 'wl-tv-active-name' : 'watchlist-active-name');
   if (nameEl) nameEl.textContent = activeMeta ? activeMeta.name : 'À voir';
 
-  const row = document.getElementById('wl-lists-row');
+  const row = document.getElementById(mediaType === 'tv' ? 'wl-tv-lists-row' : 'wl-lists-row');
   if (!row) return;
   row.innerHTML = meta.map(l =>
     `<button type="button" class="wl-list-pill${l.id === activeId ? ' active' : ''}" data-id="${l.id}">${escAttr(l.name)}</button>`
-  ).join('') + `<button type="button" class="wl-list-pill wl-list-add" id="wl-list-add-btn">${ICONS.plus} Nouvelle liste</button>`;
+  ).join('') + `<button type="button" class="wl-list-pill wl-list-add" data-add-list>${ICONS.plus} Nouvelle liste</button>`;
 }
 
-function openWlListManageMenu(id) {
-  const meta = loadWatchlistsMeta();
+function openWlListManageMenu(id, mediaType = 'movie') {
+  const meta = loadWatchlistsMeta(mediaType);
   const entry = meta.find(l => l.id === id);
   if (!entry) return;
 
   actionSheetTitleEl.textContent = entry.name;
   const actions = [
-    { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id) },
+    { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id, mediaType) },
     {
       label: 'Supprimer cette liste', icon: ICONS.trash, danger: true,
       onClick: () => {
-        if (loadWatchlistsMeta().length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
+        if (loadWatchlistsMeta(mediaType).length <= 1) { showToast('Impossible de supprimer la dernière liste.'); return; }
         openModal('Supprimer la liste', `Supprimer "${escAttr(entry.name)}" et tous ses films ? Cette action est définitive.`, () => {
-          deleteWatchlistList(id);
-          renderWatchlistTabs();
-          renderWatchlist();
+          deleteWatchlistList(id, mediaType);
+          renderWatchlistTabs(mediaType);
+          if (mediaType === 'tv') renderTvWatchlist(); else renderWatchlist();
           showToast('Liste supprimée.');
         }, true);
       },
@@ -750,72 +770,84 @@ function openWlListManageMenu(id) {
 
 let wlModalMode = 'create';
 let wlModalTargetId = null;
+let wlModalMediaType = 'movie';
 
-function openWlListModal(mode, targetId = null) {
+function openWlListModal(mode, targetId = null, mediaType = 'movie') {
   wlModalMode = mode;
   wlModalTargetId = targetId;
+  wlModalMediaType = mediaType;
   document.getElementById('wl-list-modal-title').textContent = mode === 'create' ? 'Nouvelle liste' : 'Renommer la liste';
   document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
   const input = document.getElementById('wl-list-name-input');
-  input.value = mode === 'rename' ? (loadWatchlistsMeta().find(l => l.id === targetId)?.name || '') : '';
+  input.value = mode === 'rename' ? (loadWatchlistsMeta(mediaType).find(l => l.id === targetId)?.name || '') : '';
   lastFocusedBeforeModal = document.activeElement;
   document.getElementById('wl-list-modal').classList.add('open');
   setTimeout(() => input.focus(), 50);
 }
 
-document.getElementById('wl-lists-row').addEventListener('click', (e) => {
-  if (e.target.closest('#wl-list-add-btn')) { openWlListModal('create'); return; }
-  const pill = e.target.closest('.wl-list-pill');
-  if (!pill) return;
-  const id = pill.dataset.id;
-  if (id === getActiveWatchlistId()) {
-    openWlListManageMenu(id); // déjà active : un tap dessus propose de la gérer
-  } else {
-    setActiveWatchlistId(id);
-    renderWatchlistTabs();
-    renderWatchlist();
-  }
-});
+// Ludex 2.0 : un seul gestionnaire, réutilisé pour les deux rangées de
+// listes (films ET séries) — évite d'avoir deux blocs de code identiques
+// qui ne divergent que par le mediaType, exactement le genre de duplication
+// qui avait fait dériver les deux systèmes la première fois.
+function wireWatchlistListsRow(rowId, mediaType) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.addEventListener('click', (e) => {
+    if (e.target.closest('[data-add-list]')) { openWlListModal('create', null, mediaType); return; }
+    const pill = e.target.closest('.wl-list-pill');
+    if (!pill) return;
+    const id = pill.dataset.id;
+    if (id === getActiveWatchlistId(mediaType)) {
+      openWlListManageMenu(id, mediaType); // déjà active : un tap dessus propose de la gérer
+    } else {
+      setActiveWatchlistId(id, mediaType);
+      renderWatchlistTabs(mediaType);
+      if (mediaType === 'tv') renderTvWatchlist(); else renderWatchlist();
+    }
+  });
+}
+wireWatchlistListsRow('wl-lists-row', 'movie');
+wireWatchlistListsRow('wl-tv-lists-row', 'tv');
 
 document.getElementById('wl-list-modal-confirm').addEventListener('click', () => {
   const name = document.getElementById('wl-list-name-input').value.trim();
   if (!name) { showToast('Donne un nom à la liste.'); return; }
   if (wlModalMode === 'create') {
-    const id = createWatchlistList(name);
-    setActiveWatchlistId(id);
+    const id = createWatchlistList(name, wlModalMediaType);
+    setActiveWatchlistId(id, wlModalMediaType);
     showToast(`Liste "${name}" créée.`);
   } else {
-    renameWatchlistList(wlModalTargetId, name);
+    renameWatchlistList(wlModalTargetId, name, wlModalMediaType);
     showToast('Liste renommée.');
   }
   closeModal(document.getElementById('wl-list-modal'));
-  renderWatchlistTabs();
-  renderWatchlist();
+  renderWatchlistTabs(wlModalMediaType);
+  if (wlModalMediaType === 'tv') renderTvWatchlist(); else renderWatchlist();
 });
 document.getElementById('wl-list-modal-cancel').addEventListener('click', () => {
   closeModal(document.getElementById('wl-list-modal'));
 });
 
-renderWatchlistTabs();
+renderWatchlistTabs('movie');
 renderWatchlist();
 
 // ═══════════════════════════════════════════
 //  WATCHLIST SÉRIES (Ludex 2.0)
 // ═══════════════════════════════════════════
-// Une seule liste (pas le système à listes multiples nommées des films —
-// portée volontairement réduite pour ce premier passage). Stockage et
-// logique séparés, mais même vocabulaire visuel (.wl-card, .wl-poster,
-// tri/filtre) que la watchlist films, pour que les deux se ressemblent à
-// l'usage sans être la même donnée.
-const TV_WATCHLIST_KEY = 'lbx_tv_watchlist';
-const TV_WATCHLIST_TOMBSTONES_KEY = 'lbx_tv_watchlist_tombstones';
+// Harmonisée avec la watchlist films (voir Ludex_Specifications_Watchlist —
+// "harmoniser en prenant comme modèle la watchlist des films") : mêmes
+// listes multiples, même grille, mêmes suggestions d'état vide — via le
+// système générique multi-listes défini en tête de fichier (mediaType='tv'),
+// plus une implémentation séparée qui avait fini par diverger visuellement
+// (repéré via captures d'écran : grille absente côté séries).
 
-function loadTvWatchlist() {
-  try { return JSON.parse(localStorage.getItem(TV_WATCHLIST_KEY)) || []; } catch { return []; }
-}
-function saveTvWatchlist(list) {
-  localStorage.setItem(TV_WATCHLIST_KEY, JSON.stringify(list));
-}
+// Ludex 2.0 : wrappers fins autour du système générique multi-listes (voir
+// le bloc "WATCHLISTS MULTIPLES" en tête de fichier) — le nom reste
+// loadTvWatchlist()/saveTvWatchlist() pour ne pas devoir toucher tous les
+// appels ci-dessous, mais ils ciblent maintenant la liste séries ACTIVE
+// (multi-listes), plus l'ancienne clé simple à liste unique.
+function loadTvWatchlist() { return loadWatchlist(null, 'tv'); }
+function saveTvWatchlist(list) { saveWatchlist(list, null, 'tv'); }
 function tvWatchlistItemKey(item) { return (item.title + '|' + (item.year || '')).toLowerCase(); }
 
 let wlTvSortOrder = 'recent';
@@ -862,16 +894,64 @@ document.getElementById('wl-tv-sort-row')?.addEventListener('click', (e) => {
   renderTvWatchlist();
 });
 
+// Ludex 2.0 : suggestions d'état vide côté séries, même principe que côté
+// films (voir renderWatchlistEmptySuggestions() plus haut) — media_type
+// 'tv' plutôt que 'movie' dans le même endpoint tendances, cache mémoire
+// séparé (une série tendance n'est pas forcément un film tendance).
+let _wlTvEmptySuggestionsCache = null;
+async function renderTvWatchlistEmptySuggestions() {
+  const wrap = document.getElementById('wl-tv-empty-suggestions');
+  if (!wrap) return;
+  try {
+    let items = _wlTvEmptySuggestionsCache;
+    if (!items) {
+      const res = await fetch('/api/search?trending=true');
+      const data = await res.json();
+      items = (data.results || []).filter(m => m.media_type === 'tv' && m.poster_path).slice(0, 3);
+      _wlTvEmptySuggestionsCache = items;
+    }
+    if (items.length === 0) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = `
+      <div class="wl-empty-suggestions-title">Quelques suggestions pour commencer :</div>
+      <div class="wl-empty-suggestions-row">
+        ${items.map(m => `
+          <div class="wl-empty-sugg-card">
+            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.name)}" loading="lazy">
+            <div class="wl-empty-sugg-title">${escAttr(m.name)}</div>
+            <button type="button" class="wl-empty-sugg-btn" data-show-id="${m.id}" data-show-name="${escAttr(m.name)}" data-show-year="${(m.first_air_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
+          </div>`).join('')}
+      </div>`;
+  } catch (e) {
+    console.warn('Impossible de charger les suggestions séries', e);
+    wrap.innerHTML = '';
+  }
+}
+// Délégué depuis #wl-tv-list (toujours présent), même raison que côté
+// films : #wl-tv-empty-suggestions n'existe qu'une fois la liste vide
+// effectivement rendue.
+document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-empty-sugg-btn');
+  if (!btn) return;
+  addToTvWatchlist(
+    { id: Number(btn.dataset.showId), name: btn.dataset.showName, poster_path: btn.dataset.poster },
+    btn.dataset.showYear
+  );
+});
+
 function renderTvWatchlist() {
   const list = loadTvWatchlist();
   const container = document.getElementById('wl-tv-list');
   if (!container) return;
 
+  const badge = document.getElementById('wl-tv-count-badge');
+  if (badge) badge.textContent = list.length + ' série' + (list.length > 1 ? 's' : '');
+
   renderWlTvGenreChips(list);
   document.getElementById('wl-tv-sort-row').style.display = list.length === 0 ? 'none' : 'flex';
 
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.target}</div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div><div class="wl-empty-suggestions" id="wl-tv-empty-suggestions"></div>`;
+    renderTvWatchlistEmptySuggestions();
     return;
   }
 
@@ -920,7 +1000,7 @@ document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
   if (btn.dataset.action === 'remove') {
     list.splice(idx, 1);
     saveTvWatchlist(list);
-    recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+    recordTombstone(watchlistTombstonesKey(getActiveWatchlistId('tv'), 'tv'), tvWatchlistItemKey(item));
     renderTvWatchlist();
     return;
   }
@@ -930,7 +1010,7 @@ document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
   // watchlist, bascule vers Noter en mode Séries.
   list.splice(idx, 1);
   saveTvWatchlist(list);
-  recordTombstone(TV_WATCHLIST_TOMBSTONES_KEY, tvWatchlistItemKey(item));
+  recordTombstone(watchlistTombstonesKey(getActiveWatchlistId('tv'), 'tv'), tvWatchlistItemKey(item));
   renderTvWatchlist();
 
   if (typeof setMediaType === 'function') setMediaType('tv');
@@ -1046,8 +1126,10 @@ document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
   document.getElementById('wl-tab-movie').classList.remove('active');
   document.getElementById('wl-tv-section').style.display = '';
   document.getElementById('wl-movie-section').style.display = 'none';
+  renderWatchlistTabs('tv');
   renderTvWatchlist();
 });
 
+renderWatchlistTabs('tv');
 renderTvWatchlist();
 
