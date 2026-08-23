@@ -968,8 +968,19 @@
      l'icône porte désormais l'essentiel du repère visuel, elle doit se
      remarquer davantage qu'avant. margin-bottom retiré : gap sur .nav-btn
      gère déjà l'espacement avec le libellé, pas besoin des deux. */
-  .nav-btn-icon { font-size: 1.55rem; position: relative; }
+  .nav-btn-icon { font-size: 1.55rem; position: relative; display: inline-block; }
   .nav-btn:hover:not(.active) { color: var(--text-hi); }
+
+  /* Ludex 2.0 : petit "pop" au tap (voir wireTapPopAnimation(),
+     01-navigation.js) — icône de navigation OU d'un des 5 switches
+     Films/Séries, même effet ressort partout : léger dépassement de taille
+     puis stabilisation, 180ms. Classe posée/retirée en JS (pas de pseudo-
+     classe :active seule) pour garantir l'animation même sur un tap très
+     bref, que le doigt reste posé ou non. */
+  .tap-pop { animation: tapPop 180ms cubic-bezier(.34,1.56,.64,1); }
+  @keyframes tapPop { 50% { transform: scale(1.28); } }
+  .mode-tab-icon.tap-pop { animation-name: tapPopSmall; }
+  @keyframes tapPopSmall { 50% { transform: scale(1.35); } }
 
   /* Bascule contour → pleine : les deux SVG sont superposés dans le HTML,
      un seul affiché à la fois selon l'état actif — pas de changement de
@@ -1448,8 +1459,13 @@
   .mode-tab {
     flex: 1; text-align: center; padding: 7px; border: none; border-radius: var(--radius-sm); cursor: pointer;
     font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent; transition: all var(--dur-fast);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .mode-tab.active { background: var(--orange); color: var(--solid-fill-text, #0d1117); border: 1px solid var(--orange); font-weight: 800; }
+  /* Ludex 2.0 : icônes des 5 bascules Films/Séries (voir ICONS.compass/
+     bookmark/clapperboardStroke/tv, 00b-icons.js) — taille fixe pour ne
+     pas dépendre du font-size variable du bouton parent. */
+  .mode-tab-icon { width: 15px; height: 15px; flex-shrink: 0; }
 
   /* ── WEIGHTS PANEL ── */
   .weights-toggle {

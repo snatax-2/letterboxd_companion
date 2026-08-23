@@ -300,3 +300,22 @@ document.addEventListener('keydown', (e) => {
   e.preventDefault();
   target.click();
 });
+
+// Ludex 2.0 : petit "pop" au tap sur les icônes de navigation et des 5
+// bascules Films/Séries (voir Ludex_Specifications_Icones) — un seul
+// écouteur délégué sur tout le document plutôt qu'un par bouton (ils vivent
+// dans des zones différentes : barre de navigation fixe, + 5 endroits
+// disséminés dans Noter/Historique/Watchlist/Découvrir/Profil).
+// getBoundingClientRect() forcé (via offsetWidth) entre le retrait et
+// l'ajout de la classe : sans ça, retaper très vite le même bouton avant la
+// fin de l'animation précédente ne la redéclenche pas (le navigateur voit
+// juste "la classe est déjà là", aucun changement à animer).
+document.addEventListener('click', (e) => {
+  const navIcon = e.target.closest('.nav-btn')?.querySelector('.nav-btn-icon');
+  const tabIcon = e.target.closest('.mode-tab')?.querySelector('.mode-tab-icon');
+  const el = navIcon || tabIcon;
+  if (!el) return;
+  el.classList.remove('tap-pop');
+  void el.offsetWidth;
+  el.classList.add('tap-pop');
+});
