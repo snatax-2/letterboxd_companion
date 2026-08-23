@@ -881,6 +881,10 @@
           <div class="carousel-title" id="carousel-title-international">Cinéma international</div>
           <div class="carousel-row" id="carousel-international"></div>
         </div>
+        <div class="carousel-block" id="carousel-block-topRated" style="display:none">
+          <div class="carousel-title">Top 100 films TMDb</div>
+          <div class="carousel-row" id="carousel-topRated"></div>
+        </div>
         <div class="carousel-block" id="carousel-block-historique" style="display:none">
           <div class="carousel-title">D'après ton historique</div>
           <div class="carousel-row" id="carousel-historique"></div>
@@ -914,53 +918,21 @@
           </div>
         </div>
       </div>
-      <div class="profile-hero-sub" id="profile-hero-sub">Cinéphile · Membre depuis —</div>
-
-      <div class="card" id="data-management-card">
-        <div class="card-title">Données</div>
-        <div class="data-management-row">
-          <button class="icon-btn" id="export-btn" title="Sauvegarder les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Exporter</button>
-          <button class="icon-btn" id="import-trigger" title="Restaurer les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Importer</button>
-        </div>
-      </div>
-      <div class="card wrapped-entry-card" id="wrapped-entry-card">
-        <div class="wrapped-entry-icon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg></div>
-        <div class="wrapped-entry-text">
-          <div class="wrapped-entry-title" id="wrapped-entry-title">Ton année en films</div>
-          <div class="wrapped-entry-sub">Découvre ta rétrospective</div>
-        </div>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon wrapped-entry-arrow"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="profile-hero-sub-row">
+        <div class="profile-hero-sub" id="profile-hero-sub">Cinéphile · Membre depuis —</div>
+        <!-- Ludex 2.0 : pastille séries (voir Ludex_Specifications_Profil,
+             "Option 1 confirmée") — nombre total de séries COMMENCÉES
+             (toute série suivie compte, notée ou non), calquée visuellement
+             sur les stats films via renderTvHeroPill() (06c-profile-stats.js),
+             mais gardée séparée plutôt que mélangée dans leur moyenne. -->
+        <div class="profile-hero-tv-pill" id="profile-hero-tv-pill">0 série commencée</div>
       </div>
 
-      <!-- Ludex 2.0 : vitrine de trophées toujours visible (voir
-           Ludex_Specifications_Profil.pdf — "les badges cachés derrière un
-           menu déroulant perdent leur pouvoir de récompense") — plus de
-           <details> replié. Le détail complet (tous les badges, verrouillés
-           inclus) reste juste en dessous, dans la même carte. -->
-      <div class="card" id="profile-badges-card">
-        <div class="card-title">Tes trophées</div>
-        <div class="trophy-row" id="trophy-showcase"></div>
-        <div class="badges-grid" id="badges-grid"></div>
-      </div>
+      <!-- Ludex 2.0 : ordre repensé en blocs logiques (voir
+           Ludex_Specifications_Profil) — Analyse & goûts d'abord (ce que mes
+           données disent de moi), puis Succès, puis Rétrospective/Ludique,
+           et enfin les Actions (partage, données) tout en bas. -->
 
-      <div class="card" id="curated-lists-card">
-        <div class="card-title">Classiques à explorer</div>
-        <div class="curated-lists-hint">Le pourcentage déjà vu de quelques incontournables du cinéma.</div>
-        <div id="curated-lists-container"></div>
-      </div>
-      <div class="card" id="year-ago-card" style="display:none;">
-        <div class="card-title">Il y a un an</div>
-        <div class="year-ago-body" id="year-ago-body"></div>
-      </div>
-      <div class="card" id="heatmap-card">
-        <div class="card-title">Ton année de cinéma</div>
-        <div class="heatmap-scroll"><div class="heatmap-grid" id="heatmap-grid"></div></div>
-        <div class="heatmap-legend"><span>Moins</span><span class="heatmap-cell l0"></span><span class="heatmap-cell l1"></span><span class="heatmap-cell l2"></span><span class="heatmap-cell l3"></span><span>Plus</span></div>
-      </div>
-      <div class="card" id="decades-card" style="display:none;">
-        <div class="card-title">Tes décennies de prédilection</div>
-        <div id="decades-list"></div>
-      </div>
       <div class="card" id="stats-card">
         <div class="card-title">Dashboard Analytique</div>
 
@@ -976,25 +948,22 @@
             <div id="radar-empty" style="display:none; font-size:0.8rem; text-align:center; color:var(--text); margin-top:20px;">Utilise le mode Détaillé pour débloquer ce radar.</div>
           </div>
 
-          <!-- Ludex 2.0 : "Activité (6 derniers mois)" (graphique linéaire)
-               retiré — la heatmap plus haut (#heatmap-card) couvre déjà ce
-               même rôle (rythme de visionnage dans le temps), en mieux :
-               c'était une vraie redondance, pas deux informations
-               différentes. -->
-
-          <div class="dash-box full-width" id="top-directors-box">
-            <div class="dash-box-title" style="display:flex; justify-content:space-between">
-              <span>Top Réalisateurs</span>
-              <span style="color:var(--blue); text-transform:none; font-family:var(--font-body)">Basé sur tes vues</span>
-            </div>
-            <div class="top-list" id="top-directors-list"></div>
-          </div>
-          
+          <!-- Ludex 2.0 : "Top Réalisateurs" et "Distribution des notes"
+               retirés (voir Ludex_Specifications_Profil) — remplacés par
+               l'activité mensuelle ci-dessous, films ET séries confondues,
+               indépendante du bascule Films/Séries de ce dashboard (toujours
+               les deux visibles côte à côte). -->
           <div class="dash-box full-width">
-            <div class="dash-box-title">Distribution des notes</div>
-            <div class="histo" id="histogram"></div>
+            <div class="dash-box-title">Activité mensuelle</div>
+            <div id="monthly-activity-chart"></div>
           </div>
         </div>
+      </div>
+
+      <div class="card" id="heatmap-card">
+        <div class="card-title">Ton année de cinéma</div>
+        <div class="heatmap-scroll"><div class="heatmap-grid" id="heatmap-grid"></div></div>
+        <div class="heatmap-legend"><span>Moins</span><span class="heatmap-cell l0"></span><span class="heatmap-cell l1"></span><span class="heatmap-cell l2"></span><span class="heatmap-cell l3"></span><span>Plus</span></div>
       </div>
 
       <div class="card" id="profile-info-card">
@@ -1020,14 +989,35 @@
         </div>
       </div>
 
+      <!-- Ludex 2.0 : vitrine toujours visible (3 derniers trophées) + le
+           reste en accordéon natif (voir Ludex_Specifications_Profil —
+           "affiche les 3 derniers succès et on peut développer pour voir le
+           reste"). #trophy-showcase existait déjà exactement dans cet esprit
+           (les 3 avec le palier le plus élevé, toujours visibles) — seul
+           #badges-grid (TOUS les badges, verrouillés inclus) est nouvellement
+           enveloppé dans <details>, replié par défaut. Natif : gratuit en
+           accessibilité clavier, pas besoin de JS pour le toggle (même
+           pattern déjà utilisé par .curated-decades-accordion). -->
+      <div class="card" id="profile-badges-card">
+        <div class="card-title">Tes trophées</div>
+        <div class="trophy-row" id="trophy-showcase"></div>
+        <details class="badges-accordion">
+          <summary>Voir tous les succès (<span id="badges-count">0/0</span>)</summary>
+          <div class="badges-grid" id="badges-grid"></div>
+        </details>
+      </div>
+
+      <div class="card wrapped-entry-card" id="wrapped-entry-card">
+        <div class="wrapped-entry-icon"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg></div>
+        <div class="wrapped-entry-text">
+          <div class="wrapped-entry-title" id="wrapped-entry-title">Ton année en films</div>
+          <div class="wrapped-entry-sub">Découvre ta rétrospective</div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon wrapped-entry-arrow"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+
       <div class="card" id="duels-card">
         <div class="card-title">Duels</div>
-        <!-- Ludex 2.0 : repositionné sous les succès (voir
-             Ludex_Specifications_Profil.pdf + demande explicite) — l'arène
-             de jeu était jusque-là tout en haut du Profil, avant même les
-             statistiques. 13-duels.js n'a pas été modifié, renderDuel()/
-             renderDuelRanking() ciblent les mêmes ID qu'avant, juste posés
-             ici désormais. -->
         <div class="duels-arena-title">
           <span>Lequel préfères-tu ?</span>
           <span class="duel-counter" id="duel-counter"></span>
@@ -1044,6 +1034,14 @@
         <div class="card-title">Carte de profil</div>
         <canvas id="profile-share-canvas" width="360" height="480" style="width:100%; max-width:360px; display:block; margin:0 auto; border-radius:var(--radius-sm);"></canvas>
         <button class="btn-share-gradient" id="profile-share-btn">📸 Partager ma carte de profil</button>
+      </div>
+
+      <div class="card" id="data-management-card">
+        <div class="card-title">Données</div>
+        <div class="data-management-row">
+          <button class="icon-btn" id="export-btn" title="Sauvegarder les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 3v11"/><path d="M7 8l5-5 5 5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Exporter</button>
+          <button class="icon-btn" id="import-trigger" title="Restaurer les données"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" class="icon"><path d="M12 14V3"/><path d="M7 9l5 5 5-5"/><path d="M4 17v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg> Importer</button>
+        </div>
       </div>
     </div>
   </div>

@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query;
   // Ludex 2.0 : le toggle Films/Séries de Découvrir doit pouvoir demander
   // la variante série de ces trois endpoints (choix du jour, classiques par
   // décennie, cinéma international) — mediaType='tv' bascule discover/movie
@@ -109,6 +109,20 @@ export default async function handler(req, res) {
       const personData = await personRes.json();
       setCache(86400, 172800); // 24h : une bio/filmographie change rarement d'un jour à l'autre
       return res.status(200).json(personData);
+
+    } else if (topRated) {
+      // Ludex 2.0 : carrousel "Top 100 films TMDb" (Découvrir) — classement
+      // officiel des mieux notés selon TMDb (votes significatifs déjà
+      // filtrés côté TMDb), remplace l'ancien widget "Classiques à
+      // explorer" qui vivait dans Profil et se basait sur l'Historique de
+      // l'utilisateur. Celui-ci est purement éditorial : aucun lien avec
+      // les données de l'utilisateur, une simple vitrine à parcourir.
+      const topRatedRes = await fetch(
+        `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=fr-FR&page=1`
+      );
+      const topRatedData = await topRatedRes.json();
+      setCache(86400, 172800); // 24h : un classement "tous temps" ne bouge pas d'un jour à l'autre
+      return res.status(200).json(topRatedData);
 
     } else if (trending) {
       // Cas 6 : Tendances du moment (carrousel Découvrir), pas liées à

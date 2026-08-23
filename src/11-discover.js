@@ -37,10 +37,7 @@ function setDiscoverMediaType(type) {
   const intlTitleEl = document.getElementById('carousel-title-international');
   if (intlTitleEl) intlTitleEl.textContent = type === 'tv' ? 'Séries internationales' : 'Cinéma international';
   loadChoixDuJour();
-  loadCarousel('nouveautes');
-  loadCarousel('classiques');
-  loadCarousel('international');
-  loadCarousel('historique');
+  Object.keys(CAROUSEL_SOURCES).forEach(loadCarousel);
 }
 discoverSegBtns.forEach(btn => {
   btn.addEventListener('click', () => setDiscoverMediaType(btn.dataset.mediaType));
@@ -191,6 +188,18 @@ async function fetchInternational() {
   return merged.slice(0, 15).map(normalizeItem);
 }
 
+async function fetchTopRated() {
+  // Ludex 2.0 : "Top 100 films TMDb" — classement éditorial officiel de
+  // TMDb, aucun lien avec l'historique ou la watchlist de l'utilisateur
+  // (remplace l'ancien "Classiques à explorer" qui vivait dans Profil et se
+  // basait sur l'Historique — repositionné ici en tant que pure vitrine à
+  // parcourir). TOUJOURS des films, quel que soit le bascule Films/Séries
+  // actif — TMDb n'a pas d'équivalent "top séries" via ce même endpoint.
+  const res = await fetch('/api/search?topRated=true');
+  const data = await res.json();
+  return (data.results || []).filter(m => m.poster_path).slice(0, 15).map(m => ({ ...normalizeItem(m), media_type: 'movie' }));
+}
+
 async function fetchHistorique() {
   // "D'après ton historique" = recommandations TMDb agrégées à partir de
   // quelques films/séries de l'historique, choisis pour leur diversité de
@@ -240,20 +249,33 @@ const CAROUSEL_SOURCES = {
   nouveautes: fetchNouveautes,
   classiques: fetchClassiques,
   international: fetchInternational,
+  topRated: fetchTopRated,
   historique: fetchHistorique,
 };
+// Ludex 2.0 : "Top 100 films TMDb" est TOUJOURS des films (voir
+// fetchTopRated() plus haut) — contrairement aux 4 autres carrousels qui
+// suivent le bascule Films/Séries actif. Sans ce repli, loadCarousel()
+// marquerait ses affiches data-media-type="tv" en mode Séries (copié du
+// bascule courant), cassant leur clic vers la fiche (des identifiants de
+// films ouverts comme des séries). Masqué plutôt que vidé en mode Séries —
+// une vitrine "Top films" mélangée à des carrousels séries serait
+// incohérente visuellement.
+const CAROUSEL_FIXED_MEDIA_TYPE = { topRated: 'movie' };
 
 async function loadCarousel(key) {
   const rowEl = document.getElementById(`carousel-${key}`);
   const blockEl = document.getElementById(`carousel-block-${key}`);
   if (!rowEl || !blockEl) return;
+  const fixedType = CAROUSEL_FIXED_MEDIA_TYPE[key];
+  if (fixedType && fixedType !== discoverMediaType) { blockEl.style.display = 'none'; return; }
+  const effectiveMediaType = fixedType || discoverMediaType;
   rowEl.innerHTML = Array.from({ length: 5 }, () => `<div class="poster-min skeleton-bg"></div>`).join('');
   blockEl.style.display = 'block';
   try {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
     rowEl.innerHTML = items.map(item => `
-      <div class="poster-min" data-item-id="${item.id}" data-media-type="${discoverMediaType}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+      <div class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path
           ? `<img src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
           : ''}

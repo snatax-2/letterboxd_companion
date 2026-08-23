@@ -109,7 +109,8 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
 function renderStats() {
   const history = loadHistory();
   animateCountUp(document.getElementById('kpi-total'), history.length);
-  
+  renderTvHeroPill();
+
   if (history.length === 0) {
     document.getElementById('kpi-avg').textContent = '-'; 
     const heroYearSubEl = document.getElementById('profile-hero-year-sub');
@@ -117,8 +118,7 @@ function renderStats() {
     document.getElementById('radar-chart-container').innerHTML = ''; 
     document.getElementById('radar-chart-container').style.minHeight = '0';
     document.getElementById('radar-empty').style.display = 'block';
-    document.getElementById('top-directors-list').innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' });
-    buildHistogram({});
+    renderMonthlyActivityChart([], typeof loadTvShows === 'function' ? loadTvShows() : []);
     resetProfileExtras();
     return;
   }
@@ -154,33 +154,68 @@ function renderStats() {
     document.getElementById('radar-empty').style.display = 'block'; 
   }
 
-  const dirs = {};
-  history.forEach(h => {
-    if(h.director) { 
-      h.director.split(',').forEach(d => {
-        const t = d.trim(); if(!t) return;
-        if(!dirs[t]) dirs[t] = { count:0, sum:0 }; 
-        dirs[t].count++; dirs[t].sum+=parseFloat(h.score);
-      });
-    }
-  });
-  const topD = Object.entries(dirs).map(([name,d]) => ({name, count:d.count, avg:d.sum/d.count})).filter(d=>d.count>1).sort((a,b)=>b.count-a.count || b.avg-a.avg).slice(0,4);
-  const dirCont = document.getElementById('top-directors-list');
-  if(topD.length > 0) {
-    dirCont.innerHTML = topD.map(d => `<div class="top-item" onclick="document.getElementById('history-search').value='${escAttr(d.name)}';document.getElementById('history-search').dispatchEvent(new Event('input'))"><span class="top-item-name">${escAttr(d.name)}</span><div class="top-item-meta"><span>${d.count} films</span><span class="top-item-score">★ ${d.avg.toFixed(1)}</span></div></div>`).join('');
-  } else { 
-    dirCont.innerHTML = renderEmptyState({ message: 'Enregistrez plus de films avec un réalisateur pour générer ce top.' }); 
-  }
-
-  const dist = { '50':0, '45':0, '40':0, '35':0, '30':0, '25':0, '20':0, '15':0, '10':0, '05':0 };
-  history.forEach(item => {
-    const stars = Math.round((parseFloat(item.score) / 2) * 2) / 2;
-    const key   = Math.round(stars * 10).toString().padStart(2,'0');
-    if (dist[key] !== undefined) dist[key]++;
-  });
-  buildHistogram(dist);
+  // Ludex 2.0 : "Top Réalisateurs" et "Distribution des notes" retirés du
+  // Dashboard (voir Ludex_Specifications_Profil), remplacés par
+  // renderMonthlyActivityChart() ci-dessous — plus assez de place utile
+  // pour justifier les deux en même temps, et l'activité mensuelle raconte
+  // quelque chose de plus vivant que le classement des réalisateurs.
+  renderMonthlyActivityChart(history, typeof loadTvShows === 'function' ? loadTvShows() : []);
   renderProfileExtras(history);
   renderProfileDiscoveryCards();
+}
+
+// Ludex 2.0 : "Activité mensuelle" — remplace Top Réalisateurs + Distribution
+// des notes (Dashboard) par un histogramme en barres sur les 6 derniers mois,
+// films ET séries côte à côte (deux couleurs). Contrairement à la heatmap
+// (#heatmap-card, quotidienne, façon calendrier), celui-ci répond à "combien
+// par mois", plus direct à lire d'un coup d'œil sur une tendance courte.
+function renderMonthlyActivityChart(history, tvShows) {
+  const container = document.getElementById('monthly-activity-chart');
+  if (!container) return;
+
+  const now = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTH_LABELS_FR[d.getMonth()].slice(0, 3) });
+  }
+
+  const movieCounts = months.map(m => history.filter(h => (h.date || h.savedAt || '').startsWith(m.key)).length);
+  // Une série compte pour chaque MOIS où au moins une de ses saisons a été
+  // notée ce mois-là — pas juste son mois le plus récent, pour ne pas sous-
+  // compter une série notée sur plusieurs mois différents.
+  const tvCounts = months.map(m =>
+    tvShows.filter(sh => Object.values(sh.seasons || {}).some(se => (se.rating?.date || '').startsWith(m.key))).length
+  );
+  const maxVal = Math.max(1, ...movieCounts, ...tvCounts);
+
+  container.innerHTML = `
+    <div class="month-chart">
+      ${months.map((m, i) => `
+        <div class="month-chart-col">
+          <div class="month-chart-bars">
+            <div class="month-chart-bar movie" style="height:${(movieCounts[i] / maxVal) * 100}%" title="${movieCounts[i]} film${movieCounts[i] > 1 ? 's' : ''}"></div>
+            <div class="month-chart-bar tv" style="height:${(tvCounts[i] / maxVal) * 100}%" title="${tvCounts[i]} série${tvCounts[i] > 1 ? 's' : ''}"></div>
+          </div>
+          <div class="month-chart-label">${escAttr(m.label)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="month-chart-legend">
+      <span><span class="month-chart-dot movie"></span>Films / mois</span>
+      <span><span class="month-chart-dot tv"></span>Séries / mois</span>
+    </div>`;
+}
+
+// Ludex 2.0 : pastille séries du Hero Header (voir Ludex_Specifications_Profil
+// — "option 1 confirmée") — nombre total de séries COMMENCÉES (toute série
+// suivie compte, peu importe si elle a déjà été notée), calqué visuellement
+// sur les stats films mais séparé plutôt que mélangé dans leur moyenne.
+function renderTvHeroPill() {
+  const el = document.getElementById('profile-hero-tv-pill');
+  if (!el) return;
+  const count = typeof loadTvShows === 'function' ? loadTvShows().length : 0;
+  el.textContent = `${count} série${count > 1 ? 's' : ''} commencée${count > 1 ? 's' : ''}`;
 }
 
 // ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──
@@ -363,53 +398,6 @@ function renderBadges(badges) {
   }
 }
 
-// Carte de profil partageable : dessinée sur un <canvas>, avec les couleurs
-// et la police du thème actif (lues via getComputedStyle), pour que l'image
-// exportée corresponde à l'identité visuelle choisie plutôt qu'un rendu
-// générique. Pas de librairie externe — dessin manuel, comme pour
-// l'extraction de couleur dominante (00c-poster-color.js).
-// Dessine un petit radar (moyennes par critère) sur le canvas — même principe
-// que createRadarSVG (06-history.js) mais en dessin canvas natif, pas du SVG.
-function buildHistogram(dist) {
-  const container = document.getElementById('histogram');
-  container.innerHTML = '';
-  const maxVal = Math.max(...Object.values(dist), 0);
-  if (maxVal === 0) {
-    container.innerHTML = renderEmptyState({ message: 'Note quelques films pour voir apparaître leur répartition ici.' });
-    return;
-  }
-  const order = [50, 45, 40, 35, 30, 25, 20, 15, 10, '05'];
-  const labels = {
-    50: '★★★★★', 45: '★★★★½', 40: '★★★★', 35: '★★★½', 30: '★★★',
-    25: '★★½',   20: '★★',    15: '★½',    10: '★',    '05': '½'
-  };
-  order.forEach(key => {
-    const count   = dist[key] || 0;
-    const pct     = (count / maxVal) * 100;
-    const row     = document.createElement('div');
-    const isActive = activeScoreFilter === String(key);
-    row.className = 'histo-row' + (isActive ? ' active' : '');
-    row.title = count > 0 ? `Filtrer par ${labels[key]}` : '';
-    row.innerHTML = `
-      <span class="histo-label">${labels[key]}</span>
-      <div class="histo-track"><div class="histo-bar" style="width:${pct}%"></div></div>
-      <span class="histo-count">${count}</span>`;
-    if (count > 0) {
-      row.addEventListener('click', () => {
-        if (activeScoreFilter === String(key)) {
-          activeScoreFilter = null;
-        } else {
-          activeScoreFilter = String(key);
-          activeGenre = null; 
-        }
-        renderAll();
-        document.querySelector('.history-scroller')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-    container.appendChild(row);
-  });
-}
-
 let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir lieu
 
 // Dispatche vers le bon rendu de stats selon la bascule Films/Séries —
@@ -447,30 +435,6 @@ function renderProfileIfDirty() {
   if (statsDirty) { renderActiveStatsView(); statsDirty = false; }
 }
 
-// ═══════════════════════════════════════════
-//  SORT FILTERS
-// ═══════════════════════════════════════════
-function renderYearAgoCard(history) {
-  const card = document.getElementById('year-ago-card');
-  const body = document.getElementById('year-ago-body');
-  if (!card || !body) return;
-  const found = findOneYearAgoFilm(history, new Date());
-  if (!found) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const { item } = found;
-  const posterHtml = item.poster
-    ? `<img class="year-ago-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
-    : `<div class="year-ago-poster year-ago-poster-ph">${ICONS.clapper}</div>`;
-  body.innerHTML = `
-    ${posterHtml}
-    <div>
-      <div class="year-ago-title">${escAttr(item.title)}</div>
-      <div class="year-ago-meta">Tu regardais ce film à la même période l'an dernier${item.year ? ` (${escAttr(String(item.year))})` : ''}.</div>
-      ${item.score ? `<div class="year-ago-score">Ta note : ${escAttr(String(item.score))}/10</div>` : ''}
-    </div>
-  `;
-}
-
 function renderHeatmap(history) {
   const grid = document.getElementById('heatmap-grid');
   if (!grid) return;
@@ -499,31 +463,15 @@ function renderHeatmap(history) {
   if (scroll) scroll.scrollLeft = scroll.scrollWidth;
 }
 
-function renderDecades(history) {
-  const card = document.getElementById('decades-card');
-  const list = document.getElementById('decades-list');
-  if (!card || !list) return;
-  const stats = computeDecadeStats(history);
-  if (stats.length === 0) { card.style.display = 'none'; return; }
-  card.style.display = '';
-  const max = stats[0].count;
-  list.innerHTML = stats.slice(0, 6).map(d => `
-    <div class="decade-row">
-      <span class="decade-label">${d.decade}s</span>
-      <div class="decade-bar-track"><div class="decade-bar" style="width:${Math.round(d.count / max * 100)}%"></div></div>
-      <span class="decade-count">${d.count} · ${d.avg !== null ? d.avg.toFixed(1) : '—'}</span>
-    </div>
-  `).join('');
-}
-
-// Regroupe les trois cartes ajoutées ensuite (Il y a un an / Heatmap /
-// Décennies). Nom distinct de renderProfileExtras : les deux fonctions
-// portaient le même nom à un moment, et la seconde écrasait silencieusement
-// la première par hissage — cassant toute la carte "Ton profil" (Membre
-// depuis, Temps visionné...). Leçon : un nom = une fonction, vérifié par grep.
+// Regroupe les cartes de découverte ajoutées ensuite. Nom distinct de
+// renderProfileExtras : les deux fonctions portaient le même nom à un
+// moment, et la seconde écrasait silencieusement la première par hissage —
+// cassant toute la carte "Ton profil" (Membre depuis, Temps visionné...).
+// Leçon : un nom = une fonction, vérifié par grep.
+// Ludex 2.0 : "Il y a un an" et "Décennies de prédilection" retirés (voir
+// Ludex_Specifications_Profil) — renderYearAgoCard()/renderDecades() ont
+// été supprimées avec eux, plus aucun appelant.
 function renderProfileDiscoveryCards() {
   const history = loadHistory();
-  renderYearAgoCard(history);
   renderHeatmap(history);
-  renderDecades(history);
 }

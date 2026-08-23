@@ -1162,15 +1162,10 @@ function renderTvStats() {
   }
 
   // Ludex 2.0 : timeline retirée (voir index.html) — la heatmap couvre déjà
-  // ce rôle, films et séries confondus.
-
-  const dist = { '50': 0, '45': 0, '40': 0, '35': 0, '30': 0, '25': 0, '20': 0, '15': 0, '10': 0, '05': 0 };
-  allRatings.forEach(r => {
-    const stars = Math.round((parseFloat(r.score) / 2) * 2) / 2;
-    const key = Math.round(stars * 10).toString().padStart(2, '0');
-    if (dist[key] !== undefined) dist[key]++;
-  });
-  buildHistogram(dist);
+  // ce rôle, films et séries confondus. "Distribution des notes" retirée
+  // aussi (voir renderStats(), 06c-profile-stats.js) — remplacée par
+  // renderMonthlyActivityChart(), qui n'est PAS repeinte par ce bascule
+  // Films/Séries : elle montre déjà les deux côte à côte en permanence.
 }
 
 // ═══════════════════════════════════════════

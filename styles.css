@@ -945,9 +945,15 @@
     color: var(--text); font-family: var(--font-heading);
     font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
-    align-items: center; gap: 3px; transition: color var(--dur-base);
+    align-items: center; justify-content: center; gap: 3px; transition: color var(--dur-base);
     letter-spacing: 0.02em; border-radius: 999px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    /* Ludex 2.0 : icônes agrandies (voir .nav-btn-icon plus bas) — texte
+       visible seulement sur l'onglet actif, l'icône est désormais le seul
+       repère visuel constant. Hauteur fixe + justify-content:center :
+       l'icône reste centrée verticalement dans le bouton, que le libellé
+       soit affiché ou non, plutôt que de se décaler d'un onglet à l'autre. */
+    min-height: 46px;
   }
   /* Ludex 2.0 : la capsule pleine inversée (fond coloré, texte inversé)
      s'est avérée trop appuyée à l'usage — remplacée par une simple teinte
@@ -957,7 +963,12 @@
      Découvrir est déjà pleine au repos (rien à basculer), Historique reste
      un pictogramme à traits (3 barres verticales, pas de forme à remplir). */
   .nav-btn.active { color: var(--orange); background: none; }
-  .nav-btn-icon { font-size: 1.2rem; margin-bottom: 2px; position: relative; }
+  /* Ludex 2.0 : agrandie de 1.2rem à 1.55rem (~30%) — le texte n'étant
+     visible que sur l'onglet actif (voir .nav-btn-label plus bas),
+     l'icône porte désormais l'essentiel du repère visuel, elle doit se
+     remarquer davantage qu'avant. margin-bottom retiré : gap sur .nav-btn
+     gère déjà l'espacement avec le libellé, pas besoin des deux. */
+  .nav-btn-icon { font-size: 1.55rem; position: relative; }
   .nav-btn:hover:not(.active) { color: var(--text-hi); }
 
   /* Bascule contour → pleine : les deux SVG sont superposés dans le HTML,
@@ -2923,7 +2934,46 @@
   .profile-hero-bento-wide { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; text-align: left; }
   .profile-hero-bento-wide .kpi-val { font-size: 1.2rem; }
   .profile-hero-bento-sub { font-size: 0.62rem; color: var(--gold); margin-top: 2px; font-family: var(--font-mono); }
-  .profile-hero-sub { font-size: 0.74rem; color: var(--text-mid); margin-bottom: 18px; padding-left: 2px; }
+  .profile-hero-sub { font-size: 0.74rem; color: var(--text-mid); padding-left: 2px; }
+  /* Ludex 2.0 : pastille séries à côté du sous-texte du Hero (voir
+     Ludex_Specifications_Profil, "Option 1") — même ligne, calquée sur les
+     autres pastilles de compteur déjà présentes ailleurs dans l'app
+     (badge d'Historique, etc.) plutôt qu'un nouveau style inventé. */
+  .profile-hero-sub-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 10px; }
+  .profile-hero-tv-pill {
+    font-size: 0.68rem; color: var(--text-mid); background: var(--surface2);
+    padding: 4px 10px; border-radius: 999px; font-family: var(--font-mono);
+    font-weight: 600; white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* Ludex 2.0 : histogramme "Activité mensuelle" (remplace Top Réalisateurs
+     + Distribution des notes, voir renderMonthlyActivityChart(),
+     06c-profile-stats.js) — deux barres par mois (films/séries), hauteur
+     relative au maximum observé sur les 6 mois affichés. */
+  .month-chart { display: flex; align-items: flex-end; gap: 8px; height: 90px; margin-top: 8px; padding: 0 2px; }
+  .month-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+  .month-chart-bars { display: flex; align-items: flex-end; gap: 2px; height: 100%; width: 100%; justify-content: center; }
+  .month-chart-bar { width: 40%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height var(--dur-base) var(--ease-out); }
+  .month-chart-bar.movie { background: var(--gold); }
+  .month-chart-bar.tv { background: var(--blue); }
+  .month-chart-label { font-size: 0.6rem; color: var(--text-mid); font-family: var(--font-mono); }
+  .month-chart-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 0.68rem; color: var(--text-mid); justify-content: center; }
+  .month-chart-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+  .month-chart-dot.movie { background: var(--gold); }
+  .month-chart-dot.tv { background: var(--blue); }
+
+  /* Ludex 2.0 : accordéon des succès (voir index.html, #profile-badges-card)
+     — même pattern natif <details>/<summary> déjà utilisé par
+     .curated-decades-accordion, gratuit en accessibilité clavier. */
+  .badges-accordion { margin-top: 4px; }
+  .badges-accordion summary {
+    cursor: pointer; font-size: 0.76rem; font-weight: 700; color: var(--gold);
+    padding: 10px 4px; list-style: none; display: flex; align-items: center; gap: 6px;
+  }
+  .badges-accordion summary::-webkit-details-marker { display: none; }
+  .badges-accordion summary::before { content: '▸'; font-size: 0.7rem; transition: transform var(--dur-fast); }
+  .badges-accordion[open] summary::before { transform: rotate(90deg); }
+  .badges-accordion .badges-grid { margin-top: 8px; }
 
   /* ── Bouton de partage (voir profile-share-btn, 06d-profile-share-cards.js) ── */
   .btn-share-gradient {

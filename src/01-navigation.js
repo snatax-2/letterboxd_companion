@@ -46,7 +46,10 @@ function switchRightTab(tabName) {
   }
   if (tabName === 'profile') {
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
-    if (typeof renderCuratedListsCard === 'function') renderCuratedListsCard();
+    // Ludex 2.0 : renderCuratedListsCard() retiré — "Classiques à explorer"
+    // a quitté Profil (voir Ludex_Specifications_Profil), remplacé par le
+    // carrousel "Top 100 films TMDb" dans Découvrir (voir fetchTopRated(),
+    // 11-discover.js), purement éditorial et sans lien avec l'historique.
   }
   // Rattrape un renderStats() sauté pendant que Profil était masqué (rendu
   // ciblé : pas de recalcul du radar/heatmap/badges à chaque sauvegarde si
