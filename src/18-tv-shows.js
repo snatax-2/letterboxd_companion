@@ -1102,7 +1102,6 @@ function switchStatsMediaFilter(type) {
   const dashboard = document.querySelector('.dashboard-grid');
   const applyChange = () => {
     document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';
-    document.getElementById('top-directors-box').style.display = type === 'movie' ? '' : 'none';
     if (type === 'tv') renderTvStats(); else renderStats();
   };
   if (!dashboard) { applyChange(); return; }
