@@ -109,10 +109,9 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
 function renderStats() {
   const history = loadHistory();
   animateCountUp(document.getElementById('kpi-total'), history.length);
-  renderTvHeroPill();
 
   if (history.length === 0) {
-    document.getElementById('kpi-avg').textContent = '-'; 
+    document.getElementById('kpi-avg').textContent = '-';
     const heroYearSubEl = document.getElementById('profile-hero-year-sub');
     if (heroYearSubEl) heroYearSubEl.textContent = '';
     document.getElementById('radar-chart-container').innerHTML = ''; 
@@ -123,9 +122,6 @@ function renderStats() {
     return;
   }
 
-  const avg = history.reduce((sum, h) => sum + parseFloat(h.score), 0) / history.length;
-  animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
-
   const currentYear = new Date().getFullYear().toString();
   const yearCount = history.filter(h => h.date && h.date.startsWith(currentYear)).length;
   // Ludex 2.0 : plus de carte KPI séparée "En 2026" — ce compte vit
@@ -135,6 +131,9 @@ function renderStats() {
   // 2026"), pas un nombre brut animé seul.
   const heroYearSubEl = document.getElementById('profile-hero-year-sub');
   if (heroYearSubEl) heroYearSubEl.textContent = `+${yearCount} en ${currentYear}`;
+
+  const avg = history.reduce((sum, h) => sum + parseFloat(h.score), 0) / history.length;
+  animateCountUp(document.getElementById('kpi-avg'), avg, { decimals: 1 });
 
   // Réutilise la même fonction que le repère de moyenne perso sur les sliders
   // (voir 03b-pure-logic.js), pour ne pas dupliquer ce calcul à deux endroits.
@@ -189,13 +188,23 @@ function renderMonthlyActivityChart(history, tvShows) {
   );
   const maxVal = Math.max(1, ...movieCounts, ...tvCounts);
 
+  // Ludex 2.0 : chiffre exact au-dessus de chaque barre (voir
+  // Ludex_Specifications_Profil — "on gagnerait à afficher le nombre") —
+  // un chiffre à 0 se masque plutôt que d'afficher "0" collé au bas du
+  // graphique, redondant avec l'absence de barre visible à cet endroit.
+  const barHtml = (count, cls, unit) => `
+    <div class="month-chart-bar-wrap">
+      <div class="month-chart-count${count === 0 ? ' zero' : ''}">${count}</div>
+      <div class="month-chart-bar ${cls}" style="height:${(count / maxVal) * 100}%" title="${count} ${unit}${count > 1 ? 's' : ''}"></div>
+    </div>`;
+
   container.innerHTML = `
     <div class="month-chart">
       ${months.map((m, i) => `
         <div class="month-chart-col">
           <div class="month-chart-bars">
-            <div class="month-chart-bar movie" style="height:${(movieCounts[i] / maxVal) * 100}%" title="${movieCounts[i]} film${movieCounts[i] > 1 ? 's' : ''}"></div>
-            <div class="month-chart-bar tv" style="height:${(tvCounts[i] / maxVal) * 100}%" title="${tvCounts[i]} série${tvCounts[i] > 1 ? 's' : ''}"></div>
+            ${barHtml(movieCounts[i], 'movie', 'film')}
+            ${barHtml(tvCounts[i], 'tv', 'série')}
           </div>
           <div class="month-chart-label">${escAttr(m.label)}</div>
         </div>
@@ -205,17 +214,6 @@ function renderMonthlyActivityChart(history, tvShows) {
       <span><span class="month-chart-dot movie"></span>Films / mois</span>
       <span><span class="month-chart-dot tv"></span>Séries / mois</span>
     </div>`;
-}
-
-// Ludex 2.0 : pastille séries du Hero Header (voir Ludex_Specifications_Profil
-// — "option 1 confirmée") — nombre total de séries COMMENCÉES (toute série
-// suivie compte, peu importe si elle a déjà été notée), calqué visuellement
-// sur les stats films mais séparé plutôt que mélangé dans leur moyenne.
-function renderTvHeroPill() {
-  const el = document.getElementById('profile-hero-tv-pill');
-  if (!el) return;
-  const count = typeof loadTvShows === 'function' ? loadTvShows().length : 0;
-  el.textContent = `${count} série${count > 1 ? 's' : ''} commencée${count > 1 ? 's' : ''}`;
 }
 
 // ─── Onglet Profil : temps visionné, acteur favori, membre depuis, série, badges ──

@@ -908,6 +908,12 @@
             <div class="kpi-label" id="kpi-total-label">Films notés</div>
             <div class="profile-hero-bento-sub" id="profile-hero-year-sub">+0 en 2026</div>
           </div>
+          <!-- Ludex 2.0 : "Moyenne" restaurée — la tentative de la remplacer
+               par "Séries commencées" (Option 1) s'est avérée redondante :
+               le bascule Films/Séries du Dashboard fait déjà passer ce même
+               Header en mode séries dynamiquement (#kpi-total-label devient
+               "Séries suivies", voir renderTvStats(), 18-tv-shows.js) — pas
+               besoin d'une carte figée en plus pour la même information. -->
           <div class="profile-hero-bento-card">
             <div class="kpi-val" id="kpi-avg" style="color:var(--gold)">-</div>
             <div class="kpi-label">Moyenne</div>
@@ -918,15 +924,7 @@
           </div>
         </div>
       </div>
-      <div class="profile-hero-sub-row">
-        <div class="profile-hero-sub" id="profile-hero-sub">Cinéphile · Membre depuis —</div>
-        <!-- Ludex 2.0 : pastille séries (voir Ludex_Specifications_Profil,
-             "Option 1 confirmée") — nombre total de séries COMMENCÉES
-             (toute série suivie compte, notée ou non), calquée visuellement
-             sur les stats films via renderTvHeroPill() (06c-profile-stats.js),
-             mais gardée séparée plutôt que mélangée dans leur moyenne. -->
-        <div class="profile-hero-tv-pill" id="profile-hero-tv-pill">0 série commencée</div>
-      </div>
+      <div class="profile-hero-sub" id="profile-hero-sub">Cinéphile · Membre depuis —</div>
 
       <!-- Ludex 2.0 : ordre repensé en blocs logiques (voir
            Ludex_Specifications_Profil) — Analyse & goûts d'abord (ce que mes
