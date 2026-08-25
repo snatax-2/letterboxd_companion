@@ -17,14 +17,17 @@ test.beforeEach(async ({ page }) => {
     return route.fulfill({ json: { results: [] } });
   });
 
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.click('#nav-discover');
-  await page.waitForSelector('#trending-carousel-wrap[style*="display: block"]', { timeout: 5000 }).catch(() => {});
+  await page.waitForSelector('#carousel-block-nouveautes[style*="display: block"]', { timeout: 5000 }).catch(() => {});
 });
 
 test('glisser sur le carrousel de tendances ne change pas d\'onglet', async ({ page }) => {
-  const carousel = page.locator('#trending-carousel');
-  const count = await carousel.locator('.trending-item').count();
+  const carousel = page.locator('#carousel-nouveautes');
+  const count = await carousel.locator('.poster-min').count();
   if (count === 0) test.skip(); // pas de tendances chargées (ex: connexion lente dans l'environnement de test)
 
   await carousel.evaluate((el) => {

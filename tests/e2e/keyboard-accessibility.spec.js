@@ -16,11 +16,14 @@ test('appuyer sur Entrée sur une carte de tendance (focus clavier) ouvre sa fic
     return route.fulfill({ json: { results: [] } });
   });
 
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.click('#nav-discover');
-  await page.waitForSelector('.trending-item', { timeout: 5000 });
+  await page.waitForSelector('.poster-min', { timeout: 5000 });
 
-  const item = page.locator('.trending-item').first();
+  const item = page.locator('.poster-min').first();
   await item.focus();
   await expect(item).toBeFocused();
   await page.keyboard.press('Enter');
@@ -32,6 +35,9 @@ test('ouvrir la fiche film déplace le focus dedans (pas laissé sur l\'élémen
   await page.route('**/api/search*', async (route) => {
     return route.fulfill({ json: { id: 1, title: 'Test', release_date: '2020-01-01', poster_path: null, genres: [], credits: { crew: [], cast: [] } } });
   });
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => window.openMovieDetailSheet('1'));
   await page.waitForSelector('#movie-detail-sheet.open');
@@ -42,6 +48,9 @@ test('le focus reste piégé dans la fiche ouverte (Tab ne sort pas vers le cont
   await page.route('**/api/search*', async (route) => {
     return route.fulfill({ json: { id: 1, title: 'Test', release_date: '2020-01-01', poster_path: null, genres: [], credits: { crew: [], cast: [] } } });
   });
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => window.openMovieDetailSheet('1'));
   await page.waitForSelector('#movie-detail-sheet.open');

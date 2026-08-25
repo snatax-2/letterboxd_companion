@@ -7,6 +7,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('choisir une liste existante ajoute le film dedans (pas forcement la liste active)', async ({ page }) => {
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => {
     window.saveWatchlistsMeta([{ id: 'list-a', name: 'Films du weekend' }, { id: 'list-b', name: 'A revoir' }]);
@@ -32,6 +35,9 @@ test('choisir une liste existante ajoute le film dedans (pas forcement la liste 
 });
 
 test('creer une nouvelle liste a la volee ajoute le film dedans', async ({ page }) => {
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => {
     window.saveWatchlistsMeta([{ id: 'list-a', name: 'Films du weekend' }]);

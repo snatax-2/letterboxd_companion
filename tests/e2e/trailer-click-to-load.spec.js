@@ -10,6 +10,9 @@ test('la bande-annonce se charge au clic (pas automatiquement)', async ({ page }
       },
     });
   });
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => window.openMovieDetailSheet('500'));
   await page.waitForSelector('#movie-detail-sheet.open');

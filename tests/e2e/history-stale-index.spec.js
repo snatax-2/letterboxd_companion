@@ -15,6 +15,9 @@
 const { test, expect } = require('@playwright/test');
 
 test.beforeEach(async ({ page }) => {
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => {
     window.localStorage.setItem('lbx_v2', JSON.stringify([
