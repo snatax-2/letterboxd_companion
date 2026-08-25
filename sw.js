@@ -64,8 +64,14 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        // Ne met en cache que les réponses effectivement valides. Sans ce
+        // contrôle, une 404 (fichier renommé, déploiement en cours) ou une
+        // 500 passagère était mise en cache et resservie indéfiniment hors
+        // ligne, jusqu'au prochain changement de CACHE_NAME.
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
         return response;
       })
       .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
