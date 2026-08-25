@@ -56,10 +56,17 @@ async function loadChoixDuJour() {
   const heroEl = document.getElementById('choix-du-jour-card');
   if (!heroEl) return;
   const todayKey = new Date().toISOString().slice(0, 10);
+  // Ludex 2.0 : une clé PAR type de média plutôt qu'une seule partagée
+  // (bug signalé par l'utilisateur : "ça change 2 à 3 fois par jour") —
+  // l'ancienne clé unique était écrasée à chaque bascule Films/Séries,
+  // donc revenir sur Films après un passage sur Séries redéclenchait
+  // systématiquement un nouveau tirage, croyant le cache absent alors
+  // qu'il existait juste pour l'AUTRE type de média.
+  const cacheKey = `${CHOIX_DU_JOUR_KEY}_${discoverMediaType}`;
   let cached = null;
-  try { cached = JSON.parse(localStorage.getItem(CHOIX_DU_JOUR_KEY) || 'null'); } catch { /* ignore */ }
+  try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch { /* ignore */ }
 
-  if (cached && cached.date === todayKey && cached.mediaType === discoverMediaType && cached.movie) {
+  if (cached && cached.date === todayKey && cached.movie) {
     renderChoixDuJour(cached.movie);
     return;
   }
@@ -77,7 +84,7 @@ async function loadChoixDuJour() {
     // bloque pas l'affichage de l'affiche+titre si cet appel échoue ou tarde :
     // rendu immédiat sans réalisateur, puis complété dès qu'il arrive.
     renderChoixDuJour(item);
-    localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+    localStorage.setItem(cacheKey, JSON.stringify({ date: todayKey, movie: item }));
 
     const detailEndpoint = discoverMediaType === 'tv' ? `tvId=${item.id}` : `id=${item.id}`;
     const detailRes = await fetch(`/api/search?${detailEndpoint}`);
@@ -88,7 +95,7 @@ async function loadChoixDuJour() {
     if (director) {
       item.director = director;
       renderChoixDuJour(item);
-      localStorage.setItem(CHOIX_DU_JOUR_KEY, JSON.stringify({ date: todayKey, mediaType: discoverMediaType, movie: item }));
+      localStorage.setItem(cacheKey, JSON.stringify({ date: todayKey, movie: item }));
     }
   } catch (e) {
     console.warn('Impossible de charger le choix du jour', e);

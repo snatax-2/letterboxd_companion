@@ -57,11 +57,21 @@ export default async function handler(req, res) {
       // très récentes). La graine (nombre de jours depuis epoch, envoyée par
       // le client) rend le tirage STABLE pour la journée sur tous les
       // appareils, sans état côté serveur — voir _seededPick.js.
+      //
+      // Bug corrigé (signalé par l'utilisateur : "ça change 2 à 3 fois par
+      // jour") : le tri était fait par popularity.desc — une donnée TMDb
+      // qui bouge en continu au fil de la journée (visionnages/recherches
+      // dans le monde entier). Même graine, même page, même index, mais si
+      // le CLASSEMENT sous-jacent a bougé entre deux consultations, ce
+      // n'est plus le même film à cette position. "Même position = même
+      // film" n'est vrai que si le classement est figé — la date de
+      // sortie, elle, ne change jamais dans la journée.
       const seed = parseInt(dailyPick, 10) || 0;
       const PAGE_SIZE = 20;
       const { page, index } = seededPageAndIndex(seed, 200, PAGE_SIZE);
+      const dateField = tmdbMediaType === 'tv' ? 'first_air_date' : 'primary_release_date';
       const discoverRes = await fetch(
-        `https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=100&page=${page}`
+        `https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=${dateField}.desc&vote_count.gte=100&page=${page}`
       );
       const discoverData = await discoverRes.json();
       const results = (discoverData.results || []).filter(m => m.poster_path);

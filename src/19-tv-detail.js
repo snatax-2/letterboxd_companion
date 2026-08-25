@@ -601,6 +601,22 @@ tdsEl.addEventListener('click', async (e) => {
   const retryBtn = e.target.closest('[data-retry-tv-id]');
   if (retryBtn) { openTvDetailSheet(retryBtn.dataset.retryTvId); return; }
 
+  // Bug corrigé (signalé par l'utilisateur : "impossible de déplier le
+  // synopsis") : le bouton existait et s'affichait correctement quand le
+  // texte débordait (voir setupTdsOverviewToggle() plus haut), mais rien
+  // n'écoutait jamais son clic — jamais câblé, contrairement à la fiche
+  // film qui a ce même mécanisme depuis le début. Même logique reprise
+  // telle quelle (mds-overview-toggle, 12-movie-detail.js) : la classe CSS
+  // .expanded est générique (pas scopée à un id précis), donc déjà
+  // fonctionnelle ici sans rien changer côté styles.css.
+  const tdsOverviewToggle = e.target.closest('#tds-overview-toggle');
+  if (tdsOverviewToggle) {
+    const overview = document.getElementById('tds-overview');
+    const expanded = overview.classList.toggle('expanded');
+    tdsOverviewToggle.textContent = expanded ? 'Réduire ▴' : 'Lire la suite ▾';
+    return;
+  }
+
   const posterChangeBtn = e.target.closest('.mds-poster-change-btn[data-tv-poster-picker]');
   if (posterChangeBtn) { openPosterPicker(posterChangeBtn.dataset.tvPosterPicker, 'tv'); return; }
 
