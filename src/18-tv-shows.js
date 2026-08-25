@@ -1390,14 +1390,24 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
   const seasonKey = btn.dataset.seasonKey;
   const episodeNumber = Number(btn.dataset.episode);
 
-  const seasonEntry = await mutateTvShows(shows => {
+  const result = await mutateTvShows(shows => {
     const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
     if (!showEntry) return null;
     const se = showEntry.seasons[seasonKey];
     if (!se.watchedEpisodes.includes(episodeNumber)) se.watchedEpisodes.push(episodeNumber);
-    return se;
+    // Bug corrigé (signalé par l'utilisateur : "je dois relancer l'app pour
+    // valider l'épisode suivant", confirmé par une vraie erreur console —
+    // "showEntry is not defined") : cette mutation ne renvoyait que la
+    // saison (seasonEntry), pas la série elle-même — mais le code juste
+    // après avait besoin des DEUX pour résoudre l'épisode suivant
+    // (resolveNextTvEpisode() attend un show complet, pas juste son id).
+    // showEntry n'existe qu'à L'INTÉRIEUR de cette fonction (portée perdue
+    // dès qu'elle se termine) ; il fallait le faire remonter avec le
+    // retour, pas y accéder après coup comme s'il était encore visible.
+    return { showEntry, seasonEntry: se };
   });
-  if (!seasonEntry) return;
+  if (!result) return;
+  const { showEntry, seasonEntry } = result;
   if (typeof statsDirty !== 'undefined') statsDirty = true;
   maybeShowSeasonCompleteBanner(showId, seasonKey, seasonEntry);
 
