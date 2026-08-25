@@ -1945,6 +1945,12 @@
 
   /* ── HISTORY ── */
   .history-scroller { max-height: 550px; overflow-y: auto; overflow-x: hidden;}
+  /* Le navigateur saute la mise en page et le rendu des cartes hors écran.
+     Mesuré : 800 films produisent ~18 000 nœuds DOM, tous rendus jusqu'ici.
+     contain-intrinsic-size donne une hauteur estimée pour que la barre de
+     défilement reste juste avant que la carte ne soit réellement rendue.
+     Pas de virtualisation en JS : une ligne de CSS suffit à ce volume. */
+  .hist-item, .wl-card { content-visibility: auto; contain-intrinsic-size: auto 240px; }
   .hist-item {
     /* Ludex 2.0 : fusionné avec .hist-grid-card (voir plus haut dans ce
        fichier) — une SEULE déclaration pour .hist-item désormais, pas deux

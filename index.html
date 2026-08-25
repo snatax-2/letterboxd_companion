@@ -45,7 +45,6 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Caveat:wght@400;600;700&family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Fragment+Mono:ital@0;1&family=Fraunces:ital,wght@0,600;1,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Martian+Mono:wght@400;600;700&family=Oswald:wght@400;600;700&family=Poppins:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Syne:wght@400;700;800&family=Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400&family=Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
 <link rel="stylesheet" href="styles.min.css">
 </head>
 <body>
@@ -60,6 +59,37 @@
 // couleurs dupliquée ici volontairement (pas d'accès aux variables CSS du
 // thème à ce stade, la feuille de style externe n'a pas encore fini de
 // charger) : seulement fond + accent, pas besoin de plus pour ce court instant.
+// ─── Polices : uniquement celles du thème actif ───────────────────────────
+// Avant, un unique <link> demandait 21 familles à Google Fonts, en bloquant
+// le rendu. Or un thème n'en utilise que 3 ou 4 : les autres étaient
+// téléchargées pour des thèmes que l'utilisateur n'a pas choisis, et le
+// premier affichage dépendait de la latence du CDN Google.
+// (Archivo Black, Cormorant Garamond et Ubuntu Mono y figuraient sans être
+// utilisées nulle part — elles ont disparu avec.)
+// Les specs de graisses/italiques sont reprises telles quelles de l'ancien lien.
+var THEME_FONTS = {
+  default:     ['Fraunces:ital,wght@0,600;1,600', 'Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400', 'IBM+Plex+Mono:wght@400;500;600'],
+  carnet:      ['Special+Elite', 'Lora:ital,wght@0,400;0,500;0,600;0,700;1,400', 'Courier+Prime:ital,wght@0,400;0,700;1,400', 'Caveat:wght@400;600;700'],
+  filmnoir:    ['Cinzel:wght@400;700;900', 'Inter:wght@400;600;700', 'Space+Mono:ital,wght@0,400;0,700;1,400'],
+  cinephile:   ['Poppins:wght@400;500;600;700;800', 'Fragment+Mono:ital@0;1'],
+  moderne:     ['Syne:wght@400;700;800', 'DM+Sans:ital,wght@0,400;0,500;0,700;1,400', 'Martian+Mono:wght@400;600;700'],
+  technicolor: ['Oswald:wght@400;600;700', 'Inter:wght@400;600;700', 'JetBrains+Mono:wght@400;600;700'],
+};
+// Titillium Web sert à l'écran de démarrage et aux vignettes de thème dans
+// Réglages : elle est nécessaire quel que soit le thème.
+var BASE_FONTS = ['Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400'];
+var loadedFontSets = {};
+window.loadThemeFonts = function (theme) {
+  if (loadedFontSets[theme]) return;          // déjà chargé : ne rien refaire
+  loadedFontSets[theme] = true;
+  var fams = BASE_FONTS.concat(THEME_FONTS[theme] || THEME_FONTS.default);
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?' +
+    fams.map(function (f) { return 'family=' + f; }).join('&') + '&display=swap';
+  document.head.appendChild(link);
+};
+
 (function themeSplash() {
   try {
     var settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
@@ -76,6 +106,7 @@
       moderne:   { bg: '#F9F6F0', accent: '#1E5AA8' },
       technicolor: { bg: '#101425', accent: '#DF2935' },
     };
+    window.loadThemeFonts(theme);
     var p = palettes[theme] || palettes.default;
     var bg = p.bg;
     var splash = document.getElementById('app-splash');
