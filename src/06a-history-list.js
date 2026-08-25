@@ -265,7 +265,11 @@ function renderHistory() {
   // vedette demandent explicitement plus, via un remplacement de segment
   // dans l'URL d\u00e9j\u00e0 stock\u00e9e (aucune migration de donn\u00e9es n\u00e9cessaire,
   // fonctionne aussi sur les films not\u00e9s avant ce changement).
-  const POSTER_SIZE_BY_TIER = { pair: 'w342', isolated: 'w342', banner: 'w500' };
+  // Ludex 2.0 : "normal" ajouté à w342 (au lieu de w185, implicite avant) —
+  // la grille affiche ces cartes à ~110-130px, w185 manquait de netteté sur
+  // un écran haute densité. Même correctif que la Watchlist (08-watchlist.js),
+  // pour rester cohérent entre les deux grilles.
+  const POSTER_SIZE_BY_TIER = { normal: 'w342', pair: 'w342', isolated: 'w342', banner: 'w500' };
 
   container.innerHTML = '';
   let flatIndex = 0; // pour le d\u00e9lai de cascade \u2014 continu \u00e0 travers tous les groupes, pas remis \u00e0 z\u00e9ro \u00e0 chaque mois

@@ -739,8 +739,10 @@ function renderTvShowCard(show, tier) {
   // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
   // substitution de chaîne comme côté films. Même correspondance palier→
   // taille que renderHistory() (06a-history-list.js), gardée cohérente.
-  const POSTER_SIZE_BY_TIER = { pair: 'w342', isolated: 'w342', banner: 'w500' };
-  const posterUrl = tmdbImage(show.poster_path, POSTER_SIZE_BY_TIER[tier] || 'w154');
+  // Ludex 2.0 : palier "normal" passé à w342 (au lieu de w154, le repli
+  // implicite avant) — même raisonnement que côté films.
+  const POSTER_SIZE_BY_TIER = { normal: 'w342', pair: 'w342', isolated: 'w342', banner: 'w500' };
+  const posterUrl = tmdbImage(show.poster_path, POSTER_SIZE_BY_TIER[tier] || 'w342');
 
   const imgHtml = posterUrl
     ? `<img class="hist-grid-poster" src="${posterUrl}" alt="Affiche de ${escAttr(show.title)}" loading="lazy" decoding="async">`

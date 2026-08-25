@@ -357,8 +357,12 @@ function renderWatchlist() {
       div.classList.add('wl-card-entering');
     }
 
-    const posterHtml = item.poster
-      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+    // Ludex 2.0 : remplace la taille dans l'URL deja enregistree pour les
+    // items ajoutes avant ce correctif (retroactif, comme pour les cartes
+    // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
+    const posterSrc = item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
+    const posterHtml = posterSrc
+      ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
@@ -494,7 +498,10 @@ async function addToSpecificWatchlist(movie, year, listId) {
   list.unshift({
     title: movie.title,
     year,
-    poster: tmdbImage(movie.poster_path, 'w185'),
+    // Ludex 2.0 : w342 (au lieu de w185) -- la grille affiche ces cartes
+    // a ~110-130px, w185 manquait de nettete sur un ecran haute densite.
+    // Meme saut deja fait pour les cartes vedettes de l'Historique.
+    poster: tmdbImage(movie.poster_path, 'w342'),
     genre,
     rating,
     runtime,
@@ -969,8 +976,12 @@ function renderTvWatchlist() {
     if (window._justSavedTvWatchlistTitle && item.title.toLowerCase() === window._justSavedTvWatchlistTitle) {
       div.classList.add('wl-card-entering');
     }
-    const posterHtml = item.poster
-      ? `<div class="wl-poster"><img src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
+    // Ludex 2.0 : remplace la taille dans l'URL deja enregistree pour les
+    // items ajoutes avant ce correctif (retroactif, comme pour les cartes
+    // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
+    const posterSrc = item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
+    const posterHtml = posterSrc
+      ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
     div.innerHTML = `
       <div class="wl-card-content">
@@ -1042,7 +1053,7 @@ async function addToTvWatchlist(show, year) {
   list.unshift({
     title: show.name,
     year,
-    poster: tmdbImage(show.poster_path, 'w185'),
+    poster: tmdbImage(show.poster_path, 'w342'),
     genre,
     rating,
     tmdbId: show.id,
