@@ -31,6 +31,17 @@ document.getElementById('tv-heart-btn')?.addEventListener('click', async () => {
     const show = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
     if (!show) return undefined; // signale "série pas encore suivie" à l'appelant, sans rien modifier
     show.liked = !show.liked;
+    // Ludex 2.0 : horodatage du dernier changement — bug corrigé (signalé
+    // par l'utilisateur : "je décoche un coup de cœur, ça revient tout
+    // seul quelques instants après"). La fusion cloud (mergeTvShows,
+    // 03b-pure-logic.js) appliquait jusqu'ici "un true de n'importe quel
+    // côté l'emporte", en l'absence de tout horodatage pour trancher —
+    // un choix qui semblait sans conséquence en le posant, mais qui
+    // ressuscitait le coup de cœur depuis une copie cloud pas encore à
+    // jour dès que la synchro automatique (toutes les 45s) tombait juste
+    // après un décochage. Avec cette date, la fusion peut désormais
+    // garder le changement le plus RÉCENT plutôt qu'un true aveugle.
+    show.likedAt = new Date().toISOString();
     return show.liked;
   });
   if (liked === undefined) { showToast('Commence à suivre cette série avant de la marquer comme coup de cœur.'); return; }

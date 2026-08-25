@@ -89,6 +89,32 @@ describe('mergeTvShows', () => {
     assert.equal(result[0].liked, false);
   });
 
+  // Régression : le vrai bug signalé par l'utilisateur — décocher un coup
+  // de cœur puis le voir revenir tout seul quelques instants après (le
+  // temps qu'une synchro automatique tombe pile après le décochage). La
+  // copie distante, pas encore au courant du décochage, redevenait
+  // silencieusement la copie qui gagne à cause de la règle "true gagne
+  // toujours". Corrigé en faisant trancher par la date du changement le
+  // plus récent (show.likedAt) plutôt qu'un true aveugle.
+  test('decocher un coup de coeur recent l\'emporte sur un remote pas encore synchronise', () => {
+    const local = [{ tmdbTvId: 1, title: 'A', liked: false, likedAt: '2026-03-10T12:00:00.000Z', seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }];
+    const remote = [{ tmdbTvId: 1, title: 'A', liked: true, likedAt: '2026-03-09T08:00:00.000Z', seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }];
+    const result = mergeTvShows(local, remote, [], []);
+    assert.equal(result[0].liked, false);
+  });
+  test('a l\'inverse, un remote plus recent l\'emporte sur un local perime', () => {
+    const local = [{ tmdbTvId: 1, title: 'A', liked: true, likedAt: '2026-03-01T00:00:00.000Z', seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }];
+    const remote = [{ tmdbTvId: 1, title: 'A', liked: false, likedAt: '2026-03-15T00:00:00.000Z', seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }];
+    const result = mergeTvShows(local, remote, [], []);
+    assert.equal(result[0].liked, false);
+  });
+  test('un cote avec horodatage l\'emporte sur un cote sans (donnee ancienne jamais touchee depuis)', () => {
+    const local = [{ tmdbTvId: 1, title: 'A', liked: false, likedAt: '2026-03-10T12:00:00.000Z', seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }];
+    const remote = [{ tmdbTvId: 1, title: 'A', liked: true, seasons: { '1': { seasonName: 'S1', watchedEpisodes: [1], totalEpisodes: 1 } } }]; // pas de likedAt du tout
+    const result = mergeTvShows(local, remote, [], []);
+    assert.equal(result[0].liked, false);
+  });
+
   // Régression : vérifie qu'une saison DÉJÀ notée n'est jamais perdue
   // quand une AUTRE saison de la même série est fusionnée ensuite
   // (signalé : "la note de la saison précédente disparaît" — non

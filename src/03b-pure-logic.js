@@ -105,18 +105,30 @@ function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
       // champ n'existait pas encore quand cette fonction de fusion a été
       // écrite, jamais mis à jour depuis. `!!` normalise undefined/absent
       // en false plutôt que de laisser passer une valeur bizarre.
-      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, liked: !!show.liked, seasons: {} });
+      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, liked: !!show.liked, likedAt: show.likedAt || '', seasons: {} });
     }
     const target = byId.get(key);
     if (show.title) target.title = show.title;
     if (show.poster_path) target.poster_path = show.poster_path;
     if (show.genre) target.genre = show.genre;
-    // Un `true` de n'importe quel côté l'emporte plutôt qu'un simple
-    // "dernier arrivé écrase" — aucun horodatage fiable pour trancher
-    // "coup de cœur" comme pour les notes (voir plus bas), et redevenir
-    // liked=true après l'avoir DÉCOCHÉ n'est pas un vrai souci pratique,
-    // contrairement à le perdre alors qu'on venait de le cocher.
-    if (show.liked) target.liked = true;
+    // Bug corrigé (signalé par l'utilisateur : un coup de cœur décoché
+    // revenait tout seul après quelques instants) : "un true de n'importe
+    // quel côté l'emporte" ressuscitait un ancien liked=true depuis une
+    // copie cloud pas encore synchronisée, à chaque fois que l'auto-sync
+    // (toutes les 45s) tombait juste après un décochage. show.likedAt
+    // (voir tv-heart-btn, 18-tv-shows.js) permet maintenant de trancher
+    // par la date du changement le plus RÉCENT quand les deux côtés en
+    // ont une. Si aucun des deux n'en a (donnée antérieure à l'ajout de
+    // ce champ), repli sur l'ancien comportement "true gagne" — pour ne
+    // pas faire perdre un coup de cœur déjà posé avant ce correctif.
+    if (show.likedAt || target.likedAt) {
+      if ((show.likedAt || '') > (target.likedAt || '')) {
+        target.liked = !!show.liked;
+        target.likedAt = show.likedAt || '';
+      }
+    } else if (show.liked) {
+      target.liked = true;
+    }
 
     for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
       const existing = target.seasons[seasonKey];
