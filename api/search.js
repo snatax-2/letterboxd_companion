@@ -20,6 +20,21 @@ export default async function handler(req, res) {
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
+  // Les identifiants TMDb partent dans le CHEMIN de l'URL appelée
+  // (…/movie/${id}/recommendations). Sans validation, une valeur comme
+  // `550?api_key=…` y injecte ses propres paramètres de requête, et
+  // `550/lists` atteint un endpoint qu'on n'a jamais voulu exposer.
+  // encodeURIComponent() ne conviendrait pas ici : il échapperait les `/`
+  // légitimes d'autres usages et masquerait une entrée absurde au lieu de la
+  // refuser. Ces identifiants sont TOUS numériques — on valide, on n'encode pas.
+  // (query, tvQuery, personSearch et imdbId, eux, sont du texte libre : ils
+  // passent déjà par encodeURIComponent plus bas, ce qui est correct pour eux.)
+  const tmdbId = (value) => (/^[0-9]{1,12}$/.test(String(value)) ? String(value) : null);
+  const badId = () => {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(400).json({ error: 'Identifiant invalide.' });
+  };
+
   // Met en cache la réponse sur le CDN Vercel pendant `maxAge` secondes, et continue
   // à servir une version (légèrement) périmée jusqu'à `staleWhileRevalidate` secondes
   // pendant que Vercel va chercher une version fraîche en arrière-plan.
@@ -113,8 +128,10 @@ export default async function handler(req, res) {
     } else if (personId) {
       // Cas 7 : Fiche personne (réalisateur/acteur) — biographie + filmographie
       // complète (cast + équipe technique) en un seul appel TMDb.
+      const safePersonId = tmdbId(personId);
+      if (!safePersonId) return badId();
       const personRes = await fetch(
-        `https://api.themoviedb.org/3/person/${encodeURIComponent(personId)}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=movie_credits`
+        `https://api.themoviedb.org/3/person/${safePersonId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=movie_credits`
       );
       const personData = await personRes.json();
       setCache(86400, 172800); // 24h : une bio/filmographie change rarement d'un jour à l'autre
@@ -167,8 +184,10 @@ export default async function handler(req, res) {
       // Cas 5 : Recommandations basées sur un film ou une série spécifique —
       // mediaType='tv' bascule vers l'endpoint séries (utilisé par le
       // carrousel "D'après ton historique" quand le toggle Séries est actif).
+      const safeId = tmdbId(id);
+      if (!safeId) return badId();
       const recRes = await fetch(
-        `https://api.themoviedb.org/3/${tmdbMediaType}/${id}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/${tmdbMediaType}/${safeId}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const recData = await recRes.json();
       setCache(43200, 604800); // 12h, revalidation jusqu'à 7 jours
@@ -178,8 +197,10 @@ export default async function handler(req, res) {
       // Cas 3 : Watch providers pour un film OU une série, filtrés par
       // région (ex: BE) — mediaType='tv' bascule vers l'endpoint séries,
       // même paramètre déjà utilisé ailleurs dans ce fichier.
+      const safeId = tmdbId(id);
+      if (!safeId) return badId();
       const provRes = await fetch(
-        `https://api.themoviedb.org/3/${tmdbMediaType}/${id}/watch/providers?api_key=${TMDB_KEY}`
+        `https://api.themoviedb.org/3/${tmdbMediaType}/${safeId}/watch/providers?api_key=${TMDB_KEY}`
       );
       const provData = await provRes.json();
       // Retourner uniquement la région demandée pour alléger la réponse
@@ -198,8 +219,10 @@ export default async function handler(req, res) {
       // d'affiche par l'utilisateur). include_image_language ratisse le
       // français, l'anglais ET les affiches sans texte (null) — les plus
       // belles variantes sont souvent dans cette dernière catégorie.
+      const safeImagesId = tmdbId(images);
+      if (!safeImagesId) return badId();
       const imagesRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${images}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
+        `https://api.themoviedb.org/3/movie/${safeImagesId}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
       );
       const imagesData = await imagesRes.json();
       // Ne renvoie que l'essentiel (chemins + langue), trié par note TMDb,
@@ -213,8 +236,10 @@ export default async function handler(req, res) {
     } else if (tvImages) {
       // Cas série du même choix d'affiche que les films (voir "images"
       // juste au-dessus) — même logique, juste /tv/ au lieu de /movie/.
+      const safeTvImagesId = tmdbId(tvImages);
+      if (!safeTvImagesId) return badId();
       const tvImagesRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${tvImages}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
+        `https://api.themoviedb.org/3/tv/${safeTvImagesId}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
       );
       const tvImagesData = await tvImagesRes.json();
       const tvPosters = (tvImagesData.posters || [])
@@ -227,8 +252,10 @@ export default async function handler(req, res) {
       // Cas : détails d'une série + liste de ses saisons (Phase 1 du
       // suivi séries — recherche + sélection de saison uniquement, le
       // détail épisode par épisode viendra en Phase 2, pas encore ici).
+      const safeTvId = tmdbId(tvId);
+      if (!safeTvId) return badId();
       const tvRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${tvId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids`
+        `https://api.themoviedb.org/3/tv/${safeTvId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids`
       );
       const tvData = await tvRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
@@ -239,8 +266,11 @@ export default async function handler(req, res) {
       // épisode par épisode). Deux paramètres nécessaires (l'ID de la
       // série ET le numéro de saison), TMDb n'expose pas cette liste
       // autrement que via cette combinaison dans l'URL.
+      const safeShowId = tmdbId(tvSeasonShowId);
+      const safeSeasonNo = tmdbId(tvSeasonNumber);
+      if (!safeShowId || !safeSeasonNo) return badId();
       const seasonRes = await fetch(
-        `https://api.themoviedb.org/3/tv/${tvSeasonShowId}/season/${tvSeasonNumber}?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/tv/${safeShowId}/season/${safeSeasonNo}?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const seasonData = await seasonRes.json();
       setCache(21600, 604800); // 6h — une liste d'épisodes ne change plus une fois la saison sortie
@@ -415,8 +445,10 @@ export default async function handler(req, res) {
       // réalisateur) — TMDb a un vrai concept de "collection" nativement,
       // déjà présent dans belongs_to_collection sur chaque fiche film (pas
       // besoin de le construire à la main comme les listes prédéfinies).
+      const safeCollectionId = tmdbId(collectionId);
+      if (!safeCollectionId) return badId();
       const collectionRes = await fetch(
-        `https://api.themoviedb.org/3/collection/${collectionId}?api_key=${TMDB_KEY}&language=fr-FR`
+        `https://api.themoviedb.org/3/collection/${safeCollectionId}?api_key=${TMDB_KEY}&language=fr-FR`
       );
       const collectionData = await collectionRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
@@ -424,8 +456,10 @@ export default async function handler(req, res) {
 
     } else if (id) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
+      const safeId = tmdbId(id);
+      if (!safeId) return badId();
       const detailsRes = await fetch(
-        `https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids&include_video_language=fr,en,null`
+        `https://api.themoviedb.org/3/movie/${safeId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids&include_video_language=fr,en,null`
       );
       const detailsData = await detailsRes.json();
       setCache(21600, 604800); // 6h, revalidation jusqu'à 7 jours (infos très stables)

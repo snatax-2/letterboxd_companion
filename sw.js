@@ -49,6 +49,18 @@ self.addEventListener('fetch', (event) => {
   // Seules les requêtes GET sont mises en cache.
   if (request.method !== 'GET') return;
 
+  // Ne jamais intercepter une requête vers un AUTRE domaine (affiches TMDb,
+  // vignettes YouTube, polices Google). Deux raisons :
+  //  1. Ré-émettre la requête depuis le service worker la transforme en
+  //     `connect-src` du point de vue de la CSP, au lieu du `img-src` qu'elle
+  //     est réellement — toutes les affiches disparaissaient avec un
+  //     "Refused to connect" pointant sur cette ligne.
+  //  2. Ces réponses sont opaques : les mettre en cache faisait grossir le
+  //     cache sans limite, sans qu'on puisse jamais vérifier leur validité.
+  // Laissées au navigateur, elles suivent leur cache HTTP normal (les images
+  // TMDb sont servies en `immutable`, c'est déjà optimal).
+  if (new URL(request.url).origin !== self.location.origin) return;
+
   event.respondWith(
     fetch(request)
       .then((response) => {

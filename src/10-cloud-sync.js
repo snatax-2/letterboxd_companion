@@ -39,6 +39,58 @@ const syncCodeInput = document.getElementById('setting-sync-code');
 const syncSaveBtn = document.getElementById('sync-save-btn');
 const syncRestoreBtn = document.getElementById('sync-restore-btn');
 const syncStatusEl = document.getElementById('sync-status');
+const syncGenerateBtn = document.getElementById('sync-generate-btn');
+const syncCopyBtn = document.getElementById('sync-copy-btn');
+const syncCodeWarningEl = document.getElementById('sync-code-warning');
+
+// ─── Force du code de synchronisation ───────────────────────────────────────
+// Le code est un JETON PORTEUR : le connaître suffit à lire ET à écraser
+// l'historique complet. Il n'y a pas de mot de passe en plus — c'est le code
+// lui-même qui doit être impossible à deviner.
+//
+// L'ancien exemple proposé dans le champ ("mon-code-secret") invitait
+// justement au contraire : un code court et mémorisable ("dario", "films")
+// se teste en quelques secondes. Le serveur refuse désormais les codes courts
+// à la CRÉATION (voir MIN_NEW_CODE_LENGTH dans api/sync.js) ; ici on donne le
+// moyen d'en obtenir un bon en un clic, et on prévient tant qu'un code faible
+// est encore en place.
+const SYNC_CODE_MIN_SAFE_LENGTH = 16;
+// Alphabet sans caractères ambigus (ni 0/O, ni 1/l/I) : un code se recopie à
+// la main d'un appareil à l'autre, autant éviter les confusions de lecture.
+const SYNC_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'; // 55 caractères
+const SYNC_CODE_LENGTH = 26; // 26 × log2(55) ≈ 150 bits
+
+function generateSyncCode() {
+  const n = SYNC_CODE_ALPHABET.length;
+  // 255 n'est pas un multiple de 55 : un simple `octet % 55` rendrait les
+  // premiers caractères de l'alphabet légèrement plus probables. On rejette
+  // les octets de la tranche incomplète (tirage par rejet) — le coût est nul
+  // à cette échelle, et la distribution reste exactement uniforme.
+  const limit = Math.floor(256 / n) * n; // 220 pour n = 55
+  let out = '';
+  const buf = new Uint8Array(1);
+  while (out.length < SYNC_CODE_LENGTH) {
+    crypto.getRandomValues(buf); // jamais Math.random() pour un secret
+    if (buf[0] < limit) out += SYNC_CODE_ALPHABET[buf[0] % n];
+  }
+  return out;
+}
+
+function isWeakSyncCode(code) {
+  return !!code && code.length < SYNC_CODE_MIN_SAFE_LENGTH;
+}
+
+function refreshSyncCodeWarning() {
+  if (!syncCodeWarningEl) return;
+  const code = (syncCodeInput.value || '').trim();
+  if (isWeakSyncCode(code)) {
+    syncCodeWarningEl.textContent =
+      'Ce code est trop court : quelqu\'un pourrait le deviner et lire ou écraser tes données. Génère un code sûr, puis recopie-le sur tes autres appareils.';
+    syncCodeWarningEl.style.display = 'block';
+  } else {
+    syncCodeWarningEl.style.display = 'none';
+  }
+}
 
 function getSyncCode() {
   return (localStorage.getItem(SYNC_CODE_KEY) || '').trim();
@@ -224,8 +276,17 @@ function currentLocalSnapshot() {
   };
 }
 
+// Le code voyage dans un EN-TÊTE, plus dans l'URL : une query string finit
+// dans les journaux d'accès du serveur, dans les caches CDN et dans le
+// Referer — mauvais endroits pour ce qui tient lieu de mot de passe.
+// api/sync.js accepte encore ?code= en repli, le temps que les service
+// workers servant une ancienne version de app.js soient remplacés.
+function syncHeaders(code, extra = {}) {
+  return { 'X-Sync-Code': code, ...extra };
+}
+
 async function fetchCloudPayload(code) {
-  const res = await fetch(`/api/sync?code=${encodeURIComponent(code)}`);
+  const res = await fetch('/api/sync', { headers: syncHeaders(code) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'bad status');
   return data.found ? data.payload : null;
@@ -260,9 +321,9 @@ async function pushToCloud(silent = false) {
     const remotePayload = await fetchCloudPayload(code);
     const merged = mergeWithRemote(remotePayload);
 
-    const res = await fetch(`/api/sync?code=${encodeURIComponent(code)}`, {
+    const res = await fetch('/api/sync', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: syncHeaders(code, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(merged),
     });
     if (!res.ok) {
@@ -316,11 +377,55 @@ async function pullFromCloud() {
 // Pré-remplit le champ code + affiche le statut à chaque ouverture de la modale réglages
 document.getElementById('settings-btn').addEventListener('click', () => {
   syncCodeInput.value = getSyncCode();
+  refreshSyncCodeWarning();
   const lastTime = localStorage.getItem(SYNC_LAST_TIME_KEY);
   setSyncStatus(lastTime ? `Dernière synchronisation : ${formatDateTime(lastTime)}` : '');
 });
 
 syncCodeInput.addEventListener('change', () => setSyncCode(syncCodeInput.value));
+syncCodeInput.addEventListener('input', refreshSyncCodeWarning);
+
+// Générer : on ne remplace jamais un code existant sans confirmation — le
+// perdre, c'est perdre l'accès aux données déjà sauvegardées sous ce code.
+if (syncGenerateBtn) {
+  syncGenerateBtn.addEventListener('click', () => {
+    const apply = () => {
+      const fresh = generateSyncCode();
+      syncCodeInput.value = fresh;
+      setSyncCode(fresh);
+      refreshSyncCodeWarning();
+      setSyncStatus('Nouveau code généré. Copie-le et colle-le sur tes autres appareils, puis sauvegarde.');
+      syncCodeInput.focus();
+      syncCodeInput.select();
+    };
+    if (getSyncCode()) {
+      openModal(
+        'Remplacer le code de synchronisation ?',
+        'Tes données déjà sauvegardées sous l\'ancien code resteront accessibles avec CE code uniquement. Note-le quelque part avant de continuer si tu en as besoin.',
+        apply
+      );
+    } else {
+      apply();
+    }
+  });
+}
+
+if (syncCopyBtn) {
+  syncCopyBtn.addEventListener('click', async () => {
+    const code = (syncCodeInput.value || '').trim();
+    if (!code) { setSyncStatus('Aucun code à copier.', true); return; }
+    try {
+      await navigator.clipboard.writeText(code);
+      showToast('Code de synchronisation copié.');
+    } catch {
+      // Presse-papiers refusé (contexte non sécurisé, permission) : on
+      // sélectionne le champ pour que la copie manuelle reste possible.
+      syncCodeInput.focus();
+      syncCodeInput.select();
+      setSyncStatus('Copie automatique impossible — le code est sélectionné, copie-le à la main.', true);
+    }
+  });
+}
 
 syncSaveBtn.addEventListener('click', () => {
   setSyncCode(syncCodeInput.value);

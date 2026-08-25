@@ -70,7 +70,12 @@
        héritée de l'ancien thème "Méridien", retiré. Le lie-de-vin reste
        rare — fonds d'affiche et dégradés, jamais un accent interactif. */
     --bg: #0E1116; --surface: #181C22; --surface2: #212B38; --border: #2A3340;
-    --border-hi: #3D4A5C; --text: #8A90A0; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
+    /* --text éclairci de #8A90A0 à #8F95A5 : 4.48:1 seulement sur --surface2,
+       juste sous le seuil AA — trouvé par axe-core sur le badge de comptage de
+       l'Historique ("6 films · 0 série"), qui est le seul endroit où --text se
+       pose sur la surface la plus claire. La nouvelle valeur passe partout :
+       6.31:1 sur --bg, 5.71:1 sur --surface, 4.78:1 sur --surface2. */
+    --border-hi: #3D4A5C; --text: #8F95A5; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
     --orange: #C89B3C; --gold: #C89B3C; --blue: #C89B3C; --red: #8B2E2E; --green: #7C8B6F;
     /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
        de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
@@ -2915,6 +2920,18 @@
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
   
   .settings-label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-heading); }
+  /* Avertissement "code de synchronisation trop court". Volontairement discret
+     (pas un bandeau d'erreur bloquant) : l'ancien code continue de fonctionner,
+     on signale un risque, on n'interdit rien. Couleurs prises aux tokens du
+     thème pour rester lisible sur les 6 palettes. */
+  .sync-code-warning {
+    margin-bottom: 10px; padding: 8px 10px;
+    border-left: 3px solid var(--red);
+    background: color-mix(in srgb, var(--red) 12%, transparent);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem; line-height: 1.45; color: var(--text-hi);
+    font-family: var(--font-body);
+  }
   .error-log-section {
     margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);
   }

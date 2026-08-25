@@ -2,6 +2,32 @@
 // dans une table Supabase, identifiée par un "code de synchronisation" choisi par l'utilisateur
 // (pas de vrai compte/authentification : app personnelle, un code = un jeu de données).
 //
+// ── MODÈLE DE SÉCURITÉ (revu) ─────────────────────────────────────────────
+// Le code de synchronisation est un JETON PORTEUR : le connaître donne accès
+// aux données, comme un lien de partage secret. Deux propriétés le rendent
+// tenable, là où la version précédente n'en avait aucune :
+//
+// 1. IL N'EST PAS DEVINABLE. Un nouveau code doit faire au moins
+//    MIN_NEW_CODE_LENGTH caractères — le client en génère un aléatoire de 26
+//    caractères (~130 bits). Avant, 4 caractères suffisaient : n'importe qui
+//    pouvait tester "films", "dario", "test" et lire — ou écraser —
+//    l'historique complet de quelqu'un.
+//
+// 2. IL N'EST JAMAIS STOCKÉ EN CLAIR. La ligne Supabase est indexée par
+//    sha256(code), pas par le code lui-même. Une fuite de la base ne donne
+//    donc aucun code utilisable. Aucune migration SQL n'est nécessaire : la
+//    colonne `sync_code` est déjà du texte, elle contient maintenant un hash.
+//
+// Le code voyage désormais dans l'en-tête X-Sync-Code plutôt que dans l'URL
+// (les query strings finissent dans les journaux d'accès et les caches CDN).
+// Le paramètre ?code= reste accepté en repli : un utilisateur dont le service
+// worker sert encore une ancienne version de app.js continue de fonctionner.
+//
+// Codes hérités : une ligne créée avant ce changement est indexée par le code
+// en clair. Elle reste lisible (repli explicite ci-dessous) et migre vers sa
+// forme hachée à la première écriture, l'ancienne ligne étant alors supprimée
+// — sinon un code faible comme "dario" continuerait d'exposer les données.
+//
 // Variables d'environnement nécessaires (à définir dans Vercel + .env local) :
 //   SUPABASE_URL          -> ex: https://xxxxx.supabase.co
 //   SUPABASE_SERVICE_KEY  -> clé "service_role" (Supabase > Settings > API)
@@ -16,14 +42,36 @@
 //     updated_at timestamptz not null default now()
 //   );
 
+import { createHash } from 'node:crypto';
 import { rateLimit } from './_rateLimit.js';
 
 const TABLE = 'ludex_sync';
+
+// Longueur minimale d'un code NOUVEAU. Les codes déjà en base sont exemptés
+// (voir plus bas) : imposer la règle rétroactivement couperait l'utilisateur
+// de ses propres données, ce qui serait pire que le risque qu'on corrige.
+const MIN_NEW_CODE_LENGTH = 16;
 
 function isValidCode(code) {
   // Lettres, chiffres, tirets/underscores, 4 à 64 caractères : évite les codes
   // vides, absurdement longs, ou contenant des caractères à risque.
   return typeof code === 'string' && /^[a-zA-Z0-9_-]{4,64}$/.test(code);
+}
+
+// Identifiant réellement stocké en base. Le code en clair ne quitte jamais
+// cette fonction.
+function storageKey(code) {
+  return createHash('sha256').update(code, 'utf8').digest('hex');
+}
+
+// En-tête d'abord (le code n'apparaît alors ni dans les journaux d'accès ni
+// dans les caches CDN), query string en repli pour les clients pas encore
+// rechargés.
+function readCode(req) {
+  const fromHeader = req.headers?.['x-sync-code'];
+  if (typeof fromHeader === 'string' && fromHeader.trim()) return fromHeader.trim();
+  const fromQuery = req.query?.code; // `?.` : req.query n'est pas garanti hors Vercel
+  return typeof fromQuery === 'string' ? fromQuery.trim() : undefined;
 }
 
 export default async function handler(req, res) {
@@ -34,11 +82,15 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
+  const code = readCode(req);
+
   // Limite par code de synchronisation (indépendamment de l'IP) : empêche de
   // marteler/deviner un code précis en le testant rapidement depuis plusieurs IP.
-  const codeForLimit = req.query.code;
-  if (typeof codeForLimit === 'string') {
-    if (!rateLimit(req, res, { name: 'sync-code', limit: 20, windowMs: 60_000, identifier: codeForLimit })) {
+  // Défense secondaire seulement — le compteur vit en mémoire d'instance et ne
+  // résiste pas à un serverless réparti (voir _rateLimit.js). C'est l'entropie
+  // du code qui protège réellement, pas cette limite.
+  if (typeof code === 'string' && code) {
+    if (!rateLimit(req, res, { name: 'sync-code', limit: 20, windowMs: 60_000, identifier: storageKey(code) })) {
       res.setHeader('Cache-Control', 'no-store');
       return res.status(429).json({ error: 'Trop de requêtes pour ce code, réessaie dans un instant.' });
     }
@@ -58,29 +110,43 @@ export default async function handler(req, res) {
     'Content-Type': 'application/json',
   };
 
+  // Récupère la ligne d'un code, sous sa forme hachée d'abord, puis sous sa
+  // forme héritée (code en clair). Retourne aussi SOUS QUELLE FORME elle a été
+  // trouvée, pour que l'écriture sache s'il y a une ligne héritée à nettoyer.
+  async function fetchRow(rawCode) {
+    const hashed = storageKey(rawCode);
+    for (const [key, legacy] of [[hashed, false], [rawCode, true]]) {
+      const url = `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(key)}&select=payload,updated_at`;
+      const sbRes = await fetch(url, { headers });
+      if (!sbRes.ok) throw new Error('read failed');
+      const rows = await sbRes.json();
+      if (rows.length) return { row: rows[0], legacy };
+    }
+    return { row: null, legacy: false };
+  }
+
   try {
     if (req.method === 'GET') {
-      const code = req.query.code;
       if (!isValidCode(code)) {
         res.setHeader('Cache-Control', 'no-store');
         return res.status(400).json({ error: 'Code de synchronisation invalide.' });
       }
 
-      const url = `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(code)}&select=payload,updated_at`;
-      const sbRes = await fetch(url, { headers });
-      if (!sbRes.ok) {
+      let found;
+      try {
+        found = await fetchRow(code);
+      } catch {
         res.setHeader('Cache-Control', 'no-store');
         return res.status(502).json({ error: 'Erreur de lecture cloud.' });
       }
-      const rows = await sbRes.json();
+
       res.setHeader('Cache-Control', 'no-store'); // toujours la donnée la plus fraîche
-      if (!rows.length) {
+      if (!found.row) {
         return res.status(200).json({ found: false });
       }
-      return res.status(200).json({ found: true, payload: rows[0].payload, updatedAt: rows[0].updated_at });
+      return res.status(200).json({ found: true, payload: found.row.payload, updatedAt: found.row.updated_at });
 
     } else if (req.method === 'POST') {
-      const code = req.query.code;
       if (!isValidCode(code)) {
         return res.status(400).json({ error: 'Code de synchronisation invalide.' });
       }
@@ -93,15 +159,30 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Corps de requête invalide.' });
       }
 
-      const url = `${SUPABASE_URL}/rest/v1/${TABLE}`;
-      const sbRes = await fetch(url, {
+      let existing;
+      try {
+        existing = await fetchRow(code);
+      } catch {
+        return res.status(502).json({ error: 'Erreur de lecture cloud.' });
+      }
+
+      // Un code qui n'existe nulle part est un code NEUF : c'est le seul moment
+      // où on peut exiger une vraie longueur sans couper personne de ses données.
+      if (!existing.row && code.length < MIN_NEW_CODE_LENGTH) {
+        return res.status(400).json({
+          error: `Ce code est trop court pour être sûr (${MIN_NEW_CODE_LENGTH} caractères minimum). Utilise le bouton "Générer un code sûr" dans Réglages.`,
+        });
+      }
+
+      const hashed = storageKey(code);
+      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
         method: 'POST',
         headers: {
           ...headers,
           Prefer: 'resolution=merge-duplicates,return=minimal', // upsert sur la clé primaire sync_code
         },
         body: JSON.stringify({
-          sync_code: code,
+          sync_code: hashed,
           payload: body,
           updated_at: new Date().toISOString(),
         }),
@@ -111,6 +192,22 @@ export default async function handler(req, res) {
         const errText = await sbRes.text();
         console.error('Supabase upsert error:', errText);
         return res.status(502).json({ error: "Erreur d'écriture cloud." });
+      }
+
+      // La ligne héritée (indexée par le code en clair) vient d'être recopiée
+      // sous sa forme hachée : on la supprime. La laisser signifierait qu'un
+      // code faible comme "dario" continue d'exposer les données — c'est
+      // exactement ce que ce changement corrige. Un échec ici ne doit pas faire
+      // échouer la synchro elle-même : les données sont déjà sauvegardées.
+      if (existing.legacy) {
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(code)}`, {
+            method: 'DELETE',
+            headers: { ...headers, Prefer: 'return=minimal' },
+          });
+        } catch (err) {
+          console.error('Nettoyage de la ligne héritée impossible :', err);
+        }
       }
 
       return res.status(200).json({ ok: true });
