@@ -7,8 +7,11 @@
     "build": "node scripts/build-app-js.js && npm run lint && node scripts/minify.js && node scripts/generate-sw-cache.js",
     "build:js": "node scripts/build-app-js.js",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "pretest:e2e": "node scripts/build-app-js.js",
     "test:e2e": "playwright test",
+    "precheck:load": "node scripts/build-app-js.js",
     "check:load": "node scripts/check-load.js",
+    "prelint": "node scripts/build-app-js.js",
     "lint": "eslint src api scripts app.js"
   },
   "engines": {

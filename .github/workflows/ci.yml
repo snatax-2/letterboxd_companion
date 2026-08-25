@@ -31,19 +31,13 @@ jobs:
             node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))"
           done
 
-      - name: Régénération de app.js depuis src/
+      # app.js n'est plus commité (voir .gitignore) : c'est un artefact
+      # entièrement dérivé de src/, construit ici comme sur Vercel. L'ancienne
+      # étape "Vérifie que app.js est synchronisé avec src/" n'a plus lieu
+      # d'être — c'est elle qui bloquait tout le reste du CI depuis le 13 août,
+      # parce qu'une version minifiée de app.js avait été commitée.
+      - name: Construction de app.js depuis src/
         run: node scripts/build-app-js.js
-
-      - name: Vérifie que app.js est bien synchronisé avec src/
-        run: |
-          if ! git diff --exit-code app.js; then
-            echo ""
-            echo "❌ app.js ne correspond pas au contenu de src/."
-            echo "   Un fichier a été modifié dans src/ sans relancer 'npm run build:js' avant de commit."
-            echo "   Lance 'npm run build:js' en local, puis commit le app.js régénéré."
-            exit 1
-          fi
-          echo "✓ app.js est à jour par rapport à src/"
 
       - name: Vérification de la syntaxe de tous les fichiers JavaScript
         run: |

@@ -58,7 +58,11 @@ Le fichier faisait à l'origine ~1750 lignes en un seul bloc. Le code est mainte
 npm run build:js
 ```
 
-Vercel régénère aussi `app.js` automatiquement à chaque déploiement (`npm run build`, voir `vercel.json`).
+**`app.js` n'est pas commité** (il est dans `.gitignore`) : c'est un pur artefact de build, dont le diff est par construction la somme des diffs de `src/`. Après un `git clone`, il faut donc le construire une fois avant de servir le site en local — `npm run build:js`, ou n'importe quelle commande qui en dépend (`npm run lint`, `npm run check:load`, `npm run test:e2e` le construisent automatiquement).
+
+> **Pourquoi ce choix.** `app.js` était commité, et le CI vérifiait qu'il correspondait bien à `src/`. Une version *minifiée* s'y est retrouvée commitée (via `scripts/minify-for-deploy.js`, qui minifie en place) : la vérification a échoué à chaque push pendant 12 jours, et comme les étapes suivantes du workflow en dépendaient, **le lint, les 162 tests unitaires et les 90 specs e2e ont été sautés à chaque fois**. Ne plus commiter l'artefact supprime définitivement cette classe de panne.
+
+Vercel construit `app.js` à chaque déploiement (`npm run build`, voir `vercel.json`), et le CI fait de même avant de lancer les vérifications.
 
 ### Minification (`scripts/minify.js`)
 
@@ -102,10 +106,22 @@ Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamai
    SUPABASE_SERVICE_KEY=xxxxxxxxxxxxxxxxxxxxxxxx
    ```
 5. Ajoute les **mêmes** variables dans Vercel : `Project Settings → Environment Variables` (Production + Preview + Development).
-6. Dans l'app, ouvre les réglages (⚙️) → section "Synchronisation cloud" → choisis un code (ex: un mot de passe que toi seul connais) → **Sauvegarder maintenant**.
-7. Sur un autre appareil/navigateur, ouvre les réglages, entre le **même code**, clique **Restaurer depuis le cloud**.
+6. Dans l'app, ouvre les réglages (⚙️) → section "Synchronisation cloud" → clique **Générer un code sûr** → **Copier le code** → **Sauvegarder maintenant**.
+7. Sur un autre appareil/navigateur, ouvre les réglages, colle le **même code**, clique **Restaurer depuis le cloud**.
 
 La clé `service_role` ne quitte jamais le serveur (elle est utilisée uniquement dans `api/sync.js`, jamais envoyée au navigateur) — c'est cette fonction serverless qui fait l'intermédiaire entre l'app et Supabase.
+
+### Le code de synchronisation est un secret, pas un pseudo
+
+Il n'y a pas de compte ni de mot de passe : **le code SEUL donne accès aux données**. Qui le connaît peut lire ton historique complet (films, notes, critiques écrites) et l'écraser. C'est le même modèle qu'un lien de partage secret.
+
+Trois garde-fous sont en place :
+
+- **Un nouveau code doit faire au moins 16 caractères.** Le bouton *Générer un code sûr* en produit un de 26 caractères tirés au hasard (`crypto.getRandomValues`, jamais `Math.random`). Un code court et mémorisable — `dario`, `films`, `test` — se devine en quelques secondes ; c'est précisément ce que le minimum empêche.
+- **Le code n'est jamais stocké en clair.** La ligne Supabase est indexée par `sha256(code)`. Si la base fuite, aucun code utilisable n'en sort. *Aucune migration SQL n'est nécessaire* : la colonne `sync_code` contient simplement un hash désormais.
+- **Le code voyage dans un en-tête** (`X-Sync-Code`), plus dans l'URL — une query string finit dans les journaux d'accès et les caches. Le `?code=` reste accepté en repli le temps que les service workers servant une ancienne version de `app.js` soient remplacés.
+
+**Si tu utilisais déjà un code court**, il continue de fonctionner : tes données restent accessibles, et la ligne migre automatiquement vers sa forme hachée à la première sauvegarde (l'ancienne ligne en clair est alors supprimée). Mais **tant que tu gardes ce code court, il reste devinable** — l'app affiche un avertissement dans les réglages. Pour le remplacer : *Générer un code sûr*, puis *Sauvegarder maintenant*, puis recopie le nouveau code sur tes autres appareils. Note l'ancien quelque part d'abord si tu as un doute.
 
 ## Tests automatisés
 

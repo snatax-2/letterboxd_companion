@@ -139,8 +139,9 @@ function computeDuelRanking(minDuels = 3) {
 let currentDuelPair = null;
 
 function duelPosterHtml(item) {
-  return item.poster
-    ? `<img class="duel-poster" src="${item.poster}" alt="" loading="lazy" decoding="async">`
+  const poster = safePosterSrc(item.poster);
+  return poster
+    ? `<img class="duel-poster" src="${poster}" alt="" loading="lazy" decoding="async">`
     : `<div class="duel-poster duel-poster-ph">${ICONS.clapper}</div>`;
 }
 

@@ -40,8 +40,12 @@ function renderHistoryHero(sorted) {
     return;
   }
   const item = sorted[0];
-  const imgHtml = item.poster
-    ? `<img class="hero-entry-poster" src="${item.poster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+  // On teste l'URL ASSAINIE, pas l'URL brute : une affiche rejetée par
+  // safePosterSrc() doit retomber sur l'espace réservé, pas produire un
+  // <img src=""> (que le navigateur interprète comme un rechargement de la page).
+  const heroPoster = safePosterSrc(item.poster);
+  const imgHtml = heroPoster
+    ? `<img class="hero-entry-poster" src="${heroPoster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
     : `<div class="hero-entry-poster"></div>`;
   hero.innerHTML = `
     <div class="hero-entry">
@@ -313,7 +317,8 @@ function renderHistory() {
       flatIndex++;
 
       const targetSize = POSTER_SIZE_BY_TIER[tier];
-      const posterSrc = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
+      const rawPoster = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
+      const posterSrc = safePosterSrc(rawPoster);
       const imgHtml = posterSrc
         ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
         : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;

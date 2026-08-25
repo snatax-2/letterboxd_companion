@@ -24,19 +24,29 @@ const CRITERIA = ['scenario','realisation','photo','acteurs','ambiance','rythme'
 // ═══════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════
+// Le résultat est inséré via innerHTML (voir les 3 sites d'appel) : CHAQUE
+// champ doit être échappé. Aucun ne vient d'une source sûre — ils viennent
+// des champs éditables du formulaire, d'un item d'historique (donc d'un
+// import JSON/CSV ou d'une synchro cloud), ou de TMDb. Un `director` valant
+// `<img src=q onerror=...>` s'exécutait ici ; vérifié en conditions réelles.
 function buildStripMeta({ genre = '', runtime = '', year = '', director = '', actors = '' } = {}) {
-  let meta = [genre, runtime, year].filter(Boolean).join(' · ');
-  if (director) meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Réalisé par <b>${director}</b></span>`;
-  if (actors)   meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Avec <b>${actors}</b></span>`;
+  let meta = [genre, runtime, year].filter(Boolean).map(escAttr).join(' · ');
+  if (director) meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Réalisé par <b>${escAttr(director)}</b></span>`;
+  if (actors)   meta += `<br><span style="color:var(--text-mid);font-size:0.75rem;font-family:var(--font-body)">Avec <b>${escAttr(actors)}</b></span>`;
   return meta;
 }
 
-// Échappe une chaîne pour une insertion sûre dans un attribut HTML (alt, aria-label, title...)
-// Utilisé pour les titres de films (qui peuvent contenir des guillemets ou des chevrons).
+// Échappe une chaîne pour une insertion sûre dans du HTML — que ce soit dans
+// un attribut (alt, aria-label, title, src...) ou dans du contenu textuel.
+// L'apostrophe est échappée elle aussi : sans elle, la fonction n'était sûre
+// que dans les attributs à guillemets DOUBLES, et le jour où quelqu'un écrit
+// alt='${escAttr(x)}' une faille réapparaissait silencieusement — sur 167
+// sites d'appel, mieux vaut que la fonction soit sûre dans les deux cas.
 function escAttr(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
@@ -57,8 +67,44 @@ function isDefaultComposition() {
   return true;
 }
 
+// `path` n'est pas toujours frais de l'API : show.poster_path, par exemple,
+// est relu depuis localStorage (donc d'un import JSON ou d'une synchro). Une
+// valeur comme `/a.jpg" onerror="…` produisait une URL qui s'échappait de
+// l'attribut src="" chez les ~33 appelants à la fois. Valider ICI la forme
+// d'un chemin TMDb (toujours /nom-de-fichier) protège tous les appelants
+// d'un coup, y compris ceux qui affectent le résultat à une propriété .src
+// (où un échappement HTML aurait au contraire corrompu l'URL).
+const TMDB_PATH_RE = /^\/[A-Za-z0-9._-]+$/;
+
 function tmdbImage(path, size = 'w185') {
-  return path ? `https://image.tmdb.org/t/p/${size}${path}` : '';
+  if (!path || !TMDB_PATH_RE.test(String(path))) return '';
+  return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+// Prépare une URL d'affiche STOCKÉE pour une insertion dans un attribut src="".
+//
+// Pourquoi une fonction dédiée plutôt qu'un escAttr() à chaque site d'appel :
+// `item.poster` vient de localStorage, donc potentiellement d'un import JSON,
+// d'un CSV Letterboxd ou d'une synchro cloud — c'est-à-dire d'une source que
+// l'utilisateur ne contrôle pas forcément. Une valeur comme
+//     x" onerror="…" data-z="
+// s'échappait de l'attribut et exécutait son code (vérifié en conditions
+// réelles sur l'historique, la watchlist et les duels). Centraliser évite
+// qu'un sixième site d'appel réintroduise la faille demain.
+//
+// Deux garde-fous, pas un seul :
+//  1. origine restreinte à image.tmdb.org — même règle que le proxy d'images
+//     de api/search.js. Toutes les affiches légitimes viennent de
+//     tmdbImage() ci-dessus ; une URL d'ailleurs (pixel de traçage glissé
+//     dans une sauvegarde) est écartée plutôt qu'affichée.
+//  2. échappement — sans lui, la restriction d'origine ne suffirait pas :
+//     une URL tmdb valide suivie d'un guillemet sortirait encore de l'attribut.
+// Retourne '' si l'URL n'est pas exploitable, ce qui fait retomber les
+// appelants sur leur affichage de repli habituel (l'espace réservé 🎬).
+function safePosterSrc(url) {
+  const raw = String(url ?? '');
+  if (!raw.startsWith('https://image.tmdb.org/')) return '';
+  return escAttr(raw);
 }
 
 // État vide unifié — soit compact (juste un texte, pour une section déjà

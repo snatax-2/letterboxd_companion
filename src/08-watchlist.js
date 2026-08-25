@@ -360,7 +360,7 @@ function renderWatchlist() {
     // Ludex 2.0 : remplace la taille dans l'URL deja enregistree pour les
     // items ajoutes avant ce correctif (retroactif, comme pour les cartes
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
-    const posterSrc = item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
+    const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
       ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
@@ -979,7 +979,7 @@ function renderTvWatchlist() {
     // Ludex 2.0 : remplace la taille dans l'URL deja enregistree pour les
     // items ajoutes avant ce correctif (retroactif, comme pour les cartes
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
-    const posterSrc = item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster;
+    const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
       ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
       : `<div class="wl-poster">${ICONS.clapper}</div>`;

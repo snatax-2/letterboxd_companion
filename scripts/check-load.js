@@ -60,17 +60,39 @@ function freshDom() {
   }
   console.log('✓ app.js s\'exécute entièrement sans erreur (chargement à vide).');
 
+  // Mode focus : on vérifie le COMPORTEMENT (défaut + bascule aller-retour),
+  // pas un instantané d'un défaut donné. La version précédente cliquait une
+  // fois puis attendait le mode focus ACTIF : elle datait de l'époque où le
+  // mode était inactif par défaut. Depuis que le défaut est passé à "actif"
+  // (voir FOCUS_MODE_KEY dans src/05-rating-form.js), ce clic unique le
+  // DÉSACTIVE — le test échouait donc sur une app parfaitement saine.
   try {
     const doc = window.document;
     const toggle = doc.getElementById('focus-mode-toggle');
     const list = doc.getElementById('criteria-list');
-    toggle.dispatchEvent(new window.Event('click', { bubbles: true }));
-    const activeBlocks = doc.querySelectorAll('.criterion-block.focus-active');
-    if (!list.classList.contains('focus-mode') || activeBlocks.length !== 1) {
-      console.error('❌ Le mode focus ne fonctionne pas comme attendu après un clic sur la bascule.');
+    const isOn = () => list.classList.contains('focus-mode');
+    const click = () => toggle.dispatchEvent(new window.Event('click', { bubbles: true }));
+
+    // 1. localStorage vide => mode focus actif, et un SEUL critère affiché.
+    const onAtLoad = isOn();
+    const activeCount = doc.querySelectorAll('.criterion-block.focus-active').length;
+    // 2. Un clic le désactive, un second le réactive.
+    click();
+    const offAfterOne = !isOn();
+    click();
+    const onAfterTwo = isOn();
+
+    if (!onAtLoad || activeCount !== 1) {
+      console.error(`❌ Mode focus : attendu actif par défaut avec 1 critère, reçu actif=${onAtLoad} et ${activeCount} critère(s).`);
+      hasFailure = true;
+    } else if (!offAfterOne) {
+      console.error('❌ Mode focus : un clic sur la bascule ne l\'a pas désactivé.');
+      hasFailure = true;
+    } else if (!onAfterTwo) {
+      console.error('❌ Mode focus : un second clic ne l\'a pas réactivé.');
       hasFailure = true;
     } else {
-      console.log('✓ Mode focus : bascule et affichage d\'un seul critère fonctionnent.');
+      console.log('✓ Mode focus : actif par défaut (1 critère), bascule aller-retour fonctionnelle.');
     }
   } catch (err) {
     console.error('❌ Erreur en testant le mode focus :', err.message);

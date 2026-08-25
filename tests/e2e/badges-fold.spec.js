@@ -10,13 +10,17 @@ test('les badges sont plies par defaut avec compteur, et se deplient', async ({ 
   await page.click('#nav-profile');
   await page.waitForTimeout(400);
 
-  const fold = page.locator('#badges-fold');
+  // Le balisage a changé : l'accordéon est un <details class="badges-accordion">
+  // natif, sans id #badges-fold ni classe .badges-summary (voir index.html).
+  // Le comportement testé, lui, est identique — replié par défaut, compteur
+  // visible, dépliage au clic sur le résumé.
+  const fold = page.locator('.badges-accordion');
   expect(await fold.evaluate(el => el.open)).toBe(false);
   await expect(page.locator('#badges-count')).toContainText('/');
   const gridVisible = await page.locator('#badges-grid').isVisible();
   expect(gridVisible).toBe(false);
 
-  await page.locator('.badges-summary').click();
+  await page.locator('.badges-accordion summary').click();
   await expect(page.locator('#badges-grid')).toBeVisible();
   const badgeCount = await page.locator('.badge-item').count();
   expect(badgeCount).toBeGreaterThan(3);

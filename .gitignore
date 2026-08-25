@@ -7,3 +7,12 @@ node_modules/
 test-results/
 playwright-report/
 playwright/.cache/
+
+# Artefact de build : app.js est ENTIÈREMENT dérivé de src/ par
+# scripts/build-app-js.js. Le commiter n'apportait rien (son diff est par
+# construction la somme des diffs de src/) et coûtait cher : une version
+# minifiée s'y est retrouvée commitée, ce qui a fait échouer la porte
+# "app.js synchronisé avec src/" du CI pendant 12 jours — et donc sauté
+# le lint, les 162 tests unitaires et les 90 specs e2e à chaque push.
+# Il est désormais construit à la demande (voir les scripts npm).
+app.js
