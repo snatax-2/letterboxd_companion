@@ -7,7 +7,12 @@
 // les deux sens, pour ne plus jamais laisser passer cette régression.
 const { test, expect } = require('@playwright/test');
 
-const TAB_ORDER = ['nav-rating', 'nav-history', 'nav-watchlist', 'nav-discover', 'nav-profile'];
+// Ordre ALIGNÉ SUR LA BARRE telle qu'elle s'affiche, de gauche à droite.
+// Il doit rester identique au TAB_ORDER de src/01-navigation.js : c'est lui
+// qui décide de l'onglet suivant/précédent. La barre a été réordonnée
+// (Découvrir en premier, Noter au centre) sans que ce test suive — d'où
+// 7 échecs qui décrivaient l'ancienne disposition, pas un bug.
+const TAB_ORDER = ['nav-discover', 'nav-watchlist', 'nav-rating', 'nav-history', 'nav-profile'];
 
 // Dispatche une vraie séquence tactile (touchstart -> touchend) dans la page,
 // pour simuler un glissement horizontal comme le ferait un doigt réel.
