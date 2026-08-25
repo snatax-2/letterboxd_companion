@@ -301,21 +301,48 @@ document.addEventListener('keydown', (e) => {
   target.click();
 });
 
-// Ludex 2.0 : petit "pop" au tap sur les icônes de navigation et des 5
-// bascules Films/Séries (voir Ludex_Specifications_Icones) — un seul
-// écouteur délégué sur tout le document plutôt qu'un par bouton (ils vivent
-// dans des zones différentes : barre de navigation fixe, + 5 endroits
-// disséminés dans Noter/Historique/Watchlist/Découvrir/Profil).
-// getBoundingClientRect() forcé (via offsetWidth) entre le retrait et
-// l'ajout de la classe : sans ça, retaper très vite le même bouton avant la
-// fin de l'animation précédente ne la redéclenche pas (le navigateur voit
-// juste "la classe est déjà là", aucun changement à animer).
+// Ludex 2.0 : animations au tap sur la navigation et les 5 bascules
+// Films/Séries (voir Ludex_Explication_Switch + Ludex_Animations_
+// Interactives — documents de spécification). Un seul écouteur délégué
+// sur tout le document plutôt qu'un par bouton (ils vivent dans des zones
+// différentes : barre de navigation fixe, + 5 endroits disséminés dans
+// Noter/Historique/Watchlist/Découvrir/Profil).
+//
+// Noter (#nav-rating) reste sur l'ancien "pop" générique appliqué à
+// l'icône elle-même (voir .tap-pop, styles.css) — inchangé à la demande
+// explicite de l'utilisateur. Les 4 autres onglets de nav et les 5
+// switches ont chacun leur propre animation ciblée sur une sous-partie du
+// SVG (aiguille, signet, barres, tête/corps, clap, antenne) — la classe
+// "animate" se pose donc sur le BOUTON (.nav-btn / .mode-tab), pas sur
+// l'icône, pour que les sélecteurs CSS descendants (ex: .nav-btn.animate
+// .icon-compass .needle) puissent cibler la bonne sous-partie.
+//
+// void el.offsetWidth (le "reflow hack") entre le retrait et l'ajout de la
+// classe, dans les deux cas : sans ça, retaper très vite le même bouton
+// avant la fin de l'animation précédente ne la redéclenche pas (le
+// navigateur voit juste "la classe est déjà là", aucun changement à animer).
 document.addEventListener('click', (e) => {
-  const navIcon = e.target.closest('.nav-btn')?.querySelector('.nav-btn-icon');
-  const tabIcon = e.target.closest('.mode-tab')?.querySelector('.mode-tab-icon');
-  const el = navIcon || tabIcon;
+  const fabIcon = e.target.closest('#nav-rating')?.querySelector('.nav-btn-icon');
+  if (fabIcon) {
+    fabIcon.classList.remove('tap-pop');
+    void fabIcon.offsetWidth;
+    fabIcon.classList.add('tap-pop');
+    return;
+  }
+  const el = e.target.closest('.nav-btn:not(#nav-rating), .mode-tab');
   if (!el) return;
-  el.classList.remove('tap-pop');
+  el.classList.remove('animate');
   void el.offsetWidth;
-  el.classList.add('tap-pop');
+  el.classList.add('animate');
+
+  // Ludex 2.0 : positionne la pastille glissante du switch Films/Séries
+  // (voir .toggle-slider, styles.css) — même écouteur, pas un de plus.
+  // Détection générique par la présence de l'icône TV plutôt qu'un
+  // identifiant précis : les 5 switches n'utilisent pas tous le même
+  // schéma d'id/attribut (id="...-tv", data-media-type="tv"...), mais
+  // tous ont systématiquement .icon-tv sur le bouton "Séries".
+  const tabsContainer = el.closest('.mode-tabs');
+  if (tabsContainer) {
+    tabsContainer.classList.toggle('series-active', !!el.querySelector('.icon-tv'));
+  }
 });

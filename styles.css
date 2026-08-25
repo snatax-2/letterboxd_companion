@@ -977,10 +977,72 @@
      puis stabilisation, 180ms. Classe posée/retirée en JS (pas de pseudo-
      classe :active seule) pour garantir l'animation même sur un tap très
      bref, que le doigt reste posé ou non. */
+  /* Ludex 2.0 : "pop" générique — désormais réservé au bouton Noter
+     uniquement (inchangé à la demande de l'utilisateur, voir index.html).
+     Les 4 autres onglets et les 5 switches ont chacun leur propre
+     animation ciblée (voir plus bas : .icon-compass, .icon-bookmark,
+     .icon-stats, .icon-user, .icon-clap, .icon-tv) — .tap-pop ne
+     s'applique donc plus qu'à #nav-rating désormais. */
   .tap-pop { animation: tapPop 180ms cubic-bezier(.34,1.56,.64,1); }
   @keyframes tapPop { 50% { transform: scale(1.28); } }
-  .mode-tab-icon.tap-pop { animation-name: tapPopSmall; }
-  @keyframes tapPopSmall { 50% { transform: scale(1.35); } }
+
+  /* Ludex 2.0 : animations propres à chaque icône (voir
+     Ludex_Explication_Switch + Ludex_Animations_Interactives —
+     documents de spécification). Déclenchées en posant la classe
+     "animate" sur le bouton (.nav-btn ou .mode-tab, pas sur l'icône
+     elle-même) via wireIconAnimations() (01-navigation.js), avec le
+     "reflow hack" (void el.offsetWidth) pour garantir le redéclenchement
+     même en tapant très vite plusieurs fois de suite.
+
+     Découvrir — "règlement magnétique" : l'aiguille de la boussole
+     s'affole avant de se stabiliser, seule cette partie tourne. */
+  .icon-compass .needle { transform-origin: 12px 12px; }
+  .nav-btn.animate .icon-compass .needle { animation: magneticSnap 0.7s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes magneticSnap { 0% { transform: rotate(0deg); } 30% { transform: rotate(45deg); } 60% { transform: rotate(-15deg); } 80% { transform: rotate(5deg); } 100% { transform: rotate(0deg); } }
+
+  /* À voir — "tirette élastique" : le signet s'étire vers le bas puis
+     rebondit, pivote depuis son point d'accroche en haut. */
+  .icon-bookmark { transform-origin: 50% 0%; }
+  .nav-btn.animate .icon-bookmark { animation: elasticPull 0.5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes elasticPull { 0%, 100% { transform: scaleY(1) translateY(0); } 40% { transform: scaleY(1.15) translateY(3px); } 70% { transform: scaleY(0.95) translateY(-1px); } }
+
+  /* Historique — "équaliseur" : les 3 barres grandissent en cascade,
+     décalées de 100ms chacune plutôt que toutes en même temps. */
+  .icon-stats line { transform-origin: bottom; }
+  .nav-btn.animate .icon-stats .bar-1 { animation: equalize 0.5s ease-out 0s; }
+  .nav-btn.animate .icon-stats .bar-2 { animation: equalize 0.5s ease-out 0.1s; }
+  .nav-btn.animate .icon-stats .bar-3 { animation: equalize 0.5s ease-out 0.2s; }
+  @keyframes equalize { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.4); } }
+
+  /* Profil — "coucou" : la tête bondit un peu plus tôt et plus haut que
+     le corps, comme un salut amical. Mêmes classes sur les deux variantes
+     (contour ET plein) : l'animation doit fonctionner quel que soit
+     l'état visible au moment du clic. */
+  .icon-user .user-body, .icon-user .user-head { transform-origin: bottom center; }
+  .nav-btn.animate .icon-user .user-head { animation: popUpHead 0.5s cubic-bezier(.34,1.56,.64,1); }
+  .nav-btn.animate .icon-user .user-body { animation: popUpBody 0.5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes popUpHead { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+  @keyframes popUpBody { 0%, 100% { transform: translateY(0) scaleY(1); } 40% { transform: translateY(-2px) scaleY(1.05); } }
+
+  /* Films — torsion globale confirmée (pas de bras séparé à articuler
+     indépendamment, les hachures diagonales ne forment plus qu'un seul
+     tracé) : bascule en arrière, frappe en avant, léger rebond. */
+  .icon-clap { transform-origin: 30% 80%; }
+  .mode-tab.animate .icon-clap { animation: dynamicClap 0.7s cubic-bezier(.25,1,.5,1); }
+  @keyframes dynamicClap {
+    0%, 100% { transform: rotate(0deg) scale(1) skewX(0deg); }
+    35% { transform: rotate(-18deg) scale(1.05) skewX(5deg); }
+    60% { transform: rotate(10deg) scale(0.95) skewX(-5deg); }
+    80% { transform: rotate(-3deg) scale(0.98) skewX(0deg); }
+  }
+
+  /* Séries — le boîtier s'écrase légèrement puis rebondit, l'antenne
+     frétille indépendamment. */
+  .icon-tv .antenna { transform-origin: 12px 6px; }
+  .mode-tab.animate .icon-tv { animation: popTv 0.4s cubic-bezier(.25,1,.5,1); }
+  .mode-tab.animate .icon-tv .antenna { animation: wiggleAntenna 0.5s ease-in-out; }
+  @keyframes popTv { 0%, 100% { transform: scale(1); } 40% { transform: scale(0.92); } 70% { transform: scale(1.05); } }
+  @keyframes wiggleAntenna { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-18deg); } 50% { transform: rotate(12deg); } 75% { transform: rotate(-6deg); } }
 
   /* Bascule contour → pleine : les deux SVG sont superposés dans le HTML,
      un seul affiché à la fois selon l'état actif — pas de changement de
@@ -1460,8 +1522,23 @@
     flex: 1; text-align: center; padding: 7px; border: none; border-radius: var(--radius-sm); cursor: pointer;
     font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent; transition: all var(--dur-fast);
     display: flex; align-items: center; justify-content: center; gap: 6px;
+    position: relative; z-index: 1;
   }
-  .mode-tab.active { background: var(--orange); color: var(--solid-fill-text, #0d1117); border: 1px solid var(--orange); font-weight: 800; }
+  .mode-tab.active { background: transparent; color: var(--solid-fill-text, #0d1117); border: 1px solid transparent; font-weight: 800; }
+  /* Ludex 2.0 : pastille glissante (voir Ludex_Switch_Animation) — le
+     fond n'est plus posé directement sur le bouton actif (.mode-tab.active
+     ci-dessus, désormais transparent) mais sur cet élément séparé qui
+     glisse par-dessus via transform (pris en charge par le GPU, contrairement
+     à animer left/margin qui recalculerait la mise en page de tout le
+     conteneur à chaque image). z-index:0 pour rester sous les boutons
+     (z-index:1 ci-dessus), sinon le texte/l'icône disparaîtrait dessous. */
+  .mode-tabs { position: relative; }
+  .toggle-slider {
+    position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+    background: var(--orange); border: 1px solid var(--orange); border-radius: var(--radius-sm);
+    transition: transform var(--dur-base) var(--ease-out); z-index: 0;
+  }
+  .mode-tabs.series-active .toggle-slider { transform: translateX(100%); }
   /* Ludex 2.0 : icônes des 5 bascules Films/Séries (voir ICONS.compass/
      bookmark/clapperboardStroke/tv, 00b-icons.js) — taille fixe pour ne
      pas dépendre du font-size variable du bouton parent. */
