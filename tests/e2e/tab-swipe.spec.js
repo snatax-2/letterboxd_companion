@@ -65,10 +65,12 @@ test.describe('Navigation par swipe entre les 5 onglets', () => {
     }
   }
 
-  test("glisser au-delà de Noter (premier onglet) ne fait rien", async ({ page }) => {
-    await page.click('#nav-rating');
+  // Bornes : le PREMIER onglet de la barre est Découvrir (plus Noter, qui a
+  // été déplacé au centre lors du réordonnancement), le dernier reste Profil.
+  test("glisser au-delà de Découvrir (premier onglet) ne fait rien", async ({ page }) => {
+    await page.click('#nav-discover');
     await swipe(page, { startX: 50, endX: 300 });
-    await expect(page.locator('#nav-rating')).toHaveClass(/active/);
+    await expect(page.locator('#nav-discover')).toHaveClass(/active/);
   });
 
   test("glisser au-delà de Profil (dernier onglet) ne fait rien", async ({ page }) => {
