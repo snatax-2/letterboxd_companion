@@ -11,6 +11,14 @@ test('choisir une liste existante ajoute le film dedans (pas forcement la liste 
   // premier clic du test (page.click part alors en timeout de 30 s).
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
+  // Attendre la fin du démarrage avant de semer : au chargement, l'app migre
+  // l'ancienne clé de watchlist unique vers les listes multiples (voir
+  // LEGACY_WATCHLIST_KEY, 08-watchlist.js). Semer pendant cette fenêtre était
+  // une course — la migration écrasait parfois le meta qu'on venait d'écrire,
+  // et le test échouait alors une fois sur deux, en alternance avec son
+  // voisin. L'écran de démarrage se retire à la fin du boot : son absence est
+  // un repère fiable, contrairement à un délai fixe.
+  await page.waitForFunction(() => !document.getElementById('app-splash'));
   await page.evaluate(() => {
     window.saveWatchlistsMeta([{ id: 'list-a', name: 'Films du weekend' }, { id: 'list-b', name: 'A revoir' }]);
     localStorage.setItem('lbx_active_watchlist_id', 'list-a');
@@ -28,6 +36,11 @@ test('choisir une liste existante ajoute le film dedans (pas forcement la liste 
   await page.locator('.wl-picker-item', { hasText: 'A revoir' }).click();
   await expect(page.locator('#wl-picker-modal')).not.toHaveClass(/open/);
 
+  // Même course que dans le test suivant : addToSpecificWatchlist() écrit après
+  // un await, la fermeture de la modale est synchrone. On attend l'écriture.
+  await page.waitForFunction(
+    () => (window.loadWatchlist('list-b') || []).some(f => f.title === 'Nouveau Film'),
+  );
   const listB = await page.evaluate(() => window.loadWatchlist('list-b'));
   expect(listB.some(f => f.title === 'Nouveau Film')).toBe(true);
   const listA = await page.evaluate(() => window.loadWatchlist('list-a'));
@@ -39,6 +52,14 @@ test('creer une nouvelle liste a la volee ajoute le film dedans', async ({ page 
   // premier clic du test (page.click part alors en timeout de 30 s).
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
+  // Attendre la fin du démarrage avant de semer : au chargement, l'app migre
+  // l'ancienne clé de watchlist unique vers les listes multiples (voir
+  // LEGACY_WATCHLIST_KEY, 08-watchlist.js). Semer pendant cette fenêtre était
+  // une course — la migration écrasait parfois le meta qu'on venait d'écrire,
+  // et le test échouait alors une fois sur deux, en alternance avec son
+  // voisin. L'écran de démarrage se retire à la fin du boot : son absence est
+  // un repère fiable, contrairement à un délai fixe.
+  await page.waitForFunction(() => !document.getElementById('app-splash'));
   await page.evaluate(() => {
     window.saveWatchlistsMeta([{ id: 'list-a', name: 'Films du weekend' }]);
   });
@@ -57,6 +78,14 @@ test('creer une nouvelle liste a la volee ajoute le film dedans', async ({ page 
   const newList = meta.find(l => l.name === 'Films de Noel');
   expect(newList).toBeTruthy();
 
+  // addToSpecificWatchlist() est asynchrone (elle interroge TMDb pour le genre,
+  // la note et la durée avant d'écrire) alors que la fermeture de la modale,
+  // elle, est synchrone. Lire le stockage juste après le clic revenait donc à
+  // le lire AVANT l'écriture. On attend l'ajout plutôt qu'un délai fixe.
+  await page.waitForFunction(
+    (id) => (window.loadWatchlist(id) || []).some(f => f.title === 'Nouveau Film'),
+    newList.id,
+  );
   const items = await page.evaluate((id) => window.loadWatchlist(id), newList.id);
   expect(items.some(f => f.title === 'Nouveau Film')).toBe(true);
 });
