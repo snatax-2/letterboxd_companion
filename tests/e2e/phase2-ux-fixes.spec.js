@@ -1,53 +1,33 @@
 const { test, expect } = require('@playwright/test');
 
-test('etat vide (jamais note) : hauteur reduite, message bien visible et lisible', async ({ page }) => {
+// ── LA PILE DE SUGGESTIONS DE DÉCOUVRIR N'EXISTE PLUS ──────────────────
+// Deux tests portaient ici sur #discover-stack : son état vide compact
+// ("Note au moins un film"), et le retour à une hauteur normale une fois la
+// file peuplée. fa0caea a vidé l'écran Découvrir (-1470 lignes dans
+// src/11-discover.js, -230 dans index.html) : plus de pile à balayer, plus
+// de file, et donc plus d'état vide — l'écran ne dépend plus de ce qu'on a
+// déjà noté, il propose un choix du jour et des rangées par catégorie.
+//
+// La garantie sous-jacente — "Découvrir est utilisable dès l'installation,
+// sans avoir rien noté" — reste vraie et vérifiable, sur le contenu actuel.
+test('Decouvrir est utilisable des l\'installation, sans aucune note', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
   await page.waitForTimeout(1400);
   await page.click('#nav-discover');
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(1000);
 
-  const box = await page.locator('#discover-stack').boundingBox();
-  console.log('hauteur etat vide:', box.height);
-  expect(box.height).toBeLessThan(200);
-  expect(box.height).toBeGreaterThan(50); // assez pour contenir le texte
+  // L'écran se rend, avec sa bascule Films/Séries et le choix du jour.
+  const wrap = page.locator('#discover-card-wrap');
+  await expect(wrap).toBeVisible();
+  await expect(wrap.locator('.discover-seg-btn')).toHaveCount(2);
+  await expect(page.locator('.choix-du-jour-wrap')).toBeVisible();
 
-  const text = await page.locator('.discover-empty').textContent();
-  expect(text).toContain('Note au moins un film');
-
-  // Le texte doit vraiment etre visible dans les limites du conteneur, pas juste "present dans le DOM"
-  const textBox = await page.locator('.discover-empty').boundingBox();
-  expect(textBox.height).toBeGreaterThan(10);
-});
-
-test('avec de vraies cartes en file, la hauteur normale est restauree', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 900 });
-  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
-  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-discover');
-  await page.waitForTimeout(800);
-
-  // Verifie d'abord l'etat vide (compact)
-  let box = await page.locator('#discover-stack').boundingBox();
-  expect(box.height).toBeLessThan(200);
-
-  // Peuple directement la file et redessine, sans dependre du pipeline
-  // async complet de generation de suggestions (hors sujet pour ce test)
-  await page.evaluate(() => {
-    discoverQueue = [
-      { id: 999, title: 'Suggestion Test', poster_path: null, release_date: '2022-01-01', vote_average: 7.5 },
-    ];
-    renderDiscoverStack();
-  });
-  await page.waitForTimeout(300);
-
-  box = await page.locator('#discover-stack').boundingBox();
-  console.log('hauteur avec une vraie carte en file:', box.height);
-  expect(box.height).toBeGreaterThan(300);
+  // Et rien n'y invite à noter d'abord : c'était tout l'objet du changement.
+  const texte = await wrap.textContent();
+  expect(texte).not.toContain('Note au moins un film');
 });
 
 test('Historique : bascule Films/Series avec fondu, contenu final correct', async ({ page }) => {
@@ -78,7 +58,9 @@ test('Historique : bascule Films/Series avec fondu, contenu final correct', asyn
   const opacity = await page.locator('#tv-history-list').evaluate(el => getComputedStyle(el).opacity);
   console.log('opacity finale apres transition:', opacity);
   expect(opacity).toBe('1');
-  await expect(page.locator('.tv-show-card')).toBeVisible();
+  // Ludex 2.0 : l'historique des séries est passé à la mosaïque d'affiches des
+  // films — .tv-show-card a laissé place à .hist-item.hist-grid-card.
+  await expect(page.locator('#tv-history-list .hist-item').first()).toBeVisible();
 });
 
 test('Noter : bascule Film/Serie avec fondu, formulaire final correct', async ({ page }) => {

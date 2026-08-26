@@ -1,23 +1,18 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
-test('les puces de theme restent cliquables et fonctionnelles avec les nouvelles icones', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 900 });
-  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
-  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
-  await page.route('**/api/search?themeId=10051**', route => route.fulfill({ json: { results: [] } }));
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-discover');
-  await page.waitForTimeout(700);
-  await expect(page.locator('.theme-chip')).toHaveCount(8);
-  await expect(page.locator('.theme-chip svg')).toHaveCount(8);
-  await expect(page.locator('.theme-chip').first()).toContainText('Braquage');
-  await page.click('.theme-chip >> nth=0');
-  await page.waitForTimeout(500);
-  await expect(page.locator('#curated-list-sheet')).toHaveClass(/open/);
-  await expect(page.locator('#curated-list-sheet')).toContainText('Braquage');
-});
+// ── LES PUCES DE THÈME ONT DISPARU AVEC L'ÉCRAN DÉCOUVRIR ──────────────
+// Ce test vérifiait les 8 puces .theme-chip (Braquage, etc.) et l'ouverture
+// de leur fiche. fa0caea a retiré #theme-chips-row d'index.html en vidant
+// l'écran Découvrir — vérifié : le conteneur est absent sur origin/main
+// aussi. renderThemeChips() et openThemeSheet() survivent dans
+// src/15-curated-lists.js mais ne peuvent plus rien remplir (la fonction
+// sort tout de suite, faute de conteneur) : no-unused-vars ne pouvait pas
+// les voir, renderThemeChips() étant appelée au niveau du module.
+//
+// Ce que l'écran propose aujourd'hui est couvert par le test remplaçant
+// dans phase2-ux-fixes.spec.js ("Decouvrir est utilisable des
+// l'installation") et par trending-carousel.spec.js.
 
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test(`a11y puces de theme - ${theme}`, async ({ page }) => {
