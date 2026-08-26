@@ -95,6 +95,24 @@
       // Plus rien à annuler alors qu'une sentinelle traîne (l'utilisateur a
       // refermé au bouton) : on la consomme nous-mêmes, sinon le Retour
       // suivant serait avalé sans rien faire de visible.
+      //
+      // sentinellePosee repasse à false ICI, avant l'appel, et pas seulement
+      // dans le gestionnaire popstate. history.back() est ASYNCHRONE : le
+      // popstate qui remettait ce drapeau à false n'arrivait qu'au tour de
+      // boucle suivant. Or l'observateur de mutations peut rappeler cette
+      // fonction plusieurs fois pour un même changement d'onglet (le clic
+      // retire .active d'un bouton ET l'ajoute sur un autre, ce qui peut
+      // donner deux lots de mutations distincts). Les deux passages voyaient
+      // alors encore sentinellePosee === true et appelaient chacun
+      // history.back() — deux reculs pour UNE seule entrée sentinelle.
+      //
+      // Conséquence réelle, reproduite : revenir sur l'onglet d'arrivée
+      // (Découvrir) après l'avoir quitté faisait sortir de l'application.
+      // Le premier back consommait la sentinelle, le second remontait
+      // au-delà de l'app — vers la page précédente du navigateur, ou une
+      // page vierge s'il n'y en avait pas. Rien dans la console, aucune
+      // erreur JS : juste l'app qui disparaît.
+      sentinellePosee = false;
       retourInterne = true;
       history.back();
     }
@@ -126,7 +144,21 @@
   });
 
   window.addEventListener('popstate', () => {
-    if (retourInterne) { retourInterne = false; sentinellePosee = false; longueurConnue = history.length; return; }
+    if (retourInterne) {
+      retourInterne = false;
+      sentinellePosee = false;
+      longueurConnue = history.length;
+      // On vient de consommer notre propre sentinelle : le navigateur a
+      // restauré l'URL de l'entrée précédente, dont le hash désigne l'onglet
+      // QUITTÉ, pas celui affiché maintenant. Sans cette resynchronisation,
+      // l'URL affichait #history alors que Découvrir était à l'écran — et un
+      // rechargement à ce moment-là rouvrait donc le mauvais onglet.
+      const onglet = ongletActif();
+      if (location.hash !== `#${onglet}`) {
+        history.replaceState(history.state, '', `#${onglet}`);
+      }
+      return;
+    }
 
     const entreeNeuve = history.length > longueurConnue;
     longueurConnue = history.length;

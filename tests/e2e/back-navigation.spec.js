@@ -144,3 +144,56 @@ test('coller un lien de fragment dans une session deja ouverte ouvre le bon ongl
   await page.waitForTimeout(600);
   expect(await ongletActif(page)).toBe('nav-discover');
 });
+
+// ── Sortie accidentelle de l'application en changeant d'onglet ────────────
+// Bug réel, trouvé en réparant une assertion périmée de offline-full.spec.js
+// et reproduit sur les commits antérieurs (ce n'est pas une régression de
+// l'audit) : revenir sur l'onglet d'ARRIVÉE après l'avoir quitté faisait
+// SORTIR de l'application, silencieusement.
+//
+// Mécanisme : en quittant Découvrir, une entrée sentinelle est empilée. En y
+// revenant, il n'y a plus rien à annuler, donc la sentinelle est consommée
+// par un history.back(). Mais history.back() est asynchrone, et le drapeau
+// `sentinellePosee` n'était remis à false que dans le gestionnaire popstate,
+// au tour de boucle suivant. Or l'observateur de mutations rappelle
+// synchroniserSentinelle() plusieurs fois pour un même changement d'onglet
+// (le clic retire .active d'un bouton et l'ajoute sur un autre). Les deux
+// passages voyaient encore le drapeau à true : DEUX history.back() pour UNE
+// seule entrée sentinelle. Le second remontait au-delà de l'application.
+//
+// Aucune erreur JS, aucune trace en console : juste la page qui disparaît.
+test('revenir sur l\'onglet d\'arrivee ne fait pas sortir de l\'application', async ({ page }) => {
+  // Mise en place (localStorage, routes, goto) faite par le test.beforeEach
+  // du fichier — la refaire ici relancerait une seconde navigation.
+
+  // Quitter l'onglet d'arrivee (Decouvrir) puis y revenir.
+  await page.click('#nav-history');
+  await page.waitForTimeout(400);
+  await page.click('#nav-discover');
+  await page.waitForTimeout(800);
+
+  // L'application doit toujours etre la : avant correctif, la page etait
+  // remplacee par l'entree d'historique precedente du navigateur.
+  await expect(page.locator('#nav-discover')).toHaveClass(/active/);
+  await expect(page.locator('.mobile-nav')).toBeVisible();
+  expect(page.url()).toContain('#discover');
+
+  // Et la navigation reste utilisable ensuite.
+  await page.click('#nav-profile');
+  await page.waitForTimeout(400);
+  await expect(page.locator('#nav-profile')).toHaveClass(/active/);
+});
+
+test('aller-retour repete sur l\'onglet d\'arrivee reste stable', async ({ page }) => {
+  // Trois allers-retours : chaque consommation de sentinelle doit retirer
+  // exactement une entree, jamais deux.
+  for (let i = 0; i < 3; i++) {
+    await page.click('#nav-watchlist');
+    await page.waitForTimeout(350);
+    await page.click('#nav-discover');
+    await page.waitForTimeout(350);
+    await expect(page.locator('#nav-discover')).toHaveClass(/active/);
+  }
+  await expect(page.locator('.mobile-nav')).toBeVisible();
+  expect(page.url()).toContain('#discover');
+});

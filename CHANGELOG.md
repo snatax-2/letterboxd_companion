@@ -69,6 +69,7 @@ cours de route, captures de mesures) vit dans
 - **Carte "Par pays" repensée visuellement** (retour utilisateur.
 
 ### Corrigé
+- **Sortie accidentelle de l'application en revenant sur l'onglet Découvrir.** Bug réel et silencieux, antérieur à l'audit : quitter l'onglet d'arrivée puis y revenir faisait DEUX `history.back()` pour une seule entrée sentinelle, le second remontant au-delà de l'application. `history.back()` étant asynchrone, le drapeau `sentinellePosee` n'était remis à false qu'au tour de boucle suivant, alors que l'observateur de mutations rappelle la synchronisation plusieurs fois pour un même changement d'onglet. Aucune erreur JS, aucune trace : juste l'app qui disparaît. Le drapeau est désormais baissé avant l'appel, et l'URL est resynchronisée sur l'onglet réellement affiché après consommation de la sentinelle.
 - **Phase 6 du plan d'exécution de l'audit expert — vérifications finales.** La phase la plus courte sur le papier, mais qui a débusqué le bug le plus subtil de tout ce travail.
 - **Profil : les points laissés de côté lors de l'audit UX/design précédent, traités sur demande explicite.**
 - **Audit UX/design complet, sur demande explicite (hors Profil, exclu à la demande de l'utilisateur) :**
