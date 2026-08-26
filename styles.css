@@ -119,6 +119,12 @@
     --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
     --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --solid-fill-text: #fff;
+    /* Même correctif que Moderne : le rose poudré en TEXTE sur la barre
+       d'onglets claire donne 3.51:1 en 10px gras (seuil 4.5, mesuré par
+       axe-core). Assombri dans la même famille — 5.27:1. Les surfaces
+       remplies en --orange gardent leur teinte d'origine, ce token ne sert
+       qu'au texte. */
+    --accent-text: #9C4632;
     --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 50%;
@@ -265,6 +271,20 @@
     --red: #DD6B47;
     --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
     --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
+    /* --gold est ici un ocre PROFOND (#7A5507, assombri deux fois pour le
+       contraste), alors que les surfaces remplies en or supposent partout
+       ailleurs un or CLAIR et posent dessus var(--solid-fill-text, #0d1117),
+       quasi noir. Moderne ne declarant pas --solid-fill-text, le repli
+       s'appliquait : 2.82:1 sur le bouton de tri actif de "A voir", sous le
+       seuil. Le 6.22:1 cite dans le commentaire de --gold ci-dessus est
+       precisement celui de --bg sur cet ocre : l'intention etait donc bien un
+       texte clair, seul le cablage manquait. */
+    --gold-fill-text: var(--bg);
+    /* Accent en TEXTE sur une surface claire : #DD6B47 sur la barre d'onglets
+       donne 3.24:1 en 10px gras (seuil 4.5). Meme famille de teinte, assombrie
+       juste ce qu'il faut — 5.35:1. Le token ne touche que le texte : les
+       surfaces remplies en --orange gardent leur teinte d'origine. */
+    --accent-text: #B34524;
     --radius: 10px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
     --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
@@ -501,7 +521,7 @@
 
   .hist-grid-featured-badge {
     position: absolute; bottom: 15px; left: 8px; z-index: 1;
-    background: var(--gold); color: var(--solid-fill-text, #0d1117);
+    background: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117));
     padding: 4px 9px; border-radius: 999px; font-size: 0.64rem; font-weight: 700;
     font-family: var(--font-mono); display: flex; align-items: center; gap: 3px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.3);
@@ -967,7 +987,14 @@
      de contour à pleine (voir .icon-outline/.icon-solid ci-dessous) —
      Découvrir est déjà pleine au repos (rien à basculer), Historique reste
      un pictogramme à traits (3 barres verticales, pas de forme à remplir). */
-  .nav-btn.active { color: var(--orange); background: none; }
+  /* --accent-text : l'accent utilisé comme TEXTE, distinct de l'accent utilisé
+     comme fond. Sur les deux thèmes clairs (Carnet, Moderne), la teinte
+     d'accent passe très bien en aplat mais échoue en texte de 10px sur la
+     barre d'onglets translucide (3.51:1 et 3.35:1 mesurés par axe-core, seuil
+     4.5). Même démarche que --solid-fill-text, introduit plus haut pour le
+     problème symétrique — plutôt que de corriger chaque endroit séparément.
+     Les thèmes qui ne le déclarent pas gardent --orange tel quel. */
+  .nav-btn.active { color: var(--accent-text, var(--orange)); background: none; }
   /* Ludex 2.0 : agrandie de 1.2rem à 1.55rem (~30%) — le texte n'étant
      visible que sur l'onglet actif (voir .nav-btn-label plus bas),
      l'icône porte désormais l'essentiel du repère visuel, elle doit se
@@ -1399,7 +1426,7 @@
     background: var(--surface2); border: 1px solid var(--border); color: var(--text-mid);
     font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem;
   }
-  .tds-season-tab.active { background: var(--gold); border-color: var(--gold); color: var(--solid-fill-text, #0d1117); }
+  .tds-season-tab.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117)); }
   #tds-season-status-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px 10px; font-size: 0.85rem; color: var(--text-hi); }
   .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
@@ -2051,7 +2078,9 @@
     transition: all var(--dur-fast);
   }
   .wl-sort-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--solid-fill-text, #0d1117); }
+  /* --gold-fill-text : sur Moderne, --gold est un ocre PROFOND alors que ces
+     surfaces supposent partout ailleurs un or clair (voir le bloc du thème). */
+  .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117)); }
   .wl-sort-btn-filter { margin-left: auto; }
   .wl-list-pill {
     flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
@@ -2976,6 +3005,9 @@
   .trophy-name { font-size: 0.68rem; color: var(--text-hi); font-weight: 700; line-height: 1.25; }
   .trophy-tier { font-size: 0.6rem; color: var(--gold); margin-top: 3px; font-family: var(--font-mono); }
   .trophy-empty { font-size: 0.8rem; color: var(--text-mid); text-align: center; padding: 12px 0; grid-column: 1 / -1; }
+  /* Même tournure compacte que .trophy-empty, pour "Activité mensuelle" quand
+     les 6 mois sont vides (voir renderMonthlyActivityChart). */
+  .month-chart-empty { font-size: 0.8rem; color: var(--text-mid); text-align: center; padding: 12px 0; }
 
   /* ── Hero Header (voir ludex_profil_maquette.html) ── */
   .profile-hero-header { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }

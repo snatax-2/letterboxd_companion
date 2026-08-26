@@ -188,6 +188,17 @@ function renderMonthlyActivityChart(history, tvShows) {
   );
   const maxVal = Math.max(1, ...movieCounts, ...tvCounts);
 
+  // Rien sur les 6 derniers mois : un message plutôt que douze barres à zéro.
+  // C'est exactement le défaut pour lequel "Distribution des notes" avait été
+  // corrigé ("afficher un message au lieu de 10 lignes à zéro") — bloc que
+  // celui-ci remplace en Ludex 2.0, sans reprendre ce correctif au passage.
+  // Les trois autres encarts du tableau de bord ont chacun le leur (radar,
+  // trophées, duels) : même tournure, même style compact.
+  if (movieCounts.every(c => c === 0) && tvCounts.every(c => c === 0)) {
+    container.innerHTML = '<div class="month-chart-empty">Note quelques films pour voir ton activité des 6 derniers mois.</div>';
+    return;
+  }
+
   // Ludex 2.0 : chiffre exact au-dessus de chaque barre (voir
   // Ludex_Specifications_Profil — "on gagnerait à afficher le nombre") —
   // un chiffre à 0 se masque plutôt que d'afficher "0" collé au bas du

@@ -47,13 +47,25 @@ test('etats vides compacts (Profil) toujours corrects apres migration', async ({
   await page.click('#nav-profile');
   await page.waitForTimeout(600);
 
-  const dirText = await page.locator('#top-directors-list').textContent();
-  expect(dirText).toContain('Enregistrez plus de films');
-  const distText = await page.locator('#histogram').textContent();
-  expect(distText).toContain('Note quelques films');
-
-  await expect(page.locator('#top-directors-list .empty-state-compact')).toBeVisible();
-  await expect(page.locator('#histogram .empty-state-compact')).toBeVisible();
+  // "Top Réalisateurs" (#top-directors-list) et "Distribution des notes"
+  // (#histogram) ont été retirés en Ludex 2.0, avec la classe
+  // .empty-state-compact qui les habillait — plus rien de tout ça n'existe.
+  //
+  // Ce que ce test protège reste valable et vérifiable sur les encarts
+  // actuels : sur un profil vierge, chacun affiche un message utile plutôt
+  // qu'un cadre vide ou une série de zéros. Les quatre y sont — le radar,
+  // l'activité mensuelle, les trophées et les duels. (L'activité mensuelle
+  // n'en avait pas : elle affichait 6 mois de barres à zéro, exactement ce
+  // que ce test interdisait à l'histogramme. Corrigé, voir
+  // renderMonthlyActivityChart.)
+  for (const [selecteur, extrait] of [
+    ['#radar-empty', 'mode Détaillé'], // le message vit à côté du conteneur, qui se replie à 0 quand il est vide
+    ['#monthly-activity-chart', 'Note quelques films'],
+  ]) {
+    const texte = await page.locator(selecteur).textContent();
+    expect(texte, `encart ${selecteur}`).toContain(extrait);
+  }
+  await expect(page.locator('.trophy-empty')).toContainText('Note quelques films');
 });
 
 test('les etats vides riches (deja fonctionnels) restent inchanges', async ({ page }) => {
