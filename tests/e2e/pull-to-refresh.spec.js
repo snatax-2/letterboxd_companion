@@ -27,6 +27,9 @@ async function touchPull(page, distance) {
 }
 
 test('tirer suffisamment vers le bas (en haut de page) déclenche le rafraîchissement', async ({ page }) => {
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => window.scrollTo(0, 0));
   await touchPullPartial(page, 100); // au-delà du seuil (70px), avant relâchement
@@ -38,6 +41,9 @@ test('tirer suffisamment vers le bas (en haut de page) déclenche le rafraîchis
 });
 
 test('tirer vers le bas quand la page est déjà scrollée ne fait rien', async ({ page }) => {
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => window.scrollTo(0, 300));
   await touchPull(page, 100);

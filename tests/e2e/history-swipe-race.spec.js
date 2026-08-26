@@ -1,86 +1,96 @@
-// Reproduit le bug signalé : glisser un film de l'historique montre parfois
-// "rien" (ni Supprimer ni Modifier). Cause trouvée : un re-rendu de la liste
-// (déclenché par une synchro en arrière-plan, un tirer-pour-rafraîchir...)
-// s'intercalant PENDANT qu'un item est "armé" laissait les variables d'état
-// pointer vers des éléments DOM détachés, sans réinitialiser l'affichage.
 const { test, expect } = require('@playwright/test');
 
+// Un re-rendu de l'historique qui s'intercale PENDANT une action en cours.
+//
+// ── CE QUE CE FICHIER TESTAIT ───────────────────────────────────────────
+// Le bug d'origine : glisser un film montrait parfois "rien" (ni Supprimer ni
+// Modifier), parce qu'un re-rendu de la liste — déclenché par une synchro en
+// arrière-plan ou un tirer-pour-rafraîchir — s'intercalait pendant qu'un item
+// était "armé", laissant les variables d'état pointer vers des éléments DOM
+// détachés. Les trois tests portaient sur cette machine à états : armement,
+// préservation de l'état armé au re-rendu, seuil de reconnaissance d'un
+// glissement diagonal.
+//
+// Ce glissement n'existe plus (Ludex 2.0 : historique en mosaïque, actions en
+// surimpression — voir styles.css, section HISTORY), donc plus d'état armé,
+// donc plus rien à préserver.
+//
+// ── CE QUI SURVIT, ET QUI COMPTE VRAIMENT ───────────────────────────────
+// La classe de bug, elle, n'a pas disparu : une action de l'historique n'est
+// pas instantanée (300 ms d'animation avant l'écriture), et un re-rendu peut
+// toujours s'intercaler dans cette fenêtre. C'est exactement ce qui a produit
+// la mise à jour perdue corrigée dans deleteItem() — l'instantané pris avant
+// le délai écrasait l'écriture d'une suppression concurrente, et l'index figé
+// désignait un autre film après décalage.
+//
+// Ce fichier vérifie donc désormais la variante "re-rendu" de ce scénario ;
+// la variante "deux suppressions coup sur coup" vit dans
+// history-stale-index.spec.js.
+
+const FILMS = [
+  { title: 'Film Un', tmdbId: '1', score: '7.0', mode: 'quick', values: { quick: 3.5 }, date: '2026-01-01', savedAt: '2026-01-01T10:00:00.000Z' },
+  { title: 'Film Deux', tmdbId: '2', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-01-05', savedAt: '2026-01-05T10:00:00.000Z' },
+  { title: 'Film Trois', tmdbId: '3', score: '6.0', mode: 'quick', values: { quick: 3 }, date: '2026-01-03', savedAt: '2026-01-03T10:00:00.000Z' },
+];
+
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.addInitScript((films) => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_swipe_hint_seen', '1');
+    localStorage.setItem('lbx_v2', JSON.stringify(films));
+  }, FILMS);
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
-  await page.evaluate(() => {
-    window.localStorage.setItem('lbx_v2', JSON.stringify([
-      { title: 'Film Un', tmdbId: '1', score: '7.0', mode: 'quick', values: { quick: 3.5 }, date: '2026-01-01', savedAt: '2026-01-01T10:00:00.000Z' },
-      { title: 'Film Deux', tmdbId: '2', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-01-05', savedAt: '2026-01-05T10:00:00.000Z' },
-    ]));
-    window.renderAll();
-  });
   await page.click('#nav-history');
+  await page.waitForSelector('.hist-item');
 });
 
-async function armFirstItem(page) {
-  const item = page.locator('.hist-item').first();
-  const box = await item.boundingBox();
-  await item.evaluate((el, box) => {
-    function touchEvent(type, x, y) {
-      const ev = new Event(type, { bubbles: true });
-      ev.touches = [{ clientX: x, clientY: y }];
-      return ev;
-    }
-    const y = box.y + box.height / 2;
-    el.dispatchEvent(touchEvent('touchstart', box.x + box.width - 20, y));
-    el.dispatchEvent(touchEvent('touchmove', box.x + 20, y)); // glisse fort vers la gauche
-    el.dispatchEvent(new Event('touchend', { bubbles: true }));
-  }, box);
+async function titresAffiches(page) {
+  const labels = await page.locator('.hist-item-open').evaluateAll(els => els.map(el => el.getAttribute('aria-label') || ''));
+  return labels.join(' | ');
 }
 
-test('un swipe normal arme bien l\'indice de suppression', async ({ page }) => {
-  await armFirstItem(page);
-  await expect(page.locator('.hist-item').first()).toHaveClass(/hist-swipe-armed-left/);
-});
+test('un re-rendu pendant une suppression en cours supprime quand meme le bon film', async ({ page }) => {
+  await expect(page.locator('.hist-item')).toHaveCount(3);
 
-test('un re-rendu pendant un item armé PRÉSERVE l\'état armé (pas d\'état fantôme, la confirmation marche toujours)', async ({ page }) => {
-  await armFirstItem(page);
-  await expect(page.locator('.hist-item').first()).toHaveClass(/hist-swipe-armed-left/);
+  // "Film Deux" est le plus récent, donc affiché en premier.
+  const cible = page.locator('.hist-item', { has: page.locator('.hist-item-open[aria-label*="Film Deux"]') });
+  await cible.locator('.hist-action-btn.del').click();
 
   // Simule une synchro en arrière-plan (ou un tirer-pour-rafraîchir) qui
-  // re-rend la liste PENDANT que l'item est encore armé.
+  // re-rend la liste AVANT que l'écriture différée de 300 ms n'ait eu lieu.
+  await page.waitForTimeout(100);
   await page.evaluate(() => window.renderHistory());
+  await page.waitForTimeout(800);
 
-  // L'état armé doit être PRÉSERVÉ sur le nouvel élément (pas juste effacé) —
-  // et un tap sur l'indice de confirmation doit encore fonctionner normalement.
-  const item = page.locator('.hist-item').first();
-  await expect(item).toHaveClass(/hist-swipe-armed-left/);
-  await item.locator('.hist-swipe-hint-left').click({ force: true });
-  await page.waitForTimeout(700);
-  const titles = await page.locator('.hist-title').allTextContents();
-  console.log('TITRES RESTANTS:', JSON.stringify(titles));
-  expect(titles.some(t => t.includes('Film Un'))).toBe(true); // seul l'item arme (Film Deux, affiche en premier car plus recent) a ete supprime
-  expect(titles.some(t => t.includes('Film Deux'))).toBe(false);
+  const restants = await titresAffiches(page);
+  expect(restants).not.toContain('Film Deux');
+  expect(restants).toContain('Film Un');
+  expect(restants).toContain('Film Trois');
+  await expect(page.locator('.hist-item')).toHaveCount(2);
 });
 
-test('un glissement légèrement diagonal au départ est quand même reconnu comme un swipe', async ({ page }) => {
-  // Simule un doigt qui part en diagonale (8px vertical, bien plus horizontal
-  // ensuite) — avec l'ancien seuil (10px, ratio 1.2), ce genre de trajectoire
-  // pouvait se faire classer "scroll" à tort dès les tout premiers pixels.
-  const item = page.locator('.hist-item').first();
-  const box = await item.boundingBox();
-  await item.evaluate((el, box) => {
-    function touchEvent(type, x, y) {
-      const ev = new Event(type, { bubbles: true });
-      ev.touches = [{ clientX: x, clientY: y }];
-      return ev;
-    }
-    const y = box.y + box.height / 2;
-    el.dispatchEvent(touchEvent('touchstart', box.x + box.width - 20, y));
-    // Ratio dx/dy du tout premier mouvement : 12/11 ≈ 1.09 — et les deux
-    // dépassent même l'ancien seuil de 10px (donc la décision se prend bien
-    // SUR ce premier mouvement). Sous l'ancien ratio (1.2), ce mouvement
-    // aurait été classé "scroll" à tort ; avec le nouveau (1.0), "swipe".
-    el.dispatchEvent(touchEvent('touchmove', box.x + box.width - 32, y + 11));
-    el.dispatchEvent(touchEvent('touchmove', box.x + 20, y + 11)); // puis nettement horizontal
-    el.dispatchEvent(new Event('touchend', { bubbles: true }));
-  }, box);
+test('un re-rendu pendant une suppression n\'ouvre aucune fiche par accident', async ({ page }) => {
+  const cible = page.locator('.hist-item', { has: page.locator('.hist-item-open[aria-label*="Film Trois"]') });
+  await cible.locator('.hist-action-btn.del').click();
+  await page.waitForTimeout(100);
+  await page.evaluate(() => window.renderHistory());
+  await page.waitForTimeout(800);
 
-  await expect(item).toHaveClass(/hist-swipe-armed-left/);
+  await expect(page.locator('#movie-detail-sheet.open')).toHaveCount(0);
+  expect(await titresAffiches(page)).not.toContain('Film Trois');
+});
+
+test('annuler une suppression restaure le bon film', async ({ page }) => {
+  const cible = page.locator('.hist-item', { has: page.locator('.hist-item-open[aria-label*="Film Deux"]') });
+  await cible.locator('.hist-action-btn.del').click();
+  await page.waitForTimeout(700);
+  expect(await titresAffiches(page)).not.toContain('Film Deux');
+
+  await page.locator('#toast button, #toast a').first().click();
+  await page.waitForTimeout(500);
+
+  const restants = await titresAffiches(page);
+  expect(restants).toContain('Film Deux');
+  await expect(page.locator('.hist-item')).toHaveCount(3);
 });

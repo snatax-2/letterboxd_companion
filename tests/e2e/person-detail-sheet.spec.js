@@ -25,6 +25,9 @@ test.beforeEach(async ({ page }) => {
     return route.fulfill({ json: { results: [] } });
   });
 
+  // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+  // premier clic du test (page.click part alors en timeout de 30 s).
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.evaluate(() => {
     window.localStorage.setItem('lbx_v2', JSON.stringify([

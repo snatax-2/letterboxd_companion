@@ -7,7 +7,7 @@
     "build": "node scripts/build-app-js.js && npm run lint && node scripts/minify.js && node scripts/generate-sw-cache.js",
     "build:js": "node scripts/build-app-js.js",
     "test": "node --test --test-concurrency=1 tests/*.test.js",
-    "pretest:e2e": "node scripts/build-app-js.js",
+    "pretest:e2e": "node scripts/build-app-js.js && node scripts/minify.js --css-only",
     "test:e2e": "playwright test",
     "precheck:load": "node scripts/build-app-js.js",
     "check:load": "node scripts/check-load.js",
@@ -23,7 +23,11 @@
     "@playwright/test": "1.56.0",
     "clean-css": "^5.3.3",
     "eslint": "^10.7.0",
+    "globals": "^17.11.0",
     "jsdom": "^29.1.1",
     "terser": "^5.50.0"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0"
   }
 }

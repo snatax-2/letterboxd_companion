@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   // été revérifié depuis le changement de modèle) — mieux vaut une limite
   // basse ici (protection contre une boucle accidentelle côté client) que
   // de griller le quota du jour sur un bug.
-  if (!rateLimit(req, res, { name: 'analyse-film', limit: 30, windowMs: 3600_000 })) {
+  if (!(await rateLimit(req, res, { name: 'analyse-film', limit: 30, windowMs: 3600_000 }))) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }

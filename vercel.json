@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build && node scripts/minify-for-deploy.js",
+  "buildCommand": "npm run build",
   "outputDirectory": ".",
   "headers": [
     {

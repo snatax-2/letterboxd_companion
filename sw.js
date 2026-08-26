@@ -8,7 +8,7 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-e051952727';
+const CACHE_NAME = 'ludex-shell-2f7d73721d';
 
 const APP_SHELL = [
   '/',
@@ -64,8 +64,14 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        // Ne met en cache que les réponses effectivement valides. Sans ce
+        // contrôle, une 404 (fichier renommé, déploiement en cours) ou une
+        // 500 passagère était mise en cache et resservie indéfiniment hors
+        // ligne, jusqu'au prochain changement de CACHE_NAME.
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+        }
         return response;
       })
       .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))

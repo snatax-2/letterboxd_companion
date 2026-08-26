@@ -178,105 +178,19 @@ document.getElementById('wl-sort-row')?.addEventListener('click', (e) => {
   document.querySelectorAll('#wl-sort-row .wl-sort-btn[data-sort]').forEach(b => b.classList.toggle('active', b === sortBtn));
   renderWatchlist();
 });
-
-
-// Swipe sur un film de la watchlist : glisser à gauche = retirer, à droite =
-// "vu, noter" (réutilise removeWatchlist/watchlistToForm, les mêmes fonctions
-// que les boutons ✕/⭐ — juste un chemin de déclenchement en plus, pas de
-// nouvelle logique). stopPropagation() évite que ce geste horizontal ne
-// déclenche AUSSI le swipe global de changement d'onglet.
-function attachWatchlistSwipeHandlers(cardEl, idx) {
-  // Ludex 2.0 : en grille d'affiches (thème par défaut), le swipe horizontal
-  // sur une cellule étroite n'a plus vraiment de sens visuellement — les
-  // actions (noter / retirer) restent disponibles via les boutons toujours
-  // visibles en overlay (voir styles.css, .wl-actions en mode grille).
-  if (isDefaultComposition()) return;
-
-  const SWIPE_THRESHOLD = 80;
-  const MAX_DRAG = 130;
-  const contentEl = cardEl.querySelector('.wl-card-content');
-  let startX = 0, startY = 0, dx = 0, dragging = false, wasSwipe = false;
-
-  function onStart(x, y) {
-    startX = x; startY = y; dx = 0; dragging = true; wasSwipe = false;
-    cardEl.classList.add('wl-dragging');
-  }
-  function onMove(x, y) {
-    if (!dragging) return;
-    const rawDx = x - startX;
-    const dy = y - startY;
-    if (Math.abs(dy) > Math.abs(rawDx) * 1.2) return; // trop vertical : probablement un scroll, pas un swipe
-    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
-    if (Math.abs(dx) > 8) wasSwipe = true;
-    contentEl.style.transform = `translateX(${dx}px)`;
-    cardEl.classList.toggle('wl-swipe-left', dx < -10);
-    cardEl.classList.toggle('wl-swipe-right', dx > 10);
-  }
-  function onEnd() {
-    if (!dragging) return;
-    dragging = false;
-    cardEl.classList.remove('wl-dragging');
-
-    // 240ms = --dur-base (styles.css :root) : doit rester synchronisé avec la
-    // durée de la transition d'opacité/translation ci-dessus. L'ancien délai
-    // (200ms) coupait l'animation de sortie 40ms avant sa fin réelle.
-    const EXIT_DUR_MS = 240;
-    if (dx <= -SWIPE_THRESHOLD) {
-      cardEl.classList.add('wl-swipe-out-left');
-      contentEl.style.transform = 'translateX(-110%)';
-      if (navigator.vibrate) navigator.vibrate(20);
-      hapticPulse(cardEl, 'strong');
-      setTimeout(() => removeWatchlist(idx), EXIT_DUR_MS);
-    } else if (dx >= SWIPE_THRESHOLD) {
-      cardEl.classList.add('wl-swipe-out-right');
-      contentEl.style.transform = 'translateX(110%)';
-      if (navigator.vibrate) navigator.vibrate(20);
-      hapticPulse(cardEl, 'strong');
-      setTimeout(() => watchlistToForm(idx), EXIT_DUR_MS);
-    } else {
-      contentEl.style.transform = '';
-      cardEl.classList.remove('wl-swipe-left', 'wl-swipe-right');
-    }
-    // Empêche le tap-pour-ouvrir-la-fiche de se déclencher juste après un
-    // swipe avorté (retour à zéro) — seul un vrai tap sans mouvement l'ouvre.
-    if (wasSwipe) {
-      setTimeout(() => { wasSwipe = false; }, 50);
-    }
-  }
-
-  cardEl.addEventListener('touchstart', e => {
-    e.stopPropagation();
-    onStart(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  cardEl.addEventListener('touchmove', e => {
-    e.stopPropagation();
-    onMove(e.touches[0].clientX, e.touches[0].clientY);
-  }, { passive: true });
-  cardEl.addEventListener('touchend', e => {
-    e.stopPropagation();
-    onEnd();
-  });
-  cardEl.addEventListener('touchcancel', onEnd);
-
-  // Souris (pratique pour tester sur desktop / vercel dev)
-  cardEl.addEventListener('mousedown', e => {
-    onStart(e.clientX, e.clientY);
-    const moveHandler = ev => onMove(ev.clientX, ev.clientY);
-    const upHandler = () => {
-      onEnd();
-      document.removeEventListener('mousemove', moveHandler);
-      document.removeEventListener('mouseup', upHandler);
-    };
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('mouseup', upHandler);
-  });
-
-  // Empêche le tap-pour-détail de s'ouvrir juste après un swipe (voir le
-  // listener délégué de watchlist-list plus bas).
-  cardEl.addEventListener('click', e => {
-    if (wasSwipe) { e.stopPropagation(); e.preventDefault(); }
-  }, true);
-}
+// Le glissement sur une carte "À voir" a été retiré : attachWatchlistSwipeHandlers()
+// (92 lignes) commençait par `if (isDefaultComposition()) return;`, et cette
+// fonction renvoie `true` en dur depuis que la composition est appliquée aux
+// 6 thèmes — « décision confirmée : compositions identiques partout, seules
+// les couleurs/polices changent » (03-foundation.js). La garde était donc
+// inconditionnelle : plus aucun thème n'atteignait ce code.
+//
+// Retirer / "vu, noter" restent disponibles par les boutons en surimpression
+// (.wl-actions), qui appellent removeWatchlist() et watchlistToForm() — les
+// mêmes fonctions que le geste utilisait. Aucune capacité perdue.
+//
+// Partent avec : les deux <div class="wl-swipe-hint"> que chaque carte
+// rendait sans jamais pouvoir les révéler, et les 9 règles CSS associées.
 
 // Ludex 2.0 : suggestions concrètes dans l'état vide — plutôt qu'un bouton
 // "Découvrir" générique qui renvoie l'utilisateur bredouille à un autre
@@ -366,8 +280,6 @@ function renderWatchlist() {
       : `<div class="wl-poster">${ICONS.clapper}</div>`;
 
     div.innerHTML = `
-      <div class="wl-swipe-hint wl-swipe-hint-left" aria-hidden="true">${ICONS.close} Retirer</div>
-      <div class="wl-swipe-hint wl-swipe-hint-right" aria-hidden="true">${ICONS.star} Vu, noter</div>
       <div class="wl-card-content">
         <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
           ${posterHtml}
@@ -387,7 +299,6 @@ function renderWatchlist() {
 
     container.appendChild(div);
     applyPosterAccent(item.poster, div);
-    attachWatchlistSwipeHandlers(div, i);
 
     if (item.tmdbId) {
       fetchProviders(item.tmdbId, i);
@@ -520,7 +431,6 @@ async function addToSpecificWatchlist(movie, year, listId) {
 function openWatchlistPicker(movie, year) {
   const modal = document.getElementById('wl-picker-modal');
   const listEl = document.getElementById('wl-picker-list');
-  const newRow = document.getElementById('wl-picker-new-row');
   const newForm = document.getElementById('wl-picker-new-form');
   const newBtn = document.getElementById('wl-picker-new-btn');
   const newInput = document.getElementById('wl-picker-new-input');

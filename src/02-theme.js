@@ -19,7 +19,7 @@ function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
     applySettings(saved);
-  } catch (e) {
+  } catch {
     applySettings(defaultSettings);
   }
 }
@@ -39,12 +39,19 @@ function applySettings(settings) {
     
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         if (JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme === 'system') {
-            document.documentElement.setAttribute('data-theme', e.matches ? "default" : "filmnoir");
+            const sysTheme = e.matches ? "default" : "filmnoir";
+            if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
+            document.documentElement.setAttribute('data-theme', sysTheme);
             renderAll();
         }
     });
   }
   
+  // Charge les polices du thème qu'on vient d'activer (voir loadThemeFonts
+  // dans index.html) : seules celles du thème actif sont téléchargées, donc
+  // changer de thème doit demander les siennes. La fonction est idempotente,
+  // un thème déjà vu ne redéclenche aucune requête.
+  if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(themeToApply);
   document.documentElement.setAttribute('data-theme', themeToApply);
   document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
   document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
@@ -81,12 +88,13 @@ function selectThemeCard(card) {
   card.classList.add('selected');
   card.setAttribute('aria-checked', 'true');
   withThemeTransition(() => {
-    if (card.dataset.theme !== "system") {
-        document.documentElement.setAttribute('data-theme', card.dataset.theme);
-    } else {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', prefersDark ? "default" : "filmnoir");
-    }
+    // Même remarque que dans applySettings : les polices du thème choisi
+    // doivent être demandées, elles ne sont plus toutes préchargées.
+    const picked = card.dataset.theme !== "system"
+      ? card.dataset.theme
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "default" : "filmnoir");
+    if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(picked);
+    document.documentElement.setAttribute('data-theme', picked);
   });
   renderAll();
 }

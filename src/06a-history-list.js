@@ -14,6 +14,13 @@
 // désormais dans 03-foundation.js (partagée avec la watchlist).
 
 const MONTH_LABELS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+// Abréviations distinctes, pas un simple slice(0, 3) du nom complet : ça
+// donnait "Jui" à la fois pour Juin ET Juillet — les deux mois indiscernables
+// sur l'axe du graphique "Activité mensuelle" (06c-profile-stats.js), repéré
+// sur une capture d'écran où "Jui" apparaissait deux fois d'affilée. Formes
+// courtes standard du français (Imprimerie nationale) : un point pour les
+// noms tronqués, rien pour ceux déjà courts (Mars, Mai, Juin, Août).
+const MONTH_LABELS_FR_ABBR = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juill.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 // item.date / item.savedAt sont des chaînes ISO (YYYY-MM-DD...) — on prend
 // les 7 premiers caractères comme clé de regroupement (année-mois), sans
 // dépendre d'un format plus permissif que ce que loadHistory() garantit déjà.
@@ -44,8 +51,13 @@ function renderHistoryHero(sorted) {
   // safePosterSrc() doit retomber sur l'espace réservé, pas produire un
   // <img src=""> (que le navigateur interprète comme un rechargement de la page).
   const heroPoster = safePosterSrc(item.poster);
+  // onerror : sans lui, une affiche qui ne repond pas (404 TMDb, reseau
+  // coupe) laissait le navigateur dessiner son icone d'image cassee, avec le
+  // texte alternatif a cote — visible et laid, alors que la grille juste en
+  // dessous degrade proprement vers un espace reserve depuis toujours. Meme
+  // repli ici, pour que les deux se comportent pareil.
   const imgHtml = heroPoster
-    ? `<img class="hero-entry-poster" src="${heroPoster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+    ? `<img class="hero-entry-poster" src="${heroPoster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hero-entry-poster\\'></div>'">`
     : `<div class="hero-entry-poster"></div>`;
   hero.innerHTML = `
     <div class="hero-entry">

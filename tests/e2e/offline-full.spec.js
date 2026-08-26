@@ -11,6 +11,14 @@ const { test, expect } = require('@playwright/test');
 // avec réseau avant de pouvoir fonctionner hors-ligne, ce n'est pas magique).
 
 test('parcours hors-ligne complet : shell installe, chaque onglet reste utilisable, rien ne plante', async ({ page, context }) => {
+  // Budget élargi, et pas pour masquer un échec : ce test enchaîne TROIS
+  // chargements de page complets (visite en ligne, rechargement pour laisser
+  // le service worker prendre le contrôle, rechargement hors-ligne), deux
+  // attentes d'installation du SW à 10s chacune, puis la visite des 5 onglets
+  // avec leurs attentes fixes. Mesuré juste au-dessus des 30s par défaut — il
+  // expirait donc sur le dernier onglet (#nav-profile) alors que tout ce qui
+  // précède passait. Les assertions sont inchangées.
+  test.setTimeout(90_000);
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');
     localStorage.setItem('lbx_swipe_hint_seen', '1');
@@ -48,7 +56,18 @@ test('parcours hors-ligne complet : shell installe, chaque onglet reste utilisab
   await expect(page.locator('#offline-badge')).toHaveClass(/visible/);
 
   // Onglet Noter : l'UI de base s'affiche (la recherche TMDb elle-même
-  // échouera hors-ligne, c'est attendu — mais rien ne doit planter)
+  // échouera hors-ligne, c'est attendu — mais rien ne doit planter).
+  //
+  // Le clic sur #nav-rating manquait : ce test attendait #movie-search visible
+  // dès le chargement, ce qui datait de l'époque où Noter était l'écran
+  // d'accueil. L'onglet d'arrivée est Découvrir depuis (voir le
+  // `switchMobileNav(ongletInitial)` de fin de src/01-navigation.js), donc
+  // #movie-search était forcément caché et ce test échouait — exactement la
+  // même dérive que celle déjà corrigée dans desktop-layout.spec.js, restée
+  // ici non détectée. Vérifié : échec identique sur a059738, antérieur à ce
+  // travail — ce n'est pas une régression introduite par la phase 5 ou 6.
+  await page.click('#nav-rating');
+  await page.waitForTimeout(300);
   await expect(page.locator('#movie-search')).toBeVisible();
 
   // Onglet Historique : les données déjà sauvegardées restent pleinement
@@ -111,4 +130,23 @@ test('une action locale (noter/modifier/supprimer) fonctionne integralement hors
   expect(history).toHaveLength(0);
 
   await context.setOffline(false);
+});
+
+// Fusionné depuis lots-cde.spec.js (renommage par comportement, phase 6 de
+// l'audit) — le badge visuel hors-ligne (#offline-badge) doit apparaître
+// et disparaître avec l'état réseau, indépendamment de l'utilisabilité
+// vérifiée plus haut.
+test('le badge hors-ligne apparait quand le reseau tombe', async ({ page, context }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.goto('/');
+  const badge = page.locator('#offline-badge');
+  expect(await badge.evaluate(el => el.classList.contains('visible'))).toBe(false);
+
+  await context.setOffline(true);
+  await page.waitForTimeout(200);
+  expect(await badge.evaluate(el => el.classList.contains('visible'))).toBe(true);
+
+  await context.setOffline(false);
+  await page.waitForTimeout(200);
+  expect(await badge.evaluate(el => el.classList.contains('visible'))).toBe(false);
 });

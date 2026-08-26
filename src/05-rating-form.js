@@ -1,3 +1,9 @@
+/* exported toggleWeights, resetWeights */
+// Ces fonctions sont appelees depuis des attributs onclick d'index.html,
+// pas depuis le JS : ESLint ne peut pas voir cet usage. La directive
+// `exported` le lui declare, et documente au passage ce couplage
+// HTML -> JS (a resorber le jour ou on retirera les onclick en ligne,
+// ce qui permettra aussi de durcir la CSP en retirant 'unsafe-inline').
 // ═══════════════════════════════════════════
 //  HEART & DATES & REVIEW TEXT
 // ═══════════════════════════════════════════

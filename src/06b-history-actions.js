@@ -41,19 +41,42 @@ function showToast(msg, withUndo = false, undoFnName = 'undoDelete') {
 
 window.deleteItem = function(idx, btnEl) {
   const history = loadHistory();
-  deletedItemCache = history[idx]; 
+  const target = history[idx];
+  if (!target) return;
+  deletedItemCache = target;
   deletedItemIndex = idx;
-  
+
   if (btnEl) {
     const cardToAnimate = btnEl.closest('.hist-item');
     cardToAnimate.classList.add('deleting');
   }
 
   setTimeout(() => {
-    history.splice(idx, 1);
-    saveHistory(history);
-    if (deletedItemCache?.title) {
-      recordTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+    // ── MISE À JOUR PERDUE (corrigé) ────────────────────────────────────
+    // Cette fonction lisait l'historique AVANT le setTimeout, puis écrivait
+    // cet instantané vieux de 300 ms. Deux suppressions coup sur coup
+    // prenaient donc le MÊME instantané (rien n'ayant encore été écrit) et
+    // la seconde écriture écrasait la première : le film supprimé en premier
+    // réapparaissait. Reproduit : supprimer A puis C sur [C, B, A] laissait
+    // [B, A] au lieu de [B].
+    //
+    // Deuxième défaut du même endroit : `idx` était figé à l'appel. Après une
+    // suppression concurrente, tous les index suivants se décalent — l'index
+    // gardé désigne alors un AUTRE film. C'est exactement le piège que
+    // resolveCurrentIdx() documente et évite déjà plus bas dans ce fichier ;
+    // il n'avait simplement jamais été appliqué ici, alors que ce chemin
+    // (le bouton en surimpression) est aujourd'hui le seul encore vivant.
+    //
+    // On relit donc l'historique au moment d'écrire, et on retrouve le film
+    // par son identité plutôt que par sa position.
+    const fresh = loadHistory();
+    const realIdx = fresh.findIndex(h =>
+      h.savedAt === target.savedAt && (h.title || '') === (target.title || ''));
+    if (realIdx === -1) return; // déjà supprimé entre-temps : rien à faire
+    fresh.splice(realIdx, 1);
+    saveHistory(fresh);
+    if (target.title) {
+      recordTombstone(HISTORY_TOMBSTONES_KEY, target.title.toLowerCase());
     }
     renderAll();
     showToast(`Film supprimé.`, true);
@@ -287,15 +310,20 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
-    // Ludex 2.0 : Historique passé en grille — plus de swipe possible (une
-    // cellule de grille n'a pas la place pour révéler un indice en dessous).
-    // .hist-item-content n'existe plus dans le nouveau balisage (voir
-    // renderHistory(), 06a-history-list.js) : sa seule présence sert donc de
-    // signal fiable "ce geste est pertinent ici" — jamais vrai désormais,
-    // ce qui laisse pressedItem/pressedContent à null et neutralise en
-    // cascade tout le reste de ce fichier (touchmove/touchend gardent déjà
-    // `if (!pressedItem) return;`) sans avoir à toucher chacun séparément.
-    if (!item || !item.querySelector('.hist-item-content') || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    // Ludex 2.0 : Historique passé en grille — plus de GLISSEMENT possible
+    // (une cellule de grille n'a pas la place pour révéler un indice en
+    // dessous), et .hist-item-content, l'élément qu'on faisait coulisser,
+    // n'est plus produit par renderHistory() (06a-history-list.js).
+    //
+    // Cette absence servait jusqu'ici de garde ICI, à l'entrée du geste, pour
+    // neutraliser le fichier entier d'un coup. Trop large : ce handler porte
+    // AUSSI l'appui long, qui ouvre le menu d'actions rapides et ne dépend
+    // d'aucun déplacement. Vérifié dans un vrai navigateur : maintenir le
+    // doigt 800 ms sur une carte n'ouvrait plus rien. "Copier le texte"
+    // n'était alors plus atteignable nulle part, et "Coups de cœur" seulement
+    // en repassant par Modifier. La garde est donc redescendue au seul
+    // endroit qui glisse (voir `pressedContent` dans touchmove/mousemove).
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
     // NOTE : ne PAS annuler ici un item armé — un simple tap déclenche
     // touchstart AVANT click, et annuler dès le toucher tuait l'état armé
@@ -333,6 +361,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
         clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
+        // Pas de .hist-item-content : rien à faire coulisser (balisage en
+        // grille). On traite le mouvement comme un défilement — c'est ici
+        // que vit désormais la neutralisation du glissement, et nulle part
+        // ailleurs. Sans ça, la branche 'swipe' plus bas déréférencerait un
+        // pressedContent nul.
+        if (!pressedContent) { swipeMode = 'scroll'; return; }
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // C'est ICI (nouveau glissement réellement engagé) qu'on nettoie un
         // éventuel état armé du même film — assez tôt pour éviter les deux
@@ -415,6 +449,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const rawDy = e.clientY - startY;
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        // Bug corrigé, indépendant du précédent : ce chemin souris n'a JAMAIS
+        // eu la garde .hist-item-content que le chemin tactile portait. Sur le
+        // balisage en grille, glisser une carte à la souris arrivait donc
+        // jusqu'à `pressedContent.style` avec pressedContent nul — mesuré :
+        // 7 TypeError par glissement. Même traitement que le tactile.
+        if (!pressedContent) { swipeMode = 'scroll'; return; }
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // Même correctif que le tactile : nettoyer un état armé au démarrage
         // d'un VRAI glissement, jamais au simple clic (voir touchstart).

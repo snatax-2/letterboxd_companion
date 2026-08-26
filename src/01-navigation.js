@@ -130,6 +130,19 @@ function switchMobileNav(view) {
     switchRightTab('profile');
     playMobileViewAnim(colRightViews);
   }
+
+  // Reflète l'onglet courant dans l'URL (#discover, #history...) — deux
+  // bénéfices concrets : un lien copié/mis en favori rouvre sur le bon
+  // onglet, et un rechargement de page n'atterrit plus systématiquement sur
+  // Découvrir. replaceState (pas pushState) : ceci ne doit PAS créer
+  // d'entrée d'historique à chaque clic d'onglet, seulement tenir l'URL à
+  // jour sur l'entrée courante. Le bouton Retour reste géré par
+  // 20-back-navigation.js (une seule entrée sentinelle, quel que soit le
+  // nombre d'onglets visités) — passer `history.state` inchangé préserve
+  // cette sentinelle si elle est déjà posée sur l'entrée courante.
+  if (location.hash !== `#${view}`) {
+    history.replaceState(history.state, '', `#${view}`);
+  }
 }
 
 navRating.addEventListener('click', () => switchMobileNav('rating'));
@@ -142,17 +155,23 @@ navProfile.addEventListener('click', () => switchMobileNav('profile'));
 // (voir styles.css : la grille à deux colonnes est remplacée par des onglets
 // uniques, positionnés en haut sur PC et en bas sur mobile) — plus besoin de
 // réagir différemment au redimensionnement selon la largeur.
-// Découvrir est désormais l'onglet ouvert au démarrage (au lieu de Noter),
-// cohérent avec son nouvel ordre en tête de la barre de navigation.
+// Découvrir est l'onglet ouvert au démarrage par défaut (cohérent avec son
+// ordre en tête de la barre de navigation) — sauf si l'URL désigne déjà un
+// autre onglet (lien partagé, favori, ou simple rechargement de page : voir
+// le replaceState en fin de switchMobileNav ci-dessus).
+const ONGLETS_VALIDES = ['discover', 'watchlist', 'rating', 'history', 'profile'];
+const ongletInitial = ONGLETS_VALIDES.includes(location.hash.slice(1))
+  ? location.hash.slice(1)
+  : 'discover';
 // Différé au tick suivant (setTimeout 0) : app.js est la concaténation de
 // ~28 fichiers exécutés dans l'ordre, et 01-navigation.js est tôt dans cet
-// ordre — un appel immédiat à switchMobileNav('discover') atteint le code
-// de 11-discover.js (discoverMediaType, CAROUSEL_SOURCES...), pas encore
+// ordre — un appel immédiat à switchMobileNav(...) atteint le code de
+// 11-discover.js (discoverMediaType, CAROUSEL_SOURCES...), pas encore
 // exécuté à ce stade. Même classe de bug "Cannot access ... before
 // initialization" que celle déjà documentée dans 03-foundation.js, jamais
 // rencontrée avant que Découvrir devienne l'onglet ouvert au démarrage
 // (l'ancien 'rating' ne déclenchait aucun appel à ce code).
-setTimeout(() => switchMobileNav('discover'), 0);
+setTimeout(() => switchMobileNav(ongletInitial), 0);
 
 // ─── Swipe pour naviguer entre les onglets mobiles ───────────────────────────
 // Glisser vers la gauche = onglet suivant, vers la droite = onglet précédent,

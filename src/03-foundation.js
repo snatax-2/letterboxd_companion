@@ -107,19 +107,6 @@ function safePosterSrc(url) {
   return escAttr(raw);
 }
 
-// État vide unifié — soit compact (juste un texte, pour une section déjà
-// titrée comme "Top Réalisateurs" ou "Distribution des notes"), soit
-// complet (icône + message + CTA optionnel, pour un écran autonome comme
-// Historique/À voir vides). Les états déjà riches et fonctionnels ne sont
-// pas retouchés par cette fonction — elle sert à ne plus avoir à
-// réinventer le motif à la main à chaque nouvel endroit qui en a besoin.
-function renderEmptyState({ icon = null, message, ctaLabel = null, ctaId = null } = {}) {
-  const iconHtml = icon ? `<div class="empty-state-icon">${icon}</div>` : '';
-  const ctaHtml = ctaLabel ? `<button type="button" class="empty-state-cta"${ctaId ? ` id="${ctaId}"` : ''}>${escAttr(ctaLabel)}</button>` : '';
-  const cls = icon || ctaLabel ? 'empty-state' : 'empty-state empty-state-compact';
-  return `<div class="${cls}">${iconHtml}${escAttr(message)}${ctaHtml}</div>`;
-}
-
 // ═══════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════

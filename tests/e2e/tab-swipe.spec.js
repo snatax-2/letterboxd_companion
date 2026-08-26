@@ -7,7 +7,12 @@
 // les deux sens, pour ne plus jamais laisser passer cette régression.
 const { test, expect } = require('@playwright/test');
 
-const TAB_ORDER = ['nav-rating', 'nav-history', 'nav-watchlist', 'nav-discover', 'nav-profile'];
+// Ordre ALIGNÉ SUR LA BARRE telle qu'elle s'affiche, de gauche à droite.
+// Il doit rester identique au TAB_ORDER de src/01-navigation.js : c'est lui
+// qui décide de l'onglet suivant/précédent. La barre a été réordonnée
+// (Découvrir en premier, Noter au centre) sans que ce test suive — d'où
+// 7 échecs qui décrivaient l'ancienne disposition, pas un bug.
+const TAB_ORDER = ['nav-discover', 'nav-watchlist', 'nav-rating', 'nav-history', 'nav-profile'];
 
 // Dispatche une vraie séquence tactile (touchstart -> touchend) dans la page,
 // pour simuler un glissement horizontal comme le ferait un doigt réel.
@@ -26,6 +31,9 @@ async function swipe(page, { startX, endX, y = 400 }) {
 
 test.describe('Navigation par swipe entre les 5 onglets', () => {
   test.beforeEach(async ({ page }) => {
+    // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
+    // premier clic du test (page.click part alors en timeout de 30 s).
+    await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
     await page.goto('/');
     await page.waitForSelector('#app-splash.hide', { timeout: 5000 }).catch(() => {});
   });
@@ -57,10 +65,12 @@ test.describe('Navigation par swipe entre les 5 onglets', () => {
     }
   }
 
-  test("glisser au-delà de Noter (premier onglet) ne fait rien", async ({ page }) => {
-    await page.click('#nav-rating');
+  // Bornes : le PREMIER onglet de la barre est Découvrir (plus Noter, qui a
+  // été déplacé au centre lors du réordonnancement), le dernier reste Profil.
+  test("glisser au-delà de Découvrir (premier onglet) ne fait rien", async ({ page }) => {
+    await page.click('#nav-discover');
     await swipe(page, { startX: 50, endX: 300 });
-    await expect(page.locator('#nav-rating')).toHaveClass(/active/);
+    await expect(page.locator('#nav-discover')).toHaveClass(/active/);
   });
 
   test("glisser au-delà de Profil (dernier onglet) ne fait rien", async ({ page }) => {

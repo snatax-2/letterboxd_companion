@@ -62,21 +62,44 @@ test('en-tete, progression par saison (toutes les saisons TMDb, statuts corrects
   await expect(page.locator('.mds-header-director')).toContainText('Nic Pizzolatto');
   await expect(page.locator('.mds-personal-score')).toContainText('9.0/10'); // moyenne de la seule saison notee
 
-  await expect(page.locator('.tds-season-progress-row')).toHaveCount(3);
-  const rows = await page.locator('.tds-season-progress-row').allTextContents();
-  expect(rows[0]).toContain('9.0/10');
-  expect(rows[1]).toContain('2/8 ép');
-  expect(rows[2]).toContain('Non suivie');
+  // 97ae807 a remplacé les lignes dépliables par saison
+  // (.tds-season-progress-row) par des onglets (.tds-season-tab) et UNE
+  // ligne d'état pour la seule saison active — on ne peut donc plus lire les
+  // trois d'un coup, il faut passer d'un onglet à l'autre. Le commit n'a
+  // touché aucun fichier de test.
+  await expect(page.locator('.tds-season-tab')).toHaveCount(3);
+  const statusForSeason = async (n) => {
+    await page.click(`.tds-season-tab[data-season-number="${n}"]`);
+    await page.waitForTimeout(300);
+    return page.locator('.tds-season-status').first().textContent();
+  };
+  expect(await statusForSeason(1)).toContain('9.0/10');
+  expect(await statusForSeason(2)).toContain('2/8 ép');
+  expect(await statusForSeason(3)).toContain('Non suivie');
 
   await page.waitForTimeout(500);
   await expect(page.locator('#tds-external-ratings')).toContainText('IMDb');
   await expect(page.locator('#tds-external-ratings')).toContainText('RT');
 
-  // Clique la saison 3 (jamais suivie) -> ouvre Noter avec cette saison selectionnee
-  await page.click('.tds-season-progress-row >> nth=2');
+  // Cliquer une saison n'ouvre plus Noter : l'onglet charge sa liste
+  // d'épisodes dans la fiche elle-même (même refonte). Le passage vers Noter
+  // se fait maintenant par le bouton "Rouvrir pour noter"
+  // (.tds-season-reopen-btn), qui n'apparaît que sur une saison notable —
+  // c'est-à-dire déjà notée, ou complète. Une saison jamais suivie n'en a
+  // donc pas, et c'est délibéré : le bouton promettait auparavant une
+  // notation que selectSeason() refusait ensuite d'afficher (voir le
+  // commentaire de buildSeasonStatusRow, 19-tv-detail.js).
+  await page.click('.tds-season-tab[data-season-number="3"]');
+  await page.waitForTimeout(400);
+  await expect(page.locator('.tds-season-reopen-btn')).toHaveCount(0);
+
+  // Sur la saison 1, notée, le bouton existe et ouvre bien Noter.
+  await page.click('.tds-season-tab[data-season-number="1"]');
+  await page.waitForTimeout(400);
+  await page.click('.tds-season-reopen-btn');
   await page.waitForTimeout(500);
   await expect(page.locator('#tab-media-tv')).toHaveClass(/active/);
-  await expect(page.locator('#tv-strip-title')).toContainText('Saison 3');
+  await expect(page.locator('#tv-strip-title')).toContainText('Saison 1');
 });
 
 test('serie jamais suivie : pas de note globale, bouton Noter/Suivre pre-remplit la recherche', async ({ page }) => {
@@ -90,10 +113,22 @@ test('serie jamais suivie : pas de note globale, bouton Noter/Suivre pre-remplit
 
   await expect(page.locator('#tds-content')).toContainText('Pas encore notée');
 
-  await page.click('#tds-rate-btn');
-  await page.waitForTimeout(500);
-  await expect(page.locator('#tab-media-tv')).toHaveClass(/active/);
-  await expect(page.locator('#tv-search')).toHaveValue('True Detective');
+  // #tds-rate-btn n'existe plus. Sur une série jamais suivie, la fiche
+  // propose #tds-start-btn ("Commencer la série"), qui ne renvoie plus vers
+  // Noter : il crée le suivi de la première saison sur place, l'ajoute au
+  // widget "En cours" et recharge la fiche (voir le handler #tds-start-btn,
+  // 19-tv-detail.js). C'est ce parcours-là qu'on vérifie maintenant.
+  await page.click('#tds-start-btn');
+  await page.waitForTimeout(800);
+
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
+  const show = stored.find(s => String(s.tmdbTvId) === '4607');
+  expect(show).toBeTruthy();
+  expect(show.seasons['1'].watchedEpisodes).toEqual([]);
+
+  // La fiche s'est rechargée : le bouton a laissé place à la progression.
+  await expect(page.locator('#tds-start-btn')).toHaveCount(0);
+  await expect(page.locator('.tds-season-tab').first()).toBeVisible();
 });
 
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {

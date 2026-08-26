@@ -176,7 +176,7 @@ function renderMonthlyActivityChart(history, tvShows) {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTH_LABELS_FR[d.getMonth()].slice(0, 3) });
+    months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTH_LABELS_FR_ABBR[d.getMonth()] });
   }
 
   const movieCounts = months.map(m => history.filter(h => (h.date || h.savedAt || '').startsWith(m.key)).length);
@@ -187,6 +187,17 @@ function renderMonthlyActivityChart(history, tvShows) {
     tvShows.filter(sh => Object.values(sh.seasons || {}).some(se => (se.rating?.date || '').startsWith(m.key))).length
   );
   const maxVal = Math.max(1, ...movieCounts, ...tvCounts);
+
+  // Rien sur les 6 derniers mois : un message plutôt que douze barres à zéro.
+  // C'est exactement le défaut pour lequel "Distribution des notes" avait été
+  // corrigé ("afficher un message au lieu de 10 lignes à zéro") — bloc que
+  // celui-ci remplace en Ludex 2.0, sans reprendre ce correctif au passage.
+  // Les trois autres encarts du tableau de bord ont chacun le leur (radar,
+  // trophées, duels) : même tournure, même style compact.
+  if (movieCounts.every(c => c === 0) && tvCounts.every(c => c === 0)) {
+    container.innerHTML = '<div class="month-chart-empty">Note quelques films pour voir ton activité des 6 derniers mois.</div>';
+    return;
+  }
 
   // Ludex 2.0 : chiffre exact au-dessus de chaque barre (voir
   // Ludex_Specifications_Profil — "on gagnerait à afficher le nombre") —

@@ -390,7 +390,7 @@ async function openTvDetailSheet(tmdbTvId) {
     fetchAndRenderProviders(data.id, 'tds-providers', 'tv');
     populateTdsUpNext(localShow);
     wireSeasonTabs();
-  } catch (e) {
+  } catch {
     tdsCurrentData = null;
     tdsContentEl.innerHTML = `
       <div class="error-state">

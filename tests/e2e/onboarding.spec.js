@@ -48,3 +48,28 @@ test('un utilisateur avec déjà des films dans l\'historique ne voit PAS l\'acc
   await page.waitForTimeout(1600);
   await expect(page.locator('#onboarding-modal')).not.toHaveClass(/open/);
 });
+
+// Fusionné depuis phase6-final-verification.spec.js (renommage par
+// comportement, phase 6 de l'audit) — a débusqué un vrai bug préexistant
+// (voir CHANGELOG) : une diapositive d'onboarding restait cliquable —
+// invisible mais interceptant les clics — même quand la modale entière
+// était fermée, à cause d'un pointer-events: auto appliqué dès
+// l'initialisation plutôt que seulement à l'ouverture réelle.
+test('onboarding non ouverte : aucune diapositive ne doit intercepter de clics ailleurs sur la page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_settings', JSON.stringify({ theme: 'cinephile' }));
+    localStorage.setItem('lbx_watchlist', JSON.stringify([{ title: 'Dune', tmdbId: '99', year: '2021', genre: 'SF', poster: '' }]));
+  });
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.goto('/');
+  await page.waitForTimeout(1400);
+  await page.click('#nav-history');
+  await page.waitForTimeout(600);
+  await page.click('#nav-watchlist');
+  await page.waitForTimeout(600);
+  // Le vrai test : ce clic doit reussir sans timeout, sans etre intercepte
+  await page.click('#nav-rating', { timeout: 3000 });
+  await expect(page.locator('#nav-rating')).toHaveClass(/active/);
+});
