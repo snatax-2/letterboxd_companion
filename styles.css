@@ -2850,20 +2850,6 @@
   }
   .on-this-day-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 5px; line-height: 1.25; }
 
-  /* ── Découvrir : "D'après tes goûts" (angle mort ciblé) ── */
-  .blind-spot-card {
-    display: flex; align-items: center; justify-content: space-between; gap: 10px;
-    width: 100%; text-align: left; background: var(--surface2); border: 1px solid var(--border);
-    border-left: 4px solid var(--orange); border-radius: var(--radius-sm);
-    padding: 12px 14px; margin-bottom: 8px; cursor: pointer;
-    font-family: var(--font-body); transition: border-color var(--dur-fast);
-  }
-  .blind-spot-card:last-child { margin-bottom: 0; }
-  .blind-spot-card:hover { border-color: var(--orange); }
-  .blind-spot-text { display: flex; flex-direction: column; gap: 3px; }
-  .blind-spot-highlight { font-size: 0.85rem; font-weight: 800; color: var(--text-hi); font-family: var(--font-heading); }
-  .blind-spot-detail { font-size: 0.76rem; color: var(--text-mid); line-height: 1.3; }
-  .blind-spot-arrow { flex-shrink: 0; color: var(--text-mid); }
   .mds-person-link:hover { text-decoration-color: var(--orange); }
 
   /* ── FICHE PERSONNE : barre de complétion + grille de filmographie ── */
