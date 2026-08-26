@@ -24,6 +24,14 @@ test('cibles tactiles : zone effective agrandie pour les 4 elements corriges', a
   await page.click('#weights-toggle');
   await page.waitForTimeout(300);
   const stepBtn = page.locator('.criterion-step-btn[data-step="0.5"]').first();
+  // Ouvrir le panneau des pondérations pousse le critère vers le bas : mesuré,
+  // le bouton passait de y=970 à y=1440, hors du viewport de 1400. Or
+  // mouse.click() travaille en coordonnées de viewport SANS faire défiler —
+  // le clic tombait donc dans le vide, et le test concluait à tort que la zone
+  // tactile étendue ne marchait plus. On amène le bouton à l'écran, puis on
+  // relit sa position.
+  await stepBtn.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
   const stepBox = await stepBtn.boundingBox();
   const before = await page.locator('#scenario').inputValue();
   await page.mouse.click(stepBox.x + stepBox.width / 2, stepBox.y - 6);
@@ -32,7 +40,12 @@ test('cibles tactiles : zone effective agrandie pour les 4 elements corriges', a
   console.log('avant/apres clic 6px au-dessus du bouton +:', before, '->', after);
   expect(parseFloat(after)).toBeGreaterThan(parseFloat(before));
 
-  // settings-btn : clic 6px a gauche (zone etendue) doit ouvrir les reglages
+  // settings-btn : clic 6px a gauche (zone etendue) doit ouvrir les reglages.
+  // Remonter d'abord : le scrollIntoViewIfNeeded ci-dessus a fait defiler la
+  // page, et l'en-tete n'etait plus dans le viewport — mesuree depuis un
+  // en-tete hors ecran, la position servait un clic qui n'atteignait rien.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(200);
   const settingsBox = await page.locator('#settings-btn').boundingBox();
   await page.mouse.click(settingsBox.x - 6, settingsBox.y + settingsBox.height / 2);
   await page.waitForTimeout(400);

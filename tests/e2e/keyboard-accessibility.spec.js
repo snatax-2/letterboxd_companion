@@ -5,15 +5,18 @@
 const { test, expect } = require('@playwright/test');
 
 test('appuyer sur Entrée sur une carte de tendance (focus clavier) ouvre sa fiche', async ({ page }) => {
+  // fa0caea a remplace la rangee "tendances" unique par plusieurs carrousels
+  // (nouveautes, classiques, international, topRated, historique), chacun avec
+  // ses propres parametres et charge a l'intersection. Ne repondre qu'a
+  // trending=true laissait donc des squelettes : 25 .poster-min a l'ecran,
+  // aucun avec data-item-id, donc rien de focusable. On repond a TOUS les
+  // endroits de liste avec la meme carte.
   await page.route('**/api/search*', async (route) => {
     const url = route.request().url();
-    if (url.includes('trending=true')) {
-      return route.fulfill({ json: { results: [{ id: 42, title: 'Film Clavier', poster_path: '/x.jpg' }] } });
-    }
     if (url.includes('id=42')) {
       return route.fulfill({ json: { id: 42, title: 'Film Clavier', release_date: '2020-01-01', poster_path: '/x.jpg', genres: [], credits: { crew: [], cast: [] } } });
     }
-    return route.fulfill({ json: { results: [] } });
+    return route.fulfill({ json: { results: [{ id: 42, title: 'Film Clavier', poster_path: '/x.jpg' }] } });
   });
 
   // L'onboarding est une modale PLEIN ÉCRAN : sans ça, elle intercepte le
@@ -21,9 +24,11 @@ test('appuyer sur Entrée sur une carte de tendance (focus clavier) ouvre sa fic
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.click('#nav-discover');
-  await page.waitForSelector('.poster-min', { timeout: 5000 });
+  // Attendre une VRAIE carte, pas un squelette : .poster-min sert aux deux, et
+  // seul l'element porteur de data-item-id est focusable et gere l'Entree.
+  await page.waitForSelector('.poster-min[data-item-id]', { timeout: 15000 });
 
-  const item = page.locator('.poster-min').first();
+  const item = page.locator('.poster-min[data-item-id]').first();
   await item.focus();
   await expect(item).toBeFocused();
   await page.keyboard.press('Enter');

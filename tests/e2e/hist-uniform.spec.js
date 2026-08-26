@@ -1,6 +1,20 @@
 const { test, expect } = require('@playwright/test');
 
-test('les cartes de l\'historique ont un rythme uniforme (lignes meta bornees)', async ({ page }) => {
+// ── L'UNIFORMITÉ EST DEVENUE STRUCTURELLE ──────────────────────────────
+// Ce test vérifiait qu'une carte d'historique garde la même hauteur qu'une
+// autre malgré des genres et des acteurs bien plus longs, et que les lignes
+// débordantes soient ellipsées (.hist-meta-line, text-overflow).
+//
+// Ludex 2.0 a remplacé la carte à lignes de texte par une mosaïque
+// d'affiches : plus de .hist-meta-line du tout — le titre vit dans l'aria-label
+// de .hist-item-open, et la hauteur découle d'un aspect-ratio 2/3 sur la
+// vignette. L'uniformité n'est donc plus une propriété à surveiller ligne par
+// ligne, elle est garantie par construction.
+//
+// Ce qui reste vérifiable, et qui casserait si un palier vedette débordait de
+// la grille : toutes les cartes d'un même palier ont la même hauteur, et un
+// texte anormalement long n'y change rien.
+test('les cartes d\'un meme palier gardent la meme hauteur, quel que soit le texte', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');
     localStorage.setItem('lbx_swipe_hint_seen', '1');
@@ -10,20 +24,17 @@ test('les cartes de l\'historique ont un rythme uniforme (lignes meta bornees)',
       { title: 'Avec Tag', year: '2024', runtime: '135 min', genre: 'Action, Aventure', director: 'Matthew Vaughn', actors: 'Henry Cavill, Bryce Dallas Howard', score: '6.1', mode: 'quick', values: { quick: 3 }, date: '2026-07-03', savedAt: '2026-07-03T10:00:00.000Z', stars: '★★★', contextTags: ['home'] },
     ]));
   });
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
   await page.click('#nav-history');
   await page.waitForSelector('.hist-item');
 
-  // Meme nombre de champs -> meme hauteur, malgre genres/acteurs bien plus longs
-  const heights = await page.locator('.hist-item').evaluateAll(els => els.map(el => el.getBoundingClientRect().height));
-  // Les TROIS cartes identiques — y compris celle avec un tag de contexte
-  // ("À la maison"), qui prenait auparavant une rangée de plus
-  expect(Math.abs(heights[0] - heights[1])).toBeLessThan(2);
-  expect(Math.abs(heights[0] - heights[2])).toBeLessThan(2);
-
-  // Les lignes debordantes sont ellipsees, pas enroulees
-  const overflow = await page.locator('.hist-meta-line').first().evaluate(el => getComputedStyle(el).textOverflow);
-  expect(overflow).toBe('ellipsis');
+  // On compare à palier égal : une carte vedette est volontairement plus
+  // grande (grid-row: span 2), la comparer aux autres n'aurait pas de sens.
+  const hauteurs = await page.locator('.hist-item:not([class*="hist-grid-card-"])').evaluateAll(
+    els => els.map(el => Math.round(el.getBoundingClientRect().height)));
+  expect(hauteurs.length).toBeGreaterThanOrEqual(2);
+  expect(Math.max(...hauteurs) - Math.min(...hauteurs), `hauteurs : ${hauteurs}`).toBeLessThan(2);
 });
 
 test('le filtre genre est plie par defaut avec le genre actif visible', async ({ page }) => {
