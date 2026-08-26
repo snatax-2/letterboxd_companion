@@ -41,7 +41,7 @@ function formatViolations(violations) {
   return violations.map(v => `[${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} élément(s))`).join('\n');
 }
 
-for (const theme of ['default', 'technicolor']) {
+for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test.describe(`Accessibilité — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedRichState(page);
@@ -97,8 +97,9 @@ for (const theme of ['default', 'technicolor']) {
 }
 
 // Vues supplémentaires scannées uniquement sur le thème par défaut (éviter de
-// dupliquer 10 thèmes × N vues — le principe des couleurs/contrastes est déjà
-// couvert par la boucle ci-dessus avec Technicolor, le thème le plus stylisé).
+// dupliquer 6 thèmes × N vues — le principe des couleurs/contrastes est déjà
+// couvert par la boucle ci-dessus, qui balaie maintenant les 6 thèmes réels
+// de l'application au lieu de 2).
 test('Fiche film ouverte', async ({ page }) => {
   await seedRichState(page);
   await page.route('**/api/search*', route => route.fulfill({

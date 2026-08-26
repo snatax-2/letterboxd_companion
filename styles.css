@@ -921,6 +921,17 @@
     overscroll-behavior-y: contain;
   }
 
+  /* Lien d'évitement (WCAG 2.4.1, A) : invisible tant qu'il n'a pas le focus
+     clavier, permet de sauter la navigation et d'atterrir directement sur
+     #contenu (voir index.html, <main id="contenu">). */
+  .skip-link {
+    position: absolute; left: -9999px; top: 0; z-index: 99999;
+    background: var(--surface); color: var(--text-hi);
+    padding: 10px 16px; border-radius: var(--radius-sm);
+    font-family: var(--font-heading); font-weight: 600; text-decoration: none;
+  }
+  .skip-link:focus { left: 12px; top: 12px; }
+
   /* ── HEADER ── */
   .app-header {
     max-width: 1100px;
@@ -969,6 +980,11 @@
      d'autres boutons texte+icône déjà assez grands. */
   #settings-btn { position: relative; }
   #settings-btn::after { content: ''; position: absolute; inset: -7px; }
+  /* #reset-duels-btn est un .icon-btn parmi d'autres (export/import/copie du
+     journal), tous déjà assez grands — ciblé seul plutôt que d'élargir toute
+     la classe .icon-btn, action destructrice mesurée à 34px avant correction
+     (min-height 44px, WCAG 2.5.5 AAA). */
+  #reset-duels-btn { min-height: 44px; }
 
   /* ── LAYOUT ── */
   /* Une seule vue à la fois, à toutes les tailles d'écran (voir switchMobileNav
@@ -1156,9 +1172,13 @@
     box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25));
     width: 100%;
   }
+  /* .card-title porte maintenant <h3> (hiérarchie de titres, WCAG 1.3.1) —
+     margin remis à zéro explicitement : la marge haut par défaut du
+     navigateur sur <h3> n'était pas neutralisée par le seul margin-bottom
+     ci-dessous et aurait décalé chaque carte vers le bas. */
   .card-title {
     font-size: var(--text-xs); font-weight: 800; text-transform: uppercase; color: var(--text);
-    margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    margin: 0 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
     display: flex; justify-content: space-between; align-items: center;
     font-family: var(--font-heading);
     font-style: var(--title-style, normal);
@@ -2507,7 +2527,10 @@
   .theme-label { font-size:.68rem; font-weight:700; text-align:center; padding:5px 4px 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.04em; }
   .modal-body { font-size: 0.9rem; margin-bottom: 24px; line-height: 1.5; font-family: var(--font-body);}
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
-  .modal-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; font-family: var(--font-heading); font-size: 0.85rem; cursor: pointer; background: var(--bg); color: var(--text); font-weight: 600; letter-spacing: 0.04em; transition: all var(--dur-fast); }
+  /* min-height 44px (WCAG 2.5.5, AAA) : mesuré à 34px avant correction sur
+     #modal-confirm/#modal-cancel — trop juste pour les boutons de confirmation
+     d'actions destructrices, où une pression manquée compte double. */
+  .modal-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; min-height: 44px; font-family: var(--font-heading); font-size: 0.85rem; cursor: pointer; background: var(--bg); color: var(--text); font-weight: 600; letter-spacing: 0.04em; transition: all var(--dur-fast); }
 
   /* Menu d'actions rapides (appui long sur un film de l'historique) */
   .action-sheet-box { max-width: 340px; }
@@ -2986,10 +3009,12 @@
   .settings-toggle-switch input:checked + .settings-toggle-slider::before { transform: translateX(18px); }
 
   .platform-chips-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  /* min-height 44px (WCAG 2.5.5, AAA) : mesuré à 31px avant correction. */
   .platform-chip {
     padding: 7px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
     font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all var(--dur-fast);
+    min-height: 44px; display: inline-flex; align-items: center;
   }
   .platform-chip:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .platform-chip.selected { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); font-weight: 700; }
