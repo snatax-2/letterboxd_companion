@@ -16,6 +16,15 @@ const { test, expect } = require('@playwright/test');
 // (évite les diffs qui apparaîtraient tout seuls d'un jour à l'autre).
 // `animations: 'disabled'` fige transitions/animations CSS pour un rendu
 // déterministe.
+//
+// Polices Google BLOQUÉES délibérément (voir beforeEach) : loadThemeFonts()
+// (index.html) les charge par un <link> injecté dynamiquement, donc leur
+// disponibilité dépend du réseau au moment du test. Mesuré : jusqu'à 13s de
+// chargement, et un échec réseau fait retomber silencieusement sur la police
+// de repli — deux sources de faux diffs pour une suite censée n'attraper que
+// de VRAIES régressions. Bloquer la police la rend non pertinente pour ce
+// test (elle reste couverte ailleurs) au profit d'un rendu qui ne dépend que
+// du CSS, reproductible à l'identique quel que soit l'état du réseau.
 
 async function seedStableHistory(page) {
   await page.addInitScript(() => {
@@ -38,9 +47,11 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'filmnoir', 'technicolor']) {
+for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
+      await page.route('**fonts.googleapis.com**', route => route.abort());
+      await page.route('**fonts.gstatic.com**', route => route.abort());
       await seedStableHistory(page);
       if (theme !== 'default') {
         await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
