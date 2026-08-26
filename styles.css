@@ -3430,26 +3430,95 @@
   }
 
   /* ═══════════════════════════════════════════
+     BARRE D'ONGLETS EN HAUT (>860px)
+     ═══════════════════════════════════════════
+     Dans le HTML, <nav class="mobile-nav"> est écrit APRÈS .layout : sur
+     mobile il passe en position:fixed en bas de l'écran, où l'ordre du
+     document n'a aucune importance. Dès qu'on repasse en flux normal
+     (au-dessus de 860px, seuil du bloc mobile plus haut), ce même ordre le
+     rejetait tout en bas de la PAGE. Mesuré à 1440px : la barre se
+     retrouvait à 1021px du haut sur Découvrir et à 2637px sur Profil — il
+     fallait donc faire défiler toute la page pour changer d'onglet, alors
+     que le commentaire du bloc .layout annonce justement une barre "en haut
+     sur PC". Elle ne l'a jamais été.
+
+     Corrigé par l'ordre visuel flex plutôt qu'en déplaçant le nœud dans le
+     HTML : à l'endroit où il est, l'ordre du document correspond à l'ordre
+     visuel sur mobile (barre en bas, après le contenu), ce qui est le cas
+     d'usage principal — le déplacer désalignerait mobile pour aligner PC.
+     position:sticky garde ensuite la barre atteignable pendant le
+     défilement, sans la superposer au contenu comme le ferait fixed. */
+  @media (min-width: 861px) {
+    body { display: flex; flex-direction: column; }
+    /* width: 100% est indispensable ici : `margin: 0 auto` (déjà posé sur
+       .app-header et .mobile-nav pour les centrer) neutralise le
+       align-items: stretch d'un conteneur flex. Sans lui, les deux se
+       réduisaient à la largeur de leur contenu — barre d'onglets écrasée à
+       ~290px avec les libellés qui se chevauchent, titre et engrenage collés
+       l'un à l'autre au lieu d'être aux deux extrémités. .layout a déjà son
+       width: 100% et n'était donc pas touchée. */
+    .app-header { order: 0; width: 100%; }
+    .mobile-nav {
+      order: 1; width: 100%;
+      /* Reste atteignable pendant le défilement : sans ça, sur un onglet
+         long (Profil fait 2637px de haut), la barre remontait hors de vue
+         dès les premiers pixels de scroll. */
+      position: sticky; top: 0; z-index: 900;
+      background: var(--surface);
+    }
+    .layout { order: 2; }
+  }
+
+  /* ═══════════════════════════════════════════
      DESKTOP (≥1024px) — usage réel de l'espace disponible
      ═══════════════════════════════════════════
      Toujours un seul onglet actif à la fois (choix explicite déjà fait
      pour ce produit — pas de retour aux deux colonnes permanentes
      retirées précédemment). Ces règles élargissent le conteneur et
-     distribuent le contenu existant sur plusieurs colonnes À L'INTÉRIEUR
-     de l'onglet actif, sans jamais afficher deux vues simultanément. */
+     distribuent le contenu existant à l'intérieur de l'onglet actif, sans
+     jamais afficher deux vues simultanément. */
   @media (min-width: 1024px) {
     .layout, .mobile-nav { max-width: 1100px; }
 
-    /* Historique / À voir : disposition en colonnes façon "masonry"
-       plutôt qu'une grille classique — les cartes ont des hauteurs
-       variables (avec ou sans critique écrite), une vraie grille CSS
-       laisserait des trous inégaux entre colonnes. Le glissement
-       (physique en pixels, indépendant de la disposition visuelle)
-       continue de fonctionner normalement. */
-    .history-scroller, .watchlist-scroller {
-      column-count: 2; column-gap: 16px; max-height: 700px;
+    /* ── L'HISTORIQUE PERDAIT 85 % DE SON CONTENU ICI ──────────────────
+       Ce bloc posait `column-count: 2` sur .history-scroller pour obtenir
+       une disposition "masonry". Combiné au `max-height` du même bloc et au
+       `overflow-x: hidden` de la règle de base (.history-scroller, plus
+       haut), c'était une perte de données à l'écran :
+
+       le multi-colonnes CSS ne défile pas verticalement. Quand le contenu
+       dépasse la hauteur imposée, il ne déborde pas vers le bas — il crée
+       des colonnes SUPPLÉMENTAIRES vers la droite, au-delà des 2 demandées.
+       overflow-x: hidden les rend alors invisibles ET inatteignables.
+
+       Mesuré à 1440px avec 40 films : conteneur de 1058px de large pour un
+       scrollWidth de 8039px, 6 cartes visibles sur 40. Les 34 autres étaient
+       hors d'atteinte, sans aucun indice à l'écran. À 900px (sous le seuil),
+       les 40 s'affichaient normalement.
+
+       Le multi-colonnes était de toute façon inadapté au balisage : le
+       scroller contient une suite de blocs [séparateur de mois][grille du
+       mois], et .hist-grid est DÉJÀ une grille 6 colonnes dont les paliers
+       vedettes (span 4 / span 3 / span 6, voir computeFeaturedTiers) ont
+       besoin de toute la largeur du conteneur. On la lui rend : à 1058px
+       ses sous-colonnes passent de ~60px (mobile) à ~170px, ce qui donne
+       une vraie mosaïque d'affiches au lieu de vignettes agrandies. */
+    .history-scroller { max-height: 700px; }
+
+    /* À voir : la grille est en repeat(3, 1fr) quelle que soit la largeur.
+       Sur 1058px ça donnait des affiches de 342 × 519px — trois par ligne
+       occupant tout l'écran, là où mobile en montre trois de ~107px. La
+       largeur gagnée servait à grossir les vignettes au lieu d'en montrer
+       plus. auto-fill/minmax rend le nombre de colonnes fonction de la
+       place disponible : ~7 colonnes de ~143px à 1058px, et la règle de
+       base à 3 colonnes reste intacte sous 1024px.
+       (column-count était aussi posé ici, mais sans effet : le
+       multi-colonnes ne s'applique pas à un conteneur display:grid — d'où
+       l'absence de casse visible côté À voir, contrairement à l'historique.) */
+    .watchlist-scroller {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      max-height: 700px;
     }
-    .hist-item, .wl-card { break-inside: avoid; margin-bottom: 12px; }
 
     /* Noter : la carte de formulaire garde une largeur raisonnable plutôt
        que de s'étirer sur toute la largeur du conteneur élargi — un

@@ -25,6 +25,18 @@ module.exports = defineConfig({
     {
       name: 'mobile-chrome',
       use: { ...devices['Pixel 7'] }, // viewport mobile + touch activé, indispensable pour tester le swipe
+      testIgnore: /(^|[\\/])desktop-[^\\/]*\.spec\.js$/, // ces specs n'ont de sens qu'au-dessus de 1024px
+    },
+    // Le reste de la suite tourne sur un gabarit Pixel 7 (412px), c'est-à-dire
+    // ENTIÈREMENT sous les seuils responsive (861px et 1024px). Les règles
+    // desktop n'étaient donc couvertes par aucun test : c'est ainsi qu'un
+    // `column-count: 2` a pu rendre 34 films sur 40 inatteignables sans faire
+    // rougir quoi que ce soit. Ce projet ne fait tourner que les specs
+    // desktop-*, sur un vrai gabarit de bureau.
+    {
+      name: 'desktop-chrome',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      testMatch: /(^|[\\/])desktop-[^\\/]*\.spec\.js$/,
     },
   ],
 });

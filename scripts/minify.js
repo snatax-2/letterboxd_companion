@@ -18,6 +18,14 @@
 // APRÈS le lint (qui a besoin du JS lisible, pas minifié, pour être
 // pertinent) et AVANT generate-sw-cache.js (qui doit hasher les octets
 // RÉELLEMENT servis, donc déjà minifiés).
+//
+// ── --css-only ──────────────────────────────────────────────────────────
+// index.html charge styles.min.css, PAS styles.css. Sans regénération, une
+// modification de styles.css n'atteint donc ni le navigateur ni les tests
+// e2e : ils continuent de lire l'ancien minifié. Les hooks pretest:e2e /
+// precheck:load appellent ce script avec --css-only pour partir du CSS à
+// jour, sans toucher à app.js — le minifier avant les tests rendrait les
+// traces d'erreur illisibles et casserait le lint qui suit.
 
 const fs = require('fs');
 const path = require('path');
@@ -29,8 +37,23 @@ const APP_JS = path.join(ROOT, 'app.js');
 const STYLES_CSS = path.join(ROOT, 'styles.css');
 const STYLES_MIN_CSS = path.join(ROOT, 'styles.min.css');
 
+const cssOnly = process.argv.includes('--css-only');
+
 async function run() {
   // ── JS : minifie app.js en place ──
+  if (!cssOnly) await minifyJs();
+
+  // ── CSS : génère styles.min.css à partir de styles.css (source intacte) ──
+  const originalCss = fs.readFileSync(STYLES_CSS, 'utf8');
+  const cssResult = new CleanCSS({ level: 2 }).minify(originalCss);
+  if (cssResult.errors.length) throw new Error(cssResult.errors.join('\n'));
+  fs.writeFileSync(STYLES_MIN_CSS, cssResult.styles, 'utf8');
+  const cssBefore = Buffer.byteLength(originalCss, 'utf8');
+  const cssAfter = Buffer.byteLength(cssResult.styles, 'utf8');
+  console.log(`[minify] styles.min.css généré : ${(cssBefore/1024).toFixed(1)} Ko -> ${(cssAfter/1024).toFixed(1)} Ko (-${Math.round((1 - cssAfter/cssBefore)*100)}%)`);
+}
+
+async function minifyJs() {
   const originalJs = fs.readFileSync(APP_JS, 'utf8');
   const result = await minify(originalJs, {
     compress: true,
@@ -42,15 +65,6 @@ async function run() {
   const jsBefore = Buffer.byteLength(originalJs, 'utf8');
   const jsAfter = Buffer.byteLength(result.code, 'utf8');
   console.log(`[minify] app.js : ${(jsBefore/1024).toFixed(1)} Ko -> ${(jsAfter/1024).toFixed(1)} Ko (-${Math.round((1 - jsAfter/jsBefore)*100)}%)`);
-
-  // ── CSS : génère styles.min.css à partir de styles.css (source intacte) ──
-  const originalCss = fs.readFileSync(STYLES_CSS, 'utf8');
-  const cssResult = new CleanCSS({ level: 2 }).minify(originalCss);
-  if (cssResult.errors.length) throw new Error(cssResult.errors.join('\n'));
-  fs.writeFileSync(STYLES_MIN_CSS, cssResult.styles, 'utf8');
-  const cssBefore = Buffer.byteLength(originalCss, 'utf8');
-  const cssAfter = Buffer.byteLength(cssResult.styles, 'utf8');
-  console.log(`[minify] styles.min.css généré : ${(cssBefore/1024).toFixed(1)} Ko -> ${(cssAfter/1024).toFixed(1)} Ko (-${Math.round((1 - cssAfter/cssBefore)*100)}%)`);
 }
 
 run().catch((err) => {
