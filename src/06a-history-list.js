@@ -332,13 +332,13 @@ function renderHistory() {
       const rawPoster = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
       const posterSrc = safePosterSrc(rawPoster);
       const imgHtml = posterSrc
-        ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</div>'">`
-        : `<div class="hist-grid-poster-ph">${ICONS.clapper}</div>`;
+        ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<span class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</span>'">`
+        : `<span class="hist-grid-poster-ph">${ICONS.clapper}</span>`;
 
       div.innerHTML = `
-        <div class="hist-item-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="hist-item-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
           ${imgHtml}
-        </div>
+        </button>
         <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
         ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
         <div class="hist-actions">

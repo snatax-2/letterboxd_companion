@@ -67,13 +67,13 @@ function renderFilmGridSheet(label, films) {
     </div>
     <div class="mds-section pds-filmography" style="animation-delay:.1s">
       ${withSeen.map(f => `
-        <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
+        <button type="button" class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
           ${f.poster_path
             ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
-            : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
-          <div class="pds-film-title">${escAttr(f.title)}</div>
-          <div class="pds-film-year">${f.year || ''}</div>
-        </div>
+            : `<span class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</span>`}
+          <span class="pds-film-title">${escAttr(f.title)}</span>
+          <span class="pds-film-year">${f.year || ''}</span>
+        </button>
       `).join('')}
     </div>
   `;
@@ -183,13 +183,13 @@ async function openThemeSheet(themeId, themeName) {
     </div>
     <div class="mds-section pds-filmography" style="animation-delay:.05s">
       ${films.map(f => `
-        <div class="pds-film-item" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+        <button type="button" class="pds-film-item" data-movie-id="${f.id}" aria-label="Voir la fiche de ${escAttr(f.title)}">
           ${f.poster_path
             ? `<img class="pds-film-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">`
-            : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
-          <div class="pds-film-title">${escAttr(f.title)}</div>
-          <div class="pds-film-year">${f.year || ''}</div>
-        </div>
+            : `<span class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</span>`}
+          <span class="pds-film-title">${escAttr(f.title)}</span>
+          <span class="pds-film-year">${f.year || ''}</span>
+        </button>
       `).join('')}
     </div>
   `;

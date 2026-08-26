@@ -1,7 +1,12 @@
-// Accessibilité clavier — activation par Entrée/Espace des cartes cliquables
-// (div avec role="button", qui ne déclenchent pas nativement de clic sur
-// Entrée contrairement à un vrai <button>), et gestion du focus à
-// l'ouverture des fiches.
+// Accessibilité clavier — activation par Entrée/Espace des cartes cliquables,
+// et gestion du focus à l'ouverture des fiches.
+//
+// Ces cartes étaient des <div role="button" tabindex="0">, que le navigateur
+// n'active PAS au clavier : trois gestionnaires keydown faits main
+// rattrapaient Entrée/Espace. Elles sont désormais de vrais <button>, et ces
+// gestionnaires ont été supprimés. Ce test garde donc tout son sens : il
+// échouerait si l'on revenait à un <div>, en emportant l'activation clavier
+// avec — exactement la régression qu'il est là pour empêcher.
 const { test, expect } = require('@playwright/test');
 
 test('appuyer sur Entrée sur une carte de tendance (focus clavier) ouvre sa fiche', async ({ page }) => {

@@ -513,22 +513,11 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
   });
 
-  // Activation clavier (Entrée/Espace) de .hist-item-open : role="button" +
-  // tabindex="0" rendent l'élément focusable et l'annoncent comme un bouton
-  // aux lecteurs d'écran, mais NE déclenchent PAS d'activation clavier tout
-  // seuls (contrairement à un vrai <button>) — sans ce gestionnaire, il était
-  // impossible d'ouvrir une fiche film au clavier depuis l'historique.
-  container.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const opener = e.target.closest('.hist-item-open');
-    if (!opener) return;
-    e.preventDefault(); // Espace ne doit pas aussi faire défiler la page
-    const item = opener.closest('.hist-item');
-    if (!item) return;
-    const idx = parseInt(item.dataset.idx, 10);
-    const movieItem = loadHistory()[idx];
-    if (movieItem) openMovieDetailSheet(movieItem.tmdbId);
-  });
+  // Pas de gestionnaire clavier ici : .hist-item-open est un vrai <button>,
+  // Entrée et Espace y déclenchent nativement un clic, qui remonte jusqu'au
+  // gestionnaire ci-dessus. C'est même PLUS correct que l'ancien palliatif,
+  // qui court-circuitait les garde-fous du clic (item armé pour suppression,
+  // appui long, balayage) et ouvrait la fiche sans les consulter.
 
   // Filet de sécurité : un tap n'importe où EN DEHORS de la liste (changer
   // d'onglet, ouvrir les réglages...) annule aussi un item resté armé.

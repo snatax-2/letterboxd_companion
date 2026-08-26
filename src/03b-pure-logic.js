@@ -1,6 +1,99 @@
 // ═══════════════════════════════════════════
 //  LOGIQUE PURE (testable) : calcul du score & fusion cloud
 // ═══════════════════════════════════════════
+
+// ── LES STRUCTURES DE DONNÉES PERSISTÉES ─────────────────────────────────
+// Décrites ici, en un seul endroit, plutôt qu'à reconstituer en relisant les
+// fonctions de sauvegarde. Ce sont ces objets que les fonctions de fusion
+// ci-dessous manipulent, et ceux qui transitent par la synchro cloud.
+//
+// En JSDoc et non en TypeScript : les éditeurs en tirent l'autocomplétion et
+// la vérification de frappe sans imposer d'étape de compilation à un projet
+// qui sert du JavaScript tel quel (voir le README sur app.js généré).
+//
+// ATTENTION : ces champs sont écrits sur le disque des utilisateurs. En
+// ajouter un est sans risque ; en RENOMMER ou en SUPPRIMER un casse les
+// données déjà enregistrées et demande une migration (voir 00a-migrations.js).
+
+/**
+ * Un film noté. Stocké dans localStorage['lbx_v2'] (tableau).
+ * @typedef  {Object} FilmNote
+ * @property {string}  title        Titre, sert aussi de clé de fusion (voir historyItemKey).
+ * @property {string}  year
+ * @property {string}  poster       URL TMDb complète (pas un chemin).
+ * @property {string}  genre        Genres joints par ', '.
+ * @property {string}  runtime      Ex. « 120 min ».
+ * @property {string}  director
+ * @property {string}  actors       Noms joints par ', '.
+ * @property {string|null} tmdbScore
+ * @property {string|null} tmdbId
+ * @property {string}  date         Date de visionnage saisie (AAAA-MM-JJ).
+ * @property {boolean} liked        Coup de cœur.
+ * @property {string[]} contextTags Ex. « À la maison », « Au cinéma ».
+ * @property {string}  score        Note /10, une décimale, en CHAÎNE.
+ * @property {string}  stars        Rendu en étoiles, ex. « ★★★½ ».
+ * @property {'quick'|'detail'} mode
+ * @property {string}  review
+ * @property {{quick: number}|Record<string, string>} values
+ *           En mode « quick » : { quick }. En mode « detail » : une entrée par
+ *           critère de CRITERIA (scenario, realisation, photo…).
+ * @property {string}  savedAt      ISO. Fixé à la création, jamais réécrit.
+ * @property {string}  updatedAt    ISO. Réécrit à chaque modification —
+ *                                  c'est LUI qui arbitre la fusion cloud.
+ */
+
+/**
+ * Une série suivie. Stockée dans localStorage['lbx_tv_shows'] (tableau).
+ * @typedef  {Object} SerieSuivie
+ * @property {number|string} tmdbTvId  Clé de fusion (voir tvShowItemKey).
+ * @property {string} title
+ * @property {string} poster_path     Chemin TMDb brut, PAS une URL complète
+ *                                    (contrairement à FilmNote.poster).
+ * @property {string} genre
+ * @property {boolean} liked          Coup de cœur sur la série entière.
+ * @property {string}  likedAt        ISO, ou ''. Horodate le dernier changement de
+ *                                    `liked` : c'est lui qui arbitre la fusion de ce
+ *                                    champ (sans lui, un ancien true venu du cloud
+ *                                    ressuscitait un coup de cœur décoché).
+ * @property {Record<string, SaisonSuivie>} seasons  Clé = numéro de saison en chaîne.
+ */
+
+/**
+ * Une saison, dans SerieSuivie.seasons.
+ * @typedef  {Object} SaisonSuivie
+ * @property {string}   seasonName       Nom de la saison SEULE, sans le titre de la série.
+ * @property {number[]} watchedEpisodes  Numéros d'épisodes vus.
+ * @property {number}   totalEpisodes
+ * @property {Object}  [rating]          Absent tant que la saison n'est pas notée ;
+ *                                       même forme que la notation d'un FilmNote
+ *                                       (mode, values, score, stars, review, date).
+ */
+
+/**
+ * Un film à voir. Stocké par liste dans localStorage['lbx_watchlist_<id>'].
+ * @typedef  {Object} ItemWatchlist
+ * @property {string} title
+ * @property {string} year
+ * @property {string} poster    URL TMDb complète.
+ * @property {string} genre
+ * @property {*}      rating    Note TMDb telle que renvoyée par l'API.
+ * @property {string} runtime
+ * @property {number|string} tmdbId  Clé de fusion si présent, sinon le titre
+ *                                   (voir watchlistItemKey).
+ * @property {string} addedAt   ISO.
+ */
+
+/**
+ * Trace de suppression. Sans elle, une synchro depuis un appareil qui a
+ * encore l'élément le ferait RÉAPPARAÎTRE sur celui qui l'a supprimé.
+ * @typedef  {Object} Tombstone
+ * @property {string} key        Même clé que l'élément supprimé.
+ * @property {string} deletedAt  ISO. Comparé à l'horodatage de l'élément pour
+ *                               arbitrer — `updatedAt`/`savedAt` pour l'historique,
+ *                               `addedAt` pour la watchlist : une modification
+ *                               postérieure à la suppression ressuscite l'élément.
+ */
+
 //
 // Ce fichier ne touche JAMAIS au DOM ni à localStorage : chaque fonction ici
 // prend des données en entrée et renvoie un résultat, sans effet de bord.

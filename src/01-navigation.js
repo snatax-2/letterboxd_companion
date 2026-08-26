@@ -306,19 +306,10 @@ function isExcludedTarget(target) {
   });
 })();
 
-// Accessibilité clavier : un vrai <button> déclenche déjà un clic sur
-// Entrée/Espace nativement, mais un <div role="button" tabindex="0"> (utilisé
-// pour les cartes cliquables — tendances, casting, filmographie, lignes
-// d'historique/watchlist...) ne le fait PAS tout seul, le navigateur ne le
-// câble pas automatiquement pour un rôle ARIA sur un élément non natif. Un
-// seul écouteur global plutôt que de le répéter à chaque nouvel élément.
-document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const target = e.target.closest('[role="button"][tabindex="0"]');
-  if (!target) return;
-  e.preventDefault();
-  target.click();
-});
+// L'écouteur keydown global qui rattrapait Entrée/Espace sur les
+// <div role="button" tabindex="0"> a été RETIRÉ : ces cartes cliquables sont
+// désormais de vrais <button>, que le navigateur active nativement au
+// clavier. Le palliatif n'avait plus rien à rattraper.
 
 // Ludex 2.0 : animations au tap sur la navigation et les 5 bascules
 // Films/Séries (voir Ludex_Explication_Switch + Ludex_Animations_
