@@ -80,11 +80,17 @@ test('accessibilite : zero violation sur le flux complet de selection', async ({
 // Noter — signale par l'utilisateur, confirme visuellement avant fix).
 
 test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 6 themes', async ({ page }) => {
-  // Six chargements de page complets dans un seul test : le budget de 30s par
-  // défaut de Playwright n'y suffit pas (l'écran de démarrage a une durée
-  // minimale volontaire). Le test expirait sur un page.goto, sans rapport avec
-  // ce qu'il vérifie — échec identique sur origin/main. L'assertion, elle,
-  // reste valable et utile : on lui donne le temps de s'exécuter.
+  // Six chargements de page complets dans un seul test. Précision importante :
+  // ce test PASSE sur le CI dans les 30s par défaut — il n'est pas dans la
+  // liste d'échecs du run. Il expire en revanche sur un environnement au
+  // réseau lent, parce que page.goto attend l'événement `load`, lequel attend
+  // la feuille de style Google Fonts injectée par loadThemeFonts(). Mesuré
+  // dans un tel environnement : goto = 13 429 ms avec les polices, 192 ms en
+  // les bloquant. Six goto suffisent alors à dépasser le budget.
+  //
+  // Le budget est donc élargi pour la robustesse hors CI, pas pour masquer un
+  // échec : l'assertion est inchangée, et un vrai déséquilibre de largeur la
+  // ferait toujours échouer.
   test.setTimeout(90_000);
   for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);

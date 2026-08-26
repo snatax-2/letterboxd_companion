@@ -34,6 +34,13 @@ test('epuration : Export/Import retires de l\'en-tete, deplaces dans Profil et f
 test('epuration : badge "Mode detaille" en double retire, sans casser le changement de mode', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#mode-badge')).toHaveCount(0);
+  // #tab-quick et #tab-detail vivent dans #col-rating, masqué tant que
+  // l'onglet Noter n'est pas actif — et l'onglet d'arrivée est Découvrir
+  // (setTimeout(() => switchMobileNav('discover'), 0), fin de
+  // src/01-navigation.js). Sans ce clic, le clic suivant expirait sur un
+  // bouton hors écran. Les autres tests du fichier qui touchent à cet écran
+  // le font déjà (voir "chevron sur Personnaliser les pondérations").
+  await page.click('#nav-rating');
   // Le changement de mode doit toujours fonctionner (verifie l'absence de
   // regression suite au retrait de la ligne JS qui ciblait ce badge)
   await page.click('#tab-quick');
