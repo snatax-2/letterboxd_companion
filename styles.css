@@ -77,6 +77,21 @@
        6.31:1 sur --bg, 5.71:1 sur --surface, 4.78:1 sur --surface2. */
     --border-hi: #3D4A5C; --text: #8F95A5; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
     --orange: #C89B3C; --gold: #C89B3C; --blue: #C89B3C; --red: #8B2E2E; --green: #7C8B6F;
+    /* Ce thème n'a délibérément qu'UN accent (orange = gold = blue) — cohérent
+       partout où --blue sert d'accent interactif (barre de recherche, onglets,
+       curseur "Impact affectif"...). Le graphique "Activité mensuelle" pose un
+       problème différent : il a besoin de DEUX couleurs mutuellement
+       distinctes pour ses deux séries (films/séries), ce qu'aucun jeton
+       d'accent existant ne peut fournir ici puisqu'ils valent tous la même
+       chose. --chart-tv est une couleur dédiée, choisie uniquement pour se
+       distinguer de --gold — jamais utilisée ailleurs, donc sans effet sur le
+       reste du thème. Voir .month-chart-bar plus bas.
+       Bug réel corrigé ici, pas seulement une préférence : avant ce jeton,
+       .month-chart-bar.movie et .tv utilisaient var(--gold)/var(--blue)
+       directement, IDENTIQUES dans ce thème — les deux séries du graphique
+       rendaient exactement la même couleur, totalement indiscernables
+       (capture d'écran à l'appui). */
+    --chart-movie: var(--gold); --chart-tv: #2C5670;
     /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
        de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
        bon choix (blanc ou noir) varie selon la couleur ET selon le thème,
@@ -116,6 +131,13 @@
     --orange: #B8695E; /* Rose Poudré */
     --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
     --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
+    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
+       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
+       complète dans :root). Ici les deux se distinguent déjà bien visuellement
+       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
+       pour que le graphique ne dépende plus silencieusement de --blue si son
+       usage en accent venait à changer. */
+    --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
     --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     --solid-fill-text: #fff;
@@ -185,6 +207,13 @@
     --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
     --orange: #ffffff; 
     --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
+    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
+       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
+       complète dans :root). Ici les deux se distinguent déjà bien visuellement
+       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
+       pour que le graphique ne dépende plus silencieusement de --blue si son
+       usage en accent venait à changer. */
+    --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est blanc ici : texte clair impossible */
     --radius: 0px; --radius-sm: 0px;
     --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
@@ -222,6 +251,13 @@
     --orange: #4A2E1B; /* Terre de Sienne */
     --gold: #7a5628;    /* Ambre Brûlé, assombri (était #DAC0A3) : 1.36:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet */
     --blue: #4d5d4a;    /* Olive Vintage, assombri (était #5C6E58) : 4.46:1 seulement sur le badge "Impact affectif", tout juste sous le seuil — trouvé lors de l'audit complet */
+    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
+       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
+       complète dans :root). Ici les deux se distinguent déjà bien visuellement
+       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
+       pour que le graphique ne dépende plus silencieusement de --blue si son
+       usage en accent venait à changer. */
+    --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red: #8B4226; --green: #5C6E58;
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 18px; --radius-sm: 12px;
@@ -268,6 +304,13 @@
     --orange: #DD6B47; /* Terracotta, légèrement plus saturée qu'avant */
     --gold: #7A5507;   /* Moutarde -> ocre profond : deux essais precedents (#D9A62E, #A6790F) manquaient encore de contraste, verifie mathematiquement cette fois (6.22:1) */
     --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
+    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
+       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
+       complète dans :root). Ici les deux se distinguent déjà bien visuellement
+       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
+       pour que le graphique ne dépende plus silencieusement de --blue si son
+       usage en accent venait à changer. */
+    --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red: #DD6B47;
     --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
     --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
@@ -324,6 +367,13 @@
     --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
     --border-hi: #3D4A73; --text: #98A2B4; --text-hi: #F4F1E1; --text-mid: #98A2B4;
     --orange: #E6AF2E; --gold: #E6AF2E; --blue: #7C9DC5; --red: #DF2935; --green: #4F9268;
+    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
+       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
+       complète dans :root). Ici les deux se distinguent déjà bien visuellement
+       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
+       pour que le graphique ne dépende plus silencieusement de --blue si son
+       usage en accent venait à changer. */
+    --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 8px; --radius-sm: 6px;
     --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
@@ -3042,8 +3092,8 @@
   .month-chart-count { font-size: 0.6rem; color: var(--text-hi); font-weight: 700; font-family: var(--font-mono); margin-bottom: 3px; }
   .month-chart-count.zero { display: none; }
   .month-chart-bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; transition: height var(--dur-base) var(--ease-out); }
-  .month-chart-bar.movie { background: var(--gold); }
-  .month-chart-bar.tv { background: var(--blue); }
+  .month-chart-bar.movie { background: var(--chart-movie, var(--gold)); }
+  .month-chart-bar.tv { background: var(--chart-tv, var(--blue)); }
   .month-chart-label { font-size: 0.6rem; color: var(--text-mid); font-family: var(--font-mono); }
   .month-chart-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 0.68rem; color: var(--text-mid); justify-content: center; }
   .month-chart-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: middle; }
