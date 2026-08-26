@@ -14,6 +14,13 @@
 // désormais dans 03-foundation.js (partagée avec la watchlist).
 
 const MONTH_LABELS_FR = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+// Abréviations distinctes, pas un simple slice(0, 3) du nom complet : ça
+// donnait "Jui" à la fois pour Juin ET Juillet — les deux mois indiscernables
+// sur l'axe du graphique "Activité mensuelle" (06c-profile-stats.js), repéré
+// sur une capture d'écran où "Jui" apparaissait deux fois d'affilée. Formes
+// courtes standard du français (Imprimerie nationale) : un point pour les
+// noms tronqués, rien pour ceux déjà courts (Mars, Mai, Juin, Août).
+const MONTH_LABELS_FR_ABBR = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juill.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 // item.date / item.savedAt sont des chaînes ISO (YYYY-MM-DD...) — on prend
 // les 7 premiers caractères comme clé de regroupement (année-mois), sans
 // dépendre d'un format plus permissif que ce que loadHistory() garantit déjà.

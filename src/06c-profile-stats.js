@@ -176,7 +176,7 @@ function renderMonthlyActivityChart(history, tvShows) {
   const months = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTH_LABELS_FR[d.getMonth()].slice(0, 3) });
+    months.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`, label: MONTH_LABELS_FR_ABBR[d.getMonth()] });
   }
 
   const movieCounts = months.map(m => history.filter(h => (h.date || h.savedAt || '').startsWith(m.key)).length);
