@@ -793,15 +793,34 @@ function applyChosenPoster(tmdbId, posterUrl) {
 function applyPosterCellHeights(grid) {
   function apply() {
     const cells = grid.querySelectorAll('.poster-picker-cell');
-    if (cells.length === 0) return;
+    if (cells.length === 0) return false;
     const width = cells[0].getBoundingClientRect().width;
-    if (width <= 0) return; // grille pas encore rendue/visible, on retentera au resize
+    if (width <= 0) return false; // grille pas encore rendue/visible
     const height = Math.round(width * 1.5);
     cells.forEach(c => { c.style.height = `${height}px`; });
+    return true;
   }
   // Un frame d'attente : au moment de l'appel, le innerHTML vient tout juste
   // d'être posé et la grille peut ne pas avoir encore de largeur calculée.
-  requestAnimationFrame(apply);
+  //
+  // On RÉESSAIE tant que la largeur n'est pas disponible, au lieu d'abandonner
+  // au premier frame. La modale s'ouvre avec une transition (.22s) : sur un
+  // appareil lent, le premier frame tombait pendant l'ouverture, la largeur
+  // valait 0, la fonction renonçait — et comme le seul rattrapage prévu était
+  // l'événement `resize`, les cases gardaient DÉFINITIVEMENT la hauteur de
+  // leurs seules bordures (4px). Les affiches se réduisaient à une fine bande
+  // plate, sans rien pour rétablir la situation.
+  //
+  // Constaté sur le CI (plus lent que la machine de développement) : hauteur
+  // mesurée à 4px pour 168px de large, là où le local donnait bien 251px.
+  // Plafonné à 90 frames (~1,5s à 60 Hz) : au-delà, c'est que la grille n'est
+  // pas affichée du tout, et boucler indéfiniment ne servirait à rien.
+  let framesRestants = 90;
+  function essayer() {
+    if (apply()) return;
+    if (framesRestants-- > 0) requestAnimationFrame(essayer);
+  }
+  requestAnimationFrame(essayer);
   // Recalcule sur rotation d'écran tant que la modale reste ouverte — retire
   // l'écouteur à la fermeture pour ne pas accumuler de fuite mémoire.
   const modal = document.getElementById('poster-picker-modal');
