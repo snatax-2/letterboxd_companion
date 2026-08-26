@@ -181,7 +181,7 @@ document.getElementById('profile-share-btn').addEventListener('click', () => {
       try {
         await navigator.share({ files: [file], title: 'Ma carte de profil Ludex' });
         return; // partage réussi, rien de plus à faire
-      } catch {
+      } catch (e) {
         if (e.name === 'AbortError') return; // l'utilisateur a juste annulé — pas une erreur à signaler
         // toute autre erreur (rare) : on retombe sur le téléchargement classique ci-dessous
       }

@@ -23,6 +23,7 @@
     "@playwright/test": "1.56.0",
     "clean-css": "^5.3.3",
     "eslint": "^10.7.0",
+    "globals": "^17.11.0",
     "jsdom": "^29.1.1",
     "terser": "^5.50.0"
   },

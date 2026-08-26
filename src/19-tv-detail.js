@@ -443,7 +443,7 @@ async function loadAndRenderSeasonEpisodes(seasonNumber, seasonName) {
     }
     renderTdsEpisodeChecklist(container, showId, String(seasonNumber), seasonName, episodes);
     container.dataset.loadedSeason = String(seasonNumber);
-  } catch {
+  } catch (err) {
     container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
   }
 }
