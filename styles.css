@@ -1396,7 +1396,22 @@
     position: relative;
     transition: border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out);
   }
-  .poster-picker-cell.skeleton-bg { aspect-ratio: 2/3; } /* squelettes de chargement : pas de JS encore passé, ratio CSS suffit ici (contenu statique, pas d'image réelle) */
+  /* Ratio de base en CSS sur TOUTES les cases, pas seulement les squelettes.
+     La hauteur exacte reste posée en pixels par JS juste après (voir
+     applyPosterCellHeights) — ceci ne le remplace pas, ça lui sert de socle.
+
+     Sans ce socle, une case n'avait AUCUNE source de hauteur avant le premier
+     requestAnimationFrame : l'image qu'elle contient est en position:absolute
+     et ne pousse donc rien. Entre l'écriture du innerHTML et ce premier
+     frame, la case ne mesurait que ses deux bordures — 4px de haut pour 168
+     de large. Fenêtre courte, mais réelle : reproduite sur le CI, où elle
+     faisait échouer le test de ratio de façon parfaitement déterministe
+     (4.01/168 est la seule valeur possible quand rien n'est posé). Pour un
+     utilisateur, c'est une grille d'affiches aplaties le temps d'un frame.
+
+     Le socle CSS donne la bonne géométrie dès la première peinture ; le JS
+     continue d'affiner au pixel, pour les raisons iOS documentées ci-dessus. */
+  .poster-picker-cell { aspect-ratio: 2/3; }
   .poster-picker-cell:hover { border-color: var(--gold); }
   .poster-picker-cell:active { transform: scale(0.96); }
   .poster-picker-cell img {
