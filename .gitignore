@@ -26,3 +26,10 @@ app.js
 # donc un CSS qui n'était PAS celui qu'on venait d'écrire. Il est maintenant
 # construit à la demande (voir pretest:e2e).
 styles.min.css
+
+# Configuration Playwright d'appoint, créée à la volée pour diagnostiquer des
+# specs sur un port et un dossier de sortie séparés pendant qu'une campagne
+# occupe déjà le port 4174 (voir playwright.config.js). Purement local : rien
+# à committer, mais suffisamment récurrent pour mériter d'être ignoré plutôt
+# que d'être oublié dans un commit.
+pw-side.config.js
