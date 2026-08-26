@@ -6,17 +6,24 @@
 // réels, donc ce bug ne pouvait être vu que dans un vrai navigateur.
 const { test, expect } = require('@playwright/test');
 
-async function swipe(page, { startX, endX, y = 400 }) {
-  await page.evaluate(({ startX, endX, y }) => {
+// Le geste doit partir de l'ELEMENT vise, pas de document.body : le
+// glissement d'onglet decide d'ignorer ou non un geste d'apres e.target
+// (isExcludedTarget, 01-navigation.js), jamais d'apres les coordonnees.
+// Emis depuis body, le test ne verifiait donc pas l'exclusion qu'il
+// annonce — il verifiait qu'un glissement sur le corps de page change
+// d'onglet, ce qui est le contraire.
+async function swipe(page, { startX, endX, y = 400, selector = 'body' }) {
+  await page.evaluate(({ startX, endX, y, selector }) => {
+    const cible = document.querySelector(selector) || document.body;
     function touchEvent(type, x, y) {
       const ev = new Event(type, { bubbles: true });
       ev.touches = [{ clientX: x, clientY: y }];
       ev.changedTouches = [{ clientX: x, clientY: y }];
       return ev;
     }
-    document.body.dispatchEvent(touchEvent('touchstart', startX, y));
-    document.body.dispatchEvent(touchEvent('touchend', endX, y));
-  }, { startX, endX, y });
+    cible.dispatchEvent(touchEvent('touchstart', startX, y));
+    cible.dispatchEvent(touchEvent('touchend', endX, y));
+  }, { startX, endX, y, selector });
 }
 
 test.beforeEach(async ({ page }) => {
@@ -57,7 +64,7 @@ test('glisser sur les étoiles ne change pas d\'onglet même en swipe tactile', 
   const y = box.y + box.height / 2;
 
   // Glissement tactile horizontal directement sur le widget d'étoiles
-  await swipe(page, { startX: box.x + 5, endX: box.x + box.width - 5, y });
+  await swipe(page, { startX: box.x + 5, endX: box.x + box.width - 5, y, selector: '#quick-stars-container' });
 
   await expect(page.locator('#nav-rating')).toHaveClass(/active/);
 });

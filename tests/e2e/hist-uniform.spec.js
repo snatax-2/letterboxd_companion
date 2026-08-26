@@ -41,7 +41,10 @@ test('le filtre genre est plie par defaut avec le genre actif visible', async ({
   expect(await page.locator('#genre-fold').evaluate(el => el.open)).toBe(false);
   await expect(page.locator('#genre-fold-current')).toHaveText('Tous');
 
-  await page.locator('.genre-fold-summary').click();
+  // .genre-fold-summary existe en trois exemplaires (historique films,
+  // historique séries, "À voir") depuis que chaque liste a son propre filtre :
+  // il faut viser celui de #genre-fold, sinon Playwright refuse en mode strict.
+  await page.locator('#genre-fold .genre-fold-summary').click();
   await page.locator('.genre-chip', { hasText: 'Action' }).click();
   await page.waitForTimeout(200);
   await expect(page.locator('#genre-fold-current')).toHaveText('Action');

@@ -23,10 +23,18 @@ test('bouton effacer sur le champ de recherche du formulaire de notation', async
 
 test('mise en page mobile : date et coeur restent alignes sur la meme ligne (regression du wrapper de recherche)', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 700 });
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
-  await page.waitForTimeout(300);
-  const dateBox = await page.locator('.date-input').boundingBox();
-  const heartBox = await page.locator('.heart-btn').boundingBox();
+  // L'onglet d'arrivée est Découvrir (setTimeout(() => switchMobileNav('discover'), 0),
+  // fin de src/01-navigation.js) : sans ce passage par Noter, le formulaire est
+  // masqué et boundingBox() renvoie null.
+  await page.click('#nav-rating');
+  await page.waitForTimeout(1400);
+  // .date-input existe deux fois depuis l'ajout des séries (#view-date pour le
+  // film, #tv-view-date pour la saison) : viser celui du formulaire film.
+  const dateBox = await page.locator('#view-date').boundingBox();
+  // Même dédoublement que la date : #heart-btn (film) et #tv-heart-btn (série).
+  const heartBox = await page.locator('#heart-btn').boundingBox();
   // Meme ligne : les deux doivent partager (a peu pres) la meme position Y
   expect(Math.abs(dateBox.y - heartBox.y)).toBeLessThan(5);
   // Le coeur ne doit pas s'etirer sur toute la largeur (signe du bug corrige)
