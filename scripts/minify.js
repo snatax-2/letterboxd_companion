@@ -14,6 +14,15 @@
 //   SÉPARÉ (styles.min.css), et c'est LUI que index.html/sw.js chargent —
 //   styles.css reste la source, jamais servie au navigateur directement.
 //
+// vercel.json (buildCommand) appelle simplement `npm run build`, ce script y
+// suffit : il minifie déjà app.js EN PLACE et écrit styles.min.css, exactement
+// ce qui est servi (outputDirectory: "."). Un script séparé
+// scripts/minify-for-deploy.js existait en plus dans le buildCommand et
+// refaisait le même travail après coup — re-minifier un app.js déjà minifié,
+// re-minifier styles.css en CSS déjà couvert par styles.min.css — sans rien
+// changer de servi. Doublait le temps de build à chaque déploiement, sans
+// bénéfice. Retiré.
+//
 // Ordre important dans package.json (voir "build") : ce script doit tourner
 // APRÈS le lint (qui a besoin du JS lisible, pas minifié, pour être
 // pertinent) et AVANT generate-sw-cache.js (qui doit hasher les octets
