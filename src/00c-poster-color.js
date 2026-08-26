@@ -45,14 +45,14 @@ function extractPosterAccentColorFromUrl(url) {
           const color = count === 0 ? null : `rgb(${Math.round(r / count)}, ${Math.round(g / count)}, ${Math.round(b / count)})`;
           posterAccentCache.set(url, color);
           resolve(color);
-        } catch (e) {
+        } catch {
           posterAccentCache.set(url, null); // canvas "tainted" (CORS) : dégradation silencieuse
           resolve(null);
         }
       };
       img.onerror = () => { posterAccentCache.set(url, null); resolve(null); };
       img.src = url;
-    } catch (e) {
+    } catch {
       resolve(null);
     }
   });

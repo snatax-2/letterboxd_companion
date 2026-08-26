@@ -438,7 +438,7 @@ async function openMovieDetailSheet(tmdbId) {
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
     fetchAndRenderProviders(data.id, 'mds-providers', 'movie');
     if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
-  } catch (e) {
+  } catch {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
     // gestionnaire délégué RACINE (plus bas) relance le chargement complet.
@@ -648,7 +648,7 @@ async function openPersonDetailSheet(personId, personName) {
     const data = await res.json();
     if (!data || !data.name) throw new Error('no data');
     pdsContentEl.innerHTML = buildPdsContent(data);
-  } catch (e) {
+  } catch {
     pdsContentEl.innerHTML = `<div class="mds-error">Impossible de charger cette fiche pour l'instant. Vérifie ta connexion et réessaie.</div>`;
   }
 }

@@ -1,3 +1,9 @@
+/* exported switchHistoryMediaFilter, switchStatsMediaFilter */
+// Ces fonctions sont appelees depuis des attributs onclick d'index.html,
+// pas depuis le JS : ESLint ne peut pas voir cet usage. La directive
+// `exported` le lui declare, et documente au passage ce couplage
+// HTML -> JS (a resorber le jour ou on retirera les onclick en ligne,
+// ce qui permettra aussi de durcir la CSP en retirant 'unsafe-inline').
 // ═══════════════════════════════════════════
 //  SÉRIES — Phase 1 : recherche + sélection de saison
 // ═══════════════════════════════════════════
@@ -315,18 +321,6 @@ function getOrCreateTvShow(shows) {
   }
   return entry;
 }
-function getOrCreateTvSeason(showEntry, seasonName, totalEpisodes) {
-  const key = String(selectedSeasonNumber);
-  if (!showEntry.seasons[key]) {
-    showEntry.seasons[key] = { seasonName, watchedEpisodes: [], totalEpisodes };
-  }
-  // Le total peut differer de ce qu'on avait stocke si TMDb ajoute un
-  // episode entre deux visites (saison en cours de diffusion) — on le
-  // reajuste plutot que de garder une valeur perimee.
-  showEntry.seasons[key].totalEpisodes = totalEpisodes;
-  return showEntry.seasons[key];
-}
-
 function loadSeasonRatingIntoForm() {
   const shows = loadTvShows();
   const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
@@ -765,195 +759,6 @@ function renderTvShowCard(show, tier) {
       </div>
     </div>
   `;
-}
-
-// Glissement sur les lignes de saison — mêmes paramètres physiques déjà
-// éprouvés que l'historique films (voir initHistoryGestures), mais
-// contrôleur séparé plutôt qu'une généralisation complète : le système
-// film est ancien, très affiné (de nombreux bugs corrigés un par un au
-// fil de plusieurs sessions), le réécrire pour le rendre générique aurait
-// un vrai risque de régression sur un comportement déjà fiable et testé.
-// Version allégée ici : pas de menu d'appui long (pas d'équivalent série
-// pour l'instant), pas de survie à un nouveau rendu complexe (un
-// re-rendu annule simplement un geste armé, acceptable sur cette liste
-// moins sollicitée que l'historique principal).
-function initTvSeasonSwipeGestures(container) {
-  const MOVE_CANCEL_PX = 12;
-  const SWIPE_THRESHOLD = 80;
-  const MAX_DRAG = 130;
-
-  let startX = 0, startY = 0;
-  let pressedItem = null, pressedContent = null;
-  let wasSwipe = false;
-  let swipeMode = null;
-  let dx = 0;
-  let armedItem = null, armedDirection = null;
-
-  function cancelArmed() {
-    if (!armedItem) return;
-    const content = armedItem.querySelector('.tv-season-row-content');
-    if (content) { content.style.transition = 'transform var(--dur-base) var(--ease-out)'; content.style.transform = ''; }
-    armedItem.classList.remove('hist-swipe-armed-left', 'hist-swipe-armed-right', 'hist-swipe-left', 'hist-swipe-right');
-    armedItem = null;
-    armedDirection = null;
-  }
-
-  function confirmArmed() {
-    if (!armedItem) return;
-    const showId = armedItem.dataset.showId;
-    const seasonKey = armedItem.dataset.seasonKey;
-    const dir = armedDirection;
-    armedItem = null;
-    armedDirection = null;
-    if (dir === 'left') {
-      deleteTvSeasonWithConfirm(showId, seasonKey);
-    } else {
-      reopenTvSeason(showId, seasonKey);
-    }
-  }
-
-  function resetGesture() {
-    if (pressedItem) pressedItem.classList.remove('hist-dragging');
-    pressedItem = null;
-    pressedContent = null;
-    swipeMode = null;
-    dx = 0;
-  }
-
-  function cancelGestureFully() {
-    if (pressedItem) {
-      if (pressedContent) {
-        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
-        pressedContent.style.transform = '';
-      }
-      pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
-    }
-    resetGesture();
-  }
-
-  container.addEventListener('touchstart', (e) => {
-    const item = e.target.closest('.tv-season-row');
-    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) { resetGesture(); return; }
-    e.stopPropagation();
-    pressedItem = item;
-    pressedContent = item.querySelector('.tv-season-row-content');
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    swipeMode = null;
-    dx = 0;
-  }, { passive: true });
-
-  container.addEventListener('touchmove', (e) => {
-    if (!pressedItem) return;
-    e.stopPropagation();
-    const rawDx = e.touches[0].clientX - startX;
-    const rawDy = e.touches[0].clientY - startY;
-    if (swipeMode === null) {
-      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
-        if (swipeMode === 'swipe') {
-          if (armedItem === pressedItem) cancelArmed();
-          pressedItem.classList.add('hist-dragging');
-        }
-      } else {
-        return;
-      }
-    }
-    if (swipeMode !== 'swipe') return;
-    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
-    pressedContent.style.transform = `translateX(${dx}px)`;
-    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
-    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
-  }, { passive: true });
-
-  function resolveGesture() {
-    if (!pressedItem) return;
-    if (swipeMode === 'swipe') {
-      if (dx <= -SWIPE_THRESHOLD) {
-        cancelArmed();
-        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
-        pressedContent.style.transform = 'translateX(-120px)';
-        pressedItem.classList.add('hist-swipe-armed-left');
-        armedItem = pressedItem;
-        armedDirection = 'left';
-        hapticPulse(pressedItem, 'medium');
-      } else if (dx >= SWIPE_THRESHOLD) {
-        cancelArmed();
-        pressedContent.style.transition = 'transform var(--dur-base) var(--ease-out)';
-        pressedContent.style.transform = 'translateX(120px)';
-        pressedItem.classList.add('hist-swipe-armed-right');
-        armedItem = pressedItem;
-        armedDirection = 'right';
-        hapticPulse(pressedItem, 'medium');
-      } else {
-        pressedContent.style.transform = '';
-        pressedItem.classList.remove('hist-swipe-left', 'hist-swipe-right');
-      }
-      wasSwipe = true;
-      setTimeout(() => { wasSwipe = false; }, 300);
-    }
-    resetGesture();
-  }
-  container.addEventListener('touchend', resolveGesture);
-  container.addEventListener('touchcancel', cancelGestureFully);
-
-  // Souris (pratique pour tester sur desktop / vercel dev)
-  let mouseActive = false;
-  container.addEventListener('mousedown', (e) => {
-    const item = e.target.closest('.tv-season-row');
-    if (!item || e.target.closest('.tv-season-reopen-btn') || e.target.closest('.tv-season-delete-btn')) return;
-    mouseActive = true;
-    pressedItem = item;
-    pressedContent = item.querySelector('.tv-season-row-content');
-    startX = e.clientX;
-    startY = e.clientY;
-    swipeMode = null;
-    dx = 0;
-  });
-  document.addEventListener('mousemove', (e) => {
-    if (!mouseActive || !pressedItem) return;
-    const rawDx = e.clientX - startX;
-    const rawDy = e.clientY - startY;
-    if (swipeMode === null) {
-      if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
-        swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll';
-        if (swipeMode === 'swipe') {
-          if (armedItem === pressedItem) cancelArmed();
-          pressedItem.classList.add('hist-dragging');
-        }
-      } else {
-        return;
-      }
-    }
-    if (swipeMode !== 'swipe') return;
-    dx = Math.max(-MAX_DRAG, Math.min(MAX_DRAG, rawDx));
-    pressedContent.style.transform = `translateX(${dx}px)`;
-    pressedItem.classList.toggle('hist-swipe-left', dx < -10);
-    pressedItem.classList.toggle('hist-swipe-right', dx > 10);
-  });
-  document.addEventListener('mouseup', () => {
-    if (!mouseActive) return;
-    mouseActive = false;
-    resolveGesture();
-  });
-
-  container.addEventListener('click', (e) => {
-    if (armedItem) {
-      const hint = e.target.closest('.hist-swipe-hint');
-      const clickedItem = e.target.closest('.tv-season-row');
-      if (hint && clickedItem === armedItem) {
-        confirmArmed();
-        return;
-      }
-      const wasArmedItself = clickedItem === armedItem;
-      cancelArmed();
-      if (wasArmedItself) return;
-    }
-  }, true); // capture : s'exécute avant les listeners de clic sur les boutons internes (reopen/delete)
-
-  document.addEventListener('click', (e) => {
-    if (armedItem && !container.contains(e.target)) cancelArmed();
-  }, true);
 }
 
 function reopenTvSeason(showId, seasonKey) {

@@ -70,7 +70,7 @@
       migration.up();
       stored = migration.to;
       localStorage.setItem(VERSION_KEY, String(stored));
-    } catch (e) {
+    } catch {
       // Échec : on s'arrête là, version inchangée depuis la dernière réussite,
       // données intactes. L'app fonctionne avec l'ancien schéma.
       console.error(`Migration vers v${migration.to} échouée (données intactes) :`, e);

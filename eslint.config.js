@@ -29,6 +29,20 @@ module.exports = [
       'no-constant-condition': ['error', { checkLoops: false }],
       'use-isnan': 'error',
       'valid-typeof': 'error',
+      'eqeqeq': ['error', 'smart'],
+    },
+  },
+  // no-unused-vars UNIQUEMENT sur app.js, pas sur src/ pris fichier par fichier.
+  // Raison : avec le partage de globals par concaténation, une fonction déclarée
+  // dans src/12 et appelée depuis src/15 paraît inutilisée quand ESLint lit src/12
+  // isolément — mesuré, ça donnait 72 faux positifs. Sur le fichier CONCATÉNÉ,
+  // tous les appels inter-fichiers sont visibles : 0 faux positif.
+  // Les fonctions consommées par les onclick d'index.html sont déclarées avec
+  // /* exported ... */ en tête de leur fichier source.
+  {
+    files: ['app.js'],
+    rules: {
+      'no-unused-vars': ['error', { args: 'none', varsIgnorePattern: '^_' }],
     },
   },
   {

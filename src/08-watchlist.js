@@ -520,7 +520,6 @@ async function addToSpecificWatchlist(movie, year, listId) {
 function openWatchlistPicker(movie, year) {
   const modal = document.getElementById('wl-picker-modal');
   const listEl = document.getElementById('wl-picker-list');
-  const newRow = document.getElementById('wl-picker-new-row');
   const newForm = document.getElementById('wl-picker-new-form');
   const newBtn = document.getElementById('wl-picker-new-btn');
   const newInput = document.getElementById('wl-picker-new-input');

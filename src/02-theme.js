@@ -19,7 +19,7 @@ function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
     applySettings(saved);
-  } catch (e) {
+  } catch {
     applySettings(defaultSettings);
   }
 }

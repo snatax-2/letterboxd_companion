@@ -220,7 +220,7 @@ async function selectMovie(m, year) {
       document.getElementById('strip-votes').textContent = count ? `${count.toLocaleString('fr-FR')} votes` : '';
       document.getElementById('strip-ratings').style.display = 'flex';
     }
-  } catch (err) {
+  } catch {
     document.getElementById('strip-genre').textContent = year || '';
     showToast('Détails du film indisponibles, réessaie plus tard.');
   } finally {

@@ -390,7 +390,7 @@ async function openTvDetailSheet(tmdbTvId) {
     fetchAndRenderProviders(data.id, 'tds-providers', 'tv');
     populateTdsUpNext(localShow);
     wireSeasonTabs();
-  } catch (e) {
+  } catch {
     tdsCurrentData = null;
     tdsContentEl.innerHTML = `
       <div class="error-state">
@@ -443,7 +443,7 @@ async function loadAndRenderSeasonEpisodes(seasonNumber, seasonName) {
     }
     renderTdsEpisodeChecklist(container, showId, String(seasonNumber), seasonName, episodes);
     container.dataset.loadedSeason = String(seasonNumber);
-  } catch (err) {
+  } catch {
     container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
   }
 }
