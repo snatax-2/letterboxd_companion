@@ -19,7 +19,20 @@
 
     /* ── Échelle d'élévation ──
        Trois niveaux d'ombre au lieu d'ombres improvisées au cas par cas :
-       posé / soulevé / au-dessus de tout (modales, bannières). */
+       posé / soulevé / au-dessus de tout (modales, bannières).
+
+       Ces trois jetons existaient déjà mais n'étaient utilisés QUE 3 fois
+       sur 44 box-shadow — les 41 autres étaient écrites en dur, chacune
+       avec ses propres décalages et opacités, si bien que deux éléments de
+       même niveau hiérarchique pouvaient porter des profondeurs
+       différentes. Généralisés ici.
+
+       Ces valeurs-ci conviennent aux thèmes SOMBRES (défaut, Film Noir,
+       Technicolor) : du noir semi-opaque sur un fond sombre. Les trois
+       thèmes clairs les redéfinissent plus bas — une ombre noire sur du
+       papier crème fait une tache grise sale, ils ont besoin d'une ombre
+       teintée dans leur propre palette (même raisonnement que leur
+       --box-shadow-style de signature, qui reste inchangé). */
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
@@ -98,8 +111,16 @@
        parfois même à l'intérieur d'un même thème (ex: rouge très saturé mais
        bleu clair). Voir l'audit complet dans la conversation. */
     --red-fill-text: #EDE6D8; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
+    /* Texte posé sur un aplat d'accent (or, orange...). Existait déjà mais
+       n'était déclaré QUE par Carnet et Cinéphile : les quatre autres thèmes
+       passaient par le repli littéral `var(--solid-fill-text)`,
+       recopié 26 fois dans le fichier. Le déclarer ici donne exactement la
+       même couleur à ces quatre thèmes (le repli valait déjà #0d1117), mais
+       la valeur n'existe plus qu'à UN endroit — les deux thèmes qui la
+       redéfinissent continuent de gagner par cascade. */
+    --solid-fill-text: #0d1117;
     --radius: 4px; --radius-sm: 3px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%;
+    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%;
     --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --font-heading: 'Fraunces', serif;
     --font-body: 'Work Sans', sans-serif;
@@ -148,7 +169,7 @@
        qu'au texte. */
     --accent-text: #9C4632;
     --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 50%;
     --font-heading: 'Special Elite', monospace; /* esprit machine à écrire pour titres/labels/chiffres */
     --font-body: 'Lora', serif; /* proportionnelle et chaleureuse pour le corps de texte — le vrai correctif face à l'ancien Journal */
@@ -163,6 +184,12 @@
     --star-symbol: '❂';
     --icon-stroke: 1.5;
     --icon-linecap: round; --icon-linejoin: round;
+
+    /* Élévation dans la palette du thème : une ombre noire sur ce papier
+       crème virerait au gris sale. Même teinte que la signature ci-dessous. */
+    --shadow-1: 0 1px 3px rgba(184, 105, 94, 0.20);
+    --shadow-2: 0 4px 12px rgba(184, 105, 94, 0.26);
+    --shadow-3: 0 8px 28px rgba(120, 68, 60, 0.28);
 
     --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
     --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
@@ -261,7 +288,7 @@
     --red: #8B4226; --green: #5C6E58;
     --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
     --radius: 18px; --radius-sm: 12px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
+    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
     --control-radius: 50%;
     --font-heading: 'Poppins', sans-serif;
     --font-body: 'Poppins', sans-serif;
@@ -276,6 +303,11 @@
     --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
     --icon-linecap: round; --icon-linejoin: round;
     --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
+
+    /* Élévation en sépia plutôt qu'en noir, cohérente avec le fond crème. */
+    --shadow-1: 0 1px 3px rgba(74, 46, 27, 0.16);
+    --shadow-2: 0 4px 12px rgba(74, 46, 27, 0.22);
+    --shadow-3: 0 8px 28px rgba(74, 46, 27, 0.26);
 
     --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
     /* Bande sépia tri-tons, dans la palette du moodboard */
@@ -316,7 +348,7 @@
     --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
     /* --gold est ici un ocre PROFOND (#7A5507, assombri deux fois pour le
        contraste), alors que les surfaces remplies en or supposent partout
-       ailleurs un or CLAIR et posent dessus var(--solid-fill-text, #0d1117),
+       ailleurs un or CLAIR et posent dessus var(--solid-fill-text),
        quasi noir. Moderne ne declarant pas --solid-fill-text, le repli
        s'appliquait : 2.82:1 sur le bouton de tri actif de "A voir", sous le
        seuil. Le 6.22:1 cite dans le commentaire de --gold ci-dessus est
@@ -329,7 +361,7 @@
        surfaces remplies en --orange gardent leur teinte d'origine. */
     --accent-text: #B34524;
     --radius: 10px; --radius-sm: 6px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
+    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
     --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
     --font-heading: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
@@ -341,6 +373,11 @@
     /* Angles francs, cohérent avec le losange du bouton Noter et le refus
        général des formes rondes dans ce thème. */
     --icon-linecap: square; --icon-linejoin: miter;
+
+    /* Élévation en bleu encre, dans la palette du thème (fond blanc). */
+    --shadow-1: 0 1px 3px rgba(30, 90, 168, 0.14);
+    --shadow-2: 0 4px 12px rgba(30, 90, 168, 0.18);
+    --shadow-3: 0 8px 28px rgba(30, 90, 168, 0.22);
 
     --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
     /* Grille fine façon papier millimétré d'architecte, à peine visible —
@@ -376,7 +413,7 @@
     --chart-movie: var(--gold); --chart-tv: var(--blue);
     --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
     --radius: 8px; --radius-sm: 6px;
-    --slider-track-radius: 999px; --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --control-radius: 50%;
     --font-heading: 'Oswald', sans-serif;
     --font-body: 'Inter', sans-serif;
@@ -532,8 +569,27 @@
     grid-column: span 2; /* palier "normal", 33% — 2 des 6 sous-colonnes */
   }
   .hist-grid-card .hist-item-open { display: block; width: 100%; height: 100%; }
+  /* ── État squelette au premier rendu de l'historique ──────────────────
+     L'historique lui-même vient de localStorage : il est là instantanément,
+     et lui coller un squelette n'afficherait qu'un faux chargement pour des
+     données déjà en mémoire. Le VRAI temps d'attente est ailleurs — les
+     affiches viennent de TMDb par le réseau, et la cellule n'avait aucun
+     fond : jusqu'à ce que l'image arrive, on voyait un trou.
+
+     Le squelette est donc posé en fond de l'image elle-même. L'image se
+     peint PAR-DESSUS son propre fond : le miroitement n'est visible que tant
+     qu'elle n'est pas arrivée, et disparaît tout seul, sans une ligne de JS
+     ni le moindre risque de squelette qui resterait affiché. Le miroitement
+     est neutralisé par le bloc prefers-reduced-motion global plus haut.
+     Réutilise l'animation `shimmer` déjà définie pour la fiche film et le
+     sélecteur d'affiche, plutôt qu'une seconde variante. */
   .hist-grid-poster, .hist-grid-poster-ph {
     width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .hist-grid-poster {
+    background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s infinite;
   }
   .hist-grid-poster-ph {
     display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid);
@@ -571,10 +627,10 @@
 
   .hist-grid-featured-badge {
     position: absolute; bottom: 15px; left: 8px; z-index: 1;
-    background: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117));
-    padding: 4px 9px; border-radius: 999px; font-size: 0.64rem; font-weight: 700;
+    background: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text));
+    padding: 4px 9px; border-radius: var(--radius-pill); font-size: 0.64rem; font-weight: 700;
     font-family: var(--font-mono); display: flex; align-items: center; gap: 3px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-1);
   }
   .hist-grid-featured-badge .icon { width: 0.85em; height: 0.85em; }
   /* Barre de progression intégrée en bas de l'affiche (séries uniquement) —
@@ -710,7 +766,7 @@
   }
   .watchlist-scroller .wl-actions {
     top: 6px; right: 6px; background: rgba(14, 17, 22, 0.65);
-    backdrop-filter: blur(6px); border-radius: 999px; padding: 2px;
+    backdrop-filter: blur(6px); border-radius: var(--radius-pill); padding: 2px;
   }
 
   /* L'ancien tricolore Letterboxd de l'onglet actif est retiré : l'indicateur
@@ -775,7 +831,7 @@
   [data-theme="cinephile"] .stars, [data-theme="cinephile"] .duel-medal-gold {
     filter: drop-shadow(0 0 3px rgba(139, 66, 38, 0.35));
   }
-  [data-theme="cinephile"] .card { box-shadow: 0 1px 3px rgba(74, 46, 27, 0.12); }
+  [data-theme="cinephile"] .card { box-shadow: var(--shadow-1); }
 
   /* ── Méridien : revue éditoriale ── */
   /* Filets fins au-dessus des titres, rubrique de magazine */
@@ -1027,8 +1083,8 @@
     background: color-mix(in srgb, var(--surface) 55%, transparent);
     backdrop-filter: blur(18px) saturate(160%);
     -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border: 1px solid var(--border-hi); border-radius: 999px;
-    box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35));
+    border: 1px solid var(--border-hi); border-radius: var(--radius-pill);
+    box-shadow: var(--box-shadow-style, var(--shadow-2));
     padding: 4px;
   }
   .nav-btn {
@@ -1037,7 +1093,7 @@
     font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px; transition: color var(--dur-base);
-    letter-spacing: 0.02em; border-radius: 999px;
+    letter-spacing: 0.02em; border-radius: var(--radius-pill);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     /* Ludex 2.0 : icônes agrandies (voir .nav-btn-icon plus bas) — texte
        visible seulement sur l'onglet actif, l'icône est désormais le seul
@@ -1169,7 +1225,7 @@
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 20px;
-    box-shadow: var(--box-shadow-style, 0 2px 12px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25));
+    box-shadow: var(--box-shadow-style, var(--shadow-2));
     width: 100%;
   }
   /* .card-title porte maintenant <h3> (hiérarchie de titres, WCAG 1.3.1) —
@@ -1191,7 +1247,7 @@
   }
   .btn-new-review {
     background: var(--orange); border: 1px solid var(--orange);
-    color: var(--solid-fill-text, #0d1117); padding: 4px 10px; border-radius: 12px;
+    color: var(--solid-fill-text); padding: 4px 10px; border-radius: 12px;
     font-size: 0.65rem; cursor: pointer; transition: all var(--dur-base);
     font-family: var(--font-heading); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
     font-style: normal;
@@ -1270,14 +1326,14 @@
   .ctx-tag:hover { color: var(--text-hi); border-color: var(--border-hi); }
   .ctx-tag.active {
     background: var(--blue); border-color: var(--blue);
-    color: var(--solid-fill-text, #0d1117); font-weight: 700;
+    color: var(--solid-fill-text); font-weight: 700;
   }
 
   /* Dropdown suggestions */
   .suggestions {
     position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2);
     border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-    z-index: 999; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,0.6); display: none;
+    z-index: 999; overflow: hidden; box-shadow: var(--shadow-3); display: none;
   }
   .suggestion-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer;
@@ -1374,7 +1430,7 @@
   @keyframes backupSlideIn { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
   .backup-reminder-text { flex: 1; min-width: 0; font-size: 0.8rem; color: var(--text-hi); }
   .backup-reminder-btn {
-    background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none; border-radius: var(--radius-sm);
+    background: var(--orange); color: var(--solid-fill-text); border: none; border-radius: var(--radius-sm);
     padding: 7px 14px; font-family: var(--font-heading); font-weight: 700; font-size: 0.76rem; cursor: pointer; flex-shrink: 0;
   }
   .backup-reminder-close { background: none; border: none; color: var(--text-mid); cursor: pointer; font-size: 0.9rem; padding: 4px 6px; flex-shrink: 0; }
@@ -1418,7 +1474,7 @@
     transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
   }
   .tv-episode-check.watched { background: var(--green); border-color: var(--green); }
-  .tv-episode-checkmark { width: 16px; height: 16px; color: var(--solid-fill-text, #0d1117); opacity: 0; transition: opacity var(--dur-fast); }
+  .tv-episode-checkmark { width: 16px; height: 16px; color: var(--solid-fill-text); opacity: 0; transition: opacity var(--dur-fast); }
   .tv-episode-check.watched .tv-episode-checkmark { opacity: 1; }
   .tv-episode-checkmark path { stroke-dasharray: 20; stroke-dashoffset: 20; }
   .tv-episode-check.watched .tv-episode-checkmark path { animation: tvCheckDraw .3s ease-out forwards; }
@@ -1492,11 +1548,11 @@
     scroll-snap-type: x proximity; border-bottom: 1px solid var(--border);
   }
   .tds-season-tab {
-    flex-shrink: 0; scroll-snap-align: start; padding: 7px 16px; border-radius: 999px;
+    flex-shrink: 0; scroll-snap-align: start; padding: 7px 16px; border-radius: var(--radius-pill);
     background: var(--surface2); border: 1px solid var(--border); color: var(--text-mid);
     font-family: var(--font-heading); font-weight: 700; font-size: 0.78rem;
   }
-  .tds-season-tab.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117)); }
+  .tds-season-tab.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text)); }
   #tds-season-status-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 2px 10px; font-size: 0.85rem; color: var(--text-hi); }
   .tds-season-status { font-size: 0.78rem; color: var(--text-mid); font-family: var(--font-mono); }
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
@@ -1540,7 +1596,7 @@
   .tv-continue-check-btn {
     position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-    background: var(--orange); border: none; color: var(--solid-fill-text, #0d1117);
+    background: var(--orange); border: none; color: var(--solid-fill-text);
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .tv-continue-check-btn svg { width: 18px; height: 18px; }
@@ -1582,7 +1638,7 @@
     display: flex; align-items: center; justify-content: center; gap: 6px;
     position: relative; z-index: 1;
   }
-  .mode-tab.active { background: transparent; color: var(--solid-fill-text, #0d1117); border: 1px solid transparent; font-weight: 800; }
+  .mode-tab.active { background: transparent; color: var(--solid-fill-text); border: 1px solid transparent; font-weight: 800; }
   /* Bug corrigé : la règle ci-dessus rend le bouton actif TRANSPARENT et lui
      donne la couleur de texte prévue pour la pastille orange qui glisse
      dessous (.toggle-slider). Le groupe "Détaillé / Rapide" est le seul des
@@ -1656,7 +1712,7 @@
     transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   }
   .focus-mode-toggle:hover { border-color: var(--orange); color: var(--text-hi); }
-  .focus-mode-toggle.active { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); }
+  .focus-mode-toggle.active { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text); }
   .focus-mode-toggle:active { transform: scale(.95); }
 
   .criteria-list.focus-mode .criterion-block { display: none; }
@@ -1753,7 +1809,7 @@
        actuelle (--slider-pct, mis à jour par updateSliderPct() au chargement
        et à chaque glissement) — plus sobre qu'un dégradé multi-couleurs. */
     background: linear-gradient(to right, var(--orange) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%));
-    border-radius: var(--slider-track-radius, 999px); outline: none; margin-bottom: 0; cursor: pointer;
+    border-radius: var(--slider-track-radius, var(--radius-pill)); outline: none; margin-bottom: 0; cursor: pointer;
     transition: background 0.05s linear;
   }
   /* outline:none ci-dessus retire l'anneau de focus par défaut du navigateur :
@@ -1768,7 +1824,7 @@
     clip-path: var(--slider-thumb-clip, none);
     transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); border: 2px solid var(--orange); cursor: pointer;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.35), var(--shadow-1);
     transition: transform var(--dur-fast), box-shadow var(--dur-fast);
   }
   input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
@@ -1987,8 +2043,8 @@
   .btn:hover { opacity: 1; transform: translateY(-1px); }
   .btn:active { transform: scale(.96); }
   .btn-copy { background: var(--surface2); color: var(--text-hi); border: 1px solid var(--border-hi); }
-  .btn-copy.copied { background: var(--green); color: var(--solid-fill-text, #0d1117); border-color: var(--green); }
-  .btn-save { background: var(--blue); color: var(--blue-fill-text, #0d1117); font-weight: 800; }
+  .btn-copy.copied { background: var(--green); color: var(--solid-fill-text); border-color: var(--green); }
+  .btn-save { background: var(--blue); color: var(--blue-fill-text); font-weight: 800; }
 
   /* ── STATS COLUMN ── */
   
@@ -2120,7 +2176,7 @@
   .wl-empty-sugg-btn:active { transform: scale(0.95); }
   .empty-state-cta {
     display: block; margin: 16px auto 0; padding: 10px 20px; border: none; border-radius: var(--radius-sm);
-    background: var(--orange); color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading); font-weight: 800;
+    background: var(--orange); color: var(--solid-fill-text); font-family: var(--font-heading); font-weight: 800;
     font-size: 0.8rem; letter-spacing: 0.03em; cursor: pointer;
     transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
   }
@@ -2131,7 +2187,7 @@
   .watchlist-add-row { display: flex; gap: 8px; margin-bottom: 14px; width: 100%; }
   .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color var(--dur-fast); box-shadow: var(--box-shadow-style, none); min-width: 0; }
   .watchlist-add-input:focus { border-color: var(--blue); }
-  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text, #0d1117); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
+  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
   .watchlist-add-btn:hover { opacity: 0.85; }
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
 
@@ -2150,7 +2206,7 @@
   .wl-sort-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   /* --gold-fill-text : sur Moderne, --gold est un ocre PROFOND alors que ces
      surfaces supposent partout ailleurs un or clair (voir le bloc du thème). */
-  .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text, #0d1117)); }
+  .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text)); }
   .wl-sort-btn-filter { margin-left: auto; }
   .wl-list-pill {
     flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
@@ -2159,7 +2215,7 @@
     display: flex; align-items: center; gap: 4px; transition: all var(--dur-fast);
   }
   .wl-list-pill:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--blue-fill-text, #0d1117); }
+  .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--blue-fill-text); }
   .wl-list-pill.wl-list-add { background: none; border-style: dashed; }
   .wl-list-pill .icon { width: 1em; height: 1em; }
 
@@ -2200,7 +2256,7 @@
   .wl-btn.del:hover { color: var(--red); }
 
   .wl-suggest-wrap { position: relative; width: 100%; }
-  .wl-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 998; overflow: hidden; box-shadow: 0 12px 24px rgba(0,0,0,.6); display: none; }
+  .wl-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 998; overflow: hidden; box-shadow: var(--shadow-3); display: none; }
   .wl-suggest-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background var(--dur-fast); }
   .wl-suggest-item:last-child { border-bottom: none; }
   .wl-suggest-item:hover { background: var(--bg); }
@@ -2209,7 +2265,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-3);}
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -2237,7 +2293,7 @@
     padding: 10px 12px; color: var(--text-hi); font-size: 0.88rem; font-family: var(--font-body);
   }
   .wl-picker-new-form button {
-    background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none; border-radius: var(--radius-sm);
+    background: var(--orange); color: var(--solid-fill-text); border: none; border-radius: var(--radius-sm);
     padding: 10px 14px; font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem; cursor: pointer; white-space: nowrap;
   }
 
@@ -2260,7 +2316,7 @@
   }
   .duel-side:hover { border-color: var(--gold); transform: translateY(-2px); }
   .duel-side:active { transform: scale(.97); }
-  .duel-side.duel-winner { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 4px 16px rgba(0,0,0,0.3); }
+  .duel-side.duel-winner { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), var(--shadow-2); }
   .duel-poster { width: 84px; height: 124px; object-fit: cover; border-radius: var(--radius-sm); box-shadow: var(--shadow-1); }
   .duel-poster-ph { display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 1.6rem; color: var(--text-mid); }
   .duel-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.82rem; color: var(--text-hi); line-height: 1.25; overflow-wrap: break-word; max-width: 100%; }
@@ -2306,7 +2362,7 @@
 
   /* ── Cartes Profil : Il y a un an / Heatmap / Décennies ── */
   .year-ago-body { display: flex; gap: 12px; align-items: center; }
-  .year-ago-poster { width: 52px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .year-ago-poster { width: 52px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: var(--shadow-1); }
   .year-ago-poster-ph { display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text-mid); font-size: 1.2rem; }
   .year-ago-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem; color: var(--text-hi); }
   .year-ago-meta { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
@@ -2382,7 +2438,7 @@
   .wrapped-entry-card:hover { border-color: var(--orange); }
   .wrapped-entry-icon {
     width: 42px; height: 42px; border-radius: 50%; background: var(--orange); flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; color: var(--solid-fill-text, #0d1117);
+    display: flex; align-items: center; justify-content: center; color: var(--solid-fill-text);
   }
   .wrapped-entry-icon .icon { width: 22px; height: 22px; }
   .wrapped-entry-text { flex: 1; }
@@ -2410,7 +2466,7 @@
   .wrapped-share-canvas-wrap { width: 100%; max-width: 260px; }
   .wrapped-share-canvas-wrap canvas { width: 100%; height: auto; border-radius: var(--radius-sm); }
   .wrapped-share-btn {
-    margin-top: 14px; background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none;
+    margin-top: 14px; background: var(--orange); color: var(--solid-fill-text); border: none;
     border-radius: var(--radius-sm); padding: 9px 18px; font-family: var(--font-heading); font-weight: 700;
     font-size: 0.8rem; cursor: pointer;
   }
@@ -2446,7 +2502,7 @@
   .onboarding-skip { background: none; border: none; color: var(--text-mid); font-size: 0.82rem; cursor: pointer; padding: 8px; }
   .onboarding-skip:hover { color: var(--text-hi); }
   .onboarding-next {
-    background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none; border-radius: var(--radius-sm);
+    background: var(--orange); color: var(--solid-fill-text); border: none; border-radius: var(--radius-sm);
     padding: 10px 22px; font-family: var(--font-heading); font-weight: 700; font-size: 0.85rem; cursor: pointer;
   }
   .onboarding-next:hover { opacity: 0.9; }
@@ -2457,11 +2513,11 @@
     border-bottom: none; border-radius: 12px 12px 0 0; padding: 12px 16px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     font-size: 0.82rem; color: var(--text-hi); font-family: var(--font-body);
-    box-shadow: 0 -8px 24px rgba(0,0,0,0.35); z-index: 9997; transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: var(--shadow-3); z-index: 9997; transition: transform var(--dur-base) var(--ease-out);
   }
   .update-banner.show { transform: translate(-50%, 0); }
   #update-banner-reload-btn {
-    background: var(--orange); color: var(--solid-fill-text, #0d1117); border: none; border-radius: 8px;
+    background: var(--orange); color: var(--solid-fill-text); border: none; border-radius: 8px;
     padding: 7px 14px; font-family: var(--font-heading); font-weight: 700; font-size: 0.8rem;
     cursor: pointer; white-space: nowrap; flex-shrink: 0;
   }
@@ -2502,7 +2558,7 @@
      où l'ordre du DOM se trouvait être le bon par hasard). */
   #person-detail-sheet { z-index: 10011; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--shadow-3); transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
   .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }
   .modal-title { color: var(--text-hi); font-weight: 700; margin-bottom: 12px; font-family: var(--font-heading); font-size: 1.2rem;}
   .theme-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px; }
@@ -2553,7 +2609,7 @@
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); z-index: 6;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    box-shadow: var(--shadow-1);
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
   }
@@ -2606,7 +2662,7 @@
   .mds-header.compact .mds-title { font-size: 0.95rem; }
   .mds-header-left { width: 100px; flex-shrink: 0; transition: width var(--dur-base) var(--ease-out); }
   .mds-poster-wrap { position: relative; width: 100%; }
-  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.4); transition: width var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); display: block; }
+  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: var(--shadow-2); transition: width var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); display: block; }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
     background: var(--surface2); font-size: 2rem; color: var(--text-mid);
@@ -2665,7 +2721,7 @@
     border-radius: 50%; background: var(--bg);
     border: 2px solid var(--poster-accent, var(--gold));
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transform: rotate(-11deg); box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    transform: rotate(-11deg); box-shadow: var(--shadow-1);
     animation: stampImpact .45s cubic-bezier(.2,1.4,.4,1) both;
     animation-delay: .15s;
   }
@@ -2774,8 +2830,8 @@
     font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all var(--dur-fast); white-space: nowrap;
   }
   .mds-action-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); }
-  .mds-action-btn.primary:hover { opacity: 0.9; color: var(--solid-fill-text, #0d1117); }
+  .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text); }
+  .mds-action-btn.primary:hover { opacity: 0.9; color: var(--solid-fill-text); }
   .mds-action-btn .icon { width: 1em; height: 1em; flex-shrink: 0; }
 
   .mds-personal {
@@ -2813,7 +2869,7 @@
   .mds-providers { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
   .mds-provider-pill {
     display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px 5px 5px;
-    background: var(--surface2); border-radius: 999px; font-size: 0.7rem; color: var(--text-hi);
+    background: var(--surface2); border-radius: var(--radius-pill); font-size: 0.7rem; color: var(--text-hi);
   }
   .mds-provider-pill.rent { color: var(--text-mid); }
   .mds-provider-logo { width: 18px; height: 18px; border-radius: 5px; object-fit: cover; }
@@ -2822,7 +2878,7 @@
   /* Badge de statut coloré (séries) — vert en cours, rouge arrêtée. */
   .tds-status-badge {
     display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
-    border-radius: 999px; background: var(--surface2); font-size: 0.66rem; font-weight: 700;
+    border-radius: var(--radius-pill); background: var(--surface2); font-size: 0.66rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.04em; margin: 4px 0 6px; color: var(--text-hi);
   }
   .tds-status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-mid); }
@@ -2842,7 +2898,7 @@
   .tds-upnext-meta { font-size: 0.7rem; color: var(--text-mid); margin-top: 2px; }
   .tds-upnext-check {
     margin-left: auto; width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
-    background: var(--gold); border: none; color: var(--solid-fill-text, #0d1117);
+    background: var(--gold); border: none; color: var(--solid-fill-text);
     display: flex; align-items: center; justify-content: center; cursor: pointer;
   }
   .tds-upnext-check svg { width: 16px; height: 16px; }
@@ -2904,7 +2960,7 @@
   .on-this-day-item { flex-shrink: 0; width: 92px; cursor: pointer; position: relative; }
   .on-this-day-poster { width: 92px; height: 138px; border-radius: var(--radius-sm); object-fit: cover; display: block; background: var(--surface2); border: 1px solid var(--border); }
   .on-this-day-badge {
-    position: absolute; top: 6px; left: 6px; background: var(--orange); color: var(--solid-fill-text, #0d1117);
+    position: absolute; top: 6px; left: 6px; background: var(--orange); color: var(--solid-fill-text);
     font-size: 0.6rem; font-weight: 700; padding: 3px 7px; border-radius: var(--radius-pill); font-family: var(--font-heading);
   }
   .on-this-day-title { font-size: 0.7rem; color: var(--text-hi); margin-top: 5px; line-height: 1.25; }
@@ -3017,7 +3073,7 @@
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .platform-chip:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  .platform-chip.selected { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text, #0d1117); font-weight: 700; }
+  .platform-chip.selected { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text); font-weight: 700; }
   .settings-input, .settings-select { width: 100%; padding: 10px; margin-bottom: 16px; background: var(--bg); border: 1px solid var(--border-hi); color: var(--text-hi); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9rem; outline: none; }
   .settings-input:focus, .settings-select:focus { border-color: var(--blue); }
 
@@ -3172,7 +3228,7 @@
   .save-confirm-ticket-half {
     flex: 1; background: var(--orange); border: 2px solid var(--text-hi);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.3rem; color: var(--solid-fill-text, #0d1117); font-weight: 900;
+    font-size: 1.3rem; color: var(--solid-fill-text); font-weight: 900;
   }
   .save-confirm-ticket-half .icon { width: 1.4rem; height: 1.4rem; }
   .save-confirm-ticket-left {
@@ -3379,7 +3435,7 @@
       margin: 0 12px calc(12px + env(safe-area-inset-bottom)) 12px;
       border-radius: 22px;
       z-index: 1000;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+      box-shadow: var(--shadow-3);
       max-width: none;
       /* Fond semi-transparent + flou : le contenu qui défile en dessous
          glisse élégamment derrière la barre, plutôt qu'un fond plein qui
@@ -3428,12 +3484,12 @@
       width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      box-shadow: var(--shadow-1);
     }
-    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text, #0d1117); }
+    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text); }
     .nav-btn-primary-label {
       font-size: 0.54rem; font-weight: 800; letter-spacing: 0.03em;
-      color: var(--solid-fill-text, #0d1117); font-family: var(--font-heading);
+      color: var(--solid-fill-text); font-family: var(--font-heading);
       line-height: 1;
     }
 
@@ -3471,6 +3527,23 @@
        redimensionner ici. */
     .kpi-val { font-size: 1.25rem; }
     .kpi-label { font-size: 0.65rem; }
+  }
+
+  /* ── Double en-tête sur les petits écrans ──────────────────────────────
+     « LUDEX RATING COMPANION » passait sur DEUX lignes en dessous de 360px
+     de large, doublant la hauteur du titre (52px au lieu de 26) et poussant
+     l'en-tête à 97px — puis venait le titre de section, soit 150px avant le
+     premier contenu utile.
+
+     Mesuré avant/après correctif, sur les 4 largeurs courantes :
+       320px : titre 52px (2 lignes), en-tête 97px, contenu à 150px
+       360 / 390 / 412px : titre 26px (1 ligne), en-tête 71px, contenu à 124px
+     Le défaut ne concerne donc QUE les écrans les plus étroits (iPhone SE
+     première génération et petits Android) — d'où ce seuil à 359px plutôt
+     qu'une réduction générale qui pénaliserait les téléphones courants où
+     le titre tient déjà sur une ligne. */
+  @media (max-width: 359px) {
+    .app-title { font-size: 1.12rem; letter-spacing: 0; }
   }
 
   @media (max-width: 480px) {

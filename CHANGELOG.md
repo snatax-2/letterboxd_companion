@@ -17,6 +17,7 @@ cours de route, captures de mesures) vit dans
 [docs/journal-2026.md](docs/journal-2026.md).
 
 ### Ajouté
+- **Phase 7 de l'audit — finition visuelle.** Ombres tokénisées sur trois niveaux d'élévation (3 déclarations sur 37 utilisaient les jetons, désormais 32 sur 37 — le reste étant des anneaux de focus et des lueurs colorées, qui ne sont pas de l'élévation), avec des valeurs propres aux trois thèmes CLAIRS : une ombre noire sur du papier crème faisait une tache grise sale. `--solid-fill-text` déclaré dans `:root`, ce qui retire les 30 répétitions du littéral `#0d1117` en repli. Les 7 `999px` passés à `--radius-pill` (plus 6 autres de même intention). Squelette de chargement sur les affiches de l'historique, posé en fond de l'image pour disparaître tout seul dès qu'elle arrive. Titre applicatif réduit sous 360px, où il passait sur deux lignes. Nouveau test de non-régression des jetons sémantiques sur les 6 thèmes.
 - **Phase 4 du plan d'exécution de l'audit expert — responsive desktop.** Le point le plus lourd et le plus risqué du plan.
 - **Phase 3 du plan d'exécution de l'audit expert — UI.**
 - **Phase 2 du plan d'exécution de l'audit expert — UX.**
