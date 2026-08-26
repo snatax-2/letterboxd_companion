@@ -41,19 +41,42 @@ function showToast(msg, withUndo = false, undoFnName = 'undoDelete') {
 
 window.deleteItem = function(idx, btnEl) {
   const history = loadHistory();
-  deletedItemCache = history[idx]; 
+  const target = history[idx];
+  if (!target) return;
+  deletedItemCache = target;
   deletedItemIndex = idx;
-  
+
   if (btnEl) {
     const cardToAnimate = btnEl.closest('.hist-item');
     cardToAnimate.classList.add('deleting');
   }
 
   setTimeout(() => {
-    history.splice(idx, 1);
-    saveHistory(history);
-    if (deletedItemCache?.title) {
-      recordTombstone(HISTORY_TOMBSTONES_KEY, deletedItemCache.title.toLowerCase());
+    // ── MISE À JOUR PERDUE (corrigé) ────────────────────────────────────
+    // Cette fonction lisait l'historique AVANT le setTimeout, puis écrivait
+    // cet instantané vieux de 300 ms. Deux suppressions coup sur coup
+    // prenaient donc le MÊME instantané (rien n'ayant encore été écrit) et
+    // la seconde écriture écrasait la première : le film supprimé en premier
+    // réapparaissait. Reproduit : supprimer A puis C sur [C, B, A] laissait
+    // [B, A] au lieu de [B].
+    //
+    // Deuxième défaut du même endroit : `idx` était figé à l'appel. Après une
+    // suppression concurrente, tous les index suivants se décalent — l'index
+    // gardé désigne alors un AUTRE film. C'est exactement le piège que
+    // resolveCurrentIdx() documente et évite déjà plus bas dans ce fichier ;
+    // il n'avait simplement jamais été appliqué ici, alors que ce chemin
+    // (le bouton en surimpression) est aujourd'hui le seul encore vivant.
+    //
+    // On relit donc l'historique au moment d'écrire, et on retrouve le film
+    // par son identité plutôt que par sa position.
+    const fresh = loadHistory();
+    const realIdx = fresh.findIndex(h =>
+      h.savedAt === target.savedAt && (h.title || '') === (target.title || ''));
+    if (realIdx === -1) return; // déjà supprimé entre-temps : rien à faire
+    fresh.splice(realIdx, 1);
+    saveHistory(fresh);
+    if (target.title) {
+      recordTombstone(HISTORY_TOMBSTONES_KEY, target.title.toLowerCase());
     }
     renderAll();
     showToast(`Film supprimé.`, true);
