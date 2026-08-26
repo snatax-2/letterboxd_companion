@@ -1354,72 +1354,28 @@
     font-size: 0.82rem; color: var(--text-mid); animation: mdsSectionIn .3s var(--ease-out) both;
   }
 
-  /* ── SÉRIES : Historique (Phase 4) ── */
-  .tv-show-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; overflow: hidden; }
-  .tv-show-card-header-wrap { position: relative; overflow: hidden; touch-action: pan-y; }
-  .tv-show-card-header { display: flex; align-items: center; gap: 6px; padding: 10px; position: relative; z-index: 1; background: var(--bg); }
-  .tv-show-card-header-wrap:not(.hist-dragging) .tv-show-card-header { transition: transform var(--dur-base) var(--ease-out); }
-  .tv-show-card-header-wrap.hist-dragging .tv-show-card-header,
-  .tv-show-card-header-wrap.hist-swipe-armed-left .tv-show-card-header { will-change: transform; }
-  .tv-show-card-header-wrap.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
-  .tv-show-card-header-wrap.hist-swipe-armed-left .hist-swipe-hint-left {
-    cursor: pointer;
-    animation: armedHintPulse 1s ease-in-out infinite;
-  }
+  /* ── SÉRIES : Historique ──
+     Il ne reste ici que les deux affordances de la carte actuelle. Tout le
+     reste de ce bloc (une vingtaine de sélecteurs : .tv-show-card et son
+     en-tête, l'affiche et les trois lignes de texte, le dépliage des saisons
+     .tv-show-seasons-fold, les lignes .tv-season-row et leurs boutons, plus
+     tout l'appareillage de glissement hist-swipe-* qui allait avec) visait
+     un balisage supprimé par Ludex 2.0 (b219362) : l'historique des séries
+     est passé d'une carte dépliable à la mosaïque d'affiches des films.
+     Repéré en réalignant les specs qui pointaient encore ces classes. */
   .tv-show-card-open-btn {
     flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0;
     background: none; border: none; cursor: pointer; text-align: left; padding: 0; border-radius: 4px;
   }
   .tv-show-card-open-btn:hover { background: var(--surface2); }
-  .tv-show-card-poster { width: 46px; height: 68px; border-radius: 4px; object-fit: cover; flex-shrink: 0; background: var(--surface2); }
-  .tv-show-card-poster-ph { display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-  .tv-show-card-info { flex: 1; min-width: 0; }
-  .tv-show-card-title { font-size: 0.9rem; font-weight: 700; color: var(--text-hi); }
-  .tv-show-card-score { font-size: 0.8rem; color: var(--text-mid); margin-top: 2px; }
-  .tv-show-card-count { font-size: 0.72rem; }
   .tv-show-delete-btn { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 6px; flex-shrink: 0; }
   .tv-show-delete-btn:hover { color: var(--red); }
   .tv-show-delete-btn .icon { width: 18px; height: 18px; }
-  .tv-show-seasons-fold summary { cursor: pointer; padding: 8px 10px; font-size: 0.78rem; color: var(--text-mid); border-top: 1px solid var(--border); list-style: none; }
-  .tv-show-seasons-fold summary::-webkit-details-marker { display: none; }
-  .tv-show-seasons-list { padding: 0 10px 8px; }
-  .tv-season-row {
-    position: relative; border-radius: 4px; margin-bottom: 4px; overflow: hidden; touch-action: pan-y;
-  }
-  .tv-season-row-content {
-    display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; background: var(--surface2);
-  }
-  .tv-season-row:not(.hist-dragging) .tv-season-row-content { transition: transform var(--dur-base) var(--ease-out); }
-  .tv-season-row.hist-dragging .tv-season-row-content,
-  .tv-season-row.hist-swipe-armed-left .tv-season-row-content,
-  .tv-season-row.hist-swipe-armed-right .tv-season-row-content { will-change: transform; }
-  .tv-season-row.hist-swipe-left .hist-swipe-hint-left { opacity: 1; }
-  .tv-season-row.hist-swipe-right .hist-swipe-hint-right { opacity: 1; }
-  .tv-season-row.hist-swipe-armed-left .hist-swipe-hint-left,
-  .tv-season-row.hist-swipe-armed-right .hist-swipe-hint-right {
-    cursor: pointer;
-    animation: armedHintPulse 1s ease-in-out infinite;
-  }
-  .tv-season-reopen-btn {
-    flex: 1; display: flex; justify-content: space-between; align-items: center;
-    padding: 7px 4px; font-size: 0.82rem; color: var(--text-hi); cursor: pointer;
-    background: none; border: none; font-family: var(--font-body); text-align: left; border-radius: 4px;
-  }
-  .tv-season-reopen-btn:hover { background: var(--surface2); }
-  .tv-season-delete-btn { background: none; border: none; color: var(--text-mid); cursor: pointer; padding: 4px; flex-shrink: 0; }
-  .tv-season-delete-btn:hover { color: var(--red); }
-  .tv-season-delete-btn .icon { width: 15px; height: 15px; }
 
-  /* ── SÉRIES : fiche détaillée (fds), section progression par saison ── */
-  .tds-season-progress-list { display: flex; flex-direction: column; }
-  .tds-season-details { border-bottom: 1px solid var(--border); }
-  .tds-season-details:last-child { border-bottom: none; }
-  .tds-season-progress-row {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 9px 4px; font-size: 0.85rem; color: var(--text-hi);
-    border-radius: 4px; list-style: none;
-  }
-  .tds-season-progress-row::-webkit-details-marker { display: none; }
+  /* ── SÉRIES : fiche détaillée (tds), section progression par saison ──
+     .tds-season-progress-list / -details / -progress-row décrivaient les
+     lignes <details> dépliables par saison, remplacées par des onglets en
+     97ae807 (voir .tds-season-tabs plus bas). */
   .tds-season-progress-right { display: flex; align-items: center; gap: 6px; }
   .tds-season-delete-btn, .tds-season-reopen-btn {
     display: flex; align-items: center; justify-content: center;
@@ -1530,6 +1486,20 @@
     position: relative; z-index: 1;
   }
   .mode-tab.active { background: transparent; color: var(--solid-fill-text, #0d1117); border: 1px solid transparent; font-weight: 800; }
+  /* Bug corrigé : la règle ci-dessus rend le bouton actif TRANSPARENT et lui
+     donne la couleur de texte prévue pour la pastille orange qui glisse
+     dessous (.toggle-slider). Le groupe "Détaillé / Rapide" est le seul des
+     six à ne pas avoir cette pastille — son libellé actif se retrouvait donc
+     en #0d1117 directement sur le fond du thème. Contraste mesuré : 1.00 en
+     thème par défaut, 1.07 en filmnoir, 1.03 en technicolor. Autrement dit
+     le libellé de l'onglet ACTIF était illisible dans tous les thèmes, alors
+     que l'inactif, lui, se lisait très bien. Présent aussi sur main.
+     On lui rend le fond plein d'avant Ludex 2.0 : la couleur de texte
+     redevient posée sur l'orange, ce pour quoi elle est faite. */
+  .mode-tabs-plain .mode-tab.active {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
   /* Ludex 2.0 : pastille glissante (voir Ludex_Switch_Animation) — le
      fond n'est plus posé directement sur le bouton actif (.mode-tab.active
      ci-dessus, désormais transparent) mais sur cet élément séparé qui

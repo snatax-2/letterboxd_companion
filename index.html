@@ -568,7 +568,15 @@ window.loadThemeFonts = function (theme) {
         <div class="stars-display" id="stars-display">★★½</div>
       </div>
 
-      <div class="mode-tabs">
+      <!-- mode-tabs-plain : ce groupe est le seul des six .mode-tabs à ne pas
+           avoir de pastille glissante (.toggle-slider) — les cinq autres sont
+           des bascules Films/Séries, positionnées par un mécanisme générique
+           qui se repère à l'icône .icon-tv (voir 01-navigation.js), absente
+           ici. Sans cette classe, .mode-tab.active lui applique la couleur de
+           texte prévue POUR la pastille orange sur un fond de thème : le
+           libellé actif devient invisible (contraste mesuré 1.0 en thème par
+           défaut). Voir la règle correspondante dans styles.css. -->
+      <div class="mode-tabs mode-tabs-plain">
         <button class="mode-tab active" id="tab-detail" onclick="setMode('detail')">Détaillé (7 critères)</button>
         <button class="mode-tab" id="tab-quick" onclick="setMode('quick')">Rapide (étoiles)</button>
       </div>
