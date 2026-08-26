@@ -108,9 +108,16 @@ test('bouton telecharger actif des qu\'il y a au moins un film note', async ({ p
   await page.waitForTimeout(600);
   await expect(page.locator('#profile-share-btn')).toBeEnabled();
 });
-const { default: AxeBuilder } = require("@axe-core/playwright");
+const { default: AxeBuilder } = require('@axe-core/playwright');
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
-  test(`a11y profil corrige - ${theme}`, async ({ page }) => {
+  // Corrigé lors de la fusion (phase 6 de l'audit) : cette boucle ne faisait
+  // auparavant que console.log les violations sans jamais les faire échouer
+  // (aucun expect()) — un test qui passait toujours, quel que soit le
+  // résultat réel. Volontairement distinct de accessibility.spec.js, qui
+  // seed un état RICHE (son propre commentaire explique pourquoi) : ici
+  // c'est justement le Profil VIDE, sur lequel vivent les correctifs
+  // ci-dessus, qui est scanné.
+  test(`a11y profil vide - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1400 });
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_onboarding_seen', '1');
@@ -123,7 +130,54 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     await page.waitForTimeout(600);
     const results = await new AxeBuilder({ page }).analyze();
     const bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
-    console.log(`${theme}: ${bad.length} violation(s)`);
-    for (const v of bad) console.log('  ', v.id);
+    expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);
   });
 }
+
+// ── Fusionné depuis phase3-ui-fixes.spec.js (renommage par comportement,
+// phase 6 de l'audit) ────────────────────────────────────────────────────
+// "Top Réalisateurs" (#top-directors-list) et "Distribution des notes"
+// (#histogram) ont été retirés en Ludex 2.0, avec la classe
+// .empty-state-compact qui les habillait — plus rien de tout ça n'existe.
+//
+// Ce que ces deux tests protègent reste valable et vérifiable sur les
+// encarts actuels : sur un profil vierge, chacun affiche un message utile
+// plutôt qu'un cadre vide ou une série de zéros. Les quatre y sont — le
+// radar, l'activité mensuelle, les trophées et les duels. (L'activité
+// mensuelle n'en avait pas : elle affichait 6 mois de barres à zéro,
+// exactement ce que ce test interdisait à l'histogramme. Corrigé, voir
+// renderMonthlyActivityChart.)
+
+test('etats vides compacts (Profil) toujours corrects apres migration', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 1400 });
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.goto('/');
+  await page.waitForTimeout(1400);
+  await page.click('#nav-profile');
+  await page.waitForTimeout(600);
+
+  for (const [selecteur, extrait] of [
+    ['#radar-empty', 'mode Détaillé'], // le message vit à côté du conteneur, qui se replie à 0 quand il est vide
+    ['#monthly-activity-chart', 'Note quelques films'],
+  ]) {
+    const texte = await page.locator(selecteur).textContent();
+    expect(texte, `encart ${selecteur}`).toContain(extrait);
+  }
+  await expect(page.locator('.trophy-empty')).toContainText('Note quelques films');
+});
+
+test('les etats vides riches (deja fonctionnels) restent inchanges', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.goto('/');
+  await page.waitForTimeout(1400);
+  await page.click('#nav-history');
+  await page.waitForTimeout(500);
+  await expect(page.locator('#empty-state-history-cta')).toBeVisible();
+  await expect(page.locator('.empty-state-icon').first()).toBeVisible();
+  await page.click('#empty-state-history-cta');
+  await page.waitForTimeout(400);
+  await expect(page.locator('#movie-search')).toBeFocused();
+});

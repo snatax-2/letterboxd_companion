@@ -130,3 +130,29 @@ test('le reste du top 10 est sous accordeon, ferme par defaut', async ({ page })
   const innerRows = await details.locator('.duel-rank-row').count();
   expect(innerRows).toBe(2);
 });
+
+// Fusionné depuis lots-cde.spec.js (renommage par comportement, phase 6 de
+// l'audit) — le départage doit privilégier deux films de même note qui ne
+// se sont jamais affrontés plutôt qu'une paire choisie au hasard.
+function seedDuelPair(films) {
+  return JSON.stringify(films.map((f, i) => ({
+    title: f.title, year: f.year || '2020', score: f.score || '7.0', mode: 'quick',
+    values: { quick: (parseFloat(f.score) || 7) / 2 }, date: '2026-0' + ((i % 6) + 1) + '-10',
+    savedAt: '2026-01-01T10:00:0' + i + '.000Z', genre: f.genre || '',
+  })));
+}
+
+test('le departage privilegie deux films de meme note jamais affrontes', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  // 2 films a 8.0, 2 films a des notes uniques : la paire proposee doit etre les deux 8.0
+  await page.addInitScript((h) => localStorage.setItem('lbx_v2', h), seedDuelPair([
+    { title: 'Huit Un', score: '8.0' }, { title: 'Huit Deux', score: '8.0' },
+    { title: 'Trois', score: '3.0' }, { title: 'Dix', score: '10.0' },
+  ]));
+  await page.goto('/');
+  await page.click('#nav-profile');
+  await page.waitForSelector('#duel-arena .duel-side');
+
+  const titles = await page.locator('#duel-arena .duel-title').allTextContents();
+  expect(titles.sort()).toEqual(['Huit Deux', 'Huit Un']);
+});

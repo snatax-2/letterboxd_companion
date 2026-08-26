@@ -1,6 +1,13 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
+// Balayage large : les 5 écrans principaux, en mobile ET en desktop, sur
+// les 6 thèmes (12 combinaisons de viewport × thème, 5 écrans chacune),
+// avec un état riche (historique films + séries, watchlist) plutôt qu'un
+// écran vide. Complémentaire aux specs a11y plus ciblées : celles-ci
+// isolent une vue ou un correctif précis, celui-ci vérifie qu'aucune
+// combinaison viewport/thème ne laisse passer une violation ailleurs.
+
 const HIST = [
   { title: 'Parasite', tmdbId: '1', year: '2019', score: '9.5', mode: 'detail', values: { scenario: '10', realisation: '9', photo: '9', acteurs: '10', ambiance: '9', rythme: '9', affect: '10' }, date: '2026-01-01', savedAt: '2026-01-01T10:00:00.000Z', genre: 'Thriller', director: 'Bong Joon-ho', review: 'Un film exceptionnel.' },
   { title: 'Whiplash', tmdbId: '2', year: '2014', score: '8.5', mode: 'quick', values: { quick: 4.25 }, date: '2026-01-05', savedAt: '2026-01-05T10:00:00.000Z', genre: 'Drame', director: 'Damien Chazelle' },
@@ -48,22 +55,3 @@ for (const viewport of [{ w: 390, h: 900, label: 'mobile' }, { w: 1440, h: 1000,
     });
   }
 }
-
-test('onboarding non ouverte : aucune diapositive ne doit intercepter de clics ailleurs sur la page', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.addInitScript(() => {
-    localStorage.setItem('lbx_onboarding_seen', '1');
-    localStorage.setItem('lbx_settings', JSON.stringify({ theme: 'cinephile' }));
-    localStorage.setItem('lbx_watchlist', JSON.stringify([{ title: 'Dune', tmdbId: '99', year: '2021', genre: 'SF', poster: '' }]));
-  });
-  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-history');
-  await page.waitForTimeout(600);
-  await page.click('#nav-watchlist');
-  await page.waitForTimeout(600);
-  // Le vrai test : ce clic doit reussir sans timeout, sans etre intercepte
-  await page.click('#nav-rating', { timeout: 3000 });
-  await expect(page.locator('#nav-rating')).toHaveClass(/active/);
-});

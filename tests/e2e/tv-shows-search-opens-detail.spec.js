@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const AxeBuilder = require('@axe-core/playwright').default;
 
 test('recherche une serie ouvre directement la fiche detaillee, pas de puces de saisons', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1600 });
@@ -87,4 +88,86 @@ test('cliquer Commencer demarre a la Saison 1, ajoute au widget, met a jour la f
   const widgetText = await page.locator('.tv-continue-list').textContent();
   expect(widgetText).toContain('True Detective');
   expect(widgetText).toContain('Ep 1');
+});
+
+// ── Fusionné depuis tv-shows-phase1.spec.js (renommage par comportement,
+// phase 6 de l'audit) — version plus complète du test ci-dessus : couvre
+// en plus le retour vers l'onglet Film après consultation d'une série
+// (bascule Film/Série de #tab-media-*).
+
+test('bascule Film/Serie : recherche ouvre directement la fiche detaillee, retour vers Film', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  // Route generique EN PREMIER, specifiques APRES (Playwright priorise la
+  // plus recemment enregistree — piege documente ailleurs dans ce projet).
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.route('**/api/search?tvQuery=*', route => route.fulfill({ json: { results: [
+    { id: 4607, name: 'True Detective', poster_path: '/p1.jpg', first_air_date: '2014-01-12' },
+  ] } }));
+  await page.route('**/api/search?tvId=4607', route => route.fulfill({ json: {
+    id: 4607, name: 'True Detective',
+    seasons: [
+      { season_number: 1, name: 'Saison 1', episode_count: 8, poster_path: '/s1.jpg' },
+      { season_number: 2, name: 'Saison 2', episode_count: 8, poster_path: '/s2.jpg' },
+    ],
+  } }));
+
+  await page.goto('/');
+  await page.click('#nav-rating');
+  await page.waitForTimeout(400);
+
+  await expect(page.locator('#tv-only-fields')).toBeHidden();
+  await page.click('#tab-media-tv');
+  await expect(page.locator('#tv-only-fields')).toBeVisible();
+  await expect(page.locator('#movie-only-fields')).toBeHidden();
+  await expect(page.locator('#notation-card')).toBeHidden(); // pas de saison selectionnee
+
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.suggestion-item')).toHaveCount(1);
+
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+
+  // La fiche detaillee s'ouvre directement, plus de puces de saison dans Noter
+  await expect(page.locator('#tv-detail-sheet')).toHaveClass(/open/);
+  await expect(page.locator('#tds-title')).toContainText('True Detective');
+  await expect(page.locator('#tv-season-picker')).toBeHidden();
+  // 97ae807 a remplacé les lignes dépliables par saison (.tds-season-progress-row)
+  // par des onglets (.tds-season-tab) + une seule ligne d'état pour la saison
+  // active (.tds-season-status). Le commit n'a touché aucun fichier de test.
+  await expect(page.locator('.tds-season-tab')).toHaveCount(2);
+
+  await page.click('#tds-close-btn');
+  await page.waitForTimeout(300);
+
+  await page.click('#tab-media-movie');
+  await expect(page.locator('#tv-only-fields')).toBeHidden();
+  await expect(page.locator('#movie-only-fields')).toBeVisible();
+  await expect(page.locator('#notation-card')).toBeVisible();
+});
+
+test('accessibilite : zero violation sur le flux complet de selection', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.route('**/api/search?tvQuery=*', route => route.fulfill({ json: { results: [
+    { id: 4607, name: 'True Detective', poster_path: '/p1.jpg', first_air_date: '2014-01-12' },
+  ] } }));
+  await page.route('**/api/search?tvId=4607', route => route.fulfill({ json: {
+    id: 4607, name: 'True Detective',
+    seasons: [
+      { season_number: 1, name: 'Saison 1', episode_count: 8, poster_path: '/s1.jpg' },
+      { season_number: 2, name: 'Saison 2', episode_count: 8, poster_path: '/s2.jpg' },
+    ],
+  } }));
+  await page.goto('/');
+  await page.click('#nav-rating');
+  await page.click('#tab-media-tv');
+  await page.fill('#tv-search', 'True Detective');
+  await page.waitForTimeout(500);
+  await page.click('.suggestion-item');
+  await page.waitForTimeout(600);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')).toHaveLength(0);
 });

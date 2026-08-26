@@ -99,9 +99,21 @@ test('Profil : bascule stats Films/Series avec fondu, KPI final correct', async 
   console.log('opacity finale dashboard:', opacity);
   expect(opacity).toBe('1');
 });
-const { default: AxeBuilder } = require("@axe-core/playwright");
+const { default: AxeBuilder } = require('@axe-core/playwright');
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
-  test(`a11y phase2 - ${theme}`, async ({ page }) => {
+  // Corrigé lors du renommage (phase 6 de l'audit) : cette boucle ne faisait
+  // auparavant que console.log les violations sans jamais les faire échouer
+  // (aucun expect()) — deux scans axe-core complets par thème, pour un test
+  // qui passait toujours quel que soit le résultat.
+  //
+  // Budget de temps élargi en même temps, et pas pour masquer un échec : le
+  // test enchaîne DEUX analyses axe-core complètes plus 2,5s d'attentes fixes,
+  // mesuré à 30,5s seul — soit juste au-dessus des 30s par défaut. Il passait
+  // donc de justesse en isolation et expirait dès que la machine était
+  // chargée par le reste de la suite (reproduit : vert seul, rouge en lot).
+  // L'assertion, elle, est bien réelle maintenant.
+  test(`a11y bascule Films/Séries - ${theme}`, async ({ page }) => {
+    test.setTimeout(90_000);
     await page.setViewportSize({ width: 390, height: 1400 });
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_onboarding_seen', '1');
@@ -114,13 +126,13 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     await page.waitForTimeout(700);
     let results = await new AxeBuilder({ page }).analyze();
     let bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
-    console.log(`${theme} decouvrir: ${bad.length} violation(s)`);
+    expect(bad, `Découvrir — ${JSON.stringify(bad.map(v => v.id))}`).toHaveLength(0);
     await page.click('#nav-rating');
     await page.waitForTimeout(400);
     await page.click('#tab-media-tv');
     await page.waitForTimeout(400);
     results = await new AxeBuilder({ page }).analyze();
     bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
-    console.log(`${theme} apres transition: ${bad.length} violation(s)`);
+    expect(bad, `après transition — ${JSON.stringify(bad.map(v => v.id))}`).toHaveLength(0);
   });
 }

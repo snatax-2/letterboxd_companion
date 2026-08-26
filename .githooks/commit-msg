@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Rejette les messages de commit trop courts ou purement génériques. Corrige le
+# relâchement constaté sur une série de commits avant cet audit — des messages
+# d'une ligne sans aucune information exploitable en cas de bisect ou de
+# relecture d'historique. Voir CHANGELOG.md / docs/journal-2026.md pour le
+# niveau de détail attendu (pas cette longueur-là pour CHAQUE commit, mais au
+# minimum une phrase qui dit CE QUI change et POURQUOI).
+#
+# Deux garde-fous distincts et complémentaires :
+#   1. la longueur, qui attrape "wip", "fix", "update"... ;
+#   2. les tournures génériques ASSEZ LONGUES pour passer le premier filtre
+#      ("various fixes and improvements" fait 30 caractères). Sans ce second
+#      filtre, allonger un message vide de sens suffirait à contourner le hook.
+
+commit_msg_file="$1"
+msg="$(grep -v '^#' "$commit_msg_file" | sed '/^\s*$/d' | head -1)"
+msg="$(printf '%s' "$msg" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+msg_len=${#msg}
+if [ "$msg_len" -lt 15 ]; then
+  echo "commit-msg: message trop court (${msg_len} caractères, 15 minimum) : \"$msg\"" >&2
+  echo "  Décris CE QUI change et POURQUOI, pas juste un mot-clé." >&2
+  exit 1
+fi
+
+# Motifs génériques : la ligne ENTIÈRE n'est qu'une de ces tournures (ancrage
+# ^...$), pour ne jamais rejeter un vrai message qui contiendrait le mot.
+# "Corrige un bug d'affichage du radar" passe ; "bug fixes" seul ne passe pas.
+generic='^((various|some|minor|small|misc|multiple|several|assorted)[[:space:]]+)?((bug|small|minor|misc|various|quick|last|final|more)[[:space:]]+)*(fix(es|ed)?|change(s|d)?|update(s|d)?|improvement(s)?|tweak(s)?|cleanup|clean[[:space:]]?up|refactor(ing)?|stuff|things|wip|work[[:space:]]+in[[:space:]]+progress)([[:space:]]+(and|et)[[:space:]]+(fix(es)?|change(s)?|update(s)?|improvement(s)?|tweak(s)?|cleanup|refactor(ing)?))*[[:space:]]*[.!]?$'
+
+if printf '%s' "$msg" | grep -Eiq "$generic"; then
+  echo "commit-msg: message générique refusé : \"$msg\"" >&2
+  echo "  Allonger un message vide de sens ne suffit pas — dis CE QUI change et POURQUOI." >&2
+  exit 1
+fi
+
+exit 0

@@ -3530,6 +3530,14 @@
       position: sticky; top: 0; z-index: 900;
       background: var(--surface);
     }
+    /* main (pas .layout) : l'ajout du lien d'évitement (phase 5 de l'audit,
+       WCAG 2.4.1) a inséré <main id="contenu"> entre <body> et .layout —
+       .layout n'est donc plus un enfant flex DIRECT de body, et son
+       `order: 2` n'a plus aucun effet sur la position de la barre
+       d'onglets. Reproduit et vérifié avant ce correctif : la barre
+       retombait à 2450px du haut sur Profil, exactement le bug que ce bloc
+       corrige déjà pour .app-header/.mobile-nav. */
+    main { order: 2; width: 100%; }
     .layout { order: 2; }
   }
 
