@@ -44,6 +44,15 @@
   const pile = [];
   let sentinellePosee = false;
   let retourInterne = false; // pour ignorer le popstate de notre propre history.back()
+  // Distingue un popstate causé par un vrai Back (la position recule dans un
+  // historique déjà visité, history.length ne change pas) d'un popstate causé
+  // par une navigation de fragment "vers l'avant" — coller #profile dans la
+  // barre d'adresse pendant que l'app tourne déjà, ou cliquer un lien de ce
+  // type : le navigateur pousse alors une ENTREE NEUVE et déclenche quand même
+  // popstate, alors que ce n'est pas un Retour. Sans cette distinction, un tel
+  // lien collé forçait un retour à Découvrir au lieu d'ouvrir l'onglet visé —
+  // reproduit et vérifié avant ce correctif.
+  let longueurConnue = history.length;
 
   // Fermetures dédiées : ces fiches font plus que retirer la classe (rendre le
   // focus, arrêter une bande-annonce, réinitialiser leur état). Les autres
@@ -81,6 +90,7 @@
     if (besoin && !sentinellePosee) {
       history.pushState({ lbxRetour: true }, '');
       sentinellePosee = true;
+      longueurConnue = history.length;
     } else if (!besoin && sentinellePosee) {
       // Plus rien à annuler alors qu'une sentinelle traîne (l'utilisateur a
       // refermé au bouton) : on la consomme nous-mêmes, sinon le Retour
@@ -116,8 +126,25 @@
   });
 
   window.addEventListener('popstate', () => {
-    if (retourInterne) { retourInterne = false; sentinellePosee = false; return; }
+    if (retourInterne) { retourInterne = false; sentinellePosee = false; longueurConnue = history.length; return; }
+
+    const entreeNeuve = history.length > longueurConnue;
+    longueurConnue = history.length;
     sentinellePosee = false;
+
+    if (entreeNeuve) {
+      // Navigation vers l'avant, pas un Retour : honore le hash s'il désigne
+      // un onglet valide (voir 01-navigation.js pour ONGLETS_VALIDES), sinon
+      // ignore proprement. switchMobileNav() met à jour le DOM, ce qui
+      // déclenche l'observateur et repose une sentinelle si besoin — même
+      // chemin qu'un clic d'onglet normal.
+      const ongletDemande = location.hash.slice(1);
+      if (typeof ONGLETS_VALIDES !== 'undefined' && ONGLETS_VALIDES.includes(ongletDemande)
+        && typeof switchMobileNav === 'function') {
+        switchMobileNav(ongletDemande);
+      }
+      return;
+    }
 
     if (pile.length) {
       fermerCouche(pile[pile.length - 1]);

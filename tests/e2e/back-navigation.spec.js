@@ -102,3 +102,45 @@ test('sur l\'onglet d\'arrivee sans rien d\'ouvert, le premier Retour quitte', a
   await page.waitForTimeout(500);
   expect(page.url(), 'aucune entree parasite ne doit avaler ce Retour').not.toBe(avant);
 });
+
+// ── ROUTAGE PAR HASH (Phase 3 de l'audit) ───────────────────────────────
+// Chaque onglet est reflété dans l'URL (#discover, #history...) via
+// history.replaceState — pas pushState, pour ne pas créer d'entrée
+// d'historique à chaque clic (ça casserait la sentinelle unique ci-dessus).
+// Deux bénéfices concrets : un rechargement de page atterrit sur le bon
+// onglet plutôt que systématiquement Découvrir, et un lien copié/collé dans
+// la barre d'adresse d'un onglet déjà ouvert ouvre le bon onglet plutôt que
+// de forcer un retour à Découvrir.
+
+test('un rechargement atterrit sur l\'onglet indique par l\'URL', async ({ page }) => {
+  await page.click('#nav-watchlist');
+  await page.waitForTimeout(400);
+  expect(await page.evaluate(() => location.hash)).toBe('#watchlist');
+
+  await page.reload();
+  await page.waitForTimeout(1500);
+  expect(await ongletActif(page)).toBe('nav-watchlist');
+});
+
+test('coller un lien de fragment dans une session deja ouverte ouvre le bon onglet, sans le confondre avec un Retour', async ({ page }) => {
+  // Cas piège corrigé pendant le développement : le navigateur traite une
+  // navigation vers un fragment différent, sur la même page déjà chargée,
+  // comme une navigation "vers l'avant" — mais elle déclenche quand même un
+  // popstate. Sans distinction, le gestionnaire de Retour l'interprétait à
+  // tort comme "l'utilisateur a pressé Retour" et forçait un retour à
+  // Découvrir au lieu d'ouvrir l'onglet demandé.
+  await page.click('#nav-history');
+  await page.waitForTimeout(400);
+  await page.click('#nav-profile');
+  await page.waitForTimeout(400);
+  expect(await ongletActif(page)).toBe('nav-profile');
+
+  await page.goto('/#watchlist');
+  await page.waitForTimeout(600);
+  expect(await ongletActif(page)).toBe('nav-watchlist');
+
+  // Et le Retour continue de fonctionner normalement depuis cet état.
+  await page.goBack();
+  await page.waitForTimeout(600);
+  expect(await ongletActif(page)).toBe('nav-discover');
+});
