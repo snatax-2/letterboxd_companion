@@ -77,7 +77,7 @@ function readCode(req) {
 export default async function handler(req, res) {
   // Limite par IP : usage normal = 1 sauvegarde auto/45s + quelques clics manuels,
   // donc 30/min est très large pour un utilisateur légitime.
-  if (!rateLimit(req, res, { name: 'sync-ip', limit: 30, windowMs: 60_000 })) {
+  if (!(await rateLimit(req, res, { name: 'sync-ip', limit: 30, windowMs: 60_000 }))) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
@@ -90,7 +90,7 @@ export default async function handler(req, res) {
   // résiste pas à un serverless réparti (voir _rateLimit.js). C'est l'entropie
   // du code qui protège réellement, pas cette limite.
   if (typeof code === 'string' && code) {
-    if (!rateLimit(req, res, { name: 'sync-code', limit: 20, windowMs: 60_000, identifier: storageKey(code) })) {
+    if (!(await rateLimit(req, res, { name: 'sync-code', limit: 20, windowMs: 60_000, identifier: storageKey(code) }))) {
       res.setHeader('Cache-Control', 'no-store');
       return res.status(429).json({ error: 'Trop de requêtes pour ce code, réessaie dans un instant.' });
     }
