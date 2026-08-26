@@ -32,4 +32,4 @@ styles.min.css
 # occupe déjà le port 4174 (voir playwright.config.js). Purement local : rien
 # à committer, mais suffisamment récurrent pour mériter d'être ignoré plutôt
 # que d'être oublié dans un commit.
-pw-side.config.js
+pw-side*.config.js
