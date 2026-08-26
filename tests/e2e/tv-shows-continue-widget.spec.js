@@ -170,8 +170,16 @@ test('ombre du bouton Noter reste contenue (ne deborde plus sur les onglets vois
   await page.goto('/');
   await page.waitForTimeout(400);
   const shadow = await page.locator('.nav-btn-primary .nav-btn-icon').evaluate(el => getComputedStyle(el).boxShadow);
-  // Le flou (3eme valeur) doit rester modeste plutot que le 14px d'origine
-  // qui debordait des 3px de marge de chaque cote de la colonne.
-  expect(shadow).toContain('8px');
-  expect(shadow).not.toContain('14px');
+  // Le flou (3e longueur de la déclaration) doit rester modeste plutôt que
+  // le 14px d'origine, qui débordait des 3px de marge de chaque côté.
+  //
+  // L'assertion figeait auparavant la valeur exacte de l'époque
+  // (toContain('8px')). L'ombre a depuis été réduite à 4px : le test
+  // échouait alors que l'intention — un flou contenu — est mieux respectée
+  // qu'avant. On vérifie donc le seuil, pas la valeur, pour que cet ajustement
+  // reste possible sans rouvrir le test.
+  const lengths = shadow.match(/-?\d+(?:\.\d+)?px/g) || [];
+  const blur = parseFloat(lengths[2]); // offset-x, offset-y, flou, étalement
+  expect(blur, `ombre lue : ${shadow}`).toBeGreaterThan(0);
+  expect(blur, `ombre lue : ${shadow}`).toBeLessThanOrEqual(8);
 });

@@ -17,7 +17,26 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
 });
 
-test('filtre par note (clic sur l\'histogramme) s\'applique aux series, badge reflete le filtrage', async ({ page }) => {
+// ── LE FILTRE PAR NOTE N'EST PLUS ATTEIGNABLE ──────────────────────────
+// Ce test cliquait une barre de l'histogramme "Distribution des notes" du
+// profil (.histo-row) pour filtrer sur la tranche 9-10. Cet histogramme a
+// été retiré en Ludex 2.0 (voir le commentaire d'index.html au-dessus de
+// "Activité mensuelle", qui le remplace).
+//
+// C'était le SEUL point d'entrée de ce filtre. Vérifié dans le app.js
+// construit : `activeScoreFilter` n'est jamais affecté à autre chose que
+// null nulle part. Toute la mécanique existe encore et est correcte
+// (SCORE_RANGES, isScoreInActiveRange, les branches de filtrage côté films
+// ET séries, le badge qui vire à l'orange) — mais plus rien ne peut
+// l'activer. La capacité elle-même est donc perdue, pas seulement son
+// interface. C'est signalé comme trouvaille, pas corrigé ici : rétablir un
+// point d'entrée est une décision produit.
+//
+// Ce que ce test vérifiait vraiment — qu'un filtre de l'historique
+// s'applique AUSSI aux séries et que le badge de comptage le reflète —
+// reste vérifiable sur le filtre "Coups de cœur", lui bien atteignable
+// (#hist-liked-filter-btn).
+test('un filtre de l\'historique s\'applique aussi aux series, badge reflete le filtrage', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('lbx_tv_shows', JSON.stringify([
       {
@@ -28,7 +47,7 @@ test('filtre par note (clic sur l\'histogramme) s\'applique aux series, badge re
         },
       },
       {
-        tmdbTvId: 66732, title: 'Stranger Things', poster_path: '/p2.jpg',
+        tmdbTvId: 66732, title: 'Stranger Things', poster_path: '/p2.jpg', liked: true,
         seasons: { '1': { seasonName: 'Saison 1', watchedEpisodes: [1], totalEpisodes: 8, rating: { mode: 'detail', values: {}, score: '9.5', stars: '', review: '', date: '2026-01-03T00:00:00.000Z' } } },
       },
     ]));
@@ -36,19 +55,18 @@ test('filtre par note (clic sur l\'histogramme) s\'applique aux series, badge re
 
   await page.goto('/');
   await page.waitForTimeout(1400);
-  await page.click('#nav-profile');
-  await page.waitForTimeout(600);
-  await page.click('#stats-tab-tv');
-  await page.waitForTimeout(900);
-  await page.click('.histo-row:has-text("★★★★★")'); // tranche 9-10
-  await page.waitForTimeout(400);
-
   await page.click('#nav-history');
   await page.waitForTimeout(400);
   await page.click('#hist-tab-tv');
   await page.waitForTimeout(400);
 
-  // True Detective : moyenne (9.0+4.0)/2 = 6.5, hors de la tranche 9-10.
+  // Sans filtre : les deux series sont la.
+  await expect(page.locator('#tv-history-list .tv-show-card-open-btn')).toHaveCount(2);
+
+  await page.click('#hist-liked-filter-btn');
+  await page.waitForTimeout(400);
+
+  // Seule Stranger Things est marquee "coup de coeur" (voir le seed).
   // Ludex 2.0 : plus de texte visible sur la carte (grille de posters) —
   // le titre vit dans aria-label de .tv-show-card-open-btn.
   const labels = await page.locator('#tv-history-list .tv-show-card-open-btn').evaluateAll(els => els.map(el => el.getAttribute('aria-label')));
@@ -84,7 +102,12 @@ test('supprimer une seule saison depuis la fiche détail ne touche pas aux autre
   await page.waitForSelector('#tv-detail-sheet.open');
   await page.waitForTimeout(400);
 
-  await page.locator('.tds-season-details', { hasText: 'Saison 2' }).locator('.tds-season-delete-btn').click();
+  // 97ae807 : plus de <details> par saison (.tds-season-details) — des
+  // onglets, et une seule ligne d'état avec ses actions pour la saison
+  // active. Il faut donc sélectionner la saison 2 avant de la retirer.
+  await page.click('.tds-season-tab[data-season-number="2"]');
+  await page.waitForTimeout(300);
+  await page.click('.tds-season-delete-btn[data-season-key="2"]');
   await page.waitForSelector('#modal.open', { state: 'visible' });
   await page.click('#modal-confirm');
   await page.waitForTimeout(400);

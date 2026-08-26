@@ -1,3 +1,6 @@
+// 97ae807 a remplacé les <details> dépliables par saison (.tds-season-details
+// + <summary>) par des onglets (.tds-season-tab) et une seule ligne d'état
+// pour la saison active. Le commit n'a touché aucun fichier de test.
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
@@ -20,6 +23,13 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1600 });
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');
+    // Ludex 2.0 (b219362) a activé le mode focus PAR DÉFAUT : le formulaire
+    // n'affiche plus qu'un critère à la fois, les autres sont masqués. Ces
+    // tests renseignent plusieurs curseurs d'affilée et expiraient donc sur
+    // le deuxième ("element is not visible"). On repasse explicitement en
+    // liste empilée, ce qui est l'opt-out prévu (voir FOCUS_MODE_KEY,
+    // src/05-rating-form.js : seul un 'false' enregistré désactive le mode).
+    localStorage.setItem('lbx_focus_mode', 'false');
     // Les 3 saisons sont pré-suivies et COMPLÈTES : depuis ce changement de
     // session, sélectionner une saison jamais commencée montre le menu
     // "Commencer" (pas le formulaire) — ces tests portent sur la notation
@@ -52,7 +62,7 @@ async function selectShowAndSeason(page, seasonNumber = 1) {
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
   // Deplie la bonne saison (deja complete -> le bouton "Noter cette saison" apparait)
-  await page.click(`.tds-season-details[data-season-number="${seasonNumber}"] summary`);
+  await page.click(`.tds-season-tab[data-season-number="${seasonNumber}"]`);
   await page.waitForTimeout(500);
   await page.click('.tds-rate-now-btn');
   await page.waitForTimeout(500);
@@ -85,7 +95,7 @@ test('sauvegarde une note de saison et la repropose au retour, saison vierge res
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
-  await page.click('.tds-season-details[data-season-number="2"] summary');
+  await page.click('.tds-season-tab[data-season-number="2"]');
   await page.waitForTimeout(500);
   await page.click('.tds-rate-now-btn');
   await page.waitForTimeout(500);
@@ -95,7 +105,7 @@ test('sauvegarde une note de saison et la repropose au retour, saison vierge res
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
-  await page.click('.tds-season-details[data-season-number="1"] summary');
+  await page.click('.tds-season-tab[data-season-number="1"]');
   await page.waitForTimeout(500);
   await page.click('.tds-rate-now-btn');
   await page.waitForTimeout(500);
@@ -118,7 +128,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
-  await page.click('.tds-season-details[data-season-number="2"] summary');
+  await page.click('.tds-season-tab[data-season-number="2"]');
   await page.waitForTimeout(500);
   await page.click('.tds-rate-now-btn');
   await page.waitForTimeout(500);
@@ -135,7 +145,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
-  await page.click('.tds-season-details[data-season-number="3"] summary');
+  await page.click('.tds-season-tab[data-season-number="3"]');
   await page.waitForTimeout(500);
   await page.click('.tds-rate-now-btn');
   await page.waitForTimeout(500);
@@ -144,6 +154,11 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
 
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test(`accessibilite : zero violation apres notation - ${theme}`, async ({ page }) => {
+    // axe analyse ici un DOM lourd (formulaire complet + liste dépliée) après
+    // un parcours de notation entier. Sous les 30s par défaut de Playwright,
+    // l'analyse elle-même expirait — un échec d'outillage qui masquait le
+    // résultat réel. 60s laissent l'analyse aboutir.
+    test.setTimeout(60_000);
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await selectShowAndSeason(page, 1);
     await page.fill('#scenario', '8');

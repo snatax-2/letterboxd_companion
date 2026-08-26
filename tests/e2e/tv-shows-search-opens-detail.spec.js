@@ -75,8 +75,11 @@ test('cliquer Commencer demarre a la Saison 1, ajoute au widget, met a jour la f
   // La fiche s'est rechargee sur place, montre maintenant la progression demarree
   await expect(page.locator('#tv-detail-sheet')).toHaveClass(/open/);
   await expect(page.locator('#tds-start-btn')).toHaveCount(0); // remplace par la liste de progression
-  const rowsText = await page.locator('.tds-season-progress-row').first().textContent();
-  expect(rowsText).toContain('0/8');
+  // 97ae807 a remplacé les lignes dépliables par saison (.tds-season-progress-row)
+  // par des onglets (.tds-season-tab) + une seule ligne d'état pour la saison
+  // active (.tds-season-status). Le commit n'a touché aucun fichier de test.
+  const statusText = await page.locator('.tds-season-status').first().textContent();
+  expect(statusText).toContain('0/8');
 
   // Le widget En cours (fond de page, derriere la fiche) doit deja etre a jour
   await page.click('#tds-close-btn');

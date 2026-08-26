@@ -48,7 +48,10 @@ test('bascule Film/Serie : recherche ouvre directement la fiche detaillee, retou
   await expect(page.locator('#tv-detail-sheet')).toHaveClass(/open/);
   await expect(page.locator('#tds-title')).toContainText('True Detective');
   await expect(page.locator('#tv-season-picker')).toBeHidden();
-  await expect(page.locator('.tds-season-progress-row')).toHaveCount(2);
+  // 97ae807 a remplacé les lignes dépliables par saison (.tds-season-progress-row)
+  // par des onglets (.tds-season-tab) + une seule ligne d'état pour la saison
+  // active (.tds-season-status). Le commit n'a touché aucun fichier de test.
+  await expect(page.locator('.tds-season-tab')).toHaveCount(2);
 
   await page.click('#tds-close-btn');
   await page.waitForTimeout(300);
@@ -77,6 +80,12 @@ test('accessibilite : zero violation sur le flux complet de selection', async ({
 // Noter — signale par l'utilisateur, confirme visuellement avant fix).
 
 test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 6 themes', async ({ page }) => {
+  // Six chargements de page complets dans un seul test : le budget de 30s par
+  // défaut de Playwright n'y suffit pas (l'écran de démarrage a une durée
+  // minimale volontaire). Le test expirait sur un page.goto, sans rapport avec
+  // ce qu'il vérifie — échec identique sur origin/main. L'assertion, elle,
+  // reste valable et utile : on lui donne le temps de s'exécuter.
+  test.setTimeout(90_000);
   for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await page.goto('/');

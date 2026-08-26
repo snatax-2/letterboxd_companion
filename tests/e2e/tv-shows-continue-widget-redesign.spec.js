@@ -103,9 +103,16 @@ test('repli/depliage du widget, preference memorisee', async ({ page }) => {
   const collapsedPref = await page.evaluate(() => localStorage.getItem('lbx_tv_continue_collapsed'));
   expect(collapsedPref).toBe('1');
 
-  // Persiste au rechargement
+  // Persiste au rechargement.
+  // #nav-rating est indispensable ici : l'onglet d'arrivée est Découvrir
+  // (setTimeout(() => switchMobileNav('discover'), 0) en fin de
+  // src/01-navigation.js), pas Noter. Sans ce clic, #tab-media-tv est masqué
+  // et le test expirait dessus — vérifié : la préférence de repli, elle,
+  // était bien mémorisée et réappliquée.
   await page.reload();
   await page.waitForTimeout(1400);
+  await page.click('#nav-rating');
+  await page.waitForTimeout(400);
   await page.click('#tab-media-tv');
   await page.waitForTimeout(1000);
   await expect(page.locator('#tv-continue-list')).toBeHidden();

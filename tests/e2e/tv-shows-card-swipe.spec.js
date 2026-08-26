@@ -1,23 +1,36 @@
 const { test, expect } = require('@playwright/test');
 
-async function realSwipeLeft(page, locator) {
-  await locator.evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    const y = box.y + box.height / 2;
-    const startX = box.x + box.width / 2;
-    function touch(type, x) {
-      const t = new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
-      el.dispatchEvent(new TouchEvent(type, {
-        touches: type === 'touchend' ? [] : [t],
-        changedTouches: [t],
-        bubbles: true, cancelable: true,
-      }));
-    }
-    touch('touchstart', startX);
-    for (let i = 1; i <= 6; i++) touch('touchmove', startX - i * 20);
-    touch('touchend', startX - 120);
-  });
-}
+// Suppression depuis l'historique des séries.
+//
+// ── CE QUE CE FICHIER TESTAIT AVANT ─────────────────────────────────────
+// Le glissement latéral sur la carte de série (`.tv-show-card-header-wrap`)
+// et sur chaque ligne de saison (`.tv-season-row`), avec armement
+// (`hist-swipe-armed-left`) puis confirmation via un indice glissé
+// (`.hist-swipe-hint-left`).
+//
+// Ce balisage a disparu avec Ludex 2.0 (commit b219362) : l'historique des
+// séries est passé d'une carte dépliable à une mosaïque d'affiches, la même
+// que celle des films. Le geste a été retiré volontairement au profit
+// d'actions en surimpression permanente — le raisonnement est écrit dans
+// styles.css (section HISTORY) : « Actions toujours visibles en overlay
+// plutôt qu'au tap : plus sûr sur tactile qu'un survol qui n'existe pas
+// vraiment sur mobile ». Le contrôleur de glissement des saisons
+// (initTvSeasonSwipeGestures, 178 lignes) était orphelin depuis, et a été
+// supprimé.
+//
+// Aucun de ces cinq tests ne décrivait donc plus le produit. Ce qui compte
+// pour l'utilisateur — pouvoir retirer une série entière, ou une seule de
+// ses saisons — est conservé ici, sur les affordances actuelles.
+
+const SHOW_DETAIL = {
+  id: 4607, name: 'True Detective', poster_path: '/p1.jpg', first_air_date: '2014-01-12',
+  vote_average: 8.9, status: 'Returning Series', overview: 'Synopsis.', genres: [], created_by: [],
+  seasons: [
+    { season_number: 1, name: 'Saison 1', episode_count: 8, poster_path: '/s1.jpg' },
+    { season_number: 2, name: 'Saison 2', episode_count: 8, poster_path: '/s2.jpg' },
+  ],
+  credits: { cast: [] }, videos: { results: [] }, external_ids: {},
+};
 
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
@@ -31,27 +44,24 @@ test.beforeEach(async ({ page }) => {
     ]));
   });
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.route('**/api/search?tvId=4607', route => route.fulfill({ json: SHOW_DETAIL }));
 });
 
-test('glisser a gauche sur la carte de serie (sans deplier) puis confirmer supprime toute la serie', async ({ page }) => {
+async function goToTvHistory(page) {
   await page.goto('/');
   await page.waitForTimeout(1400);
   await page.click('#nav-history');
   await page.waitForTimeout(400);
   await page.click('#hist-tab-tv');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
+}
 
-  // Pas besoin de deplier les saisons pour ce geste
-  const headerWrap = page.locator('.tv-show-card-header-wrap');
-  await realSwipeLeft(page, headerWrap);
-  await page.waitForTimeout(300);
+test('le bouton retirer de la carte supprime la serie entiere, apres confirmation', async ({ page }) => {
+  await goToTvHistory(page);
 
-  await expect(headerWrap).toHaveClass(/hist-swipe-armed-left/);
-  const hint = headerWrap.locator('.hist-swipe-hint-left');
-  await expect(hint).toBeVisible();
-  await hint.click();
+  await expect(page.locator('.hist-item[data-show-id="4607"]')).toHaveCount(1);
+  await page.click('.tv-show-delete-btn');
 
-  // Reutilise la meme confirmation que le bouton visible
   await page.waitForSelector('#modal.open', { state: 'visible' });
   await expect(page.locator('#modal-body')).toContainText('True Detective');
   await page.click('#modal-confirm');
@@ -59,84 +69,47 @@ test('glisser a gauche sur la carte de serie (sans deplier) puis confirmer suppr
 
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
   expect(stored).toHaveLength(0);
-  await expect(page.locator('.tv-show-card')).toHaveCount(0);
+  await expect(page.locator('.hist-item[data-show-id="4607"]')).toHaveCount(0);
 });
 
-test('un glissement court sur la carte ne declenche rien', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-history');
-  await page.waitForTimeout(400);
-  await page.click('#hist-tab-tv');
-  await page.waitForTimeout(300);
-
-  const headerWrap = page.locator('.tv-show-card-header-wrap');
-  await headerWrap.evaluate((el) => {
-    const box = el.getBoundingClientRect();
-    const y = box.y + box.height / 2;
-    const startX = box.x + box.width / 2;
-    function touch(type, x) {
-      const t = new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
-      el.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
-    }
-    touch('touchstart', startX);
-    touch('touchmove', startX - 20);
-    touch('touchend', startX - 20);
-  });
-  await page.waitForTimeout(300);
-  await expect(headerWrap).not.toHaveClass(/hist-swipe-armed-left/);
-  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
-  expect(stored).toHaveLength(1);
-});
-
-test('glisser une SAISON individuelle fonctionne toujours independamment (pas de conflit)', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-history');
-  await page.waitForTimeout(400);
-  await page.click('#hist-tab-tv');
-  await page.waitForTimeout(300);
-  await page.click('.tv-show-seasons-fold summary');
-  await page.waitForTimeout(300);
-
-  const seasonRow = page.locator('.tv-season-row').first();
-  await realSwipeLeft(page, seasonRow);
-  await page.waitForTimeout(300);
-  await expect(seasonRow).toHaveClass(/hist-swipe-armed-left/);
-
-  // La carte elle-meme ne doit pas etre armee
-  const headerWrap = page.locator('.tv-show-card-header-wrap');
-  await expect(headerWrap).not.toHaveClass(/hist-swipe-armed-left/);
-});
-
-test('le bouton supprimer visible fonctionne toujours en plus du glissement', async ({ page }) => {
-  await page.goto('/');
-  await page.waitForTimeout(1400);
-  await page.click('#nav-history');
-  await page.waitForTimeout(400);
-  await page.click('#hist-tab-tv');
-  await page.waitForTimeout(300);
+test('annuler la confirmation ne supprime rien', async ({ page }) => {
+  await goToTvHistory(page);
   await page.click('.tv-show-delete-btn');
   await page.waitForSelector('#modal.open', { state: 'visible' });
-  await page.click('#modal-confirm');
+  await page.click('#modal-cancel');
   await page.waitForTimeout(300);
+
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
-  expect(stored).toHaveLength(0);
+  expect(stored).toHaveLength(1);
+  expect(Object.keys(stored[0].seasons).sort()).toEqual(['1', '2']);
+  await expect(page.locator('.hist-item[data-show-id="4607"]')).toHaveCount(1);
+});
+
+test('retirer UNE saison depuis la fiche laisse la serie et ses autres saisons', async ({ page }) => {
+  // Le pendant de l'ancien « glisser une SAISON individuelle » : la
+  // granularité par saison n'est plus dans l'historique mais dans la fiche
+  // série, où chaque saison a son propre bouton de retrait.
+  await goToTvHistory(page);
+  await page.click('.tv-show-card-open-btn');
+  await page.waitForTimeout(800);
+
+  await page.click('.tds-season-delete-btn[data-season-key="2"]');
+  await page.waitForSelector('#modal.open', { state: 'visible' });
+  await expect(page.locator('#modal-body')).toContainText('Saison 2');
+  await page.click('#modal-confirm');
+  await page.waitForTimeout(600);
+
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_tv_shows')));
+  expect(stored).toHaveLength(1);                       // la serie reste
+  expect(Object.keys(stored[0].seasons)).toEqual(['1']); // seule la saison 2 est partie
+  expect(stored[0].seasons['1'].watchedEpisodes).toEqual([1]);
 });
 
 const { default: AxeBuilder } = require('@axe-core/playwright');
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
-  test(`accessibilite glissement carte serie - ${theme}`, async ({ page }) => {
+  test(`accessibilite de l'historique des series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
-    await page.goto('/');
-    await page.waitForTimeout(1400);
-    await page.click('#nav-history');
-    await page.waitForTimeout(400);
-    await page.click('#hist-tab-tv');
-    await page.waitForTimeout(300);
-    const headerWrap = page.locator('.tv-show-card-header-wrap');
-    await realSwipeLeft(page, headerWrap);
-    await page.waitForTimeout(300);
+    await goToTvHistory(page);
     const results = await new AxeBuilder({ page }).analyze();
     const bad = results.violations.filter(v => v.impact === 'serious' || v.impact === 'critical');
     expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);

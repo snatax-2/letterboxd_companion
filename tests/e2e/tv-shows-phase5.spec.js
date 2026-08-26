@@ -48,18 +48,29 @@ async function goToTvStats(page) {
   await page.waitForTimeout(900); // animateCountUp dure 700ms par defaut
 }
 
-test('films par defaut, bascule vers series change les libelles et cache Top Realisateurs', async ({ page }) => {
+// Le "cache Top Realisateurs" du nom d'origine ne veut plus rien dire :
+// #top-directors-box a été retiré en Ludex 2.0 (avec "Distribution des
+// notes"), remplacé par "Activité mensuelle" — qui, lui, est délibérément
+// INDÉPENDANT de la bascule Films/Séries et reste donc visible des deux
+// côtés (le commentaire est dans index.html, au-dessus du bloc). Il n'y a
+// plus aucun encart propre aux films à masquer : switchStatsMediaFilter()
+// ne fait plus qu'échanger les valeurs et le libellé des KPI. Ce qui reste
+// vérifiable — et ce que le test vérifiait déjà — est cette bascule.
+test('films par defaut, bascule vers series change les libelles des KPI', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(1400);
   await page.click('#nav-profile');
   await page.waitForTimeout(600);
   await expect(page.locator('#kpi-total-label')).toHaveText('Films notés');
-  await expect(page.locator('#top-directors-box')).toBeVisible();
 
   await page.click('#stats-tab-tv');
   await page.waitForTimeout(900);
   await expect(page.locator('#kpi-total-label')).toHaveText('Séries suivies');
-  await expect(page.locator('#top-directors-box')).toBeHidden();
+
+  // Et retour : la bascule doit fonctionner dans les deux sens.
+  await page.click('#stats-tab-movie');
+  await page.waitForTimeout(900);
+  await expect(page.locator('#kpi-total-label')).toHaveText('Films notés');
 });
 
 test('KPI comptes par serie et moyenne correcte (pas par saison)', async ({ page }) => {
@@ -78,10 +89,15 @@ test('radar avec libelles adaptes (Final, Cohérence — pas Photo/Rythme)', asy
   expect(radarText).not.toContain('Photo');
 });
 
-test('distribution des notes rendue pour les series', async ({ page }) => {
-  await goToTvStats(page);
-  await expect(page.locator('#histogram .histo-row')).toHaveCount(10);
-});
+// Test retiré : "Distribution des notes" (#histogram, ses 10 tranches
+// .histo-row) a été supprimé en Ludex 2.0, en même temps que "Top
+// Réalisateurs" et remplacé par "Activité mensuelle" — le commentaire est
+// dans index.html, au-dessus du bloc. Il n'y a plus d'histogramme à rendre,
+// ni pour les séries ni pour les films.
+//
+// À signaler : c'était le seul point d'entrée du filtre par note
+// (activeScoreFilter), qui est donc devenu inatteignable — voir la note
+// détaillée en tête de tv-shows-history-parity.spec.js.
 
 test('retour vers Films restaure les vrais KPI films', async ({ page }) => {
   await goToTvStats(page);

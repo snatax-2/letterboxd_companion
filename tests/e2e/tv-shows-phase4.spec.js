@@ -1,3 +1,6 @@
+// 97ae807 a remplacé les <details> dépliables par saison (.tds-season-details
+// + <summary>) par des onglets (.tds-season-tab) et une seule ligne d'état
+// pour la saison active. Le commit n'a touché aucun fichier de test.
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
@@ -81,8 +84,12 @@ test('carte de serie : note globale correcte, fiche détail montre les 2 saisons
   await page.click('.tv-show-card-open-btn');
   await page.waitForSelector('#tv-detail-sheet.open');
   await page.waitForTimeout(400);
-  await expect(page.locator('.tds-season-details')).toHaveCount(2);
-  await expect(page.locator('.tds-season-details').nth(1)).toContainText('1/8 ép');
+  await expect(page.locator('.tds-season-tab')).toHaveCount(2);
+  // Une seule ligne d'état est affichée à la fois : il faut sélectionner
+  // l'onglet de la saison 2 pour lire sa progression.
+  await page.click('.tds-season-tab[data-season-number="2"]');
+  await page.waitForTimeout(300);
+  await expect(page.locator('.tds-season-status').first()).toContainText('1/8 ép');
 });
 
 test('reouvrir une saison depuis la fiche détail repeuple le formulaire avec la vraie note', async ({ page }) => {
@@ -90,7 +97,9 @@ test('reouvrir une saison depuis la fiche détail repeuple le formulaire avec la
   await page.click('.tv-show-card-open-btn');
   await page.waitForSelector('#tv-detail-sheet.open');
   await page.waitForTimeout(400);
-  await page.locator('.tds-season-details').first().locator('.tds-season-reopen-btn').click(); // saison 1, notee
+  await page.click('.tds-season-tab[data-season-number="1"]'); // saison 1, notee
+  await page.waitForTimeout(300);
+  await page.click('.tds-season-reopen-btn');
   await page.waitForTimeout(400);
 
   await expect(page.locator('#tab-media-tv')).toHaveClass(/active/);

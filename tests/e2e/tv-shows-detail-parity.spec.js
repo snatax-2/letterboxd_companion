@@ -267,14 +267,14 @@ test('grille d\'episodes dans la fiche serie : deplier, cocher, rattrapage, note
   await page.evaluate((id) => openTvDetailSheet(id), '4607');
   await page.waitForTimeout(600);
 
-  // Pas de grille avant de deplier
-  await expect(page.locator('.tv-episode-row')).toHaveCount(0);
-  await expect(page.locator('.tds-rate-now-btn')).toBeHidden();
-
-  // Deplie la saison
-  await page.click('.tds-season-progress-row');
-  await page.waitForTimeout(500);
+  // 97ae807 a remplacé les lignes dépliables par saison par des onglets, et
+  // la saison active charge désormais ses épisodes toute seule à l'ouverture
+  // (voir la fin de wireSeasonTabs(), 19-tv-detail.js) : il n'y a plus rien à
+  // déplier, donc plus d'état « avant dépliage » à vérifier. Le commit n'a
+  // touché aucun fichier de test.
+  await expect(page.locator('.tds-season-tab')).toHaveCount(1);
   await expect(page.locator('.tv-episode-row')).toHaveCount(3);
+  await expect(page.locator('.tds-rate-now-btn')).toBeHidden();
 
   // Coche l'episode 3 directement -> rattrapage propose et accepte
   await page.click('.tv-episode-check[data-episode="3"]');
