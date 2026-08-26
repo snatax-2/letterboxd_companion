@@ -287,15 +287,20 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
 
   container.addEventListener('touchstart', (e) => {
     const item = e.target.closest('.hist-item');
-    // Ludex 2.0 : Historique passé en grille — plus de swipe possible (une
-    // cellule de grille n'a pas la place pour révéler un indice en dessous).
-    // .hist-item-content n'existe plus dans le nouveau balisage (voir
-    // renderHistory(), 06a-history-list.js) : sa seule présence sert donc de
-    // signal fiable "ce geste est pertinent ici" — jamais vrai désormais,
-    // ce qui laisse pressedItem/pressedContent à null et neutralise en
-    // cascade tout le reste de ce fichier (touchmove/touchend gardent déjà
-    // `if (!pressedItem) return;`) sans avoir à toucher chacun séparément.
-    if (!item || !item.querySelector('.hist-item-content') || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
+    // Ludex 2.0 : Historique passé en grille — plus de GLISSEMENT possible
+    // (une cellule de grille n'a pas la place pour révéler un indice en
+    // dessous), et .hist-item-content, l'élément qu'on faisait coulisser,
+    // n'est plus produit par renderHistory() (06a-history-list.js).
+    //
+    // Cette absence servait jusqu'ici de garde ICI, à l'entrée du geste, pour
+    // neutraliser le fichier entier d'un coup. Trop large : ce handler porte
+    // AUSSI l'appui long, qui ouvre le menu d'actions rapides et ne dépend
+    // d'aucun déplacement. Vérifié dans un vrai navigateur : maintenir le
+    // doigt 800 ms sur une carte n'ouvrait plus rien. "Copier le texte"
+    // n'était alors plus atteignable nulle part, et "Coups de cœur" seulement
+    // en repassant par Modifier. La garde est donc redescendue au seul
+    // endroit qui glisse (voir `pressedContent` dans touchmove/mousemove).
+    if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) { resetGesture(); return; }
     e.stopPropagation(); // évite que ce geste ne remonte jusqu'au swipe de changement d'onglet (01-navigation.js)
     // NOTE : ne PAS annuler ici un item armé — un simple tap déclenche
     // touchstart AVANT click, et annuler dès le toucher tuait l'état armé
@@ -333,6 +338,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
         clearTimeout(pressTimer); // tout mouvement franc annule l'appui long
+        // Pas de .hist-item-content : rien à faire coulisser (balisage en
+        // grille). On traite le mouvement comme un défilement — c'est ici
+        // que vit désormais la neutralisation du glissement, et nulle part
+        // ailleurs. Sans ça, la branche 'swipe' plus bas déréférencerait un
+        // pressedContent nul.
+        if (!pressedContent) { swipeMode = 'scroll'; return; }
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // C'est ICI (nouveau glissement réellement engagé) qu'on nettoie un
         // éventuel état armé du même film — assez tôt pour éviter les deux
@@ -415,6 +426,12 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     const rawDy = e.clientY - startY;
     if (swipeMode === null) {
       if (Math.abs(rawDx) > MOVE_CANCEL_PX || Math.abs(rawDy) > MOVE_CANCEL_PX) {
+        // Bug corrigé, indépendant du précédent : ce chemin souris n'a JAMAIS
+        // eu la garde .hist-item-content que le chemin tactile portait. Sur le
+        // balisage en grille, glisser une carte à la souris arrivait donc
+        // jusqu'à `pressedContent.style` avec pressedContent nul — mesuré :
+        // 7 TypeError par glissement. Même traitement que le tactile.
+        if (!pressedContent) { swipeMode = 'scroll'; return; }
         swipeMode = Math.abs(rawDx) > Math.abs(rawDy) * 0.5 ? 'swipe' : 'scroll'; // nettement favorable au swipe (etait 1:1, encore trop de faux "scroll" signales par l'utilisateur) : un vrai geste de glissement a souvent un peu de derive verticale, surtout au tout debut
         // Même correctif que le tactile : nettoyer un état armé au démarrage
         // d'un VRAI glissement, jamais au simple clic (voir touchstart).
