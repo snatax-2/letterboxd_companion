@@ -82,7 +82,7 @@ test('genre capture directement a la selection, retrofit en arriere-plan pour un
   expect(labels).toEqual(['Voir la fiche de True Detective']);
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`accessibilite filtre genre series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));

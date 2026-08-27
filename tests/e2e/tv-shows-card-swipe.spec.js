@@ -106,7 +106,7 @@ test('retirer UNE saison depuis la fiche laisse la serie et ses autres saisons',
 });
 
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`accessibilite de l'historique des series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await goToTvHistory(page);

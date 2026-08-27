@@ -131,7 +131,7 @@ test('widget absent sans serie en cours, et en mode Film', async ({ page }) => {
   await expect(page.locator('#tv-continue-list')).toBeHidden();
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`accessibilite widget en cours - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));

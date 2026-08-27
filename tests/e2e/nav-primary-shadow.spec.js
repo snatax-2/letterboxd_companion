@@ -29,7 +29,7 @@ test('ombre du bouton Noter reste contenue (flou et opacite plafonnes)', async (
   expect(opacity).toBeLessThanOrEqual(0.3);
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`pas de tache sombre visible autour du bouton Noter - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 700 });
     await page.addInitScript((t) => {

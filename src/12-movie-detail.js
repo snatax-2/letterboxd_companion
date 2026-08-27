@@ -469,8 +469,6 @@ async function openMovieDetailSheet(tmdbId) {
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
     setupStickyHeader();
-    const mdsPosterUrl = tmdbImage(data.poster_path, 'w342');
-    applyPosterAccent(mdsPosterUrl, mdsEl.querySelector('.mds-box'));
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
     fetchAndRenderProviders(data.id, 'mds-providers', 'movie');

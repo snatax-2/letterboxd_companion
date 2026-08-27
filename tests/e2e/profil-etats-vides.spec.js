@@ -109,7 +109,7 @@ test('bouton telecharger actif des qu\'il y a au moins un film note', async ({ p
   await expect(page.locator('#profile-share-btn')).toBeEnabled();
 });
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   // Corrigé lors de la fusion (phase 6 de l'audit) : cette boucle ne faisait
   // auparavant que console.log les violations sans jamais les faire échouer
   // (aucun expect()) — un test qui passait toujours, quel que soit le

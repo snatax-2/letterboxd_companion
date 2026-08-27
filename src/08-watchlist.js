@@ -298,7 +298,6 @@ function renderWatchlist() {
       </div>`;
 
     container.appendChild(div);
-    applyPosterAccent(item.poster, div);
 
     if (item.tmdbId) {
       fetchProviders(item.tmdbId, i);
@@ -905,7 +904,6 @@ function renderTvWatchlist() {
       </div>`;
     div.querySelector('.wl-card-open').addEventListener('click', () => openTvDetailSheet(item.tmdbId));
     container.appendChild(div);
-    applyPosterAccent(item.poster, div);
   });
   window._justSavedTvWatchlistTitle = null;
 }

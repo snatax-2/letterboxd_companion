@@ -15,7 +15,7 @@ const { test, expect } = require('@playwright/test');
 // inclus dès leur introduction : c'est précisément sur eux que les
 // invariants comptent le plus, puisque ce sont eux qui remplaceront les six
 // autres à la fin de la migration.
-const THEMES = ['ludex-dark', 'ludex-light', 'default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor'];
+const THEMES = ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor'];
 
 // Jetons qui doivent exister et ne jamais être vides, sur tous les thèmes.
 const JETONS_REQUIS = [

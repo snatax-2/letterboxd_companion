@@ -16,7 +16,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 // sur l'écran Découvrir vide (aucune donnée locale), volontairement
 // distinct de accessibility.spec.js qui seed un état riche par principe
 // (son propre commentaire explique pourquoi) et ne couvre pas Découvrir.
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`a11y Decouvrir (etat vide) - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
     await page.addInitScript((t) => {

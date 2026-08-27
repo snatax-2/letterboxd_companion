@@ -47,18 +47,21 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.route('**fonts.googleapis.com**', route => route.abort());
       await page.route('**fonts.gstatic.com**', route => route.abort());
       await seedStableHistory(page);
-      // Le thème est posé EXPLICITEMENT pour tous, y compris "default".
-      // Avant, "default" était laissé sans réglage et dépendait donc du
-      // thème par défaut de l'app — devenu ludex-dark depuis l'introduction
-      // de l'identité Archives & Éditorial. Les deux captures "default"
-      // auraient silencieusement changé de thème sans que le nom du fichier
-      // ne le dise. Ces six thèmes-là sont figés jusqu'à leur retrait.
+      // Le thème est posé EXPLICITEMENT pour chacun : une capture qui
+      // dépendrait du thème par défaut de l'app changerait de sujet sans que
+      // le nom du fichier ne le dise (piège déjà rencontré avec "default").
+      //
+      // La liste couvre les quatre thèmes restants. Elle en couvrait six —
+      // les six historiques — et AUCUN des deux thèmes Ludex, alors que
+      // ludex-dark est le thème par défaut depuis P0 : les deux écrans que
+      // presque tout le monde voit n'avaient donc aucun filet de pixels.
+      // Cinéphile 70s et Technicolor, conservés, restent figés tels quels.
       await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     });
 

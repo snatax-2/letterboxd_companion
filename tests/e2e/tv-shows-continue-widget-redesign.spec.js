@@ -146,7 +146,7 @@ test('hauteur de carte stable malgre un titre d\'episode tres long', async ({ pa
 });
 
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`accessibilite widget redesigne - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_onboarding_seen', '1');

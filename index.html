@@ -72,11 +72,7 @@
 // utilisées nulle part — elles ont disparu avec.)
 // Les specs de graisses/italiques sont reprises telles quelles de l'ancien lien.
 var THEME_FONTS = {
-  default:     ['Fraunces:ital,wght@0,600;1,600', 'Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400', 'IBM+Plex+Mono:wght@400;500;600'],
-  carnet:      ['Special+Elite', 'Lora:ital,wght@0,400;0,500;0,600;0,700;1,400', 'Courier+Prime:ital,wght@0,400;0,700;1,400', 'Caveat:wght@400;600;700'],
-  filmnoir:    ['Cinzel:wght@400;700;900', 'Inter:wght@400;600;700', 'Space+Mono:ital,wght@0,400;0,700;1,400'],
   cinephile:   ['Poppins:wght@400;500;600;700;800', 'Fragment+Mono:ital@0;1'],
-  moderne:     ['Syne:wght@400;700;800', 'DM+Sans:ital,wght@0,400;0,500;0,700;1,400', 'Martian+Mono:wght@400;600;700'],
   technicolor: ['Oswald:wght@400;600;700', 'Inter:wght@400;600;700', 'JetBrains+Mono:wght@400;600;700'],
   // Ludex Archives & Éditorial — les deux thèmes de l'identité cible
   // (voir styles.css, bloc LUDEX — ARCHIVES & ÉDITORIAL). Trois rôles
@@ -111,30 +107,37 @@ window.loadThemeFonts = function (theme) {
     var theme = settings.theme || 'ludex-dark';
     if (theme === 'system') {
       var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      theme = prefersDark ? 'default' : 'filmnoir';
+      theme = prefersDark ? 'ludex-dark' : 'ludex-light';
     }
+    // Repli pour les thèmes retirés — ce script s'exécute AVANT app.js, donc
+    // avant que THEMES_RETIRES (02-theme.js) n'existe : la table est répétée
+    // ici, volontairement. Sans elle, l'écran de démarrage prendrait la
+    // palette de repli pendant que l'app, elle, applique le bon thème — un
+    // clignotement de couleur au lancement.
+    var retires = {
+      meridien: 'ludex-dark', default: 'ludex-dark', filmnoir: 'ludex-dark',
+      carnet: 'ludex-light', moderne: 'ludex-light',
+    };
+    theme = retires[theme] || theme;
     var palettes = {
-      default:   { bg: '#14181c', accent: '#ff8000' },
-      carnet:    { bg: '#FAF3EC', accent: '#B8695E' },
-      filmnoir:  { bg: '#050505', accent: '#ffffff' },
       cinephile: { bg: '#F9F6F0', accent: '#4A2E1B' },
-      moderne:   { bg: '#F9F6F0', accent: '#1E5AA8' },
       technicolor: { bg: '#101425', accent: '#DF2935' },
       'ludex-dark':  { bg: '#0A0A0C', accent: '#D4AF37' },
       'ludex-light': { bg: '#F5F4F0', accent: '#7A5F0F' },
     };
     window.loadThemeFonts(theme);
-    var p = palettes[theme] || palettes.default;
+    var p = palettes[theme] || palettes['ludex-dark'];
     var bg = p.bg;
     var splash = document.getElementById('app-splash');
     splash.style.background = bg;
     // Contraste garanti quel que soit le thème (fonds très sombres à très
-    // clairs selon les 10 thèmes) : la couleur d'accent de chaque thème était
-    // choisie pour son usage DANS l'app (boutons, liens), jamais vérifiée
-    // pour du texte directement sur ce fond précis — axe-core a détecté un
-    // vrai échec de contraste (orange sur fond très sombre, thème par
-    // défaut). Calcule la luminance relative du fond et choisit noir ou blanc
-    // en conséquence : la seule méthode fiable sur 10 palettes différentes.
+    // clairs) : la couleur d'accent de chaque thème était choisie pour son
+    // usage DANS l'app (boutons, liens), jamais vérifiée pour du texte
+    // directement sur ce fond précis — axe-core a détecté un vrai échec de
+    // contraste (orange sur fond très sombre, sur l'ancien thème par défaut).
+    // Calcule la luminance relative du fond et choisit noir ou blanc en
+    // conséquence : la seule méthode fiable, hier sur dix palettes, encore
+    // aujourd'hui sur quatre.
     function relLuminance(hex) {
       var m = hex.replace('#', '');
       if (m.length === 3) m = m[0]+m[0]+m[1]+m[1]+m[2]+m[2];
@@ -190,30 +193,6 @@ window.loadThemeFonts = function (theme) {
           </div>
           <div class="theme-label" style="background:#EFEDE6;color:#111111;font-family:'Playfair Display',Georgia,serif;font-style:italic;letter-spacing:.01em;">Ludex Clair</div>
         </div>
-        <div class="theme-card" data-theme="default" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Letterboxd">
-          <div class="theme-preview" style="background:#14181c">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1f2935;flex:1"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#ff8000;width:55%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#40bcf4"></div><div class="theme-preview-dot" style="background:#00e054"></div><div class="theme-preview-dot" style="background:#ff4040"></div></div>
-          </div>
-          <div class="theme-label" style="background:#1f2935;color:#9ab;font-family:'Titillium Web',sans-serif">Letterboxd</div>
-        </div>
-        <div class="theme-card" data-theme="carnet" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Carnet de Voyage">
-          <div class="theme-preview" style="background:#FAF3EC">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#F4E9E1;flex:1;border:1px dashed #D9BFB0"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#B8695E,#556B52);width:65%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#B8695E"></div><div class="theme-preview-dot" style="background:#C9A576"></div><div class="theme-preview-dot" style="background:#556B52"></div></div>
-          </div>
-          <div class="theme-label" style="background:#F4E9E1;color:#3D2B26;font-family:'Special Elite',monospace;">CARNET DE VOYAGE</div>
-        </div>
-        <div class="theme-card" data-theme="filmnoir" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Film Noir">
-          <div class="theme-preview" style="background:#050505">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#111;flex:1;border:1px solid #333;border-radius:0"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#555;width:65%;border-radius:0"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#fff;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#aaa;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#555;border-radius:0;width:8px;height:8px"></div></div>
-          </div>
-          <div class="theme-label" style="background:#000;color:#e0e0e0;font-family:'Cinzel',serif;letter-spacing:.08em;border-top:1px solid #333;">FILM NOIR</div>
-        </div>
         <div class="theme-card" data-theme="cinephile" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Néo-Rétro 70s Cinéphile">
           <div class="theme-preview" style="background:#F9F6F0">
             <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#4A2E1B;flex:1;border-radius:8px"></div></div>
@@ -221,14 +200,6 @@ window.loadThemeFonts = function (theme) {
             <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#4A2E1B"></div><div class="theme-preview-dot" style="background:#DAC0A3"></div><div class="theme-preview-dot" style="background:#5C6E58"></div></div>
           </div>
           <div class="theme-label" style="background:#EDE2D0;color:#2e1d12;font-family:'Poppins',sans-serif;font-weight:700;">CINÉPHILE 70s</div>
-        </div>
-        <div class="theme-card" data-theme="moderne" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Moderne (Bauhaus)">
-          <div class="theme-preview" style="background:#F9F6F0">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1E5AA8;flex:1;border-radius:6px"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#DD6B47;width:65%;border-radius:6px"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#1E5AA8"></div><div class="theme-preview-dot" style="background:#DD6B47"></div><div class="theme-preview-dot" style="background:#7A5507"></div></div>
-          </div>
-          <div class="theme-label" style="background:#1E5AA8;color:#fff;font-family:'Syne',sans-serif;font-weight:800;">MODERNE</div>
         </div>
         <div class="theme-card" data-theme="technicolor" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Technicolor">
           <div class="theme-preview" style="background:#101425; border: 2px solid #E6AF2E;">
@@ -239,10 +210,10 @@ window.loadThemeFonts = function (theme) {
           <div class="theme-label" style="background:#1A223B;color:#E6AF2E;font-family:'Oswald',sans-serif;letter-spacing:.06em;border-top:2px solid #E6AF2E;">TECHNICOLOR</div>
         </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="0" aria-label="Thème automatique (système)">
-          <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
+          <div class="theme-preview" style="background:linear-gradient(135deg, #0A0A0C 50%, #F5F4F0 50%)">
              <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
           </div>
-          <div class="theme-label" style="background:#1f2935;color:#fff;font-family:var(--font-heading)">Auto (Système)</div>
+          <div class="theme-label" style="background:#121216;color:#FAFAFA;font-family:var(--font-heading)">Auto (Système)</div>
         </div>
       </div>
 

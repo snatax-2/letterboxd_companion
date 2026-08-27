@@ -20,7 +20,7 @@ test('nav bar : les 4 onglets normaux ont une largeur strictement egale, sur 6 t
   // échec : l'assertion est inchangée, et un vrai déséquilibre de largeur la
   // ferait toujours échouer.
   test.setTimeout(90_000);
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+  for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await page.goto('/');
     await page.waitForTimeout(300);

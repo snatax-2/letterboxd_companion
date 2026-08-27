@@ -178,7 +178,7 @@ test('Profil : bascule stats Films/Series avec fondu, KPI final correct', async 
   expect(opacity).toBe('1');
 });
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   // Corrigé lors du renommage (phase 6 de l'audit) : cette boucle ne faisait
   // auparavant que console.log les violations sans jamais les faire échouer
   // (aucun expect()) — deux scans axe-core complets par thème, pour un test

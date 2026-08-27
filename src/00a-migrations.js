@@ -79,6 +79,44 @@
         localStorage.setItem('lbx_settings', JSON.stringify(settings));
       },
     },
+
+    {
+      to: 4,
+      // Retrait de quatre thèmes historiques : Letterboxd (« default »),
+      // Carnet de Voyage, Film Noir et Moderne. Cinéphile 70s et Technicolor
+      // restent, aux côtés des deux thèmes Ludex.
+      //
+      // Sans cette migration, le réglage stocké garderait un nom de thème qui
+      // n'existe plus : 02-theme.js retomberait bien sur un thème valide à
+      // l'affichage, mais l'écran Réglages n'aurait AUCUNE carte sélectionnée
+      // (la sélection se fait par data-theme), et le prochain enregistrement
+      // écrirait alors le thème de la première carte au lieu du choix réel.
+      //
+      // Les littéraux sont répétés ici plutôt qu'importés de THEMES_RETIRES
+      // (02-theme.js) : ce fichier s'exécute AVANT lui dans app.js, et un
+      // const ne remonte pas d'un fichier à l'autre. Une migration doit de
+      // toute façon rester figée sur les valeurs de son époque — la corriger
+      // plus tard en suivant une constante qui a bougé la rendrait fausse
+      // pour les données qu'elle est censée traiter.
+      up() {
+        const CORRESPONDANCES = {
+          default: 'ludex-dark',
+          filmnoir: 'ludex-dark',
+          carnet: 'ludex-light',
+          moderne: 'ludex-light',
+        };
+        const raw = localStorage.getItem('lbx_settings');
+        if (!raw) return;
+        const settings = JSON.parse(raw);
+        if (!settings || typeof settings !== 'object') return;
+        // Idempotent : un thème conservé, « system », ou déjà migré, ne
+        // figure pas dans la table.
+        const cible = CORRESPONDANCES[settings.theme];
+        if (!cible) return;
+        settings.theme = cible;
+        localStorage.setItem('lbx_settings', JSON.stringify(settings));
+      },
+    },
   ];
 
   const CURRENT_VERSION = MIGRATIONS.length > 0 ? MIGRATIONS[MIGRATIONS.length - 1].to : 1;

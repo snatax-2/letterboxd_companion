@@ -35,7 +35,7 @@ function seedTvShows() {
   });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`les barres films et series du graphique sont visuellement distinctes - ${theme}`, async ({ page }) => {
     await page.addInitScript((d) => {
       localStorage.setItem('lbx_onboarding_seen', '1');

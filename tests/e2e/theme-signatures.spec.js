@@ -34,7 +34,13 @@ test('chaque theme se selectionne et applique son fond', async ({ page }) => {
 // Le rejet ne casse donc rien de reel — c'est le fixture qui etait
 // irrealiste. L'image n'a pas besoin de charger : le test ne lit qu'un style
 // calcule, qui s'applique que la requete aboutisse ou non.
-test('touches signatures: noir grise les affiches, carnet raye les cartes en pointilles, moderne a son losange', async ({ page }) => {
+//
+// Ce test portait sur les signatures de Film Noir (affiches en noir et
+// blanc), Carnet de Voyage (cartes en pointillés) et Moderne (curseur en
+// losange) — les trois thèmes ont été retirés. Son objet reste le même sur
+// les thèmes qui subsistent : une signature de thème doit RENDRE, pas juste
+// exister dans la feuille de style.
+test('touches signatures : Technicolor a son grain, Cinéphile 70s ses angles ronds', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('lbx_v2', JSON.stringify([
     { title: 'Film', year: '1994', score: '8.0', mode: 'quick', values: { quick: 4 }, date: '2026-07-10', savedAt: '2026-07-10T10:00:00.000Z', poster: 'https://image.tmdb.org/t/p/w342/exemple.jpg' },
   ])));
@@ -58,21 +64,67 @@ test('touches signatures: noir grise les affiches, carnet raye les cartes en poi
   await page.click('#nav-history');
   await page.waitForSelector('.hist-item');
 
-  await applyTheme('filmnoir');
-  const filter = await page.locator('.hist-item img').first().evaluate(el => getComputedStyle(el).filter);
-  // Chromium sérialise grayscale(100%) en "grayscale(0.998903)" : comparer la
-  // chaîne exacte rendait le test dépendant d'un arrondi du moteur. On lit la
-  // valeur et on vérifie qu'elle est bien au maximum.
-  const niveauGris = parseFloat((filter.match(/grayscale\(([\d.]+)\)/) || [])[1]);
-  expect(niveauGris, `filtre lu : ${filter}`).toBeGreaterThan(0.99);
-  const vignette = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
-  expect(vignette).toContain('radial-gradient');
+  // Technicolor : voile de grain argentique sur un pseudo-élément fixe.
+  await applyTheme('technicolor');
+  const grain = await page.evaluate(() => getComputedStyle(document.body, '::before').backgroundImage);
+  expect(grain, 'Technicolor doit poser son grain').toContain('url(');
 
-  await applyTheme('carnet');
-  const borderStyle = await page.locator('.card').first().evaluate(el => getComputedStyle(el).borderStyle);
-  expect(borderStyle).toContain('dashed');
+  // Cinéphile 70s : tout y est délibérément arrondi (rayon 18px) et sépia.
+  //
+  // DÉFAUT PRÉEXISTANT, laissé tel quel : la signature annoncée de ce thème
+  // est un halo chaud sur les étoiles, écrit
+  // « [data-theme="cinephile"] .stars, [...] .duel-medal-gold ». Or aucun
+  // élément .stars n'existe dans le balisage — il y a .stars-display et
+  // .rating-stars. Ce halo n'a donc jamais rendu ailleurs que sur les
+  // médailles de Duels. Corriger le sélecteur ferait APPARAÎTRE un effet que
+  // personne n'a jamais vu, sur l'un des deux thèmes conservés précisément
+  // tels qu'ils sont : c'est un changement d'apparence à demander, pas à
+  // décider ici. On vérifie donc ce qui rend vraiment.
+  await applyTheme('cinephile');
+  const rond = await page.evaluate(() => ({
+    radius: getComputedStyle(document.documentElement).getPropertyValue('--radius').trim(),
+    bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(),
+  }));
+  expect(rond.radius, 'Cinéphile 70s doit garder ses angles arrondis').toBe('18px');
+  expect(rond.bg.toUpperCase(), 'Cinéphile 70s doit garder son papier chaud').toBe('#F9F6F0');
 
-  await applyTheme('moderne');
-  const thumbRotate = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--slider-thumb-rotate').trim());
-  expect(thumbRotate).toBe('45deg');
+  // Ludex Sombre : angles francs (rayon 2px), l'opposé des thèmes arrondis.
+  await applyTheme('ludex-dark');
+  const rayon = await page.evaluate(() =>
+    getComputedStyle(document.documentElement).getPropertyValue('--radius').trim());
+  expect(rayon, 'Ludex Sombre doit garder son rayon de 2px').toBe('2px');
+});
+
+// Les quatre thèmes retirés ne doivent plus apparaître nulle part : ni carte
+// dans les Réglages, ni bloc de variables dans la feuille de style. Sans ce
+// test, un bloc oublié ressusciterait silencieusement un thème injoignable.
+test('les thèmes retirés ne sont plus proposés ni définis', async ({ page }) => {
+  await page.goto('/');
+  await page.click('#settings-btn');
+  await page.waitForSelector('#settings-modal.open');
+
+  const proposes = await page.locator('.theme-card').evaluateAll(cards => cards.map(c => c.dataset.theme));
+  expect(proposes.sort()).toEqual(['cinephile', 'ludex-dark', 'ludex-light', 'system', 'technicolor']);
+
+  for (const retire of ['default', 'carnet', 'filmnoir', 'moderne', 'meridien']) {
+    const defini = await page.evaluate((nom) => {
+      const html = document.documentElement;
+      const avant = html.getAttribute('data-theme');
+      html.setAttribute('data-theme', nom);
+      const bg = getComputedStyle(html).getPropertyValue('--bg').trim();
+      html.setAttribute('data-theme', avant);
+      // Un thème retiré ne redéfinit plus rien : il hérite des valeurs de
+      // :root, qui restent le substrat de Cinéphile 70s et Technicolor.
+      return bg;
+    }, retire);
+    const base = await page.evaluate(() => {
+      const html = document.documentElement;
+      const avant = html.getAttribute('data-theme');
+      html.removeAttribute('data-theme');
+      const bg = getComputedStyle(html).getPropertyValue('--bg').trim();
+      html.setAttribute('data-theme', avant);
+      return bg;
+    });
+    expect(defini, `${retire} ne doit plus avoir sa propre palette`).toBe(base);
+  }
 });

@@ -370,7 +370,6 @@ function renderHistory() {
           <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
         </div>`;
       gridEl.appendChild(div);
-      applyPosterAccent(item.poster, div);
     });
   });
   window._justSavedHistoryTitle = null;

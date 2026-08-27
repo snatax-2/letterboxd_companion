@@ -27,12 +27,14 @@
        même niveau hiérarchique pouvaient porter des profondeurs
        différentes. Généralisés ici.
 
-       Ces valeurs-ci conviennent aux thèmes SOMBRES (défaut, Film Noir,
-       Technicolor) : du noir semi-opaque sur un fond sombre. Les trois
-       thèmes clairs les redéfinissent plus bas — une ombre noire sur du
-       papier crème fait une tache grise sale, ils ont besoin d'une ombre
-       teintée dans leur propre palette (même raisonnement que leur
-       --box-shadow-style de signature, qui reste inchangé). */
+       Ces valeurs-ci conviennent aux thèmes SOMBRES : du noir semi-opaque
+       sur un fond sombre. Depuis le retrait des quatre thèmes historiques
+       (Letterboxd, Carnet de Voyage, Film Noir, Moderne), Technicolor est le
+       seul à s'en contenter tel quel — Ludex Sombre les redéfinit dans sa
+       propre palette. Les thèmes CLAIRS (Cinéphile 70s, Ludex Clair) les
+       redéfinissent plus bas : une ombre noire sur du papier crème fait une
+       tache grise sale, il leur faut une ombre teintée (même raisonnement
+       que leur --box-shadow-style de signature, qui reste inchangé). */
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
@@ -149,11 +151,11 @@
        d'histogramme active, valeur du critère Affect, focus du champ de
        critique, anneau de focus des curseurs, suggestion manuelle,
        étiquette de location). Elles s'affichaient donc en orange QUEL QUE
-       SOIT le thème — y compris sur Film Noir, dont l'accent est blanc.
-       Fuite réelle, antérieure à cette refonte.
-       Les valeurs de base reprennent les littéraux à l'identique : les six
-       thèmes historiques restent figés jusqu'à leur retrait (leurs
-       instantanés visuels servent encore de filet). Les thèmes Ludex, eux,
+       SOIT le thème — y compris sur Film Noir (retiré depuis), dont
+       l'accent était blanc. Fuite réelle, antérieure à cette refonte.
+       Les valeurs de base reprennent les littéraux à l'identique : les deux
+       thèmes historiques conservés (Cinéphile 70s, Technicolor) restent donc
+       figés au pixel près. Les thèmes Ludex, eux,
        les dérivent enfin de leur propre accent. */
     --accent-wash: rgba(255,128,0,0.12);
     --accent-wash-strong: rgba(255,128,0,0.15);
@@ -248,68 +250,6 @@
     --icon-linecap: round; --icon-linejoin: round;
   }
 
-  [data-theme="carnet"] {
-    color-scheme: light;
-    /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
-       de Bord, et l'ancien cluster "vintage clair" trop redondant avec
-       Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
-       de cinéphile physique, entre carte postale et journal manuscrit —
-       structure précise d'Anderson + âme intime de Journal, sans reprendre
-       les bruns de Cinéphile (déjà pris) : duo rose poudré / sauge.
-       Le corps de texte utilise une police PROPORTIONNELLE (pas monospace
-       partout comme l'ancien Journal) — c'était un vrai risque de lisibilité
-       sur les critiques longues, corrigé ici dès la conception. */
-    --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
-    --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
-    --orange: #B8695E; /* Rose Poudré */
-    --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
-    --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    --solid-fill-text: #fff;
-    /* Même correctif que Moderne : le rose poudré en TEXTE sur la barre
-       d'onglets claire donne 3.51:1 en 10px gras (seuil 4.5, mesuré par
-       axe-core). Assombri dans la même famille — 5.27:1. Les surfaces
-       remplies en --orange gardent leur teinte d'origine, ce token ne sert
-       qu'au texte. */
-    --accent-text: #9C4632;
-    --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Special Elite', monospace; /* esprit machine à écrire pour titres/labels/chiffres */
-    --font-body: 'Lora', serif; /* proportionnelle et chaleureuse pour le corps de texte — le vrai correctif face à l'ancien Journal */
-    --font-mono: 'Courier Prime', monospace;
-    --review-font: 'Caveat', cursive; /* le détail le plus mémorable de l'ancien Journal : la critique personnelle en vraie écriture manuscrite */
-
-    /* Étoiles : tampon de gare / ticket composté, esprit carnet de voyage */
-    --star-color: #B8695E;
-    --star-empty-color: #D9BFB0;
-    --star-font: 'Special Elite', monospace;
-    --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
-    --star-symbol: '❂';
-    --icon-stroke: 1.5;
-    --icon-linecap: round; --icon-linejoin: round;
-
-    /* Élévation dans la palette du thème : une ombre noire sur ce papier
-       crème virerait au gris sale. Même teinte que la signature ci-dessous. */
-    --shadow-1: 0 1px 3px rgba(184, 105, 94, 0.20);
-    --shadow-2: 0 4px 12px rgba(184, 105, 94, 0.26);
-    --shadow-3: 0 8px 28px rgba(120, 68, 60, 0.28);
-
-    --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
-    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
-    --bg-size: 100% 27px;
-    /* Tri-bande carte postale, dans la palette propre du thème (pas celle d'Anderson) */
-    --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
-  }
-
   /* Carnet : --solid-fill-text (#fff) sert à la fois du texte sur fond
      --orange (#B8695E, ton moyen, a besoin de texte SOMBRE — 4.02:1 en
      blanc, sous le seuil) et sur fond --green (#556B52, plus sombre, a
@@ -321,70 +261,13 @@
      cours — chaque nouvel élément à fond orange doit rejoindre cette
      liste, pas être patché isolément). Noir choisi pour une marge
      confortable (4.70:1). */
-  [data-theme="carnet"] .btn-new-review,
-  [data-theme="carnet"] .backup-reminder-btn,
-  [data-theme="carnet"] .mode-tab.active,
-  [data-theme="carnet"] .focus-mode-toggle.active,
-  [data-theme="carnet"] .empty-state-cta,
-  [data-theme="carnet"] .wl-picker-new-form button,
-  [data-theme="carnet"] .wrapped-share-btn,
-  [data-theme="carnet"] .onboarding-next,
-  [data-theme="carnet"] #update-banner-reload-btn,
-  [data-theme="carnet"] .mds-action-btn.primary,
-  [data-theme="carnet"] .on-this-day-badge,
-  [data-theme="carnet"] .platform-chip.selected,
-  [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
-  [data-theme="carnet"] .nav-btn-primary-label,
-  [data-theme="carnet"] .tv-continue-check-btn {
-    color: #000;
-  }
-
-  [data-theme="filmnoir"] {
-    color-scheme: dark;
-    /* 12. Film Noir - Clair-obscur véritable */
-    --bg: #050505; --surface: #111111; --surface2: #1a1a1a; --border: #333333;
-    --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
-    --orange: #ffffff; 
-    --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est blanc ici : texte clair impossible */
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
-    --slider-thumb-clip: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); /* octogone, esprit iris/objectif de projecteur */
-    --control-radius: 0px; /* reste anguleux, cohérent avec le reste du thème */
-    --font-heading: 'Cinzel', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-    
-    /* Étoiles Film Noir : Blanc argenté impérial et intemporel */
-    --star-color: #ffffff;
-    --star-empty-color: #333333;
-    --star-font: 'Cinzel', serif;
-    --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
-    --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
-    --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
-    /* Angles francs plutôt qu'arrondis, cohérent avec le radius:0 de ce
-       thème — même logique que l'icône Noter en losange sur Moderne. */
-    --icon-linecap: square; --icon-linejoin: miter;
-    
-    --review-font: var(--font-mono); 
-    --review-bg: #000000;
-    /* Faisceau de projecteur qui s'estompe, plutôt qu'une ligne franche */
-    --header-bar: linear-gradient(to right, transparent, #ffffff 50%, transparent);
-  }
 
   [data-theme="cinephile"] {
     color-scheme: light;
     /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
-       bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
-       sur des angles nets : ici tout est délibérément arrondi et sépia,
-       esprit vieux fauteuils de cinéma et pellicule argentique. */
+       bord. Tout y est délibérément arrondi et sépia, esprit vieux fauteuils
+       de cinéma et pellicule argentique. C'est, avec Technicolor, l'un des
+       deux thèmes historiques conservés au retrait des quatre autres. */
     --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
     --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
     --orange: #4A2E1B; /* Terre de Sienne */
@@ -434,80 +317,9 @@
      illisible. Voir --solid-fill-text (déclarée par thème plus bas, utilisée
      partout où ce même problème se posait) plutôt que de corriger chaque
      bouton séparément au fil des retours. */
-
-  [data-theme="moderne"] {
-    color-scheme: light;
-    /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
-       d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
-       nettes, précision géométrique, papier millimétré d'architecte. Le
-       mécanisme de couleur tirée de l'affiche du film (voir plus bas,
-       .hist-item/.wl-card border-left, déjà unique à ce thème) reste intact
-       — c'est un vrai atout distinctif, pas une raison de le changer. */
-    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #1E5AA8;
-    --border-hi: #1E5AA8; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
-    --orange: #DD6B47; /* Terracotta, légèrement plus saturée qu'avant */
-    --gold: #7A5507;   /* Moutarde -> ocre profond : deux essais precedents (#D9A62E, #A6790F) manquaient encore de contraste, verifie mathematiquement cette fois (6.22:1) */
-    --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #DD6B47;
-    --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    /* --gold est ici un ocre PROFOND (#7A5507, assombri deux fois pour le
-       contraste), alors que les surfaces remplies en or supposent partout
-       ailleurs un or CLAIR et posent dessus var(--solid-fill-text),
-       quasi noir. Moderne ne declarant pas --solid-fill-text, le repli
-       s'appliquait : 2.82:1 sur le bouton de tri actif de "A voir", sous le
-       seuil. Le 6.22:1 cite dans le commentaire de --gold ci-dessus est
-       precisement celui de --bg sur cet ocre : l'intention etait donc bien un
-       texte clair, seul le cablage manquait. */
-    --gold-fill-text: var(--bg);
-    /* Accent en TEXTE sur une surface claire : #DD6B47 sur la barre d'onglets
-       donne 3.24:1 en 10px gras (seuil 4.5). Meme famille de teinte, assombrie
-       juste ce qu'il faut — 5.35:1. Le token ne touche que le texte : les
-       surfaces remplies en --orange gardent leur teinte d'origine. */
-    --accent-text: #B34524;
-    --radius: 10px; --radius-sm: 6px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
-    --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
-    --font-heading: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'Martian Mono', monospace;
-
-    --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
-    --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
-    --icon-stroke: 2.25;
-    /* Angles francs, cohérent avec le losange du bouton Noter et le refus
-       général des formes rondes dans ce thème. */
-    --icon-linecap: square; --icon-linejoin: miter;
-
-    /* Élévation en bleu encre, dans la palette du thème (fond blanc). */
-    --shadow-1: 0 1px 3px rgba(30, 90, 168, 0.14);
-    --shadow-2: 0 4px 12px rgba(30, 90, 168, 0.18);
-    --shadow-3: 0 8px 28px rgba(30, 90, 168, 0.22);
-
-    --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
-    /* Grille fine façon papier millimétré d'architecte, à peine visible —
-       la signature la plus neuve du thème, aucun autre thème ne l'utilise. */
-    --bg-texture: linear-gradient(rgba(30,90,168,0.05) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(30,90,168,0.05) 1px, transparent 1px);
-    --bg-size: 24px 24px, 24px 24px;
-    /* Bloc plein (pas un dégradé tri-bande, motif déjà pris par Cinéphile et
-       Carnet) : cohérent avec l'esprit "aplat de couleur" du Bauhaus. */
-    --header-bar: var(--blue);
-  }
   /* Accent tiré de la couleur dominante de l'affiche (voir 00c-poster-color.js)
      — signature du thème "Moderne". Se rabat sur la bordure normale du thème
      si l'extraction a échoué (CORS, image non chargée, etc.). */
-  [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
   [data-theme="technicolor"] {
     color-scheme: dark;
@@ -2104,10 +1916,6 @@
      défilement — les textures vivent sur des pseudo-éléments fixes). */
 
   /* ── L'Original (défaut) ── */
-  html:not([data-theme]) .card:hover,
-  [data-theme="default"] .card:hover {
-    border-color: var(--border-hi);
-  }
   /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
      "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
      libellé d'interface — l'italique Fraunces reste le traitement par
@@ -2395,56 +2203,6 @@
      commun) — remplace elle-même l'ancienne capsule pleine, jugée trop
      appuyée à l'usage. */
 
-  /* ── Film Noir : clair-obscur ── */
-  /* Vignettage permanent, comme un tirage argentique contrasté */
-  [data-theme="filmnoir"] body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
-  }
-  /* Les affiches en noir et blanc — LA promesse du thème. La couleur revient
-     au survol là où il existe (desktop) ; sur mobile, tout reste argentique. */
-  [data-theme="filmnoir"] .hist-item img,
-  [data-theme="filmnoir"] .wl-card img,
-  [data-theme="filmnoir"] .poster-min img,
-  [data-theme="filmnoir"] .duel-poster,
-  [data-theme="filmnoir"] .mds-poster {
-    filter: grayscale(1) contrast(1.08);
-    transition: filter var(--dur-base) var(--ease-out);
-  }
-  [data-theme="filmnoir"] .hist-item:hover img,
-  [data-theme="filmnoir"] .wl-card:hover img,
-  [data-theme="filmnoir"] .poster-min:hover img {
-    filter: grayscale(0) contrast(1);
-  }
-  /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
-  [data-theme="filmnoir"] .app-title { text-shadow: 3px 3px 0 rgba(255,255,255,0.12); }
-
-  /* ── Moderne : verre dépoli + grille d'architecte ── */
-  /* Le verre dépoli est LE trait distinctif du thème (avec la grille et le
-     losange des curseurs) — poussé ici comme sa vraie signature plutôt qu'un
-     détail isolé sur l'en-tête. N'écrase plus le fond (background:) comme
-     avant : ça annulait silencieusement le backdrop TMDb commun aux 6
-     thèmes (décision confirmée : compositions identiques partout, y
-     compris la fiche film/série). backdrop-filter seul se pose PAR-DESSUS
-     l'image existante, sans la remplacer. */
-  @supports (backdrop-filter: blur(8px)) {
-    [data-theme="moderne"] .mds-header {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-  }
-
-  /* ── Carnet de Voyage : reliure et tampon ── */
-  /* Bordures en pointillés, esprit page de carnet cousue à la main — hérité
-     de l'ancien Journal de Bord, le trait le plus reconnaissable des trois
-     thèmes fusionnés ici. */
-  [data-theme="carnet"] .card { border-style: dashed; }
-  [data-theme="carnet"] .card-title {
-    border-bottom: 1px dotted var(--border-hi);
-    padding-bottom: 5px;
-  }
-
   /* ── Cinéphile 70s : papier chaud ── */
   /* Halo chaud sur les étoiles (halation de projection) — le grain n'est pas
      repris ici : sur fond clair il salirait plus qu'il n'habille. */
@@ -2453,8 +2211,6 @@
   }
   [data-theme="cinephile"] .card { box-shadow: var(--shadow-1); }
 
-  /* ── Méridien : revue éditoriale ── */
-  /* Filets fins au-dessus des titres, rubrique de magazine */
   /* ═══ RETOUR TACTILE SYSTÉMATIQUE ═══
      Chaque élément interactif s'enfonce légèrement sous le doigt — la
      sensation "ça répond" des apps natives. Un seul endroit, une seule
@@ -3684,28 +3440,6 @@
   .review-textarea:focus { border-color: var(--orange); box-shadow: var(--field-focus-soft); }
   .review-textarea::placeholder { color: var(--text-mid); opacity: 0.5;}
 
-  /* Signature du thème "Carnet de Voyage" (héritée de l'ancien Journal de
-     Bord — le détail le plus mémorable des trois thèmes fusionnés) : la zone
-     de critique devient une vraie page de carnet lignée, écriture manuscrite
-     alignée précisément sur les lignes. background-attachment:local fait
-     défiler les lignes AVEC le texte (sinon elles resteraient fixes derrière
-     un texte qui scrolle). */
-  [data-theme="carnet"] .review-textarea {
-    font-family: 'Caveat', cursive;
-    font-size: 1.4rem;
-    line-height: 30px;
-    padding-top: 6px;
-    /* background-origin: content-box aligne l'origine du dégradé sur le début
-       du texte (après le padding), pas sur le coin du champ — sinon le
-       padding-top créait un décalage entre les lignes et l'endroit où le
-       texte commence réellement à s'écrire. La ligne est positionnée à ~80%
-       de la hauteur de ligne, là où repose la base des lettres (une police
-       manuscrite comme Caveat a des jambages qui descendent sous la ligne). */
-    background-origin: content-box;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--border) 23px, var(--border) 24px, transparent 24px, transparent 30px);
-    background-attachment: local;
-  }
-
   /* ── ACTION BUTTONS ── */
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn {
@@ -4243,11 +3977,6 @@
   .theme-card.selected { border-color:var(--blue); }
   .theme-card.selected::after { content:"✓"; position:absolute; top:5px; right:5px; font-size:.65rem; font-weight:900; color:#000; background:var(--blue); border-radius:50%; width:16px; height:16px; line-height:16px; text-align:center; display:block; }
   .theme-preview { height:60px; display:flex; flex-direction:column; gap:4px; padding:8px 10px; position:relative;}
-  
-  [data-theme="default"].theme-card .theme-preview::before {
-    content:''; position:absolute; top:15px; left:10px; width:80%; height:1px;
-    background: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
-  }
 
   .theme-preview-row { display:flex; align-items:center; gap:4px; height:9px; }
   .theme-preview-bar { height:9px; border-radius:3px; }
@@ -4300,9 +4029,16 @@
        inline par buildMdsContent/buildTdsContent/buildPdsContent — 'none' si
        aucun backdrop disponible, ex: listes prédéfinies/thèmes). Quand il n'y
        a pas de backdrop, background-color prend le relais avec le même esprit
-       que l'ancien dégradé teinté par --poster-accent (déjà extraite par
-       ailleurs) — chaque fiche garde une ambiance qui lui est propre même
-       sans grande image, juste via la couleur plutôt qu'une photo. */
+       que l'ancien dégradé teinté par --poster-accent — chaque fiche garde
+       une ambiance qui lui est propre même sans grande image, juste via la
+       couleur plutôt qu'une photo.
+       NOTE : --poster-accent n'est plus posée par personne depuis le retrait
+       du thème Moderne, dont l'extraction de couleur d'affiche était la
+       signature (00c-poster-color.js, supprimé). Le repli de ce var() est
+       donc toujours celui qui s'applique. Les var() sont conservés tels
+       quels plutôt qu'aplatis : ils rendent exactement pareil, et les
+       réécrire aurait touché huit déclarations qui pèsent sur les
+       instantanés figés de Cinéphile 70s et Technicolor. */
     background-color: color-mix(in srgb, var(--poster-accent, var(--bg)) 15%, var(--bg));
     background-image:
       linear-gradient(to bottom, rgba(14,17,22,0.55), rgba(14,17,22,0.92) 90%),
@@ -4386,9 +4122,9 @@
 
   /* Élément signature de la fiche : le score TMDb devient un tampon de
      certification (façon sceau de festival / cachet de laboratoire sur une
-     bobine), coloré avec la teinte dominante DE CETTE AFFICHE précisément
-     (--poster-accent, déjà extraite pour chaque film) — jamais la même
-     couleur deux fois, jamais une pastille générique. */
+     bobine), coloré à l'origine avec la teinte dominante de l'affiche
+     (--poster-accent). Cette extraction était la signature du thème Moderne
+     et a disparu avec lui : le tampon prend donc partout le repli --gold. */
   .mds-score-stamp {
     position: absolute; bottom: -10px; right: -10px; width: 46px; height: 46px;
     border-radius: 50%; background: var(--bg);
@@ -5222,15 +4958,6 @@
        débordement visuel le long de la diagonale (48×√2 ≈ 68px) — donne
        un débordement comparable aux ~5px du cercle plutôt que la
        diagonale complète d'un carré de même côté. */
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 48px; height: 48px; border-radius: 8px;
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
-      transform: rotate(-45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

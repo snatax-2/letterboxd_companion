@@ -646,11 +646,6 @@ function renderTvHistory() {
     gridEl.innerHTML = group.items.map((sh, i) => renderTvShowCard(sh, tiers[i])).join('');
   });
 
-  container.querySelectorAll('.hist-grid-card[data-show-id]').forEach((cardEl) => {
-    const show = shows.find(s => String(s.tmdbTvId) === cardEl.dataset.showId);
-    applyPosterAccent(tmdbImage(show?.poster_path, 'w154'), cardEl);
-  });
-
   container.querySelectorAll('.tv-show-card-open-btn').forEach(btn => {
     btn.addEventListener('click', () => openTvDetailSheet(btn.dataset.showId));
   });

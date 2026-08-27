@@ -74,3 +74,71 @@ test('donnees deja a jour : aucune re-migration, pas de nouvelle sauvegarde', as
   const backup = await page.evaluate(() => localStorage.getItem('lbx_pre_migration_backup'));
   expect(backup, 'la chaine ne doit pas se relancer sur des donnees a jour').toBeNull();
 });
+
+// ── v4 : retrait de quatre thèmes historiques ──
+// Ce qui se passe SANS migration mérite d'être dit, parce que c'est subtil :
+// 02-theme.js sait retomber sur un thème valide, donc l'app s'afficherait
+// correctement. Mais le réglage STOCKÉ garderait « carnet », donc l'écran
+// Réglages n'aurait aucune carte sélectionnée (la sélection se fait par
+// data-theme), et le prochain enregistrement écrirait alors le thème de la
+// première carte au lieu du choix réel de l'utilisateur.
+for (const [avant, apres] of [
+  ['carnet', 'ludex-light'],
+  ['moderne', 'ludex-light'],
+  ['filmnoir', 'ludex-dark'],
+  ['default', 'ludex-dark'],
+]) {
+  test(`migration : le thème ${avant} devient ${apres}, et la carte suit`, async ({ page }) => {
+    await bloquerPolices(page);
+    await page.addInitScript((t) => {
+      localStorage.setItem('lbx_onboarding_seen', '1');
+      localStorage.setItem('lbx_schema_version', '3');
+      localStorage.setItem('lbx_settings', JSON.stringify({ appName: 'LUD<em>e</em>X', theme: t }));
+    }, avant);
+    await page.goto('/');
+    await page.waitForTimeout(600);
+
+    const stocke = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_settings')).theme);
+    expect(stocke, 'le réglage enregistré doit être réécrit').toBe(apres);
+    await expect(page.locator('html')).toHaveAttribute('data-theme', apres);
+
+    // Le point qui compte : la carte du thème est bien sélectionnée, donc un
+    // enregistrement ultérieur ne trahira pas le choix de l'utilisateur.
+    await page.click('#settings-btn');
+    await page.waitForSelector('#settings-modal.open');
+    await expect(page.locator('.theme-card.selected')).toHaveAttribute('data-theme', apres);
+  });
+}
+
+test('un thème conservé n\'est pas touché par la migration', async ({ page }) => {
+  await bloquerPolices(page);
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_schema_version', '3');
+    localStorage.setItem('lbx_settings', JSON.stringify({ appName: 'LUD<em>e</em>X', theme: 'technicolor' }));
+  });
+  await page.goto('/');
+  await page.waitForTimeout(600);
+  const stocke = await page.evaluate(() => JSON.parse(localStorage.getItem('lbx_settings')).theme);
+  expect(stocke).toBe('technicolor');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'technicolor');
+});
+
+test('« Auto (Système) » rend enfin un thème CLAIR quand le système est clair', async ({ page }) => {
+  // Défaut réel corrigé au passage : la paire était default (sombre) /
+  // filmnoir (#050505, sombre AUSSI). La branche « clair » n'a jamais rendu
+  // un thème clair.
+  await bloquerPolices(page);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_settings', JSON.stringify({ appName: 'LUD<em>e</em>X', theme: 'system' }));
+  });
+  await page.goto('/');
+  await page.waitForTimeout(600);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'ludex-light');
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForTimeout(400);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'ludex-dark');
+});

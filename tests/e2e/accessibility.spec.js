@@ -41,7 +41,7 @@ function formatViolations(violations) {
   return violations.map(v => `[${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} élément(s))`).join('\n');
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test.describe(`Accessibilité — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedRichState(page);

@@ -13,6 +13,30 @@
 // Le champ « Nom de l'application » reste pleinement fonctionnel : un nom
 // personnalisé garde le traitement générique, seul le nom par défaut a droit
 // à sa composition dessinée.
+// ── Thèmes retirés ──
+// Quatre thèmes historiques ont été retirés (Letterboxd, Carnet de Voyage,
+// Film Noir, Moderne). Deux sont conservés à côté des deux thèmes Ludex :
+// Cinéphile 70s et Technicolor.
+//
+// Chaque thème retiré rejoint celui des deux Ludex qui garde son CARACTÈRE
+// clair ou sombre, plutôt que de renvoyer tout le monde sur le thème par
+// défaut : quelqu'un qui avait choisi Carnet de Voyage (papier crème) ne doit
+// pas se réveiller sur un fond noir.
+const THEMES_RETIRES = {
+  meridien: 'ludex-dark',   // retiré avant les autres, repli conservé
+  default:  'ludex-dark',   // Letterboxd — #0E1116
+  filmnoir: 'ludex-dark',   // #050505
+  carnet:   'ludex-light',  // #FAF3EC
+  moderne:  'ludex-light',  // #F9F6F0
+};
+
+// « Auto (Système) » désignait default (sombre) et filmnoir (sombre AUSSI,
+// #050505) : sa branche « clair » n'a jamais rendu un thème clair. Défaut
+// réel, corrigé au passage — la paire pointe maintenant sur les deux Ludex,
+// qui sont bien l'un sombre et l'autre clair.
+const THEME_AUTO_SOMBRE = 'ludex-dark';
+const THEME_AUTO_CLAIR = 'ludex-light';
+
 const DEFAULT_APP_NAME_TEXT = 'LUDEX';
 const DEFAULT_APP_NAME_HTML = 'LUD<em>e</em>X';
 
@@ -46,18 +70,25 @@ function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || DEFAULT_APP_NAME_HTML;
   
   let themeToApply = settings.theme || "ludex-dark";
-  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
-  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
-  // que de retomber sur des couleurs cohérentes.
-  if (themeToApply === 'meridien') themeToApply = 'ludex-dark';
+  // Repli pour les thèmes retirés — un data-theme inconnu laisserait l'app
+  // sans variables CSS définies plutôt que de retomber sur des couleurs
+  // cohérentes. La migration (00a-migrations.js) réécrit le réglage stocké,
+  // mais ce repli reste indispensable : un appareil peut recevoir par
+  // synchronisation un réglage écrit par une version antérieure.
+  //
+  // Chaque thème rejoint celui des deux Ludex qui garde son CARACTÈRE clair
+  // ou sombre : on ne renvoie pas tout le monde sur le thème par défaut, ce
+  // qui ferait passer un utilisateur de Carnet de Voyage (papier crème) à un
+  // fond noir sans qu'il ait rien demandé.
+  themeToApply = THEMES_RETIRES[themeToApply] || themeToApply;
   
   if (themeToApply === "system") {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    themeToApply = prefersDark ? "default" : "filmnoir"; 
-    
+    themeToApply = prefersDark ? THEME_AUTO_SOMBRE : THEME_AUTO_CLAIR;
+
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         if (JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme === 'system') {
-            const sysTheme = e.matches ? "default" : "filmnoir";
+            const sysTheme = e.matches ? THEME_AUTO_SOMBRE : THEME_AUTO_CLAIR;
             if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
             document.documentElement.setAttribute('data-theme', sysTheme);
             renderAll();
@@ -108,14 +139,9 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     // Même remarque que dans applySettings : les polices du thème choisi
     // doivent être demandées, elles ne sont plus toutes préchargées.
-    // NOTE : la carte "Auto (Système)" pointe toujours sur l'ancienne paire
-    // default/filmnoir. La basculer vers ludex-dark/ludex-light changerait
-    // l'apparence des personnes qui ont DÉJÀ choisi "Auto" — c'est une
-    // préférence utilisateur, pas un détail de présentation, donc en
-    // attente d'arbitrage (voir le rapport P0).
     const picked = card.dataset.theme !== "system"
       ? card.dataset.theme
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "default" : "filmnoir");
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? THEME_AUTO_SOMBRE : THEME_AUTO_CLAIR);
     if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(picked);
     document.documentElement.setAttribute('data-theme', picked);
   });

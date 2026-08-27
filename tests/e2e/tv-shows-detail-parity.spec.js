@@ -206,7 +206,7 @@ test('glissement vers le bas ferme la fiche serie', async ({ page }) => {
   await expect(page.locator('#tv-detail-sheet')).not.toHaveClass(/open/);
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['ludex-dark', 'ludex-light', 'cinephile', 'technicolor']) {
   test(`accessibilite parite fiche serie - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1600 });
     await page.addInitScript((t) => {

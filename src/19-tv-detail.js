@@ -382,8 +382,6 @@ async function openTvDetailSheet(tmdbTvId) {
     tdsContentEl.innerHTML = buildTdsContent(data, localShow);
     tdsCurrentData = data;
     renderTdsCastCarousel(data.credits?.cast || []);
-    const tdsPosterUrl = tmdbImage(data.poster_path, 'w342');
-    applyPosterAccent(tdsPosterUrl, tdsEl.querySelector('.mds-box'));
     setupTdsOverviewToggle();
     setupStickyHeader(tdsEl);
     if (data.external_ids?.imdb_id) populateTdsExternalRatings(data.external_ids.imdb_id);
