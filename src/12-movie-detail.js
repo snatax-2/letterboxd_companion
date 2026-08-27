@@ -14,8 +14,8 @@ const mdsCloseBtn = document.getElementById('mds-close-btn');
 // Bande-annonce : chargée seulement au clic (vignette + bouton lecture avant
 // ça), pas embarquée automatiquement dès l'ouverture de la fiche. Attaché ici,
 // au niveau racine (pas dans renderCastCarousel), pour qu'il fonctionne même
-// pour un film sans casting. Le gestionnaire clavier générique
-// (01-navigation.js) couvre déjà Entrée/Espace pour ce role="button".
+// pour un film sans casting. Aucun appoint clavier n'est requis :
+// .mds-trailer-wrap est un vrai <button>, activé nativement à Entrée/Espace.
 mdsContentEl.addEventListener('click', (e) => {
   const trailerWrap = e.target.closest('.mds-trailer-wrap');
   if (!trailerWrap || trailerWrap.querySelector('iframe')) return;
@@ -58,6 +58,111 @@ function findSavedPosterUrl(tmdbId, localMatch) {
     if (found) return found.poster;
   }
   return null;
+}
+
+// ── Sections de la fiche film ────────────────────────────────────────────
+// buildMdsContent() assemblait tout dans un seul gabarit de ~90 lignes. Une
+// fonction par section : on retrouve celle qu'on cherche par son nom, et on
+// peut en modifier une sans relire les autres. Aucun changement de rendu —
+// les chaînes produites sont identiques, la régression visuelle le vérifie.
+
+function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) {
+  return `
+    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
+      <div class="mds-header-left">
+        <div class="mds-poster-wrap">
+          ${posterUrl
+            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
+          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
+        </div>
+        ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
+      </div>
+      <div class="mds-header-info">
+        <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
+        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-external-ratings" id="mds-external-ratings"></div>
+        ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function mdsActionsHtml(localMatch) {
+  // Avec une note locale, le bloc « Ta note » (cliquable) remplace ces deux
+  // boutons — voir personalHtml dans buildMdsContent.
+  return `
+    <div class="mds-actions" style="animation-delay:.02s">
+      ${localMatch
+        ? ''
+        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
+           <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
+      }
+    </div>`;
+}
+
+function mdsTrailerHtml(data) {
+  const trailer = pickBestTrailer(data.videos?.results || []);
+  if (!trailer) return '';
+  return `
+      <div class="mds-section" style="animation-delay:.08s">
+        <div class="mds-section-title">Bande-annonce</div>
+        <button type="button" class="mds-trailer-wrap" data-video-key="${trailer.key}" aria-label="Lire la bande-annonce de ${escAttr(data.title)}">
+          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
+          <span class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></span>
+        </button>
+      </div>`;
+}
+
+function mdsOverviewHtml(data) {
+  if (!data.overview) return '';
+  return `
+      <div class="mds-section" style="animation-delay:.1s">
+        <div class="mds-section-title">Synopsis</div>
+        <div class="mds-overview" id="mds-overview">${escAttr(data.overview)}</div>
+        <button type="button" class="mds-overview-toggle" id="mds-overview-toggle">Lire la suite ▾</button>
+      </div>`;
+}
+
+function mdsCrewHtml(directorHtml, castHtml) {
+  return `
+    <div class="mds-section" style="animation-delay:.15s">
+      <div class="mds-section-title">Équipe</div>
+      ${directorHtml ? `<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${directorHtml}</span></div>` : ''}
+      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
+      ${!directorHtml && !castHtml ? `<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>` : ''}
+    </div>`;
+}
+
+function mdsDetailsHtml(data, releaseDateStr) {
+  return `
+    <div class="mds-section" style="animation-delay:.2s">
+      <div class="mds-section-title">Détails</div>
+      <div class="mds-row"><span class="mds-label">Sortie</span><span>${releaseDateStr}</span></div>
+      <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(data.budget)}</span></div>
+      <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(data.revenue)}</span></div>
+    </div>`;
+}
+
+function mdsCastHtml(data) {
+  if ((data.credits?.cast || []).length === 0) return '';
+  // Le carrousel lui-même est rempli après coup (voir renderCastCarousel).
+  return `
+      <div class="mds-section" style="animation-delay:.25s">
+        <div class="mds-section-title">Casting</div>
+        <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
+      </div>`;
+}
+
+function mdsSagaHtml(data) {
+  if (!data.belongs_to_collection) return '';
+  return `
+      <div class="mds-section" style="animation-delay:.3s">
+        <div class="mds-section-title">
+          Fait partie d'une saga
+          <button type="button" class="mds-saga-link" id="mds-saga-link" data-collection-id="${data.belongs_to_collection.id}" data-collection-name="${escAttr(data.belongs_to_collection.name)}">${escAttr(data.belongs_to_collection.name)} →</button>
+        </div>
+        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
+      </div>`;
 }
 
 function buildMdsContent(data, localMatch, localMatchIdx) {
@@ -120,96 +225,28 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
     `;
   }
 
-  return `
-    <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
-      <div class="mds-header-left">
-        <div class="mds-poster-wrap">
-          ${posterUrl
-            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
-            : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
-          ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
-        </div>
-        ${isInCollection(data.id) ? `<button type="button" class="mds-poster-change-btn" data-poster-picker="${escAttr(String(data.id))}">Changer l'affiche</button>` : ''}
-      </div>
-      <div class="mds-header-info">
-        <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
-        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
-        <div class="mds-external-ratings" id="mds-external-ratings"></div>
-        ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
-      </div>
-    </div>
-
-    <div class="mds-actions" style="animation-delay:.02s">
-      ${localMatch
-        ? '' /* le bloc "Ta note" cliquable (personalHtml plus bas) remplace ce bouton */
-        : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
-           <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
-      }
-    </div>
-
-    <!-- Ludex 2.0 : plateformes de streaming, remontées juste sous les CTA
-         (voir Ludex_Specifications_Fiches.pdf — "où le voir ? C'est la
-         donnée la plus recherchée"), chargées en arrière-plan comme les
-         notes externes juste au-dessus. Masqué par défaut (display:none
-         inline) tant que fetchAndRenderProviders() n'a pas de résultat à
-         montrer — voir 03-foundation.js. -->
-    <div class="mds-providers" id="mds-providers" style="display:none;"></div>
-
-    ${personalHtml}
-
-    ${(() => {
-      const trailer = pickBestTrailer(data.videos?.results || []);
-      if (!trailer) return '';
-      return `
-      <div class="mds-section" style="animation-delay:.08s">
-        <div class="mds-section-title">Bande-annonce</div>
-        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.title)}">
-          <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
-          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
-        </div>
-      </div>`;
-    })()}
-
-    ${data.overview ? `
-      <div class="mds-section" style="animation-delay:.1s">
-        <div class="mds-section-title">Synopsis</div>
-        <div class="mds-overview" id="mds-overview">${escAttr(data.overview)}</div>
-        <button type="button" class="mds-overview-toggle" id="mds-overview-toggle">Lire la suite ▾</button>
-      </div>` : ''}
-
-    <div class="mds-section" style="animation-delay:.15s">
-      <div class="mds-section-title">Équipe</div>
-      ${directorHtml ? `<div class="mds-row"><span class="mds-label">Réalisateur</span><span>${directorHtml}</span></div>` : ''}
-      ${castHtml ? `<div class="mds-row"><span class="mds-label">Avec</span><span>${castHtml}</span></div>` : ''}
-      ${!directorHtml && !castHtml ? `<div class="mds-row"><span class="mds-label">—</span><span>Non communiqué</span></div>` : ''}
-    </div>
-
-    <div class="mds-section" style="animation-delay:.2s">
-      <div class="mds-section-title">Détails</div>
-      <div class="mds-row"><span class="mds-label">Sortie</span><span>${releaseDateStr}</span></div>
-      <div class="mds-row"><span class="mds-label">Budget</span><span>${formatMoney(data.budget)}</span></div>
-      <div class="mds-row"><span class="mds-label">Box-office</span><span>${formatMoney(data.revenue)}</span></div>
-    </div>
-
-    ${(data.credits?.cast || []).length > 0 ? `
-      <div class="mds-section" style="animation-delay:.25s">
-        <div class="mds-section-title">Casting</div>
-        <div class="mds-cast-carousel" id="mds-cast-carousel"></div>
-      </div>` : ''}
-
-    ${data.belongs_to_collection ? `
-      <div class="mds-section" style="animation-delay:.3s">
-        <div class="mds-section-title">
-          Fait partie d'une saga
-          <span class="mds-saga-link" id="mds-saga-link" data-collection-id="${data.belongs_to_collection.id}" data-collection-name="${escAttr(data.belongs_to_collection.name)}" role="button" tabindex="0">${escAttr(data.belongs_to_collection.name)} →</span>
-        </div>
-        <div class="mds-saga-strip" id="mds-saga-strip">Chargement…</div>
-      </div>` : ''}
-
-    <div class="mds-section" style="animation-delay:.35s">
+  // Assemblage : chaque section a sa fonction, nommée d'après ce qu'elle
+  // rend. Avant, tout tenait dans un seul gabarit de ~90 lignes où il
+  // fallait compter les accolades pour savoir quelle section on lisait.
+  return [
+    mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }),
+    mdsActionsHtml(localMatch),
+    // Plateformes de streaming : remontées juste sous les CTA (voir
+    // Ludex_Specifications_Fiches.pdf — « où le voir ? C'est la donnée la
+    // plus recherchée »), chargées en arrière-plan comme les notes externes.
+    // Masqué tant que fetchAndRenderProviders() n'a rien à montrer.
+    '<div class="mds-providers" id="mds-providers" style="display:none;"></div>',
+    personalHtml,
+    mdsTrailerHtml(data),
+    mdsOverviewHtml(data),
+    mdsCrewHtml(directorHtml, castHtml),
+    mdsDetailsHtml(data, releaseDateStr),
+    mdsCastHtml(data),
+    mdsSagaHtml(data),
+    `<div class="mds-section" style="animation-delay:.35s">
       ${typeof buildAnalysisSectionHtml === 'function' ? buildAnalysisSectionHtml(data.id, data.title) : ''}
-    </div>
-  `;
+    </div>`,
+  ].join('\n');
 }
 
 // Ventilation par critère (barres, pas un radar — déjà utilisé sur le
@@ -256,13 +293,13 @@ function renderCastCarousel(castArray) {
   const itemsHtml = cast.map(actor => {
     const photoUrl = tmdbImage(actor.profile_path, 'w185');
     return `
-      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+      <button type="button" class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" aria-label="Voir la fiche de ${escAttr(actor.name)}">
         ${photoUrl
           ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
-          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
-        <div class="mds-cast-name">${escAttr(actor.name)}</div>
-        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
-      </div>`;
+          : `<span class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</span>`}
+        <span class="mds-cast-name">${escAttr(actor.name)}</span>
+        ${actor.character ? `<span class="mds-cast-character">${escAttr(actor.character)}</span>` : ''}
+      </button>`;
   }).join('');
 
   // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
@@ -319,10 +356,10 @@ async function populateSagaStrip(collectionId, currentMovieId) {
       .sort((a, b) => (a.release_date || '9999').localeCompare(b.release_date || '9999'));
     if (parts.length === 0) { stripEl.innerHTML = ''; return; }
     stripEl.innerHTML = parts.map(f => `
-      <div class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}">
+      <button type="button" class="mds-saga-item${String(f.id) === String(currentMovieId) ? ' current' : ''}" data-movie-id="${f.id}" aria-label="Voir la fiche de ${escAttr(f.title)}">
         <img class="mds-saga-poster" src="${tmdbImage(f.poster_path, 'w185')}" alt="" loading="lazy">
-        <div class="mds-saga-title">${escAttr(f.title)}</div>
-      </div>
+        <span class="mds-saga-title">${escAttr(f.title)}</span>
+      </button>
     `).join('');
   } catch {
     stripEl.innerHTML = ''; // pas grave : le lien "Voir la saga complète" reste utilisable
@@ -622,13 +659,13 @@ function buildPdsContent(data) {
           const posterUrl = tmdbImage(f.poster_path, 'w185');
           const year = f.release_date ? f.release_date.slice(0, 4) : '';
           return `
-            <div class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
+            <button type="button" class="pds-film-item${f.isSeen ? ' seen' : ''}" data-movie-id="${f.id}" title="${f.isSeen ? 'Déjà vu' : ''}" aria-label="Voir la fiche de ${escAttr(f.title)}${f.isSeen ? ', déjà vu' : ''}">
               ${posterUrl
                 ? `<img class="pds-film-poster" src="${posterUrl}" alt="Affiche de ${escAttr(f.title)}" loading="lazy">`
-                : `<div class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</div>`}
-              <div class="pds-film-title">${escAttr(f.title)}</div>
-              <div class="pds-film-year">${year}</div>
-            </div>`;
+                : `<span class="pds-film-poster pds-film-poster-ph">${ICONS.clapper}</span>`}
+              <span class="pds-film-title">${escAttr(f.title)}</span>
+              <span class="pds-film-year">${year}</span>
+            </button>`;
         }).join('')}
       </div>
     </div>

@@ -988,6 +988,39 @@
   }
   .skip-link:focus { left: 12px; top: 12px; }
 
+  /* ══════════════════════════════════════════════════════════════════
+     CARTES CLIQUABLES : <button> natif, sans l'habillage du navigateur
+     ══════════════════════════════════════════════════════════════════
+     Ces éléments étaient des <div role="button" tabindex="0">. Un rôle ARIA
+     ne câble PAS l'activation clavier : il fallait un écouteur keydown global
+     pour rattraper Entrée/Espace. Passés en <button> natif, ils obtiennent ce
+     comportement du navigateur — l'écouteur global a donc pu disparaître
+     (voir 01-navigation.js).
+
+     Le navigateur applique aux <button> un fond, une bordure, une police et
+     un centrage qui n'ont rien à voir avec ces cartes : on les neutralise
+     ici. `display` n'est VOLONTAIREMENT pas posé — chaque classe garde le
+     sien (flex, block...) ; les rares qui comptaient sur le block implicite
+     du <div> le déclarent désormais explicitement, juste en dessous. */
+  .hist-item-open, .wl-card-open, .poster-min, .mds-trailer-wrap,
+  .mds-saga-link, .mds-cast-item, .mds-saga-item, .pds-film-item,
+  .duel-side, .choix-du-jour-card {
+    appearance: none; -webkit-appearance: none;
+    background: none; border: 0; margin: 0; padding: 0;
+    font: inherit; color: inherit; text-align: inherit;
+    cursor: pointer;
+  }
+  /* Comptaient sur le display:block implicite d'un <div> — un <button> est
+     inline-block par défaut, ce qui casserait leur mise en page. */
+  .mds-trailer-wrap, .choix-du-jour-card { display: block; }
+  /* Idem pour les enfants passés de <div> à <span> (contenu phrasé exigé
+     par le modèle de contenu de <button>) : un <span> est inline. */
+  .wl-poster, .duel-poster,
+  .choix-du-jour-bg, .choix-du-jour-overlay, .choix-du-jour-content,
+  .choix-du-jour-title, .choix-du-jour-director, .mds-cast-name {
+    display: block;
+  }
+
   /* ── HEADER ── */
   .app-header {
     max-width: 1100px;

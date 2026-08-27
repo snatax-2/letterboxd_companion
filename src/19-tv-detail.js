@@ -237,10 +237,10 @@ function buildTdsContent(data, localShow) {
       return `
       <div class="mds-section" style="animation-delay:.12s">
         <div class="mds-section-title">Bande-annonce</div>
-        <div class="mds-trailer-wrap" data-video-key="${trailer.key}" role="button" tabindex="0" aria-label="Lire la bande-annonce de ${escAttr(data.name)}">
+        <button type="button" class="mds-trailer-wrap" data-video-key="${trailer.key}" aria-label="Lire la bande-annonce de ${escAttr(data.name)}">
           <img class="mds-trailer-thumb" src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" alt="" loading="lazy">
-          <div class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></div>
-        </div>
+          <span class="mds-trailer-play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M8 5v14l11-7z"/></svg></span>
+        </button>
       </div>`;
     })()}
 
@@ -300,13 +300,13 @@ function renderTdsCastCarousel(castArray) {
   const itemsHtml = cast.map(actor => {
     const photoUrl = tmdbImage(actor.profile_path, 'w185');
     return `
-      <div class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(actor.name)}">
+      <button type="button" class="mds-cast-item" data-person-id="${actor.id}" data-person-name="${escAttr(actor.name)}" aria-label="Voir la fiche de ${escAttr(actor.name)}">
         ${photoUrl
           ? `<img class="mds-cast-photo" src="${photoUrl}" alt="Photo de ${escAttr(actor.name)}" loading="lazy">`
-          : `<div class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</div>`}
-        <div class="mds-cast-name">${escAttr(actor.name)}</div>
-        ${actor.character ? `<div class="mds-cast-character">${escAttr(actor.character)}</div>` : ''}
-      </div>`;
+          : `<span class="mds-cast-photo mds-cast-photo-ph">${ICONS.clapper}</span>`}
+        <span class="mds-cast-name">${escAttr(actor.name)}</span>
+        ${actor.character ? `<span class="mds-cast-character">${escAttr(actor.character)}</span>` : ''}
+      </button>`;
   }).join('');
 
   // Duplique la liste une fois : le défilement peut boucler sans à-coup dès

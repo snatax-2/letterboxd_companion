@@ -276,21 +276,21 @@ function renderWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
-      : `<div class="wl-poster">${ICONS.clapper}</div>`;
+      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      : `<span class="wl-poster">${ICONS.clapper}</span>`;
 
     div.innerHTML = `
       <div class="wl-card-content">
-        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
           ${posterHtml}
-          <div class="wl-body">
-            <div class="wl-title">${escAttr(item.title)}</div>
-            <div class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</div>
-            <div class="wl-providers" id="wl-providers-${i}">
+          <span class="wl-body">
+            <span class="wl-title">${escAttr(item.title)}</span>
+            <span class="wl-meta">${[item.year, item.genre].filter(Boolean).join(' · ')}</span>
+            <span class="wl-providers" id="wl-providers-${i}">
               <span class="wl-provider-loading">⏳ Chargement streaming...</span>
-            </div>
-          </div>
-        </div>
+            </span>
+          </span>
+        </button>
         <div class="wl-actions">
           <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(item.title)}, vu">${ICONS.star}</button>
           <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
@@ -891,13 +891,13 @@ function renderTvWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<div class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></div>`
-      : `<div class="wl-poster">${ICONS.clapper}</div>`;
+      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      : `<span class="wl-poster">${ICONS.clapper}</span>`;
     div.innerHTML = `
       <div class="wl-card-content">
-        <div class="wl-card-open" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
           ${posterHtml}
-        </div>
+        </button>
         <div class="wl-actions">
           <button class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
           <button class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>

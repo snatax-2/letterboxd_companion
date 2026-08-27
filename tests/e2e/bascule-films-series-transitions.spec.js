@@ -14,6 +14,16 @@ test('Decouvrir est utilisable des l\'installation, sans aucune note', async ({ 
   await page.setViewportSize({ width: 390, height: 900 });
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  // Le tirage du jour a besoin d'un `result`, que la route générique
+  // ci-dessus ne fournit pas. Enregistrée APRÈS elle : Playwright donne la
+  // priorité à la route la plus récemment enregistrée (piège documenté
+  // ailleurs dans ce projet). Sans elle, le bloc « Choix du jour » se
+  // masquerait — c'est son comportement correct quand il n'y a rien à
+  // proposer, vérifié par le test suivant — et l'assertion ci-dessous ne
+  // dirait plus rien de la garantie qu'on veut tenir ici.
+  await page.route('**/api/search?dailyPick=*', route => route.fulfill({ json: { result: {
+    id: 603, title: 'Matrix', release_date: '1999-03-30', poster_path: '/m.jpg', backdrop_path: '/b.jpg',
+  } } }));
   await page.goto('/');
   await page.waitForTimeout(1400);
   await page.click('#nav-discover');
@@ -24,11 +34,47 @@ test('Decouvrir est utilisable des l\'installation, sans aucune note', async ({ 
   await expect(wrap).toBeVisible();
   await expect(wrap.locator('.discover-seg-btn')).toHaveCount(2);
   await expect(page.locator('.choix-du-jour-wrap')).toBeVisible();
+  await expect(page.locator('#choix-du-jour-card')).toContainText('Matrix');
 
   // Et rien n'y invite à noter d'abord : c'était tout l'objet du changement.
   const texte = await wrap.textContent();
   expect(texte).not.toContain('Note au moins un film');
 });
+
+// Non-régression sur le défaut trouvé en traitant l'audit tiers :
+// loadChoixDuJour() ne retirait son squelette qu'en cas de rendu RÉUSSI. API
+// en panne, appareil hors-ligne, ou réponse sans `result` → le miroitement
+// tournait indéfiniment, sans le moindre indice pour l'utilisateur. Les 4
+// carrousels géraient déjà leur échec en se masquant ; le hero était le seul
+// oublié.
+//
+// On masque le BLOC entier (surtitre + carte) et pas seulement la carte :
+// masquer la carte seule laisserait « Choix du jour » flotter au-dessus d'un
+// vide. C'est ce que font les carrousels, qui masquent `carousel-block-*` et
+// non la seule rangée d'affiches.
+for (const [nom, remplir] of [
+  ['réponse sans tirage', route => route.fulfill({ json: { results: [] } })],
+  ['API en panne', route => route.fulfill({ status: 500, body: 'boom' })],
+  ['réseau coupé', route => route.abort()],
+]) {
+  test(`Choix du jour indisponible (${nom}) : le bloc se masque, pas de squelette infini`, async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+    await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+    await page.route('**/api/search?dailyPick=*', remplir);
+    await page.goto('/');
+    await page.waitForTimeout(1400);
+    await page.click('#nav-discover');
+    await page.waitForTimeout(1000);
+
+    await expect(page.locator('.choix-du-jour-wrap')).toBeHidden();
+    // Le point qui compte vraiment : plus aucun squelette en train de
+    // miroiter. `toBeHidden` sur le bloc ne le garantirait pas seul — un
+    // squelette laissé dans le DOM d'un bloc masqué reviendrait à l'écran
+    // au premier réaffichage.
+    await expect(page.locator('#choix-du-jour-card .skeleton-bg')).toHaveCount(0);
+  });
+}
 
 test('Historique : bascule Films/Series avec fondu, contenu final correct', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });

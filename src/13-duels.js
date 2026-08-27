@@ -142,7 +142,7 @@ function duelPosterHtml(item) {
   const poster = safePosterSrc(item.poster);
   return poster
     ? `<img class="duel-poster" src="${poster}" alt="" loading="lazy" decoding="async">`
-    : `<div class="duel-poster duel-poster-ph">${ICONS.clapper}</div>`;
+    : `<span class="duel-poster duel-poster-ph">${ICONS.clapper}</span>`;
 }
 
 function renderDuel() {
@@ -165,17 +165,17 @@ function renderDuel() {
 
   const [a, b] = currentDuelPair;
   arena.innerHTML = `
-    <div class="duel-side" data-key="${escAttr(a.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(a.item.title)}">
+    <button type="button" class="duel-side" data-key="${escAttr(a.key)}" aria-label="Choisir ${escAttr(a.item.title)}">
       ${duelPosterHtml(a.item)}
-      <div class="duel-title">${escAttr(a.item.title)}</div>
-      <div class="duel-year">${a.item.year || ''}</div>
-    </div>
+      <span class="duel-title">${escAttr(a.item.title)}</span>
+      <span class="duel-year">${a.item.year || ''}</span>
+    </button>
     <div class="duel-vs">VS</div>
-    <div class="duel-side" data-key="${escAttr(b.key)}" role="button" tabindex="0" aria-label="Choisir ${escAttr(b.item.title)}">
+    <button type="button" class="duel-side" data-key="${escAttr(b.key)}" aria-label="Choisir ${escAttr(b.item.title)}">
       ${duelPosterHtml(b.item)}
-      <div class="duel-title">${escAttr(b.item.title)}</div>
-      <div class="duel-year">${b.item.year || ''}</div>
-    </div>
+      <span class="duel-title">${escAttr(b.item.title)}</span>
+      <span class="duel-year">${b.item.year || ''}</span>
+    </button>
   `;
 }
 
@@ -243,11 +243,7 @@ document.getElementById('duel-arena')?.addEventListener('click', (e) => {
   }, 450);
 });
 
-document.getElementById('duel-arena')?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const side = e.target.closest('.duel-side');
-  if (side) { e.preventDefault(); side.click(); }
-});
+// Aucun gestionnaire clavier ici non plus : .duel-side est un vrai <button>.
 
 document.getElementById('duel-skip-btn')?.addEventListener('click', () => {
   renderDuel(); // nouvelle paire, aucune cote touchée

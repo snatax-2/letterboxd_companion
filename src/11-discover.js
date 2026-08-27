@@ -71,13 +71,14 @@ async function loadChoixDuJour() {
     return;
   }
 
-  heroEl.innerHTML = `<div class="skeleton-bg" style="width:100%;height:100%;border-radius:16px;"></div>`;
+  blocChoixDuJour(heroEl).style.display = '';
+  heroEl.innerHTML = `<span class="skeleton-bg" style="display:block;width:100%;height:100%;border-radius:16px;"></span>`;
   try {
     const daysSinceEpoch = Math.floor(Date.now() / 86400000);
     const res = await fetch(`/api/search?dailyPick=${daysSinceEpoch}&mediaType=${discoverMediaType}`);
     const data = await res.json();
     const pick = data.result;
-    if (!pick) return;
+    if (!pick) { montrerChoixDuJourIndisponible(heroEl); return; }
     const item = normalizeItem(pick);
     // Second appel pour le réalisateur (le tirage du jour ne renvoie que les
     // champs de base, sans crédits — voir dailyPick dans api/search.js). Ne
@@ -99,20 +100,47 @@ async function loadChoixDuJour() {
     }
   } catch (e) {
     console.warn('Impossible de charger le choix du jour', e);
+    montrerChoixDuJourIndisponible(heroEl);
   }
+}
+
+// Le squelette de chargement du hero n'est retiré que par un rendu réussi.
+// Sans ce repli, une API en panne ou un appareil hors-ligne laissait le
+// miroitement tourner INDÉFINIMENT — l'utilisateur attend un contenu qui
+// n'arrivera jamais, sans le moindre indice. Les 4 carrousels géraient déjà
+// leur échec (ils se masquent, voir loadCarousel) ; le hero, non.
+// Il est masqué plutôt que remplacé par un message : c'est une suggestion du
+// jour, pas une donnée que l'utilisateur a demandée — signaler son absence
+// par une erreur serait disproportionné.
+function montrerChoixDuJourIndisponible(heroEl) {
+  heroEl.innerHTML = '';
+  // On masque le BLOC (surtitre « Choix du jour » + carte), pas seulement la
+  // carte : masquer la carte seule laisserait le surtitre flotter au-dessus
+  // d'un vide de 24px. C'est exactement ce que font déjà les 4 carrousels,
+  // qui masquent `carousel-block-*` et non la seule rangée d'affiches.
+  blocChoixDuJour(heroEl).style.display = 'none';
+  delete heroEl.dataset.itemId;
+  delete heroEl.dataset.mediaType;
+}
+
+// Le conteneur à masquer/réafficher. Repli sur la carte elle-même si le
+// balisage venait à changer, pour ne jamais planter sur un null.
+function blocChoixDuJour(heroEl) {
+  return heroEl.closest('.choix-du-jour-wrap') || heroEl;
 }
 
 function renderChoixDuJour(item) {
   const heroEl = document.getElementById('choix-du-jour-card');
   if (!heroEl) return;
   const posterUrl = item.poster_path ? tmdbImage(item.poster_path, 'w780') : '';
+  blocChoixDuJour(heroEl).style.display = '';  // annule un masquage laissé par un échec précédent
   heroEl.innerHTML = `
-    <div class="choix-du-jour-bg" style="background-image:url('${posterUrl}')"></div>
-    <div class="choix-du-jour-overlay"></div>
-    <div class="choix-du-jour-content">
-      <div class="choix-du-jour-title">${escAttr(item.title)}</div>
-      ${item.director ? `<div class="choix-du-jour-director">Réalisé par ${escAttr(item.director)}</div>` : ''}
-    </div>
+    <span class="choix-du-jour-bg" style="background-image:url('${posterUrl}')"></span>
+    <span class="choix-du-jour-overlay"></span>
+    <span class="choix-du-jour-content">
+      <span class="choix-du-jour-title">${escAttr(item.title)}</span>
+      ${item.director ? `<span class="choix-du-jour-director">Réalisé par ${escAttr(item.director)}</span>` : ''}
+    </span>
   `;
   heroEl.dataset.itemId = String(item.id);
   heroEl.dataset.mediaType = discoverMediaType;
@@ -123,11 +151,6 @@ document.getElementById('choix-du-jour-card')?.addEventListener('click', functio
   if (!id) return;
   if (this.dataset.mediaType === 'tv') openTvDetailSheet(id);
   else openMovieDetailSheet(id);
-});
-document.getElementById('choix-du-jour-card')?.addEventListener('keydown', function(e) {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  e.preventDefault();
-  this.click();
 });
 
 // ═══════════════════════════════════════════
@@ -282,11 +305,11 @@ async function loadCarousel(key) {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
     rowEl.innerHTML = items.map(item => `
-      <div class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}" role="button" tabindex="0" aria-label="Voir la fiche de ${escAttr(item.title)}">
+      <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path
           ? `<img src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
           : ''}
-      </div>`).join('');
+      </button>`).join('');
   } catch (e) {
     console.warn(`Impossible de charger le carrousel ${key}`, e);
     blockEl.style.display = 'none';
@@ -301,13 +324,8 @@ document.getElementById('view-discover')?.addEventListener('click', (e) => {
   if (poster.dataset.mediaType === 'tv') openTvDetailSheet(poster.dataset.itemId);
   else openMovieDetailSheet(poster.dataset.itemId);
 });
-document.getElementById('view-discover')?.addEventListener('keydown', (e) => {
-  if (e.key !== 'Enter' && e.key !== ' ') return;
-  const poster = e.target.closest('.poster-min[data-item-id]');
-  if (!poster) return;
-  e.preventDefault();
-  poster.click();
-});
+// Aucun gestionnaire clavier n'est nécessaire : .poster-min est un vrai
+// <button>, activé nativement à Entrée et Espace.
 
 // ── Base diversifiée pour "D'après ton historique" (repris de l'ancienne
 // pile de suggestions, généralisé film/série) ──
