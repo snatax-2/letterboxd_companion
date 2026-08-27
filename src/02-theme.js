@@ -104,6 +104,7 @@ function applySettings(settings) {
     const isSelected = tc.dataset.theme === th;
     tc.classList.toggle('selected', isSelected);
     tc.setAttribute('aria-checked', String(isSelected));
+    tc.tabIndex = isSelected ? 0 : -1;
   });
 }
 
@@ -125,9 +126,11 @@ function selectThemeCard(card) {
   document.querySelectorAll('.theme-card').forEach(tc => {
     tc.classList.remove('selected');
     tc.setAttribute('aria-checked', 'false');
+    tc.tabIndex = -1;
   });
   card.classList.add('selected');
   card.setAttribute('aria-checked', 'true');
+  card.tabIndex = 0;
   withThemeTransition(() => {
     // Même remarque que dans applySettings : les polices du thème choisi
     // doivent être demandées, elles ne sont plus toutes préchargées.
@@ -146,15 +149,29 @@ document.getElementById('theme-grid').addEventListener('click', e => {
   selectThemeCard(card);
 });
 
-// Accessibilité clavier : les cartes de thème ont role="radio" (voir index.html),
-// donc Entrée et Espace doivent les activer comme un vrai bouton radio.
+// Accessibilité clavier : groupe radio avec roving tabindex. Une seule carte
+// participe à l'ordre Tab ; les flèches, Début et Fin déplacent ET activent la
+// sélection comme un groupe de boutons radio natif.
 document.getElementById('theme-grid').addEventListener('keydown', e => {
   const card = e.target.closest('.theme-card');
   if (!card) return;
   if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
     selectThemeCard(card);
+    return;
   }
+  const cards = Array.from(document.querySelectorAll('.theme-card'));
+  const currentIndex = cards.indexOf(card);
+  let nextIndex;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextIndex = (currentIndex + 1) % cards.length;
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') nextIndex = (currentIndex - 1 + cards.length) % cards.length;
+  else if (e.key === 'Home') nextIndex = 0;
+  else if (e.key === 'End') nextIndex = cards.length - 1;
+  else return;
+  e.preventDefault();
+  const nextCard = cards[nextIndex];
+  selectThemeCard(nextCard);
+  nextCard.focus();
 });
 
 const OWNED_PROVIDERS_KEY = 'lbx_owned_providers';

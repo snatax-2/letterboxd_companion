@@ -163,3 +163,24 @@ test('Modale de confirmation ouverte', async ({ page }) => {
   const bad = seriousOrCritical(results);
   expect(bad, formatViolations(bad)).toHaveLength(0);
 });
+
+test('le groupe de thèmes utilise un roving tabindex et les flèches', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.goto('/');
+  await page.click('#settings-btn');
+
+  const selected = page.locator('.theme-card[aria-checked="true"]');
+  await expect(selected).toHaveAttribute('tabindex', '0');
+  await expect(page.locator('.theme-card[tabindex="0"]')).toHaveCount(1);
+
+  await selected.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.theme-card[data-theme="carnet"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.theme-card[data-theme="carnet"]')).toBeFocused();
+  await expect(page.locator('.theme-card[tabindex="0"]')).toHaveCount(1);
+
+  await page.keyboard.press('End');
+  await expect(page.locator('.theme-card[data-theme="system"]')).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.theme-card[data-theme="default"]')).toHaveAttribute('aria-checked', 'true');
+});

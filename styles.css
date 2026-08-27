@@ -1060,7 +1060,7 @@
     border-radius: var(--radius-sm); color: var(--text); padding: 8px 12px;
     font-size: 0.82rem; font-family: var(--font-heading); cursor: pointer;
     display: flex; align-items: center; gap: 6px;
-    transition: all var(--dur-fast);
+    transition: transform var(--dur-fast), background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
     box-shadow: var(--box-shadow-style, none);
   }
   .icon-btn:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text-hi); }
@@ -1281,7 +1281,7 @@
   .btn-new-review {
     background: var(--orange); border: 1px solid var(--orange);
     color: var(--solid-fill-text); padding: 4px 10px; border-radius: 12px;
-    font-size: 0.65rem; cursor: pointer; transition: all var(--dur-base);
+    font-size: 0.65rem; cursor: pointer; transition: filter var(--dur-base), transform var(--dur-base), opacity var(--dur-base);
     font-family: var(--font-heading); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
     font-style: normal;
   }
@@ -1324,7 +1324,8 @@
 
   .heart-btn {
     background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all var(--dur-base);
+    color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer;
+    transition: background-color var(--dur-base), border-color var(--dur-base), color var(--dur-base), transform var(--dur-base);
     display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
@@ -1349,12 +1350,11 @@
   .ctx-tag, .filter-btn, .genre-chip {
     border: 1px solid var(--border); border-radius: var(--radius-pill);
     font-family: var(--font-heading); font-weight: 600; cursor: pointer;
-    transition: all var(--dur-fast);
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
   }
   .ctx-tag {
     background: var(--surface2);
     padding: 9px 12px; font-size: 0.72rem; color: var(--text-mid);
-    transition: all var(--dur-fast);
   }
   .ctx-tag:hover { color: var(--text-hi); border-color: var(--border-hi); }
   .ctx-tag.active {
@@ -1682,7 +1682,8 @@
   .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
   .mode-tab {
     flex: 1; text-align: center; padding: 7px; border: none; border-radius: var(--radius-sm); cursor: pointer;
-    font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent; transition: all var(--dur-fast);
+    font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
     display: flex; align-items: center; justify-content: center; gap: 6px;
     position: relative; z-index: 1;
   }
@@ -2250,7 +2251,7 @@
     flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
     font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap;
-    transition: all var(--dur-fast);
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
   }
   .wl-sort-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
   /* --gold-fill-text : sur Moderne, --gold est un ocre PROFOND alors que ces
@@ -2261,7 +2262,8 @@
     flex-shrink: 0; padding: 6px 12px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
     font-size: 0.75rem; font-weight: 700; cursor: pointer; white-space: nowrap;
-    display: flex; align-items: center; gap: 4px; transition: all var(--dur-fast);
+    display: flex; align-items: center; gap: 4px;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
   }
   .wl-list-pill:hover { border-color: var(--border-hi); color: var(--text-hi); }
   .wl-list-pill.active { background: var(--blue); border-color: var(--blue); color: var(--blue-fill-text); }
@@ -2314,7 +2316,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: opacity var(--dur-base), transform var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-3);}
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -2544,8 +2546,8 @@
   .onboarding-slide p { font-size: 0.9rem; color: var(--text-mid); line-height: 1.55; }
 
   .onboarding-dots { display: flex; justify-content: center; gap: 7px; padding: 4px 0 16px; }
-  .onboarding-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border-hi); transition: all var(--dur-base) var(--ease-out); }
-  .onboarding-dot.active { background: var(--orange); width: 20px; border-radius: 4px; }
+  .onboarding-dot { width: 20px; height: 7px; border-radius: 4px; background: var(--border-hi); transform: scaleX(.35); transition: background-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+  .onboarding-dot.active { background: var(--orange); transform: scaleX(1); }
 
   .onboarding-actions { display: flex; justify-content: space-between; align-items: center; padding: 0 24px 24px; }
   .onboarding-skip { background: none; border: none; color: var(--text-mid); font-size: 0.82rem; cursor: pointer; padding: 8px; }
@@ -2635,7 +2637,7 @@
   /* min-height 44px (WCAG 2.5.5, AAA) : mesuré à 34px avant correction sur
      #modal-confirm/#modal-cancel — trop juste pour les boutons de confirmation
      d'actions destructrices, où une pression manquée compte double. */
-  .modal-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; min-height: 44px; font-family: var(--font-heading); font-size: 0.85rem; cursor: pointer; background: var(--bg); color: var(--text); font-weight: 600; letter-spacing: 0.04em; transition: all var(--dur-fast); }
+  .modal-btn { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 16px; min-height: 44px; font-family: var(--font-heading); font-size: 0.85rem; cursor: pointer; background: var(--bg); color: var(--text); font-weight: 600; letter-spacing: 0.04em; transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast), opacity var(--dur-fast); }
 
   /* Menu d'actions rapides (appui long sur un film de l'historique) */
   .action-sheet-box { max-width: 340px; }
@@ -2876,7 +2878,8 @@
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 8px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
     background: var(--surface2); color: var(--text-hi); font-family: var(--font-heading);
-    font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all var(--dur-fast); white-space: nowrap;
+    font-size: 0.72rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast), opacity var(--dur-fast);
   }
   .mds-action-btn:hover { border-color: var(--orange); color: var(--orange); }
   .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text); }
@@ -3137,7 +3140,8 @@
   .platform-chip {
     padding: 7px 14px; border-radius: var(--radius-pill); border: 1px solid var(--border);
     background: var(--surface2); color: var(--text-mid); font-family: var(--font-heading);
-    font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all var(--dur-fast);
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
     min-height: 44px; display: inline-flex; align-items: center;
   }
   .platform-chip:hover { border-color: var(--border-hi); color: var(--text-hi); }
