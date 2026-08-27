@@ -1736,6 +1736,71 @@
   [data-theme^="ludex-"] .tv-season-start-prompt { border-left-color: var(--border-hi); }
 
   /* ═══════════════════════════════════════════
+     P8 · MOTION — gravité et mise au point
+     ═══════════════════════════════════════════
+     L'essentiel du mouvement est déjà posé par les phases précédentes : le
+     chargement d'affiche flou vers net et le push-in au survol en P3, le
+     dévoilement du libellé d'onglet et la translation de la pastille en P2,
+     les transitions de bascule Films/Séries d'origine. Ce bloc ne fait que
+     compléter les deux moments que la spec nomme explicitement et qui
+     manquaient encore.
+
+     RIEN ici ne supprime une animation existante. §44 est explicite : la
+     nouvelle philosophie de motion « ne doit PAS servir à supprimer les
+     animations identitaires » de la navigation, du bouton NOTER et du switch.
+     Les six keyframes d'icônes sont intactes depuis P2. */
+
+  /* ── Étoile : remplissage ~200ms (§7.1) ──
+     Le mécanisme n'est pas retouché : un seul glyphe vectoriel révélé par
+     clip-path, mis au point de longue date pour éviter la jointure visible
+     au milieu de l'étoile. Seule la durée passe de --dur-fast (140ms) aux
+     ~200ms demandés, avec la courbe signature. L'étoile vide s'allège pour
+     lire comme un contour patiné plutôt qu'une forme grise pleine. */
+  [data-theme^="ludex-"] .rating-stars label.left-half::after {
+    transition: clip-path 200ms var(--ease-out);
+  }
+  [data-theme^="ludex-"] .rating-stars label.left-half::before {
+    opacity: 0.35;
+  }
+
+  /* ── Ouverture de fiche : le fond recule (§11, §12) ──
+     Obtenu par :has() plutôt qu'en posant une classe sur <body> depuis les
+     quatre points d'ouverture et les quatre de fermeture : moins de JS à
+     tenir synchronisé, et aucun risque d'état résiduel si une fermeture
+     empruntait un chemin oublié.
+
+     Le flou du fond, lui, n'est PAS appliqué ici. .modal-overlay porte déjà
+     un backdrop-filter, qui ne compose que la zone réellement visible ;
+     flouter <main> reviendrait à traiter un document qui fait plusieurs
+     milliers de pixels de haut sur l'onglet Profil, pour un résultat
+     identique à l'écran et un coût bien plus lourd sur mobile.
+
+     <main> ne contient ni la barre de navigation ni les feuilles — toutes
+     deux sont ses sœurs dans le DOM. La transformation ne crée donc aucun
+     bloc conteneur qui piégerait un position: fixed. */
+  html[data-theme^="ludex-"] main,
+  html[data-theme^="ludex-"] .app-header {
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  html[data-theme^="ludex-"] body:has(.modal-overlay.open) main,
+  html[data-theme^="ludex-"] body:has(.modal-overlay.open) .app-header {
+    transform: scale(0.96);
+  }
+
+  /* ── prefers-reduced-motion ──
+     §12 et §44 : réduire ou désactiver blur, parallax et transitions de
+     scale quand le système le demande. Les blocs des phases précédentes
+     couvrent déjà le chargement d'affiche et le push-in ; celui-ci ferme les
+     deux ajouts ci-dessus. */
+  @media (prefers-reduced-motion: reduce) {
+    html[data-theme^="ludex-"] main,
+    html[data-theme^="ludex-"] .app-header { transition: none; }
+    html[data-theme^="ludex-"] body:has(.modal-overlay.open) main,
+    html[data-theme^="ludex-"] body:has(.modal-overlay.open) .app-header { transform: none; }
+    [data-theme^="ludex-"] .rating-stars label.left-half::after { transition: none; }
+  }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
