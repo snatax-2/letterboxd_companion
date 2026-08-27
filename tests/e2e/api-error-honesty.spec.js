@@ -25,6 +25,9 @@ test('recherche watchlist : meme comportement', async ({ page }) => {
   }));
   await page.goto('/');
   await page.click('#nav-watchlist');
+  // Le champ d'ajout vit derrière une loupe qui se déplie : il faut l'ouvrir
+  // avant d'écrire dedans (voir a-voir-recherche-repliable.spec.js).
+  await page.click('#wl-search-toggle');
   await page.fill('#watchlist-input', 'Dune');
   await page.waitForTimeout(500);
 

@@ -1056,3 +1056,36 @@ document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
 renderWatchlistTabs('tv');
 renderTvWatchlist();
 
+// ═══════════════════════════════════════════
+//  À VOIR — LE CHAMP D'AJOUT PASSE DERRIÈRE UNE LOUPE
+// ═══════════════════════════════════════════
+// Même motif que Découvrir et Historique, même mécanique partagée
+// (src/03c-collapsible-search.js). Deux instances, une par section, parce que
+// chaque média a son propre champ et sa propre liste de suggestions.
+//
+// La loupe cède la place au TITRE de la section, pas à la bascule
+// Films/Séries : cette bascule est partagée par les deux sections, alors que
+// le champ d'ajout est propre à chacune. Une loupe posée sur la bascule
+// aurait dû deviner quelle section elle vise.
+//
+// Ici, refermer ne détruit rien : le champ d'ajout ne filtre pas la liste, il
+// ne fait qu'alimenter les suggestions. On le vide quand même, pour ne pas
+// rouvrir sur une saisie abandonnée il y a trois écrans.
+[
+  { ligne: 'wl-movie-search-line', toggle: 'wl-search-toggle', input: wlInput,
+    close: 'wl-search-close', suggestions: wlSuggestEl },
+  { ligne: 'wl-tv-search-line', toggle: 'wl-tv-search-toggle', input: wlTvInput,
+    close: 'wl-tv-search-close', suggestions: wlTvSuggestEl },
+].forEach(({ ligne, toggle, input, close, suggestions }) => {
+  if (!input) return;
+  installCollapsibleSearch({
+    line: document.getElementById(ligne),
+    toggle: document.getElementById(toggle),
+    input,
+    closeBtn: document.getElementById(close),
+    onFermer() {
+      input.value = '';
+      if (suggestions) suggestions.style.display = 'none';
+    },
+  });
+});

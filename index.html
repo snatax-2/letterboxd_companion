@@ -885,10 +885,34 @@ window.loadThemeFonts = function (theme) {
         </div>
 
         <div id="wl-movie-section">
-          <h3 class="card-title">
-            <span id="watchlist-active-name">À voir</span>
-            <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
-          </h3>
+          <!-- Recherche repliable : même motif que Découvrir et Historique
+               (src/03c-collapsible-search.js). Ici la loupe cède la place au
+               TITRE de la section plutôt qu'à une bascule Films/Séries : la
+               bascule de cet écran est partagée par les deux sections, alors
+               que le champ d'ajout, lui, est propre à chacune. -->
+          <div class="search-line search-line-wl" id="wl-movie-search-line">
+            <h3 class="card-title search-line-shrink">
+              <span id="watchlist-active-name">À voir</span>
+              <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
+            </h3>
+
+            <button type="button" class="search-line-toggle" id="wl-search-toggle"
+                    aria-label="Rechercher un film à ajouter"
+                    aria-expanded="false" aria-controls="watchlist-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+
+            <div class="search-line-field" id="wl-search-field">
+              <svg class="search-line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Un film à ajouter…" autocomplete="off" aria-label="Rechercher un film à ajouter">
+              <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
+              <button type="button" class="search-line-close" id="wl-search-close" aria-label="Fermer la recherche">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="wl-suggestions" id="wl-suggestions"></div>
+          </div>
           <div class="wl-lists-row" id="wl-lists-row"></div>
           <div class="wl-sort-row" id="wl-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récents</button>
@@ -904,21 +928,40 @@ window.loadThemeFonts = function (theme) {
             </summary>
             <div class="genre-chips" id="wl-genre-chips"></div>
           </details>
-          <div class="watchlist-add-row wl-suggest-wrap">
-            <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
-            <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
-            <div class="wl-suggestions" id="wl-suggestions"></div>
-          </div>
           <div class="watchlist-scroller" id="watchlist-list">
             <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les films que tu veux voir.</div>
           </div>
         </div>
 
         <div id="wl-tv-section" style="display:none;">
-          <h3 class="card-title">
-            <span id="wl-tv-active-name">À voir</span>
-            <span class="card-title-badge" id="wl-tv-count-badge">0 série</span>
-          </h3>
+          <!-- Recherche repliable : même motif que Découvrir et Historique
+               (src/03c-collapsible-search.js). Ici la loupe cède la place au
+               TITRE de la section plutôt qu'à une bascule Films/Séries : la
+               bascule de cet écran est partagée par les deux sections, alors
+               que le champ d'ajout, lui, est propre à chacune. -->
+          <div class="search-line search-line-wl" id="wl-tv-search-line">
+            <h3 class="card-title search-line-shrink">
+              <span id="wl-tv-active-name">À voir</span>
+              <span class="card-title-badge" id="wl-tv-count-badge">0 série</span>
+            </h3>
+
+            <button type="button" class="search-line-toggle" id="wl-tv-search-toggle"
+                    aria-label="Rechercher une série à ajouter"
+                    aria-expanded="false" aria-controls="wl-tv-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+
+            <div class="search-line-field" id="wl-tv-search-field">
+              <svg class="search-line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" class="watchlist-add-input" id="wl-tv-input" placeholder="Une série à ajouter…" autocomplete="off" aria-label="Rechercher une série à ajouter">
+              <button class="watchlist-add-btn" id="wl-tv-add-btn">+ Ajouter</button>
+              <button type="button" class="search-line-close" id="wl-tv-search-close" aria-label="Fermer la recherche">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <div class="wl-suggestions" id="wl-tv-suggestions"></div>
+          </div>
           <div class="wl-lists-row" id="wl-tv-lists-row"></div>
           <div class="wl-sort-row" id="wl-tv-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récentes</button>
@@ -933,11 +976,6 @@ window.loadThemeFonts = function (theme) {
             </summary>
             <div class="genre-chips" id="wl-tv-genre-chips"></div>
           </details>
-          <div class="watchlist-add-row wl-suggest-wrap">
-            <input type="text" class="watchlist-add-input" id="wl-tv-input" placeholder="Rechercher une série à ajouter..." autocomplete="off">
-            <button class="watchlist-add-btn" id="wl-tv-add-btn">+ Ajouter</button>
-            <div class="wl-suggestions" id="wl-tv-suggestions"></div>
-          </div>
           <div class="watchlist-scroller" id="wl-tv-list">
             <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>
           </div>

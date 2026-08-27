@@ -1965,6 +1965,23 @@
      c'est autant de gagné avant la première affiche. */
   .search-line-historique { margin-bottom: 18px; }
 
+  /* ── À voir ──
+     Le titre de section cède la place, et emmène avec lui le filet qui le
+     souligne : c'est le trait du champ qui le remplace pendant la recherche,
+     au même endroit. La ligne reprend l'écart que .card-title portait. */
+  .search-line-wl { margin-bottom: var(--card-title-gap); }
+  /* Le bouton d'ajout voyage avec le champ : c'est sa paire, séparé de lui il
+     ne voudrait plus rien dire. Il se contente de la place qu'il lui faut.
+     width:auto est indispensable : sous 860px, .watchlist-add-btn passait à
+     width:100% pour l'ancienne disposition EMPILÉE (champ au-dessus, bouton
+     en dessous). Dans une ligne, cette largeur mangeait tout et poussait le
+     champ à zéro. */
+  .search-line-field .watchlist-add-btn { flex: 0 0 auto; width: auto; }
+  /* Les suggestions se posent sous la ligne entière. .wl-suggest-wrap ne les
+     porte plus — c'est .search-line qui fait désormais le contexte de
+     positionnement (position: relative). */
+  .search-line > .wl-suggestions { top: 100%; }
+
   /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
      alors un changement d'état instantané — la fonction reste entière. */
   @media (prefers-reduced-motion: reduce) {
