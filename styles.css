@@ -1230,6 +1230,184 @@
   }
 
   /* ═══════════════════════════════════════════
+     P4 · À VOIR · NOTER · PROFIL
+     ═══════════════════════════════════════════
+     Propagation de la direction validée sur Découvrir. Aucune fonctionnalité
+     ne bouge : listes multiples, tris, filtres, swipe, pondérations, mode
+     focus, duels, wrapped, export/import — tout reste en place et branché de
+     la même façon.
+
+     Fil conducteur des trois écrans : l'or quitte tout ce qui n'est PAS de la
+     notation. Il restait sur le tri actif de la watchlist, l'avatar du
+     profil, l'accordéon des trophées et les barres du graphique mensuel —
+     quatre endroits où il ne signifiait rien (§2.1 : « l'or reste réservé aux
+     étoiles, scores ou micro-accents de notation »). */
+
+  /* ── Le graphique mensuel n'est pas de la notation ──
+     --chart-movie valait var(--gold) par héritage : un histogramme entier en
+     or, pour un comptage de films par mois. Les deux séries doivent rester
+     distinctes (invariant testé par jetons-semantiques) — elles le sont
+     toujours, mais par un contraste de valeur neutre plutôt que par la
+     couleur réservée aux notes. */
+  [data-theme="ludex-dark"] { --chart-movie: #B4B4B9; }
+  [data-theme="ludex-light"] { --chart-movie: #514F4A; }
+
+  /* ═══ À VOIR ═══
+     « La watchlist devient une bibliothèque visuelle. Les affiches existent
+     presque seules » (§6). */
+
+  /* Tris : même vocabulaire que les filtres de l'Historique — du texte
+     souligné. L'actif se marque par le contraste ET par le filet, jamais par
+     la seule couleur (§14). */
+  [data-theme^="ludex-"] .wl-sort-row { gap: 18px; }
+  [data-theme^="ludex-"] .wl-sort-btn {
+    background: none; border: 0; border-radius: 0;
+    border-bottom: 1px solid transparent;
+    padding: 6px 0; min-height: 44px;
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; color: var(--text); font-weight: 600;
+  }
+  [data-theme^="ludex-"] .wl-sort-btn:hover { color: var(--text-hi); border-color: transparent; }
+  [data-theme^="ludex-"] .wl-sort-btn.active {
+    background: none; color: var(--text-hi);
+    border-bottom-color: var(--text-hi);
+  }
+  [data-theme^="ludex-"] .wl-sort-btn-filter { margin-left: auto; }
+
+  /* Les listes nommées restent de vraies étiquettes — elles portent un nom
+     que l'utilisateur a choisi, elles ont donc droit à une forme. Mais
+     rectangulaire et monochrome : l'aplat bleu était le dernier accent
+     coloré de cet écran. « Nouvelle liste » garde son contour en pointillés,
+     qui dit bien qu'il s'agit d'ajouter, pas de sélectionner. */
+  [data-theme^="ludex-"] .wl-list-pill {
+    background: none; border-radius: 2px; color: var(--text);
+    border-color: var(--border);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; min-height: 44px;
+  }
+  [data-theme^="ludex-"] .wl-list-pill.active {
+    background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
+  }
+
+  /* Champ d'ajout : une ligne et une action en ghost, pas un bloc plein. */
+  [data-theme^="ludex-"] .watchlist-add-input {
+    background: transparent; border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+  }
+  [data-theme^="ludex-"] .watchlist-add-input:focus { border-bottom-color: var(--text-hi); }
+  [data-theme^="ludex-"] .watchlist-add-btn {
+    background: none; color: var(--text-hi);
+    border: 1px solid var(--border-hi); border-radius: 2px;
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; padding: 10px 14px; min-height: 44px;
+  }
+  [data-theme^="ludex-"] .watchlist-add-btn:hover { opacity: 1; border-color: var(--text-hi); }
+
+  /* L'affiche presque seule : plus de cadre, rayon d'affiche. overflow reste
+     hidden — le swipe s'appuie dessus pour masquer ses indices. */
+  [data-theme^="ludex-"] .wl-card {
+    background: transparent; border: 0; border-radius: 2px;
+  }
+
+  /* ═══ NOTER ═══
+     « Une mise en archive d'une œuvre, pas un formulaire administratif »
+     (§7). */
+
+  [data-theme^="ludex-"] .date-input {
+    background: transparent; border: 0;
+    border-bottom: 1px solid var(--border); border-radius: 0;
+    padding-left: 0; padding-right: 0;
+    font-family: var(--font-mono); font-size: var(--body-ed);
+    color: var(--text);
+  }
+  [data-theme^="ludex-"] .date-input:focus { border-bottom-color: var(--text-hi); }
+  [data-theme^="ludex-"] .heart-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: 2px;
+  }
+  [data-theme^="ludex-"] .focus-mode-toggle {
+    background: none; border: 1px solid var(--border);
+    border-radius: 2px; color: var(--text);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; min-height: 44px;
+  }
+  [data-theme^="ludex-"] .focus-mode-toggle[aria-pressed="true"] {
+    border-color: var(--text-hi); color: var(--text-hi);
+  }
+
+  /* Les valeurs de critère redeviennent de la micro-data lisible plutôt que
+     des pastilles encadrées : sept petites boîtes empilées, c'était l'effet
+     « formulaire » à lui tout seul. */
+  [data-theme^="ludex-"] .criterion-val {
+    background: none; border: 0; border-radius: 0; padding: 2px 0;
+    font-size: 1rem; text-align: right;
+  }
+  [data-theme^="ludex-"] .criterion-val.affect-val { background: none; border: 0; }
+  [data-theme^="ludex-"] .weight-badge {
+    background: none; border: 0; border-radius: 0; padding: 0;
+    color: var(--text); font-size: var(--micro); letter-spacing: 0.04em;
+  }
+  [data-theme^="ludex-"] .criterion-label {
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text-mid);
+  }
+  [data-theme^="ludex-"] .criterion-block + .criterion-block { margin-top: 22px; }
+
+  /* ═══ PROFIL ═══
+     « Une page de données éditorialisée : grands chiffres, beaucoup d'air,
+     graphiques intégrés sans cartes génériques » (§10). */
+
+  /* Les trois chiffres clés sortent de leurs boîtes. C'est leur TAILLE qui
+     les distingue maintenant, pas un cadre autour. */
+  [data-theme^="ludex-"] .profile-hero-bento-card {
+    background: none; border: 0; border-radius: 0;
+    padding: 0; text-align: left;
+  }
+  [data-theme^="ludex-"] .profile-hero-bento { gap: 20px 16px; }
+  [data-theme^="ludex-"] .profile-hero-header { align-items: flex-start; gap: 18px; }
+  [data-theme^="ludex-"] .kpi-val {
+    font-family: var(--font-display);
+    font-style: normal; font-weight: 600;
+    font-size: 2.4rem; line-height: 1;
+    letter-spacing: -0.02em; margin-bottom: 8px;
+  }
+  [data-theme^="ludex-"] .profile-hero-bento-wide .kpi-val { font-size: 1.7rem; }
+  /* La carte large empilait son libellé et sa valeur sur une même ligne, l'un
+     à gauche l'autre à droite, alors que les deux autres chiffres clés
+     s'empilent. Elle s'aligne sur eux. */
+  [data-theme^="ludex-"] .profile-hero-bento-wide {
+    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 8px;
+  }
+  /* Le temps visionné n'est ni une note ni une série de graphique : il n'a pas
+     à porter la couleur d'accent. */
+  [data-theme="ludex-dark"], [data-theme="ludex-light"] { --kpi-time-color: var(--text-hi); }
+  [data-theme^="ludex-"] .kpi-label {
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text);
+  }
+  /* L'avatar n'est pas une note : il perd l'or. */
+  [data-theme^="ludex-"] .profile-hero-avatar {
+    background: none; border: 1px solid var(--border-hi); color: var(--text-mid);
+  }
+  /* Le titre de sous-section garde son filet : ici il sépare deux graphiques
+     à l'intérieur d'un même bloc, là où l'espace seul deviendrait ambigu. */
+  [data-theme^="ludex-"] .dash-box-title {
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text); border-bottom-color: var(--border);
+    padding-bottom: 8px; margin-bottom: 16px;
+  }
+  [data-theme^="ludex-"] .dashboard-grid { gap: 28px; }
+  /* L'accordéon des trophées : un dépliant, pas une alerte. */
+  [data-theme^="ludex-"] .badges-accordion summary {
+    color: var(--text-mid);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; min-height: 44px;
+  }
+  [data-theme^="ludex-"] .badges-accordion summary:hover { color: var(--text-hi); }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
@@ -3977,10 +4155,24 @@
   .month-chart-bar.movie { background: var(--chart-movie, var(--gold)); }
   .month-chart-bar.tv { background: var(--chart-tv, var(--blue)); }
   .month-chart-label { font-size: 0.6rem; color: var(--text-mid); font-family: var(--font-mono); }
+  /* Reprises telles quelles des attributs style= qui vivaient dans le
+     balisage : une couleur de présentation n'a rien à faire en dur dans le
+     HTML, un thème ne pouvait pas la surcharger. Valeurs inchangées, donc
+     rendu inchangé pour les six thèmes historiques. */
+  #kpi-avg { color: var(--gold); }
+  #profile-hero-watch-time { color: var(--kpi-time-color, var(--blue)); }
+
   .month-chart-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 0.68rem; color: var(--text-mid); justify-content: center; }
   .month-chart-dot { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: middle; }
-  .month-chart-dot.movie { background: var(--gold); }
-  .month-chart-dot.tv { background: var(--blue); }
+  /* Bug antérieur : la légende tirait ses couleurs de --gold/--blue alors
+     que les barres tirent les leurs de --chart-movie/--chart-tv. Sur le thème
+     par défaut, où --gold et --blue valent la MÊME couleur (accent unique
+     assumé), les deux pastilles de légende étaient donc identiques — et
+     aucune ne correspondait aux barres, dont la série Séries est un bleu
+     dédié. C'est exactement le défaut déjà corrigé pour les barres, laissé en
+     place sur la légende. Elles lisent maintenant les mêmes jetons. */
+  .month-chart-dot.movie { background: var(--chart-movie, var(--gold)); }
+  .month-chart-dot.tv { background: var(--chart-tv, var(--blue)); }
 
   /* Ludex 2.0 : accordéon des succès (voir index.html, #profile-badges-card)
      — même pattern natif <details>/<summary> déjà utilisé par
