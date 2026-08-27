@@ -19,6 +19,21 @@ const SHOW_3_SEASONS = { id: 4607, name: 'True Detective', seasons: [
 ] };
 const ONE_EPISODE = { episodes: [{ episode_number: 1, name: 'Ep 1', air_date: '2014-01-12', runtime: 55 }] };
 
+// Depuis que le champ titre de Noter se replie une fois un sujet retenu
+// (src/21-rating-search-fold.js), revenir à la recherche demande de rouvrir
+// la ligne. Ce n'est pas un contournement de test : c'est le geste prévu, la
+// loupe EST le « changer de titre ». Écrit comme un si, parce que ces tests
+// cherchent tantôt avec le formulaire vierge (ligne déjà ouverte), tantôt
+// après avoir noté une saison (ligne repliée).
+async function rechercherSerie(page, titre) {
+  const loupe = page.locator('#tv-search-toggle');
+  if (await loupe.isVisible()) {
+    await loupe.click();
+    await page.waitForTimeout(400);
+  }
+  await page.fill('#tv-search', titre);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 1600 });
   await page.addInitScript(() => {
@@ -57,7 +72,7 @@ async function selectShowAndSeason(page, seasonNumber = 1) {
   await page.click('#nav-rating');
   await page.waitForTimeout(1400); // ecran de demarrage, duree minimale volontaire
   await page.click('#tab-media-tv');
-  await page.fill('#tv-search', 'True Detective');
+  await rechercherSerie(page, 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
@@ -91,7 +106,7 @@ test('sauvegarde une note de saison et la repropose au retour, saison vierge res
 
   // Changer de saison passe maintenant par la fiche (plus de puces directes
   // dans Noter) — on y retourne via une nouvelle recherche.
-  await page.fill('#tv-search', 'True Detective');
+  await rechercherSerie(page, 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
@@ -101,7 +116,7 @@ test('sauvegarde une note de saison et la repropose au retour, saison vierge res
   await page.waitForTimeout(500);
   await expect(page.locator('#scenario')).toHaveValue('5'); // pas de note existante
 
-  await page.fill('#tv-search', 'True Detective');
+  await rechercherSerie(page, 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
@@ -124,7 +139,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('10.0/10');
   await expect(page.locator('#tv-show-average')).toContainText('1 saison notée');
 
-  await page.fill('#tv-search', 'True Detective');
+  await rechercherSerie(page, 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
@@ -141,7 +156,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('2 saisons notées');
 
   // Saison 3 jamais notee : la selectionner ne doit pas changer la moyenne
-  await page.fill('#tv-search', 'True Detective');
+  await rechercherSerie(page, 'True Detective');
   await page.waitForTimeout(500);
   await page.click('.suggestion-item');
   await page.waitForTimeout(600);
