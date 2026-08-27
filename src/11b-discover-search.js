@@ -3,7 +3,9 @@
 // ═══════════════════════════════════════════
 // Une loupe dans le coin de la ligne de bascule qui se déplie en champ de
 // recherche, et donne accès à la fiche d'un film, d'une série ou d'une
-// personne.
+// personne. Le dépliage lui-même vient de installCollapsibleSearch
+// (03c-collapsible-search.js), partagé avec Historique et À voir ; ce fichier
+// ne porte que ce qui est propre à Découvrir.
 //
 // ── Pourquoi une loupe qui se déplie plutôt qu'un champ permanent ──
 // Découvrir est un écran de flânerie : l'action première est de regarder des
@@ -34,29 +36,6 @@
   let timer = null;
   let requeteEnCours = 0; // sert à ignorer une réponse arrivée après une plus récente
 
-  // ─── Ouverture / fermeture ────────────────────────────────────────────────
-  function ouvrir() {
-    if (topline.classList.contains('searching')) return;
-    topline.classList.add('searching');
-    toggle.setAttribute('aria-expanded', 'true');
-    // Le focus n'est donné qu'une fois le champ réellement dimensionné :
-    // sur iOS, focaliser un élément de largeur nulle fait remonter le clavier
-    // sans que le curseur soit visible au bon endroit.
-    requestAnimationFrame(() => input.focus());
-  }
-
-  function fermer({ rendreLeFocus = true } = {}) {
-    if (!topline.classList.contains('searching')) return;
-    topline.classList.remove('searching');
-    toggle.setAttribute('aria-expanded', 'false');
-    input.value = '';
-    input.setAttribute('aria-expanded', 'false');
-    clearTimeout(timer);
-    requeteEnCours++; // invalide une réponse encore en vol
-    masquerPanneau();
-    if (rendreLeFocus) toggle.focus();
-  }
-
   // Le contenu de flânerie (choix du jour, carrousels) s'efface tant qu'une
   // recherche est affichée : le laisser sous les résultats donnait une page à
   // deux sujets, où l'on faisait défiler ses réponses pour tomber sur des
@@ -77,25 +56,22 @@
     carte?.classList.add('discover-searching-active');
   }
 
-  toggle.addEventListener('click', ouvrir);
-  closeBtn?.addEventListener('click', () => fermer());
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      fermer();
-    }
+  const repliable = installCollapsibleSearch({
+    line: topline,
+    toggle,
+    input,
+    closeBtn,
+    // Le panneau de résultats déborde de la ligne : sans ça, cliquer DANS ses
+    // propres réponses compterait comme un clic extérieur.
+    zoneSupplementaire: () => panel,
+    onFermer() {
+      input.value = '';
+      clearTimeout(timer);
+      requeteEnCours++; // invalide une réponse encore en vol
+      masquerPanneau();
+    },
   });
-
-  // Un clic hors de la zone referme, mais seulement si le champ est vide :
-  // refermer une recherche en cours parce que le doigt a effleuré le fond
-  // serait une perte de travail, pas une commodité.
-  document.addEventListener('click', (e) => {
-    if (!topline.classList.contains('searching')) return;
-    if (topline.contains(e.target) || panel.contains(e.target)) return;
-    if (input.value.trim() !== '') return;
-    fermer({ rendreLeFocus: false });
-  });
+  const fermer = (opts) => repliable?.fermer(opts);
 
   // ─── Recherche ────────────────────────────────────────────────────────────
   input.addEventListener('input', () => {

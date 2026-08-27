@@ -1837,34 +1837,36 @@
   }
 
   /* ═══════════════════════════════════════════
-     DÉCOUVRIR — RECHERCHE UNIFIÉE
+     RECHERCHE REPLIABLE — MÉCANIQUE PARTAGÉE
      ═══════════════════════════════════════════
-     Une loupe qui se déplie en champ de recherche. Voir
-     src/11b-discover-search.js pour le comportement et le raisonnement.
+     Une loupe qui se déplie en champ de recherche, au bout d'une ligne de
+     contrôles. Motif inauguré par Découvrir, utilisé aussi par Historique et
+     À voir. Voir src/03c-collapsible-search.js pour le comportement.
 
      Ces règles ne sont PAS scopées aux thèmes Ludex : c'est une
      fonctionnalité, pas une couche de présentation, et elle doit fonctionner
      sur les six thèmes historiques tant qu'ils existent. Seules les valeurs
      viennent des jetons, donc chaque thème l'habille lui-même. */
 
-  .discover-topline {
+  .search-line {
     display: flex; align-items: center; gap: 8px;
     position: relative;
   }
-  /* La bascule occupe toute la place restante et se rétracte quand la
-     recherche s'ouvre. flex-basis à 0 avec overflow caché : elle se replie
-     sans passer à la ligne ni déformer ses deux boutons pendant le trajet. */
-  .discover-topline .mode-tabs {
+  /* L'élément qui cède la place (la bascule Films/Séries, ou le titre de la
+     carte) occupe toute la largeur restante et se rétracte quand la recherche
+     s'ouvre. flex-basis à 0 avec overflow caché : il se replie sans passer à
+     la ligne ni se déformer pendant le trajet. */
+  .search-line-shrink {
     flex: 1 1 auto; min-width: 0; margin-bottom: 0;
     transition: flex-grow var(--dur-base) var(--ease-out),
                 opacity var(--dur-fast) var(--ease-out);
   }
-  .discover-topline.searching .mode-tabs {
+  .search-line.searching .search-line-shrink {
     flex-grow: 0; flex-basis: 0; opacity: 0;
     overflow: hidden; pointer-events: none;
   }
 
-  .discover-search-toggle {
+  .search-line-toggle {
     flex: 0 0 auto;
     width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
@@ -1875,12 +1877,12 @@
                 color var(--dur-fast) var(--ease-out),
                 border-color var(--dur-fast) var(--ease-out);
   }
-  .discover-search-toggle:hover { color: var(--text-hi); border-color: var(--border-hi); }
-  .discover-search-toggle .icon { width: 19px; height: 19px; }
+  .search-line-toggle:hover { color: var(--text-hi); border-color: var(--border-hi); }
+  .search-line-toggle .icon { width: 19px; height: 19px; }
   /* La loupe ne disparaît pas du DOM : elle s'efface pendant que le champ
      prend sa place, ce qui donne le sentiment que l'une devient l'autre.
      visibility (et pas display) pour que la transition d'opacité ait lieu. */
-  .discover-topline.searching .discover-search-toggle {
+  .search-line.searching .search-line-toggle {
     opacity: 0; visibility: hidden; pointer-events: none;
     width: 0; border-width: 0; margin: 0;
     transition: opacity var(--dur-fast) var(--ease-out), visibility 0s linear var(--dur-fast);
@@ -1889,7 +1891,7 @@
   /* Le champ grandit depuis la droite, là où était la loupe, jusqu'à occuper
      toute la ligne. C'est ce trajet qui fait la continuité entre les deux
      états. */
-  .discover-search-field {
+  .search-line-field {
     position: absolute; right: 0; top: 0; bottom: 0;
     display: flex; align-items: center; gap: 8px;
     width: 44px; opacity: 0; pointer-events: none;
@@ -1898,26 +1900,50 @@
     transition: width var(--dur-base) var(--ease-out),
                 opacity var(--dur-fast) var(--ease-out);
   }
-  .discover-topline.searching .discover-search-field {
+  .search-line.searching .search-line-field {
     width: 100%; opacity: 1; pointer-events: auto;
   }
-  .discover-search-field-icon {
+  .search-line-icon {
     width: 18px; height: 18px; flex-shrink: 0; color: var(--text-mid);
   }
-  .discover-search-input {
+  /* Le champ hérite de rien : il est volontairement nu (pas de fond, pas de
+     cadre), c'est la ligne qui porte le trait. Il faut donc neutraliser
+     explicitement ce que .search-input / .watchlist-add-input posent sur les
+     champs qu'on déplace ici depuis Historique et À voir. */
+  .search-line-input,
+  .search-line-field .search-input,
+  .search-line-field .watchlist-add-input {
     flex: 1; min-width: 0;
-    background: none; border: 0; outline: none;
+    background: none; border: 0; outline: none; box-shadow: none;
     color: var(--text-hi); font-family: var(--font-body);
     font-size: 0.95rem; padding: 10px 0;
   }
-  .discover-search-input::placeholder { color: var(--text); }
-  .discover-search-close {
+  .search-line-input::placeholder,
+  .search-line-field .search-input::placeholder,
+  .search-line-field .watchlist-add-input::placeholder { color: var(--text); }
+  .search-line-close {
     flex-shrink: 0; width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
     background: none; border: 0; color: var(--text); cursor: pointer;
   }
-  .discover-search-close:hover { color: var(--text-hi); }
-  .discover-search-close .icon { width: 17px; height: 17px; }
+  .search-line-close:hover { color: var(--text-hi); }
+  .search-line-close .icon { width: 17px; height: 17px; }
+
+  [data-theme^="ludex-"] .search-line-toggle { border-radius: 2px; }
+
+  /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
+     alors un changement d'état instantané — la fonction reste entière. */
+  @media (prefers-reduced-motion: reduce) {
+    .search-line-shrink,
+    .search-line-toggle,
+    .search-line-field { transition: none; }
+  }
+
+  /* ═══════════════════════════════════════════
+     DÉCOUVRIR — RECHERCHE UNIFIÉE
+     ═══════════════════════════════════════════
+     Ce qui suit est propre à Découvrir : le panneau de résultats et ses
+     lignes. Voir src/11b-discover-search.js. */
 
   /* ── Résultats ──
      Un panneau qui se pose SOUS la ligne plutôt qu'une vue de remplacement :
@@ -1981,16 +2007,6 @@
     font-family: var(--font-display); font-style: italic;
     font-weight: 600; font-size: 1.05rem;
   }
-  [data-theme^="ludex-"] .discover-search-toggle { border-radius: 2px; }
-
-  /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
-     alors un changement d'état instantané — la fonction reste entière. */
-  @media (prefers-reduced-motion: reduce) {
-    .discover-topline .mode-tabs,
-    .discover-search-toggle,
-    .discover-search-field { transition: none; }
-  }
-
   /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
