@@ -47,12 +47,25 @@ test('Decouvrir est utilisable des l\'installation, sans aucune note', async ({ 
   await expect(page.locator('#choix-du-jour-card')).toBeVisible();
   const boite = await page.locator('#choix-du-jour-card').evaluate((el) => {
     const r = el.getBoundingClientRect();
-    return { w: Math.round(r.width), h: Math.round(r.height) };
+    // aspect-ratio est rendu « L / H » : le rapport hauteur/largeur qu'on
+    // mesure ensuite en est l'inverse.
+    const [l, h] = getComputedStyle(el).aspectRatio.split('/').map((n) => parseFloat(n));
+    return { w: Math.round(r.width), h: Math.round(r.height), ratioAttendu: h / l };
   });
   expect(boite.w, `largeur de la carte : ${JSON.stringify(boite)}`).toBeGreaterThan(200);
-  // aspect-ratio: 4/3 — une carte qui perdrait sa largeur perdrait aussi sa
-  // hauteur, le ratio est donc le contrôle qui attrape les deux d'un coup.
-  expect(boite.h / boite.w, `ratio : ${JSON.stringify(boite)}`).toBeCloseTo(3 / 4, 1);
+  expect(boite.h, `hauteur de la carte : ${JSON.stringify(boite)}`).toBeGreaterThan(200);
+  // Le ratio est l'instrument, pas la garantie : ce qu'on veut attraper, c'est
+  // une carte dont la hauteur s'effondre pendant que la largeur tient. On le
+  // compare donc à l'aspect-ratio que la carte se donne ELLE-MÊME, au lieu de
+  // le figer à 4/3.
+  //
+  // 4/3 était la valeur d'avant la refonte de Découvrir : les thèmes Ludex
+  // posent 2/3 (affiche plein cadre, voir Ludex_Specifications_Decouverte),
+  // et comme Ludex Sombre est devenu le thème par défaut, ce test mesurait
+  // depuis P3 une valeur que plus aucun thème actif n'appliquait. Écrit
+  // ainsi, il traversera aussi le retrait des thèmes historiques.
+  expect(boite.ratioAttendu, 'la carte doit se donner un aspect-ratio').toBeGreaterThan(0);
+  expect(boite.h / boite.w, `ratio : ${JSON.stringify(boite)}`).toBeCloseTo(boite.ratioAttendu, 1);
   await expect(page.locator('.choix-du-jour-title')).toBeVisible();
 
   // Et rien n'y invite à noter d'abord : c'était tout l'objet du changement.

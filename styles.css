@@ -1972,14 +1972,15 @@
   .search-line-wl { margin-bottom: var(--card-title-gap); }
   /* Le bouton d'ajout voyage avec le champ : c'est sa paire, séparé de lui il
      ne voudrait plus rien dire. Il se contente de la place qu'il lui faut.
-     width:auto est indispensable : sous 860px, .watchlist-add-btn passait à
+     width:auto est indispensable : sous 480px, .watchlist-add-btn passait à
      width:100% pour l'ancienne disposition EMPILÉE (champ au-dessus, bouton
      en dessous). Dans une ligne, cette largeur mangeait tout et poussait le
-     champ à zéro. */
+     champ à zéro. La règle a depuis été retirée, mais width:auto reste : il
+     dit ce que le bouton doit faire ici, sans dépendre de ce qui existe
+     ailleurs. */
   .search-line-field .watchlist-add-btn { flex: 0 0 auto; width: auto; }
-  /* Les suggestions se posent sous la ligne entière. .wl-suggest-wrap ne les
-     porte plus — c'est .search-line qui fait désormais le contexte de
-     positionnement (position: relative). */
+  /* Les suggestions se posent sous la ligne entière : c'est .search-line qui
+     fait le contexte de positionnement (position: relative). */
   .search-line > .wl-suggestions { top: 100%; }
 
   /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
@@ -3821,7 +3822,6 @@
   .empty-state-cta:active { transform: scale(.96); }
 
   /* ── WATCHLIST ── */
-  .watchlist-add-row { display: flex; gap: 8px; margin-bottom: 14px; width: 100%; }
   .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color var(--dur-fast); box-shadow: var(--box-shadow-style, none); min-width: 0; }
   .watchlist-add-input:focus { border-color: var(--blue); }
   .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
@@ -3892,7 +3892,6 @@
   .wl-btn.rate:hover { background: rgba(0,224,84,0.1); }
   .wl-btn.del:hover { color: var(--red); }
 
-  .wl-suggest-wrap { position: relative; width: 100%; }
   .wl-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 998; overflow: hidden; box-shadow: var(--shadow-3); display: none; }
   .wl-suggest-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background var(--dur-fast); }
   .wl-suggest-item:last-child { border-bottom: none; }
@@ -5237,16 +5236,9 @@
     .theme-card:last-child:nth-child(odd) { max-width: none; }
     .rating-stars label { font-size: 2.8rem; }
 
-    /* Barre "Rechercher un film à ajouter" + bouton : empilée pour éviter que le champ soit écrasé */
-    .watchlist-add-row {
-      flex-direction: column;
-      gap: 8px;
-    }
-    .watchlist-add-input {
-      width: 100%;
-    }
+    /* Le padding reste (cible tactile sur petit écran) ; width:100% est parti :
+       le bouton ne vit plus que dans une ligne, où il écrasait le champ. */
     .watchlist-add-btn {
-      width: 100%;
       padding: 10px 14px;
     }
   }

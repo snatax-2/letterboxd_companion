@@ -63,7 +63,7 @@ test('le champ garde une largeur utilisable à côté du bouton d\'ajout', async
   await prepare(page);
   await page.click('#wl-search-toggle');
   await page.waitForTimeout(500);
-  // Régression réelle : sous 860px, .watchlist-add-btn passait à width:100%
+  // Régression réelle : sous 480px, .watchlist-add-btn passait à width:100%
   // pour l'ancienne disposition EMPILÉE. Dans une ligne, cette largeur
   // mangeait tout et écrasait le champ à zéro.
   const champ = await page.locator('#watchlist-input').boundingBox();

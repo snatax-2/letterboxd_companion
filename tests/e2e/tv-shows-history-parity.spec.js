@@ -15,6 +15,14 @@ test.beforeEach(async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 2200 });
   await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  // Google Fonts met ~13s à résoudre dans cet environnement. Les six passes
+  // axe-core de ce fichier (une par thème) tournaient à 28-30s pour un
+  // délai d'attente de 30s : elles ne mesuraient plus l'accessibilité mais la
+  // latence DNS, et l'une d'elles finissait par franchir la limite au hasard
+  // de l'ordonnancement. Même parade que visual-regression.spec.js et les
+  // autres fichiers déjà corrigés : on coupe les polices distantes.
+  await page.route('**fonts.googleapis.com**', route => route.abort());
+  await page.route('**fonts.gstatic.com**', route => route.abort());
 });
 
 // ── LE FILTRE PAR NOTE N'EST PLUS ATTEIGNABLE ──────────────────────────
