@@ -3076,6 +3076,22 @@
   .modal-btn.primary { background: var(--blue); border-color: var(--blue); color: #000; }
   
   .settings-label { display: block; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-heading); }
+  .sync-code-field {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px;
+    align-items: stretch; margin-bottom: 8px;
+  }
+  .sync-code-field .settings-input { margin-bottom: 0; min-width: 0; }
+  .sync-code-visibility {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px; padding: 8px 12px; border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text-mid);
+    font-family: var(--font-heading); font-size: 0.78rem; font-weight: 700;
+    cursor: pointer;
+    transition: border-color var(--dur-fast), color var(--dur-fast), background-color var(--dur-fast);
+  }
+  .sync-code-visibility:hover,
+  .sync-code-visibility:focus-visible { border-color: var(--blue); color: var(--text-hi); }
+  .sync-code-visibility .icon { width: 17px; height: 17px; }
   /* Avertissement "code de synchronisation trop court". Volontairement discret
      (pas un bandeau d'erreur bloquant) : l'ancien code continue de fonctionner,
      on signale un risque, on n'interdit rien. Couleurs prises aux tokens du
@@ -3087,6 +3103,9 @@
     border-radius: var(--radius-sm);
     font-size: 0.78rem; line-height: 1.45; color: var(--text-hi);
     font-family: var(--font-body);
+  }
+  @media (max-width: 380px) {
+    .sync-code-field { grid-template-columns: 1fr; }
   }
   .error-log-section {
     margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border);

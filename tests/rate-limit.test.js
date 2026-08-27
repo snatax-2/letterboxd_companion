@@ -12,13 +12,27 @@ function fakeReqRes(ip) {
 }
 
 describe('rateLimit', async () => {
-  const { rateLimit } = await import('../api/_rateLimit.js');
+  const { rateLimit, resolveRedisConfig } = await import('../api/_rateLimit.js');
+
+  test('accepte les variables Upstash modernes et les anciens noms Vercel KV', () => {
+    assert.deepEqual(resolveRedisConfig({
+      UPSTASH_REDIS_REST_URL: 'https://modern.example',
+      UPSTASH_REDIS_REST_TOKEN: 'modern-token',
+    }), { url: 'https://modern.example', token: 'modern-token' });
+    assert.deepEqual(resolveRedisConfig({
+      KV_REST_API_URL: 'https://legacy.example',
+      KV_REST_API_TOKEN: 'legacy-token',
+    }), { url: 'https://legacy.example', token: 'legacy-token' });
+    assert.equal(resolveRedisConfig({ UPSTASH_REDIS_REST_URL: 'url-sans-token' }), null);
+  });
 
   test('autorise les requêtes sous la limite', async () => {
     const { req, res } = fakeReqRes('1.1.1.1');
     for (let i = 0; i < 5; i++) {
       assert.equal(await rateLimit(req, res, { name: 'test-under', limit: 10, windowMs: 60000 }), true);
     }
+    assert.equal(res.headers['X-RateLimit-Backend'], 'memory');
+    assert.ok(Number(res.headers['X-RateLimit-Reset']) > Math.floor(Date.now() / 1000));
   });
 
   test('bloque au-delà de la limite, sur la même fenêtre de temps', async () => {

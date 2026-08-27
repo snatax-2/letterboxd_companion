@@ -41,6 +41,14 @@ function formatViolations(violations) {
   return violations.map(v => `[${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} élément(s))`).join('\n');
 }
 
+async function waitForStableUi(page) {
+  // Axe ne doit pas mesurer le splash décoratif pendant son fondu : son
+  // opacité intermédiaire mélange volontairement ses couleurs avec la vue
+  // située derrière et produit un faux contraste. Le produit utile est prêt
+  // une fois ce nœud retiré du DOM.
+  await page.locator('#app-splash').waitFor({ state: 'detached' });
+}
+
 for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
   test.describe(`Accessibilité — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
@@ -53,6 +61,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -62,6 +71,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#nav-history');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -71,6 +81,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#nav-watchlist');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -80,6 +91,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#nav-profile');
       await page.waitForTimeout(400);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -89,6 +101,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#settings-btn');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -108,6 +121,7 @@ test('Fiche film ouverte', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => window.openMovieDetailSheet('500'));
   await page.waitForSelector('#movie-detail-sheet.open .mds-title');
+  await waitForStableUi(page);
   const results = await new AxeBuilder({ page }).analyze();
   const bad = seriousOrCritical(results);
   expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -120,6 +134,7 @@ test('Modale de confirmation ouverte', async ({ page }) => {
   await page.waitForSelector('#reset-duels-btn');
   await page.click('#reset-duels-btn');
   await page.waitForSelector('#modal.open');
+  await waitForStableUi(page);
   // Attend la FIN du fondu d'ouverture avant de mesurer. #modal.open devient
   // "visible" dès que la boîte a une aire non nulle, mais l'overlay ET la
   // boîte sont encore en transition d'opacité (voir styles.css).

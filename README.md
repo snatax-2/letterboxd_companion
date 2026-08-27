@@ -129,8 +129,13 @@ Trois garde-fous sont en place :
 - **Un nouveau code doit faire au moins 16 caractères.** Le bouton *Générer un code sûr* en produit un de 26 caractères tirés au hasard (`crypto.getRandomValues`, jamais `Math.random`). Un code court et mémorisable — `dario`, `films`, `test` — se devine en quelques secondes ; c'est précisément ce que le minimum empêche.
 - **Le code n'est jamais stocké en clair.** La ligne Supabase est indexée par `sha256(code)`. Si la base fuite, aucun code utilisable n'en sort. *Aucune migration SQL n'est nécessaire* : la colonne `sync_code` contient simplement un hash désormais.
 - **Le code voyage dans un en-tête** (`X-Sync-Code`), plus dans l'URL — une query string finit dans les journaux d'accès et les caches. Le `?code=` reste accepté en repli le temps que les service workers servant une ancienne version de `app.js` soient remplacés.
+- **Le champ est masqué par défaut** dans les réglages. Le bouton *Afficher* ne le révèle que pour l'ouverture en cours ; fermer puis rouvrir les réglages le masque à nouveau.
 
 **Si tu utilisais déjà un code court**, il continue de fonctionner : tes données restent accessibles, et la ligne migre automatiquement vers sa forme hachée à la première sauvegarde (l'ancienne ligne en clair est alors supprimée). Mais **tant que tu gardes ce code court, il reste devinable** — l'app affiche un avertissement dans les réglages. Pour le remplacer : *Générer un code sûr*, puis *Sauvegarder maintenant*, puis recopie le nouveau code sur tes autres appareils. Note l'ancien quelque part d'abord si tu as un doute.
+
+### Limitation de débit partagée
+
+Les endpoints publics utilisent Upstash Redis pour partager leurs compteurs entre les fonctions Vercel. Installe une ressource Redis depuis le Vercel Marketplace et connecte-la au projet ; les variables `UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN` seront alors disponibles au runtime. Les anciens noms `KV_REST_API_URL` et `KV_REST_API_TOKEN` restent acceptés pour les stores Vercel KV déjà migrés. Sans Redis, l'application reste fonctionnelle mais le compteur se replie sur la mémoire de chaque instance et protège moins efficacement les quotas.
 
 ## Tests automatisés
 

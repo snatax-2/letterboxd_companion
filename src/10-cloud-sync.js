@@ -41,6 +41,7 @@ const syncRestoreBtn = document.getElementById('sync-restore-btn');
 const syncStatusEl = document.getElementById('sync-status');
 const syncGenerateBtn = document.getElementById('sync-generate-btn');
 const syncCopyBtn = document.getElementById('sync-copy-btn');
+const syncRevealBtn = document.getElementById('sync-reveal-btn');
 const syncCodeWarningEl = document.getElementById('sync-code-warning');
 
 // ─── Force du code de synchronisation ───────────────────────────────────────
@@ -98,6 +99,14 @@ function getSyncCode() {
 
 function setSyncCode(code) {
   localStorage.setItem(SYNC_CODE_KEY, code.trim());
+}
+
+function setSyncCodeVisibility(visible) {
+  if (!syncCodeInput || !syncRevealBtn) return;
+  syncCodeInput.type = visible ? 'text' : 'password';
+  syncRevealBtn.setAttribute('aria-pressed', String(visible));
+  const label = syncRevealBtn.querySelector('span');
+  if (label) label.textContent = visible ? 'Masquer' : 'Afficher';
 }
 
 function setSyncStatus(msg, isError = false) {
@@ -497,6 +506,9 @@ async function pullFromCloud() {
 // Pré-remplit le champ code + affiche le statut à chaque ouverture de la modale réglages
 document.getElementById('settings-btn').addEventListener('click', () => {
   syncCodeInput.value = getSyncCode();
+  // Le code est un jeton porteur : chaque nouvelle ouverture des réglages le
+  // masque, même si l'utilisateur l'avait révélé lors de l'ouverture précédente.
+  setSyncCodeVisibility(false);
   refreshSyncCodeWarning();
   const lastTime = localStorage.getItem(SYNC_LAST_TIME_KEY);
   setSyncStatus(lastTime ? `Dernière synchronisation : ${formatDateTime(lastTime)}` : '');
@@ -504,6 +516,12 @@ document.getElementById('settings-btn').addEventListener('click', () => {
 
 syncCodeInput.addEventListener('change', () => setSyncCode(syncCodeInput.value));
 syncCodeInput.addEventListener('input', refreshSyncCodeWarning);
+
+if (syncRevealBtn) {
+  syncRevealBtn.addEventListener('click', () => {
+    setSyncCodeVisibility(syncCodeInput.type === 'password');
+  });
+}
 
 // Générer : on ne remplace jamais un code existant sans confirmation — le
 // perdre, c'est perdre l'accès aux données déjà sauvegardées sous ce code.

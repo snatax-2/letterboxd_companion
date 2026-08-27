@@ -12,7 +12,8 @@
 // protection était proche de zéro — or c'est précisément le scénario qu'elle
 // doit couvrir (voir api/sync.js).
 //
-// Vercel KV (Redis) donne un compteur réellement partagé entre les instances.
+// Upstash Redis (via l'intégration Vercel Marketplace) donne un compteur
+// réellement partagé entre les instances.
 // INCR y est atomique : deux requêtes simultanées ne peuvent pas lire la même
 // valeur et l'écraser mutuellement.
 //
@@ -25,21 +26,32 @@
 // Le nom de fichier commence par "_" : Vercel ignore les fichiers préfixés par
 // un underscore dans /api, ce n'est donc pas exposé comme une route publique.
 
-let kvClient = null;
-let kvChecked = false;
+let redisClient = null;
+let redisChecked = false;
+let redisFallbackWarned = false;
 
-async function getKv() {
-  if (kvChecked) return kvClient;
-  kvChecked = true;
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+export function resolveRedisConfig(env = process.env) {
+  // Les anciens stores Vercel KV migrés conservent généralement les noms KV_*.
+  // Les intégrations Upstash récentes injectent plutôt UPSTASH_REDIS_REST_*.
+  // Accepter les deux évite une coupure lors du déploiement de la migration.
+  const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
+  const token = env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
+  return url && token ? { url, token } : null;
+}
+
+async function getRedis() {
+  if (redisChecked) return redisClient;
+  redisChecked = true;
+  const config = resolveRedisConfig();
+  if (!config) return null;
   try {
-    const mod = await import('@vercel/kv');
-    kvClient = mod.kv;
+    const { Redis } = await import('@upstash/redis');
+    redisClient = new Redis(config);
   } catch {
     // Paquet absent : on reste sur le repli mémoire plutôt que de planter.
-    kvClient = null;
+    redisClient = null;
   }
-  return kvClient;
+  return redisClient;
 }
 
 // ─── Repli en mémoire (voir en-tête) ────────────────────────────────────────
@@ -67,14 +79,14 @@ function countInMemory(key, windowMs) {
   return { count: bucket.count, resetAt: bucket.resetAt };
 }
 
-async function countInKv(kv, key, windowMs) {
+async function countInRedis(redis, key, windowMs) {
   const ttlSeconds = Math.ceil(windowMs / 1000);
-  const count = await kv.incr(key);
+  const count = await redis.incr(key);
   if (count === 1) {
     // Première requête de la fenêtre : c'est elle qui pose l'expiration.
-    await kv.expire(key, ttlSeconds);
+    await redis.expire(key, ttlSeconds);
   }
-  const remainingTtl = await kv.ttl(key);
+  const remainingTtl = await redis.ttl(key);
   const resetAt = Date.now() + (remainingTtl > 0 ? remainingTtl : ttlSeconds) * 1000;
   return { count, resetAt };
 }
@@ -114,17 +126,32 @@ export async function rateLimit(req, res, { name, limit, windowMs, identifier })
   const key = `rl:${name}:${id}`;
 
   let bucket;
+  let backend = 'memory';
   try {
-    const kv = await getKv();
-    bucket = kv ? await countInKv(kv, key, windowMs) : countInMemory(key, windowMs);
-  } catch {
-    // KV injoignable : on ne bloque pas l'API pour autant, on compte en mémoire.
+    const redis = await getRedis();
+    if (redis) {
+      bucket = await countInRedis(redis, key, windowMs);
+      backend = 'redis';
+    } else {
+      bucket = countInMemory(key, windowMs);
+    }
+  } catch (error) {
+    // Redis injoignable : pour cette application personnelle, on privilégie la
+    // disponibilité tout en signalant clairement le mode dégradé dans les logs
+    // et les en-têtes. Le quota global redevient alors local à chaque instance.
+    if (!redisFallbackWarned) {
+      redisFallbackWarned = true;
+      console.warn('Rate limit Redis indisponible, repli mémoire actif:', error instanceof Error ? error.message : 'erreur inconnue');
+    }
     bucket = countInMemory(key, windowMs);
+    backend = 'memory-fallback';
   }
 
   const remaining = Math.max(0, limit - bucket.count);
   res.setHeader('X-RateLimit-Limit', String(limit));
   res.setHeader('X-RateLimit-Remaining', String(remaining));
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(bucket.resetAt / 1000)));
+  res.setHeader('X-RateLimit-Backend', backend);
 
   if (bucket.count > limit) {
     const retryAfterSec = Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000));
