@@ -731,7 +731,7 @@ function renderTvShowCard(show, tier) {
   const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
   const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
-  const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
+  const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--score-high)' : avg >= 5.0 ? 'var(--score-mid)' : 'var(--score-low)';
   const isFeatured = tier !== 'normal';
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les

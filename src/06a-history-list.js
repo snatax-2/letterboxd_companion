@@ -310,9 +310,14 @@ function renderHistory() {
       const realIdx = history.findIndex(h => h.savedAt === item.savedAt && h.title === item.title);
 
       const scoreNum = parseFloat(item.score);
-      let scoreColor = 'var(--red)';
-      if (scoreNum >= 7.5) scoreColor = 'var(--green)';
-      else if (scoreNum >= 5.0) scoreColor = 'var(--gold)';
+      // Jetons dédiés plutôt que --red/--gold/--green directement : ce badge
+      // est posé sur un VOILE SOMBRE au-dessus d'une affiche, pas sur le fond
+      // de la page. Il lui faut donc des valeurs lisibles sur ce voile, qui ne
+      // sont pas forcément celles qui conviennent au reste de l'interface —
+      // en thème clair, --green et --red sont volontairement foncés.
+      let scoreColor = 'var(--score-low)';
+      if (scoreNum >= 7.5) scoreColor = 'var(--score-high)';
+      else if (scoreNum >= 5.0) scoreColor = 'var(--score-mid)';
       const isFeatured = tier !== 'normal';
 
       const div = document.createElement('div');

@@ -164,6 +164,17 @@
     --field-focus-soft: var(--box-shadow-style, 0 0 0 2px rgba(255,128,0,0.1));
     --rent-wash: rgba(255,128,0,0.08);
 
+    /* ── Badge de note posé sur une affiche ──
+       Ces trois valeurs reprennent exactement celles qu'écrivait le JS en
+       dur : rendu inchangé pour les six thèmes historiques. Elles existent
+       parce que le badge ne vit PAS sur le fond de la page mais sur un voile
+       sombre au-dessus d'une image — les couleurs qui conviennent à l'un ne
+       conviennent pas forcément à l'autre. */
+    --score-high: var(--green);
+    --score-mid: var(--gold);
+    --score-low: var(--red);
+    --badge-scrim: rgba(14,17,22,0.75);
+
     /* Une pilule reste une pilule quel que soit le thème — contrairement à
        --radius/--radius-sm (qui varient par thème pour la personnalité
        visuelle de chacun), ce rayon-ci ne doit jamais varier : sinon une
@@ -720,6 +731,17 @@
     /* Le champ de critique est une ligne, pas une boîte : pas de halo. */
     --field-focus-soft: none;
     --rent-wash: color-mix(in srgb, var(--gold) 10%, transparent);
+    /* Mêmes valeurs dans les DEUX thèmes : ce badge est toujours posé sur
+       un voile sombre au-dessus d'une affiche, jamais sur le fond de la
+       page. Mesuré sur ce voile : 7.00, 9.41 et 5.55 — tous AA. */
+    --score-high: #8CA07B;
+    --score-mid: #D4AF37;
+    --score-low: #CF6B55;
+    /* Voile quasi opaque. À 0,75 l'affiche transparaissait : sur une affiche
+       claire, aucune des trois couleurs de seuil ne passait AA (3.04, 4.09,
+       2.41 mesurés). Le score doit rester lisible quelle que soit l'image
+       derrière. */
+    --badge-scrim: rgba(10,10,12,0.92);
 
     --star-color: var(--gold);
     --star-empty-color: #3A3A42;
@@ -829,6 +851,17 @@
     /* Le champ de critique est une ligne, pas une boîte : pas de halo. */
     --field-focus-soft: none;
     --rent-wash: color-mix(in srgb, var(--gold) 10%, transparent);
+    /* Mêmes valeurs dans les DEUX thèmes : ce badge est toujours posé sur
+       un voile sombre au-dessus d'une affiche, jamais sur le fond de la
+       page. Mesuré sur ce voile : 7.00, 9.41 et 5.55 — tous AA. */
+    --score-high: #8CA07B;
+    --score-mid: #D4AF37;
+    --score-low: #CF6B55;
+    /* Voile quasi opaque. À 0,75 l'affiche transparaissait : sur une affiche
+       claire, aucune des trois couleurs de seuil ne passait AA (3.04, 4.09,
+       2.41 mesurés). Le score doit rester lisible quelle que soit l'image
+       derrière. */
+    --badge-scrim: rgba(10,10,12,0.92);
 
     --star-color: var(--gold);
     --star-empty-color: #CFCCC2;
@@ -1408,6 +1441,107 @@
   [data-theme^="ludex-"] .badges-accordion summary:hover { color: var(--text-hi); }
 
   /* ═══════════════════════════════════════════
+     P5 · HISTORIQUE — polish, pas refonte
+     ═══════════════════════════════════════════
+     §9 et §33-34 sont explicites : sur téléphone, l'Historique NE DOIT PAS
+     être transformé en liste éditoriale aérée. Il garde son ADN — mosaïque
+     dense, affiches dominantes, tailles variables, séparation par mois,
+     scores visibles, actions en surimpression.
+
+     Ce bloc ne touche donc à AUCUNE structure. La grille reste en 6
+     sous-colonnes, les quatre paliers vedettes gardent leurs spans
+     (span 3 / 4 / 6), les séparateurs de mois gardent leur ligne unique,
+     les actions restent en surimpression au même coin, l'appui long est
+     intact. Ne changent que la typographie, les espacements, les rayons et
+     les couleurs — exactement ce que §34 autorise.
+
+     Vérifiable en comparant côte à côte : la composition est reconnaissable,
+     c'est la finition qui diffère. */
+
+  /* Rayon d'affiche (§2.3) et gouttière tirée de l'échelle éditoriale.
+     Rien d'autre ne bouge dans la grille. */
+  [data-theme^="ludex-"] .hist-grid { gap: var(--poster-gap); }
+  [data-theme^="ludex-"] .hist-grid-card { border-radius: 2px; background: var(--surface); }
+
+  /* Le repère de mois n'est pas une note : il perd l'or au profit du
+     contraste. Il reste sur une seule ligne avec son récap, comme avant. */
+  [data-theme^="ludex-"] .hist-month-label {
+    color: var(--text-hi);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+  }
+  [data-theme^="ludex-"] .hist-month-recap {
+    color: var(--text); font-size: var(--micro); letter-spacing: 0.04em;
+  }
+  [data-theme^="ludex-"] .hist-month-sep { padding: 26px 0 10px; }
+
+  /* Traitement vedette : §9.1 demande de CONSERVER l'indicateur personnel
+     « mais désaturé et cohérent avec la DA ». Le cerclage doré de 2px et sa
+     lueur de 16px cèdent la place à un filet clair d'un pixel. Le palier
+     reste parfaitement lisible — c'est la taille de la carte qui le dit
+     d'abord, le filet ne fait que confirmer. */
+  [data-theme^="ludex-"] .hist-grid-card-isolated,
+  [data-theme^="ludex-"] .hist-grid-card-pair,
+  [data-theme^="ludex-"] .hist-grid-card-banner {
+    border: 1px solid color-mix(in srgb, var(--text-hi) 45%, transparent);
+    box-shadow: none;
+  }
+  /* Le badge vedette passe de l'aplat doré au verre sombre. L'or ne
+     disparaît pas — il se replie sur le seul glyphe, cœur ou étoile, où il
+     signifie encore quelque chose. */
+  [data-theme^="ludex-"] .hist-grid-featured-badge {
+    background: var(--badge-scrim);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    border: 1px solid color-mix(in srgb, #FAFAFA 10%, transparent);
+    border-radius: 2px;
+    color: #FAFAFA;
+    box-shadow: none;
+    font-size: var(--micro); letter-spacing: 0.04em;
+  }
+  [data-theme^="ludex-"] .hist-grid-featured-badge .icon { color: var(--score-mid); }
+  [data-theme^="ludex-"] .hist-grid-badge {
+    border-radius: 2px;
+    border-color: color-mix(in srgb, #FAFAFA 10%, transparent);
+  }
+  [data-theme^="ludex-"] .hist-grid-card .hist-action-btn {
+    border-color: color-mix(in srgb, #FAFAFA 10%, transparent);
+    color: #FAFAFA;
+  }
+  /* La progression d'une série est une donnée, pas une note : elle quitte
+     l'or et sa lueur pour un simple trait clair. */
+  [data-theme^="ludex-"] .hist-grid-progress-fill {
+    background: #FAFAFA; box-shadow: none;
+  }
+  /* Le dégradé de pied des cartes vedettes existait pour rendre lisible un
+     badge doré posé à même l'affiche. Le badge porte désormais son propre
+     voile opaque : le dégradé n'a plus à faire ce travail et peut redevenir
+     ce qu'il aurait toujours dû être — un simple assombrissement de pied,
+     pas un rideau. */
+  [data-theme^="ludex-"] .hist-grid-card-isolated::after,
+  [data-theme^="ludex-"] .hist-grid-card-pair::after,
+  [data-theme^="ludex-"] .hist-grid-card-banner::after {
+    background: linear-gradient(to top, rgba(10,10,12,0.62) 0%, rgba(10,10,12,0.18) 28%, transparent 52%);
+  }
+
+  /* Entrée vedette (le dernier film noté). Le titre était déjà en italique —
+     mais en --font-heading, devenu Inter : un italique de police
+     d'interface. Il rejoint la police d'œuvre, qui est faite pour ça. Le
+     score reste en or : là, c'est bien une note. */
+  [data-theme^="ludex-"] .hero-entry {
+    padding: 4px 0 24px; border-bottom-color: var(--border);
+  }
+  [data-theme^="ludex-"] .hero-entry-poster { border-radius: 2px; }
+  [data-theme^="ludex-"] .hero-entry-eyebrow {
+    font-size: var(--micro); letter-spacing: var(--micro-ls); color: var(--text);
+  }
+  [data-theme^="ludex-"] .hero-entry-title {
+    font-family: var(--font-display);
+    font-size: 1.7rem; letter-spacing: -0.02em;
+  }
+  [data-theme^="ludex-"] .hero-entry-score {
+    font-family: var(--font-display); font-size: 2.4rem;
+  }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
@@ -1526,7 +1660,7 @@
     display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--text-mid);
   }
   .hist-grid-badge {
-    position: absolute; top: 5px; right: 5px; background: rgba(14,17,22,0.75);
+    position: absolute; top: 5px; right: 5px; background: var(--badge-scrim);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     padding: 3px 6px; border-radius: 6px; font-size: 0.68rem; font-weight: 700;
     border: 1px solid rgba(255,255,255,0.08); font-family: var(--font-mono);
@@ -1589,7 +1723,7 @@
     position: absolute; top: 5px; left: 5px; z-index: 1; display: flex; gap: 4px;
   }
   .hist-grid-card .hist-action-btn {
-    width: 24px; height: 24px; border-radius: 50%; background: rgba(14,17,22,0.75);
+    width: 24px; height: 24px; border-radius: 50%; background: var(--badge-scrim);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center; color: var(--text-hi);
     border: 1px solid rgba(255,255,255,0.08);
