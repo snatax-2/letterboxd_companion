@@ -75,6 +75,10 @@ function setMediaType(type) {
   currentMediaType = type;
   document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
   document.getElementById('tab-media-tv').classList.toggle('active', type === 'tv');
+  // Couvre les appels PAR PROGRAMME (fiche série -> Noter, démarrage de
+  // série, notation de saison, watchlist -> notation) : sans ceci la
+  // pastille resterait sous "Film" alors que "Série" est actif.
+  syncToggleSlider(document.getElementById('tab-media-tv').closest('.mode-tabs'));
   const movieFields = document.getElementById('movie-only-fields');
   const tvFields = document.getElementById('tv-only-fields');
   if (type === 'movie') fadeSwitchDisplay(tvFields, movieFields); else fadeSwitchDisplay(movieFields, tvFields);
@@ -460,6 +464,7 @@ function switchHistoryMediaFilter(type) {
   historyMediaFilter = type;
   document.getElementById('hist-tab-movie').classList.toggle('active', type === 'movie');
   document.getElementById('hist-tab-tv').classList.toggle('active', type === 'tv');
+  syncToggleSlider(document.getElementById('hist-tab-tv').closest('.mode-tabs'));
   const movieList = document.getElementById('history-list');
   const tvList = document.getElementById('tv-history-list');
   if (type === 'movie') fadeSwitchDisplay(tvList, movieList); else fadeSwitchDisplay(movieList, tvList);
@@ -797,6 +802,7 @@ function switchStatsMediaFilter(type) {
   statsMediaFilter = type;
   document.getElementById('stats-tab-movie').classList.toggle('active', type === 'movie');
   document.getElementById('stats-tab-tv').classList.toggle('active', type === 'tv');
+  syncToggleSlider(document.getElementById('stats-tab-tv').closest('.mode-tabs'));
   const dashboard = document.querySelector('.dashboard-grid');
   const applyChange = () => {
     document.getElementById('kpi-total-label').textContent = type === 'movie' ? 'Films notés' : 'Séries suivies';

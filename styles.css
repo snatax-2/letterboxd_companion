@@ -984,7 +984,13 @@
      relais si un libellé reste trop long. Le raffinement typographique de la
      barre appartient à P2 ; ceci n'est que le correctif de la régression. */
   [data-theme^="ludex-"] .nav-btn-label {
-    font-size: 0.58rem; letter-spacing: 0.04em;
+    /* Mesuré à 390px : une colonne d'onglet fait 70,5px. « HISTORIQUE »,
+       le plus long des cinq libellés, demandait plus que ça en Inter — d'où
+       le mot rogné en plein milieu. À 0.52rem et 0.02em, les cinq tiennent
+       avec de la marge. Un corps discret se défend ici : le libellé
+       n'apparaît que sous l'onglet actif, c'est l'icône qui porte le repère
+       permanent (le prototype va jusqu'à s'en passer complètement). */
+    font-size: 0.52rem; letter-spacing: 0.02em;
     white-space: nowrap; text-overflow: ellipsis;
   }
   [data-theme^="ludex-"] .nav-btn.active .nav-btn-label { max-width: 100%; }
@@ -996,6 +1002,114 @@
     color: var(--text);
   }
   [data-theme^="ludex-"] .empty-state-icon { opacity: 0.4; margin-bottom: 14px; }
+
+  /* ═══════════════════════════════════════════
+     P2 · NAVIGATION — habillage Ludex
+     ═══════════════════════════════════════════
+     Le PRINCIPE de la barre ne change pas : cinq destinations, bouton NOTER
+     central plus grand, pastille glissante sur le switch Films/Séries. Ce
+     bloc ne touche qu'à leur environnement — couleur, verre, contraste,
+     finesse. Aucun tracé SVG, aucune keyframe, aucune classe de
+     déclenchement n'est modifiée : les six animations d'icônes
+     (magneticSnap, elasticPull, equalize, popUpHead/Body, dynamicClap,
+     popTv/wiggleAntenna) fonctionnent exactement comme avant. */
+
+  /* ── Verre sombre ──
+     §4.1 : barre flottante en verre, blur ~24px, bordure très discrète.
+     La bordure est dérivée de la couleur de texte plutôt que de --border-hi :
+     sur une surface translucide, un gris opaque tranche, une teinte de la
+     couleur du texte à 10 % se fond. */
+  [data-theme^="ludex-"] .mobile-nav {
+    background: var(--glass);
+    backdrop-filter: blur(24px) saturate(120%);
+    -webkit-backdrop-filter: blur(24px) saturate(120%);
+    border-color: color-mix(in srgb, var(--text-hi) 10%, transparent);
+  }
+  /* Gris argenté au repos, blanc cassé à l'actif — plus jamais de jaune
+     (§2.1, critère d'acceptation « Navigation mobile »). La valeur est posée
+     explicitement plutôt qu'héritée de --orange : la navigation ne doit pas
+     redevenir colorée si l'accent interactif changeait un jour. */
+  [data-theme^="ludex-"] .nav-btn { color: var(--text); }
+  [data-theme^="ludex-"] .nav-btn.active { color: var(--text-hi); }
+  [data-theme^="ludex-"] .nav-btn:hover:not(.active) { color: var(--text-mid); }
+
+  /* ── Switch Films/Séries ──
+     §23 : palette monochrome, fond sobre, actif clair, inactif gris,
+     surface légère, animation souple. La pastille cesse d'être un aplat
+     d'accent pour devenir une surface discrètement surélevée.
+     padding: 0 et gap: 0 sur le conteneur ne sont pas cosmétiques : la
+     pastille fait exactement 50 % de la boîte de padding et se déplace de
+     translateX(100%). Avec un padding de 4px et un gap de 4px, chaque
+     bouton mesurait (100% - 4px)/2 — la pastille ne coïncidait donc jamais
+     tout à fait avec le bouton qu'elle est censée souligner. À zéro, les
+     deux s'alignent au pixel, et la translation reste exacte. */
+  [data-theme^="ludex-"] .mode-tabs {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 0;
+    gap: 0;
+  }
+  [data-theme^="ludex-"] .toggle-slider {
+    background: var(--surface2);
+    border-color: var(--border-hi);
+  }
+  [data-theme^="ludex-"] .mode-tab {
+    color: var(--text); font-weight: 600;
+    min-height: 44px;
+    font-family: var(--font-heading);
+    letter-spacing: 0.04em;
+  }
+  [data-theme^="ludex-"] .mode-tab.active { color: var(--text-hi); font-weight: 700; }
+
+  /* ── Détaillé / Rapide ──
+     Le seul .mode-tabs qui ne soit pas un switch Films/Séries : il n'a pas
+     de pastille, et son onglet actif portait le dernier gros aplat coloré du
+     formulaire de notation. Il devient deux onglets plats, l'actif marqué
+     par un filet inférieur ET par le contraste du texte — donc jamais par la
+     seule couleur (§14). */
+  [data-theme^="ludex-"] .mode-tabs-plain {
+    background: transparent; border: 0; padding: 0; gap: 26px;
+    justify-content: flex-start;
+  }
+  [data-theme^="ludex-"] .mode-tabs-plain .mode-tab {
+    flex: 0 0 auto; padding: 8px 0;
+    border: 0; border-bottom: 1px solid transparent; border-radius: 0;
+  }
+  [data-theme^="ludex-"] .mode-tabs-plain .mode-tab.active {
+    background: none;
+    border-bottom-color: var(--text-hi);
+    color: var(--text-hi);
+  }
+
+  /* ── Bouton NOTER ──
+     Reste central, plus grand, et garde sa géométrie au pixel près : colonne
+     de 74px, cercle de 68px, anneau de 4px. Ces trois valeurs ont été
+     calibrées sur appareil réel (un cercle de 78px débordait sur les
+     libellés voisins) — seules les couleurs changent ici.
+     Au repos : surface sombre discrètement cerclée, comme dans le prototype.
+     Son importance vient de la taille et de la position, pas d'une teinte
+     criarde (§4.1, §20). À l'actif : inversion franche.
+     Les règles cibles vivent dans le bloc mobile (le cercle n'existe qu'en
+     dessous de 861px), donc ces surcharges y vivent aussi — sinon le fond
+     s'appliquerait aussi à l'onglet de bureau, qui n'a pas de cercle. */
+  @media (max-width: 860px) {
+    [data-theme^="ludex-"] .nav-btn-primary .nav-btn-icon {
+      background: var(--surface2);
+      border-color: var(--bg);
+      box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--text-hi) 16%, transparent),
+        var(--shadow-1);
+    }
+    [data-theme^="ludex-"] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme^="ludex-"] .nav-btn-primary-label { color: var(--text-hi); }
+
+    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-icon {
+      background: var(--text-hi);
+      box-shadow: var(--shadow-1);
+    }
+    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-icon .icon,
+    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-primary-label { color: var(--bg); }
+  }
 
   /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME

@@ -76,6 +76,34 @@ const navProfile = document.getElementById('nav-profile');
 const colRating = document.getElementById('col-rating');
 const colRightViews = document.getElementById('col-right-views');
 
+// ═══════════════════════════════════════════
+//  PASTILLE GLISSANTE DU SWITCH FILMS/SÉRIES
+// ═══════════════════════════════════════════
+// Positionne la pastille (.toggle-slider, styles.css) à partir de la SEULE
+// source de vérité disponible : le bouton qui porte .active.
+//
+// Bug corrigé : jusqu'ici la pastille n'était déplacée QUE par l'écouteur de
+// clic global, plus bas dans ce fichier. Or setMediaType('tv') est appelée
+// par programme depuis quatre endroits — ouvrir une fiche série puis
+// "Noter" (19-tv-detail.js), commencer une série et noter une saison
+// (18-tv-shows.js, deux appels), passer une série de la watchlist à la
+// notation (08-watchlist.js). Dans ces quatre parcours le bouton "Série"
+// recevait bien .active, mais la pastille restait sous "Film" : l'onglet
+// affiché et la pastille se contredisaient à l'écran.
+//
+// Dériver la position de .active plutôt que de la poser en parallèle rend
+// la désynchronisation structurellement impossible : il n'y a plus deux
+// états à tenir d'accord, mais un seul, lu au moment où on en a besoin.
+//
+// Détection générique par la présence de .icon-tv : les cinq switches
+// n'utilisent pas le même schéma d'identifiant (id="...-tv",
+// data-media-type="tv"...), mais tous portent cette icône sur "Séries".
+function syncToggleSlider(tabsContainer) {
+  if (!tabsContainer) return;
+  const tvTab = tabsContainer.querySelector('.mode-tab .icon-tv')?.closest('.mode-tab');
+  tabsContainer.classList.toggle('series-active', !!tvTab && tvTab.classList.contains('active'));
+}
+
 // Redémarre l'animation d'entrée (mobileViewIn) sur un élément : on retire la
 // classe, on force un reflow (lecture d'une propriété layout), puis on la
 // rajoute — sinon le navigateur ne rejoue pas l'animation si la classe était
@@ -345,14 +373,6 @@ document.addEventListener('click', (e) => {
   void el.offsetWidth;
   el.classList.add('animate');
 
-  // Ludex 2.0 : positionne la pastille glissante du switch Films/Séries
-  // (voir .toggle-slider, styles.css) — même écouteur, pas un de plus.
-  // Détection générique par la présence de l'icône TV plutôt qu'un
-  // identifiant précis : les 5 switches n'utilisent pas tous le même
-  // schéma d'id/attribut (id="...-tv", data-media-type="tv"...), mais
-  // tous ont systématiquement .icon-tv sur le bouton "Séries".
-  const tabsContainer = el.closest('.mode-tabs');
-  if (tabsContainer) {
-    tabsContainer.classList.toggle('series-active', !!el.querySelector('.icon-tv'));
-  }
+  // Repositionne la pastille glissante du switch Films/Séries.
+  syncToggleSlider(el.closest('.mode-tabs'));
 });

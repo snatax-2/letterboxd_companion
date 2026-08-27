@@ -1039,12 +1039,14 @@ document.getElementById('wl-tv-add-btn')?.addEventListener('click', () => {
 document.getElementById('wl-tab-movie')?.addEventListener('click', () => {
   document.getElementById('wl-tab-movie').classList.add('active');
   document.getElementById('wl-tab-tv').classList.remove('active');
+  syncToggleSlider(document.getElementById('wl-media-tabs'));
   document.getElementById('wl-movie-section').style.display = '';
   document.getElementById('wl-tv-section').style.display = 'none';
 });
 document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
   document.getElementById('wl-tab-tv').classList.add('active');
   document.getElementById('wl-tab-movie').classList.remove('active');
+  syncToggleSlider(document.getElementById('wl-media-tabs'));
   document.getElementById('wl-tv-section').style.display = '';
   document.getElementById('wl-movie-section').style.display = 'none';
   renderWatchlistTabs('tv');

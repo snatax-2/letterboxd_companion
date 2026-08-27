@@ -31,6 +31,7 @@ function setDiscoverMediaType(type) {
   if (type === discoverMediaType) return;
   discoverMediaType = type;
   discoverSegBtns.forEach(b => b.classList.toggle('active', b.dataset.mediaType === type));
+  syncToggleSlider(document.querySelector('.discover-seg-tabs'));
   // "Cinéma international" n'a de sens qu'en mode Films — en Séries, le
   // même carrousel (même source de données, juste discover/tv) devient
   // "Séries internationales".
