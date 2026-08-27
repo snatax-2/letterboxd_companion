@@ -1112,6 +1112,124 @@
   }
 
   /* ═══════════════════════════════════════════
+     P3 · DÉCOUVRIR — écran pilote
+     ═══════════════════════════════════════════
+     « Il doit donner l'impression d'ouvrir une revue, pas un dashboard »
+     (§5). Aucune fonctionnalité ne bouge : le choix du jour, les cinq
+     carrousels, le switch sticky et le moteur « D'après ton historique »
+     rendent exactement les mêmes données, par les mêmes chemins. */
+
+  /* ── Chargement d'affiche : flou vers net (§12) ──
+     Les classes sont posées par revealImagesWhenLoaded() et
+     revealBackgroundWhenLoaded() (03-foundation.js), jamais par le rendu :
+     sans JavaScript, aucune image n'est floutée ni masquée. */
+  [data-theme^="ludex-"] .progressive {
+    filter: blur(10px);
+    opacity: 0;
+    transition: filter 600ms var(--ease-out), opacity 600ms var(--ease-out);
+  }
+  [data-theme^="ludex-"] .progressive.is-loaded { filter: none; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    [data-theme^="ludex-"] .progressive { filter: none; opacity: 1; transition: none; }
+  }
+
+  /* ── Le switch, posé sur la page plutôt que dans un bandeau ── */
+  [data-theme^="ludex-"] .discover-segmented-wrap {
+    background: var(--bg);
+    padding: 4px 0 12px;
+    margin-bottom: var(--section-gap);
+  }
+
+  /* ── Choix du jour ──
+     Le format passe de 4/3 à 2:3. Ce n'était pas qu'une question de goût :
+     l'affiche EST une image 2:3, et la recadrer en 4/3 en amputait un tiers
+     — précisément l'ancrage visuel que la spec demande de préserver (§1.2).
+     Rayon à 2px comme toute affiche (§2.3), et le titre repose sur le bas de
+     l'image, façon couverture de revue. */
+  [data-theme^="ludex-"] .choix-du-jour-wrap { margin-bottom: var(--section-gap); }
+  [data-theme^="ludex-"] .choix-du-jour-eyebrow {
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text); margin-bottom: 12px;
+  }
+  [data-theme^="ludex-"] .choix-du-jour-card {
+    aspect-ratio: 2 / 3;
+    border-radius: 2px;
+    background: var(--surface);
+    max-height: 62vh;
+  }
+  [data-theme^="ludex-"] .choix-du-jour-overlay {
+    /* Dégradé dérivé du fond du thème plutôt qu'un noir fixe : sur le thème
+       clair, un voile noir en bas d'affiche ferait une salissure. */
+    background: linear-gradient(
+      to bottom,
+      transparent 38%,
+      color-mix(in srgb, var(--bg) 72%, transparent) 68%,
+      var(--bg) 100%);
+  }
+  [data-theme^="ludex-"] .choix-du-jour-content {
+    left: 18px; right: 18px; bottom: 18px;
+  }
+  /* Titre d'œuvre : serif, italique — le traitement que la spec réserve aux
+     films et aux séries (§2.2). C'est ici qu'il porte le plus. */
+  [data-theme^="ludex-"] .choix-du-jour-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(2rem, 9vw, 3.1rem);
+    line-height: var(--display-xl-lh);
+    letter-spacing: var(--display-xl-ls);
+    text-shadow: none;
+  }
+  [data-theme^="ludex-"] .choix-du-jour-director {
+    font-family: var(--font-body);
+    font-size: var(--body-ed);
+    color: var(--text-mid); opacity: 1;
+    margin-top: 10px; text-shadow: none;
+  }
+  [data-theme^="ludex-"] .choix-du-jour-micro {
+    display: block; margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; color: var(--text);
+  }
+
+  /* ── Carrousels ──
+     Des affiches libres, sans carte visible (§5). Le titre de section reste
+     de la micro-data mono : c'est une étiquette de rayon, pas un titre
+     d'œuvre. */
+  [data-theme^="ludex-"] .carousel-block { margin-bottom: var(--section-gap); }
+  [data-theme^="ludex-"] .carousel-title {
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text); margin-bottom: 14px;
+  }
+  [data-theme^="ludex-"] .carousel-row { gap: var(--poster-gap); }
+  [data-theme^="ludex-"] .poster-min {
+    border-radius: 2px;
+    background: var(--surface);
+    width: 116px;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  /* §12 et §17 : l'affiche s'ENFONCE légèrement, elle ne grossit jamais.
+     Réservé au vrai survol pour ne pas déclencher au doigt sur mobile. */
+  @media (hover: hover) {
+    [data-theme^="ludex-"] .poster-min:hover { transform: scale(0.98); }
+    [data-theme^="ludex-"] .choix-du-jour-card:hover { transform: scale(0.99); }
+    [data-theme^="ludex-"] .choix-du-jour-card {
+      transition: transform var(--dur-base) var(--ease-out);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-theme^="ludex-"] .poster-min,
+    [data-theme^="ludex-"] .choix-du-jour-card { transition: none; }
+    [data-theme^="ludex-"] .poster-min:hover,
+    [data-theme^="ludex-"] .choix-du-jour-card:hover { transform: none; }
+  }
+  [data-theme^="ludex-"] .poster-min:focus-visible,
+  [data-theme^="ludex-"] .choix-du-jour-card:focus-visible {
+    outline: 2px solid var(--text-hi); outline-offset: 3px;
+  }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3

@@ -76,6 +76,47 @@ function isDefaultComposition() {
 // (où un échappement HTML aurait au contraire corrompu l'URL).
 const TMDB_PATH_RE = /^\/[A-Za-z0-9._-]+$/;
 
+// ═══════════════════════════════════════════
+//  CHARGEMENT PROGRESSIF DES AFFICHES
+// ═══════════════════════════════════════════
+// Spec §12 : une affiche entre en blur(10px) + opacity 0 et se pose nette en
+// ~600ms. Le CSS ne sait pas détecter la fin d'un chargement d'image ; cette
+// fonction pose les deux classes sur lesquelles la transition s'appuie.
+//
+// L'ordre des classes n'est pas anodin. C'est la fonction qui pose
+// `progressive`, PAS le rendu : sans JavaScript, aucune affiche n'est floutée
+// ni masquée, elles s'affichent simplement. Un flou décidé en CSS seul
+// laisserait les images invisibles pour toujours si ce code ne tournait pas.
+//
+// Deux cas particuliers, sans quoi des affiches resteraient floues à vie :
+//   · image DÉJÀ en cache — `complete` est vrai avant même qu'on écoute,
+//     l'événement `load` ne viendra jamais ;
+//   · image en erreur — on la révèle aussi, le repli visuel prend le relais.
+function revealImagesWhenLoaded(root) {
+  if (!root) return;
+  root.querySelectorAll('img:not([data-progressive])').forEach((img) => {
+    img.dataset.progressive = '1';
+    const reveal = () => img.classList.add('is-loaded');
+    if (img.complete && img.naturalWidth > 0) { img.classList.add('progressive', 'is-loaded'); return; }
+    img.classList.add('progressive');
+    img.addEventListener('load', reveal, { once: true });
+    img.addEventListener('error', reveal, { once: true });
+  });
+}
+
+// Même effet pour une image posée en background-image, qui n'émet aucun
+// événement de chargement : une sonde en mémoire prévient quand l'URL est
+// prête. Aucune requête supplémentaire — le navigateur sert la même entrée de
+// cache que le background.
+function revealBackgroundWhenLoaded(el, url) {
+  if (!el) return;
+  if (!url) { el.classList.add('progressive', 'is-loaded'); return; }
+  el.classList.add('progressive');
+  const sonde = new Image();
+  sonde.onload = sonde.onerror = () => el.classList.add('is-loaded');
+  sonde.src = url;
+}
+
 function tmdbImage(path, size = 'w185') {
   if (!path || !TMDB_PATH_RE.test(String(path))) return '';
   return `https://image.tmdb.org/t/p/${size}${path}`;

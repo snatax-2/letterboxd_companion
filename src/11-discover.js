@@ -141,8 +141,12 @@ function renderChoixDuJour(item) {
     <span class="choix-du-jour-content">
       <span class="choix-du-jour-title">${escAttr(item.title)}</span>
       ${item.director ? `<span class="choix-du-jour-director">Réalisé par ${escAttr(item.director)}</span>` : ''}
+      ${item.year ? `<span class="choix-du-jour-micro">${escAttr(item.year)}</span>` : ''}
     </span>
   `;
+  // Le fond entre en flou et se pose net (§12). Aucune donnée
+  // supplémentaire n'est demandée : l'année vient déjà de normalizeItem().
+  revealBackgroundWhenLoaded(heroEl.querySelector('.choix-du-jour-bg'), posterUrl);
   heroEl.dataset.itemId = String(item.id);
   heroEl.dataset.mediaType = discoverMediaType;
 }
@@ -311,6 +315,7 @@ async function loadCarousel(key) {
           ? `<img src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
           : ''}
       </button>`).join('');
+    revealImagesWhenLoaded(rowEl);
   } catch (e) {
     console.warn(`Impossible de charger le carrousel ${key}`, e);
     blockEl.style.display = 'none';
