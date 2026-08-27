@@ -365,10 +365,8 @@ let tdsCurrentData = null;
 
 async function openTvDetailSheet(tmdbTvId) {
   if (!tmdbTvId) return;
-  lastFocusedBeforeModal = document.activeElement;
   tdsContentEl.innerHTML = buildTdsSkeleton();
-  tdsEl.classList.add('open');
-  tdsCloseBtn.focus();
+  openModalElement(tdsEl, { initialFocus: tdsCloseBtn });
   const tdsBoxEl = tdsEl.querySelector('.mds-box');
   if (tdsBoxEl) tdsBoxEl.scrollTop = 0;
 

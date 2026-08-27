@@ -98,4 +98,31 @@ describe('mergeWithRemote (orchestration)', () => {
     const stored = JSON.parse(window.localStorage.getItem('lbx_watchlist_default'));
     assert.equal(stored.map(m => m.title).sort().join(','), 'Dune,Oppenheimer');
   });
+
+  test('watchlist séries : union et persistance symétriques aux films', (t) => {
+    const window = freshWindow(t);
+    window.localStorage.setItem('lbx_tv_watchlist_default', JSON.stringify([
+      { title: 'Severance', tmdbId: 95396, addedAt: daysAgo(5) },
+    ]));
+
+    const result = window.mergeWithRemote({
+      tvWatchlists: { default: [{ title: 'The Bear', tmdbId: 136315, addedAt: daysAgo(3) }] },
+    });
+
+    const stored = JSON.parse(window.localStorage.getItem('lbx_tv_watchlist_default'));
+    assert.equal(stored.map(item => item.title).sort().join(','), 'Severance,The Bear');
+    assert.equal(result.tvWatchlists.default.length, 2);
+  });
+
+  test('analyses et plateformes absentes localement sont restaurées', (t) => {
+    const window = freshWindow(t);
+    const result = window.mergeWithRemote({
+      analyses: [{ id: 'a1', filmId: 949, date: daysAgo(1), retour: { synthese: 'Précis' } }],
+      ownedProviders: ['MUBI'],
+    });
+
+    assert.equal(JSON.parse(window.localStorage.getItem('lbx_analyses'))[0].id, 'a1');
+    assert.equal(JSON.parse(window.localStorage.getItem('lbx_owned_providers'))[0], 'MUBI');
+    assert.equal(result.analyses.length, 1);
+  });
 });

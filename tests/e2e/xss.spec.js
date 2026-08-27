@@ -131,6 +131,18 @@ test('un poster_path de serie piege ne produit pas d\'URL dangereuse', async ({ 
   expect(await page.locator('img[onerror*="__xss"]').count()).toBe(0);
 });
 
+test('un nom d application piege reste du texte dans le titre', async ({ page }) => {
+  await seed(page, {
+    lbx_settings: { appName: '<img src=x onerror="window.__xss=1"> Mon Ludex', theme: 'default' },
+  });
+  await page.goto('/');
+  await page.waitForTimeout(300);
+
+  expect(await noXss(page), 'XSS via settings.appName').toBeUndefined();
+  expect(await page.locator('.app-title img').count()).toBe(0);
+  await expect(page.locator('.app-title')).toHaveText('Mon Ludex');
+});
+
 // ─── Garde-fou sur la fonction d'echappement elle-meme ─────────────────────
 // escAttr() est appelée à ~167 endroits : si elle cesse de couvrir un
 // caractère, la faille réapparaît partout à la fois, en silence.

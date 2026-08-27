@@ -8,11 +8,12 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-cb452f0b79';
+const CACHE_NAME = 'ludex-shell-c6a3590a78';
 
 const APP_SHELL = [
   '/',
   '/index.html',
+  '/bootstrap.js',
   '/styles.min.css',
   '/app.js',
   '/favicon.png',
@@ -61,6 +62,7 @@ self.addEventListener('fetch', (event) => {
   // TMDb sont servies en `immutable`, c'est déjà optimal).
   if (new URL(request.url).origin !== self.location.origin) return;
 
+  const isNavigation = request.mode === 'navigate';
   event.respondWith(
     fetch(request)
       .then((response) => {
@@ -74,6 +76,14 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match('/index.html')))
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (isNavigation) return caches.match('/index.html');
+        return new Response('Ressource indisponible hors ligne.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+        });
+      })
   );
 });

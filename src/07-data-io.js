@@ -4,10 +4,9 @@
 const LAST_EXPORT_KEY = 'lbx_last_export_at';
 
 document.getElementById('export-btn').addEventListener('click', () => {
-  const history = loadHistory();
-  const tvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
-  if (!history.length && !tvShows.length) { showToast('Rien à exporter.'); return; }
-  const payload = { history, tvShows };
+  const payload = currentLocalSnapshot({ includeExportDate: true });
+  const counts = describeSnapshotContents(payload);
+  if (counts.total === 0) { showToast('Rien à exporter.'); return; }
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -16,10 +15,7 @@ document.getElementById('export-btn').addEventListener('click', () => {
   localStorage.setItem(LAST_EXPORT_KEY, new Date().toISOString());
   const banner = document.getElementById('backup-reminder');
   if (banner) banner.remove();
-  const parts = [];
-  if (history.length) parts.push(`${history.length} film${history.length > 1 ? 's' : ''}`);
-  if (tvShows.length) parts.push(`${tvShows.length} série${tvShows.length > 1 ? 's' : ''}`);
-  showToast(`${parts.join(' · ')} exporté${(history.length + tvShows.length) > 1 ? 's' : ''}`);
+  showToast(`Sauvegarde complète exportée · ${counts.label}`);
 });
 
 document.getElementById('import-trigger').addEventListener('click', () => {
@@ -28,6 +24,19 @@ document.getElementById('import-trigger').addEventListener('click', () => {
 
 function importLudexJson(text) {
   const data = JSON.parse(text);
+  if (data && typeof data === 'object' && Number(data.schemaVersion) >= 2) {
+    const counts = describeSnapshotContents(data);
+    if (counts.total === 0) { showToast('Sauvegarde vide, rien à importer.'); return; }
+    openModal(
+      'Importer la sauvegarde complète',
+      `Importer ${counts.label} ? Les historiques et listes seront fusionnés ; tes préférences locales actuelles seront conservées.`,
+      () => {
+        mergeWithRemote(data);
+        showToast(`Sauvegarde complète importée · ${counts.label}`);
+      },
+    );
+    return;
+  }
   let history, tvShows;
   if (Array.isArray(data)) {
     // Ancienne sauvegarde (avant l'ajout du support séries) : un simple
@@ -104,6 +113,29 @@ function importLudexJson(text) {
       showToast(resultParts.length ? `${resultParts.join(' · ')} importé${(addedFilms + addedSeasons) > 1 ? 's' : ''}` : 'Rien de nouveau à importer (déjà présent)');
     }
   );
+}
+
+function describeSnapshotContents(snapshot) {
+  const historyCount = Array.isArray(snapshot?.history) ? snapshot.history.length : 0;
+  const tvCount = Array.isArray(snapshot?.tvShows) ? snapshot.tvShows.length : 0;
+  const watchlistCount = ['watchlists', 'tvWatchlists'].reduce((total, key) => {
+    const lists = snapshot?.[key];
+    if (!lists || typeof lists !== 'object') return total;
+    return total + Object.values(lists).reduce((sum, items) => sum + (Array.isArray(items) ? items.length : 0), 0);
+  }, 0);
+  const analysisCount = Array.isArray(snapshot?.analyses) ? snapshot.analyses.length : 0;
+  const duelCount = Number(snapshot?.duels?.totalDuels) || 0;
+  const hasPreferences = !!(snapshot?.settings || snapshot?.draft || snapshot?.duels ||
+    (Array.isArray(snapshot?.ownedProviders) && snapshot.ownedProviders.length));
+  const total = historyCount + tvCount + watchlistCount + analysisCount + duelCount + (hasPreferences ? 1 : 0);
+  const parts = [];
+  if (historyCount) parts.push(`${historyCount} film${historyCount > 1 ? 's' : ''}`);
+  if (tvCount) parts.push(`${tvCount} série${tvCount > 1 ? 's' : ''}`);
+  if (watchlistCount) parts.push(`${watchlistCount} élément${watchlistCount > 1 ? 's' : ''} à voir`);
+  if (analysisCount) parts.push(`${analysisCount} analyse${analysisCount > 1 ? 's' : ''}`);
+  if (duelCount) parts.push(`${duelCount} duel${duelCount > 1 ? 's' : ''}`);
+  if (hasPreferences && parts.length === 0) parts.push('préférences personnelles');
+  return { total, label: parts.join(' · ') || 'des préférences uniquement' };
 }
 
 // Import Letterboxd : accepte diary.csv, ratings.csv ou watched.csv de

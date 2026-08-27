@@ -263,7 +263,7 @@ function renderWatchlist() {
 
   container.innerHTML = '';
   visible.forEach((item) => {
-    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent (voir attributs onclick plus bas), pas la position affichée après tri/filtre.
+    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent, pas la position affichée après tri/filtre.
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
@@ -276,7 +276,7 @@ function renderWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
 
     div.innerHTML = `
@@ -292,8 +292,8 @@ function renderWatchlist() {
           </span>
         </button>
         <div class="wl-actions">
-          <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(item.title)}, vu">${ICONS.star}</button>
-          <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+          <button type="button" class="wl-btn rate" data-watchlist-action="rate" data-watchlist-idx="${i}" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(item.title)}, vu">${ICONS.star}</button>
+          <button type="button" class="wl-btn del" data-watchlist-action="remove" data-watchlist-idx="${i}" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
         </div>
       </div>`;
 
@@ -473,9 +473,9 @@ function openWatchlistPicker(movie, year) {
   newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
   cancelBtn.onclick = () => closeModal(modal);
 
-  lastFocusedBeforeModal = document.activeElement;
-  modal.classList.add('open');
-  (meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn)?.focus();
+  openModalElement(modal, {
+    initialFocus: meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn,
+  });
 }
 
 let deletedWlItemCache = null;
@@ -621,6 +621,14 @@ wlInput.addEventListener('keydown', e => {
 
 // Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
 document.getElementById('watchlist-list').addEventListener('click', e => {
+  const actionButton = e.target.closest('.wl-btn[data-watchlist-action]');
+  if (actionButton) {
+    const idx = Number(actionButton.dataset.watchlistIdx);
+    if (!Number.isInteger(idx) || idx < 0) return;
+    if (actionButton.dataset.watchlistAction === 'rate') watchlistToForm(idx);
+    if (actionButton.dataset.watchlistAction === 'remove') removeWatchlist(idx);
+    return;
+  }
   if (e.target.closest('#empty-state-watchlist-cta')) {
     if (window.innerWidth <= 860) switchMobileNav('discover');
     else switchRightTab('discover');
@@ -681,8 +689,9 @@ function openWlListManageMenu(id, mediaType = 'movie') {
     actionSheetListEl.appendChild(btn);
   });
 
-  lastFocusedBeforeModal = document.activeElement;
-  actionSheetEl.classList.add('open');
+  openModalElement(actionSheetEl, {
+    initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
+  });
 }
 
 let wlModalMode = 'create';
@@ -697,9 +706,7 @@ function openWlListModal(mode, targetId = null, mediaType = 'movie') {
   document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
   const input = document.getElementById('wl-list-name-input');
   input.value = mode === 'rename' ? (loadWatchlistsMeta(mediaType).find(l => l.id === targetId)?.name || '') : '';
-  lastFocusedBeforeModal = document.activeElement;
-  document.getElementById('wl-list-modal').classList.add('open');
-  setTimeout(() => input.focus(), 50);
+  openModalElement(document.getElementById('wl-list-modal'), { initialFocus: input });
 }
 
 // Ludex 2.0 : un seul gestionnaire, réutilisé pour les deux rangées de
@@ -891,7 +898,7 @@ function renderTvWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
     div.innerHTML = `
       <div class="wl-card-content">
@@ -899,8 +906,8 @@ function renderTvWatchlist() {
           ${posterHtml}
         </button>
         <div class="wl-actions">
-          <button class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
-          <button class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+          <button type="button" class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
+          <button type="button" class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
         </div>
       </div>`;
     div.querySelector('.wl-card-open').addEventListener('click', () => openTvDetailSheet(item.tmdbId));
@@ -943,6 +950,16 @@ document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
   if (window.innerWidth <= 860) switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   showToast(`Recherche lancée pour "${item.title}"`);
+});
+
+// Les erreurs d'affiche sont gérées par délégation, sans JavaScript inline :
+// la CSP peut ainsi interdire `unsafe-inline` sans casser les fallbacks.
+['watchlist-list', 'wl-tv-list'].forEach(id => {
+  document.getElementById(id)?.addEventListener('error', event => {
+    const image = event.target.closest?.('.wl-poster img');
+    if (!image) return;
+    image.parentElement.replaceChildren(document.createTextNode('🎬'));
+  }, true);
 });
 
 async function addToTvWatchlist(show, year) {
@@ -1053,4 +1070,3 @@ document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
 
 renderWatchlistTabs('tv');
 renderTvWatchlist();
-

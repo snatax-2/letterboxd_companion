@@ -37,7 +37,7 @@ function makeRes() {
 function installFakeSupabase(rows) {
   const calls = [];
   global.fetch = async (url, options = {}) => {
-    calls.push({ url: String(url), method: options.method || 'GET', body: options.body });
+    calls.push({ url: String(url), method: options.method || 'GET', body: options.body, headers: options.headers || {} });
     const method = options.method || 'GET';
     if (method === 'GET') {
       const match = String(url).match(/sync_code=eq\.([^&]+)/);
@@ -159,6 +159,61 @@ describe('api/sync.js — authentification', () => {
       assert.equal(res.statusCode, 400, `attendu 400 pour ${JSON.stringify(mauvais)}`);
     }
     assert.equal(calls.length, 0, 'aucun appel Supabase ne doit partir sur un code invalide');
+  }));
+
+  test('un payload inconnu ou trop volumineux est refusé avant écriture', withEnv(async () => {
+    const handler = await loadHandler();
+    const code = 'UnCodeSuffisammentLong123';
+    const calls = installFakeSupabase({});
+
+    const unknownRes = makeRes();
+    await handler({ method: 'POST', headers: { 'x-sync-code': code }, query: {}, body: { history: [], secretUnexpected: true } }, unknownRes);
+    assert.equal(unknownRes.statusCode, 400);
+    assert.match(unknownRes.body.error, /inconnu/i);
+
+    const hugeRes = makeRes();
+    await handler({ method: 'POST', headers: { 'x-sync-code': code }, query: {}, body: { history: [{ title: 'x'.repeat(1_500_001) }] } }, hugeRes);
+    assert.equal(hugeRes.statusCode, 400);
+    assert.match(hugeRes.body.error, /volumineuse/i);
+    assert.equal(calls.filter(call => call.method === 'POST').length, 0);
+  }));
+
+  test('une révision périmée produit 409 sans écraser la sauvegarde récente', withEnv(async () => {
+    const handler = await loadHandler();
+    const code = 'UnCodeSuffisammentLong123';
+    const latest = { payload: { history: [{ title: 'Récent' }] }, updated_at: '2026-08-27T12:00:00.000Z' };
+    const calls = installFakeSupabase({ [sha256(code)]: latest });
+    const res = makeRes();
+    await handler({
+      method: 'POST',
+      headers: { 'x-sync-code': code, 'if-match': '2026-08-27T11:00:00.000Z' },
+      query: {},
+      body: { history: [{ title: 'Ancien' }] },
+    }, res);
+
+    assert.equal(res.statusCode, 409);
+    assert.equal(res.body.payload.history[0].title, 'Récent');
+    assert.equal(res.body.revision, latest.updated_at);
+    assert.equal(calls.filter(call => ['POST', 'PATCH'].includes(call.method)).length, 0);
+  }));
+
+  test('une révision courante utilise une mise à jour atomique', withEnv(async () => {
+    const handler = await loadHandler();
+    const code = 'UnCodeSuffisammentLong123';
+    const revision = '2026-08-27T12:00:00.000Z';
+    const calls = installFakeSupabase({ [sha256(code)]: { payload: { history: [] }, updated_at: revision } });
+    const res = makeRes();
+    await handler({
+      method: 'POST',
+      headers: { 'x-sync-code': code, 'if-match': revision },
+      query: {},
+      body: { history: [{ title: 'Heat' }] },
+    }, res);
+
+    assert.equal(res.statusCode, 200);
+    const patchCall = calls.find(call => call.method === 'PATCH');
+    assert.ok(patchCall, 'une mise à jour avec révision doit être atomique');
+    assert.match(patchCall.url, /updated_at=eq\./);
   }));
 });
 

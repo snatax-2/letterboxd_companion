@@ -100,7 +100,9 @@ function updateQuickLabel() {
 function toggleWeights() {
   weightsOpen = !weightsOpen;
   document.getElementById('weights-panel').classList.toggle('open', weightsOpen);
-  document.getElementById('weights-toggle').style.color = weightsOpen ? 'var(--orange)' : '';
+  const toggle = document.getElementById('weights-toggle');
+  toggle.style.color = weightsOpen ? 'var(--orange)' : '';
+  toggle.setAttribute('aria-expanded', String(weightsOpen));
   document.getElementById('weights-toggle-chevron').style.transform = weightsOpen ? 'rotate(90deg)' : '';
 }
 
@@ -119,6 +121,11 @@ function resetWeights() {
   calculateScore();
   document.getElementById('genre-weight-suggest').style.display = 'none';
 }
+
+document.getElementById('tab-detail').addEventListener('click', () => setMode('detail'));
+document.getElementById('tab-quick').addEventListener('click', () => setMode('quick'));
+document.getElementById('weights-toggle').addEventListener('click', toggleWeights);
+document.getElementById('weights-reset-btn').addEventListener('click', resetWeights);
 
 function updateWeightBadges() {
   const w = getWeights();

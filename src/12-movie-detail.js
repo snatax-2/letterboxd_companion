@@ -447,10 +447,8 @@ async function openMovieDetailSheet(tmdbId) {
     return;
   }
 
-  lastFocusedBeforeModal = document.activeElement;
   mdsContentEl.innerHTML = buildMdsSkeleton();
-  mdsEl.classList.add('open');
-  mdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture (pas juste piégé une fois qu'on y est déjà)
+  openModalElement(mdsEl, { initialFocus: mdsCloseBtn });
   const mdsBoxEl = mdsEl.querySelector('.mds-box');
   if (mdsBoxEl) mdsBoxEl.scrollTop = 0; // évite de démarrer en mode compact si une fiche precedente avait été scrollée
 
@@ -674,10 +672,8 @@ function buildPdsContent(data) {
 
 async function openPersonDetailSheet(personId, personName) {
   if (!personId) return;
-  lastFocusedBeforeModal = document.activeElement;
   pdsContentEl.innerHTML = buildPdsSkeleton(personName);
-  pdsEl.classList.add('open');
-  pdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture
+  openModalElement(pdsEl, { initialFocus: pdsCloseBtn });
 
   try {
     const res = await fetch(`/api/search?personId=${personId}`);
@@ -875,8 +871,8 @@ async function openPosterPicker(tmdbId, mediaType = 'movie') {
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
-  modal.classList.add('open');
   grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
+  openModalElement(modal, { initialFocus: document.getElementById('poster-picker-close') });
 
   try {
     const param = mediaType === 'tv' ? 'tvImages' : 'images';
@@ -917,8 +913,8 @@ document.getElementById('movie-detail-sheet')?.addEventListener('click', (e) => 
 
 document.getElementById('poster-picker-modal')?.addEventListener('click', (e) => {
   const modal = document.getElementById('poster-picker-modal');
-  if (e.target === modal) { modal.classList.remove('open'); return; }
-  if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
+  if (e.target === modal) { closeModal(modal); return; }
+  if (e.target.closest('#poster-picker-close')) { closeModal(modal); return; }
 
   const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
   if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
@@ -928,7 +924,7 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
   const mediaType = grid.dataset.mediaType || 'movie';
-  modal.classList.remove('open');
+  closeModal(modal);
 
   if (mediaType === 'tv') {
     // Les séries stockent déjà poster_path en fragment brut TMDb (pas une

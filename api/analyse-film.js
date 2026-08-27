@@ -15,6 +15,11 @@
 // obsolète sans préavis.
 import { rateLimit } from './_rateLimit.js';
 
+const MAX_TITLE_LENGTH = 200;
+const MAX_ANALYSIS_LENGTH = 5_000;
+const MAX_TOTAL_INPUT_LENGTH = 8_000;
+const GEMINI_TIMEOUT_MS = 15_000;
+
 const SYSTEM_INSTRUCTION = `Tu es un mentor en analyse filmique, exigeant mais bienveillant. L'utilisateur t'envoie sa propre analyse d'un film (technique et/ou thématique) — ton rôle est de l'aider à progresser, pas de faire l'analyse à sa place.
 
 Réponds UNIQUEMENT avec un objet JSON valide de cette forme exacte, sans texte avant ni après :
@@ -46,15 +51,25 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
+  if (!(await rateLimit(req, res, { name: 'analyse-film-global', limit: 100, windowMs: 86_400_000, identifier: 'global' }))) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(429).json({ error: "Quota quotidien d'analyse atteint — réessaie demain." });
+  }
 
   const GEMINI_KEY = process.env.GEMINI_API_KEY;
   if (!GEMINI_KEY) {
     return res.status(503).json({ error: "L'analyse par IA n'est pas encore configurée (clé Gemini manquante)." });
   }
 
-  const { titre, technique, theme } = req.body || {};
+  const titre = typeof req.body?.titre === 'string' ? req.body.titre.trim() : '';
+  const technique = typeof req.body?.technique === 'string' ? req.body.technique.trim() : '';
+  const theme = typeof req.body?.theme === 'string' ? req.body.theme.trim() : '';
   if (!titre || (!technique && !theme)) {
     return res.status(400).json({ error: 'Titre et au moins un des deux champs (technique ou thématique) sont requis.' });
+  }
+  if (titre.length > MAX_TITLE_LENGTH || technique.length > MAX_ANALYSIS_LENGTH || theme.length > MAX_ANALYSIS_LENGTH ||
+      technique.length + theme.length > MAX_TOTAL_INPUT_LENGTH) {
+    return res.status(400).json({ error: 'Analyse trop longue. Limite chaque champ à 5 000 caractères (8 000 au total).' });
   }
 
   const userContent = `Film : ${titre}\n\nAnalyse technique (cadrage, lumière, montage, son, mise en scène) :\n${technique || '(non renseigné)'}\n\nAnalyse thématique (sujet apparent vs réel, comment la forme sert le fond) :\n${theme || '(non renseigné)'}`;
@@ -71,8 +86,9 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
           contents: [{ parts: [{ text: userContent }] }],
-          generationConfig: { responseMimeType: 'application/json' },
+          generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 900, temperature: 0.3 },
         }),
+        signal: AbortSignal.timeout(GEMINI_TIMEOUT_MS),
       }
     );
 
@@ -83,19 +99,8 @@ export default async function handler(req, res) {
       if (r.status === 429) {
         return res.status(429).json({ error: "Quota Gemini du jour épuisé — réessaie demain (le palier gratuit se réinitialise chaque jour)." });
       }
-      // Diagnostic TEMPORAIRE : remonte le détail exact renvoyé par Gemini
-      // (statut + message) plutôt qu'un message générique qui masquait la
-      // vraie cause — nécessaire pour diagnostiquer à distance sans accès
-      // aux journaux de la fonction sur Vercel. À simplifier une fois la
-      // cause réelle identifiée et corrigée.
-      let detail = '';
-      try {
-        const errBody = await r.json();
-        detail = errBody?.error?.message || JSON.stringify(errBody).slice(0, 300);
-      } catch {
-        detail = await r.text().catch(() => '').then(t => t.slice(0, 300));
-      }
-      return res.status(502).json({ error: `Gemini a renvoyé une erreur (${r.status}) : ${detail || 'détail indisponible'}` });
+      console.error(`Gemini upstream error: HTTP ${r.status}`);
+      return res.status(502).json({ error: "Le service d'analyse est temporairement indisponible. Réessaie dans un instant." });
     }
 
     const data = await r.json();
@@ -113,8 +118,24 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: "Réponse de Gemini dans un format inattendu. Réessaie." });
     }
 
-    return res.status(200).json({ retour });
-  } catch {
-    return res.status(502).json({ error: 'Impossible de contacter Gemini. Vérifie ta connexion et réessaie.' });
+    const normalizeList = value => Array.isArray(value)
+      ? value.filter(item => typeof item === 'string').map(item => item.trim().slice(0, 600)).filter(Boolean).slice(0, 3)
+      : [];
+    const normalized = {
+      synthese: typeof retour?.synthese === 'string' ? retour.synthese.trim().slice(0, 1_000) : '',
+      pointsForts: normalizeList(retour?.pointsForts),
+      anglesMorts: normalizeList(retour?.anglesMorts),
+      questions: normalizeList(retour?.questions),
+    };
+    if (!normalized.synthese || !normalized.pointsForts.length || !normalized.anglesMorts.length || !normalized.questions.length) {
+      return res.status(502).json({ error: "Réponse incomplète du service d'analyse. Réessaie." });
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ retour: normalized });
+  } catch (error) {
+    if (error?.name === 'AbortError' || error?.name === 'TimeoutError') {
+      return res.status(504).json({ error: "Le service d'analyse met trop de temps à répondre. Réessaie." });
+    }
+    return res.status(502).json({ error: "Impossible de contacter le service d'analyse. Réessaie dans un instant." });
   }
 }

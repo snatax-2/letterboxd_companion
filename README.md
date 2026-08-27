@@ -1,6 +1,8 @@
 # Ludex Rating Companion
 
-App de notation de films (recherche TMDb, fiche film, watchlist, providers de streaming BE) — front-end statique + une fonction serverless Vercel qui fait office de proxy vers l'API TMDb.
+Application personnelle de notation et de suivi de films et séries : historique détaillé, watchlists multiples, progression par saison, profil, analyses et synchronisation facultative entre appareils. Le navigateur conserve les données localement ; des fonctions Vercel servent de proxy vers TMDb/Gemini et de passerelle vers Supabase.
+
+Application en ligne : [https://ludex-three.vercel.app/](https://ludex-three.vercel.app/)
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
 
@@ -9,6 +11,7 @@ Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
 ```
 ludex/
 ├── index.html            → structure de la page
+├── bootstrap.js          → thème initial, polices à la demande et métriques Vercel
 ├── styles.css             → tous les styles et thèmes
 ├── app.js                  → ⚠️ FICHIER GÉNÉRÉ, ne pas éditer directement (voir src/)
 ├── src/                    → code source réel de app.js, découpé par thème
@@ -29,7 +32,12 @@ ludex/
 │   ├── 08-watchlist.js        → watchlist
 │   ├── 09-modal-init.js       → modale de confirmation & initialisation
 │   ├── 10-cloud-sync.js       → synchronisation cloud (sauvegarde/restauration)
-│   └── 11-discover.js         → onglet "Découvrir" façon Tinder (swipe pour ajouter/passer)
+│   ├── 11-discover.js         → onglet "Découvrir"
+│   ├── 12-movie-detail.js     → fiche film
+│   ├── 13-duels.js            → classement personnel par duels ELO
+│   ├── 17-film-analysis.js    → analyses personnelles et retour Gemini optionnel
+│   ├── 18-tv-shows.js         → suivi des séries et saisons
+│   └── 19-tv-detail.js        → fiche série
 ├── tests/                  → tests automatisés (node:test), voir section dédiée plus bas
 ├── scripts/
 │   ├── build-app-js.js      → concatène src/*.js dans l'ordre pour produire app.js
@@ -41,12 +49,13 @@ ludex/
 │   ├── package.json       → marque ce dossier en module ES (pour Node/tests uniquement)
 │   ├── _rateLimit.js       → limiteur de requêtes partagé (pas une route, préfixe _)
 │   ├── search.js           → fonction serverless Vercel (proxy TMDb + cache)
+│   ├── analyse-film.js     → mentor filmique Gemini, optionnel
 │   └── sync.js             → fonction serverless Vercel (synchro cloud Supabase)
 ├── .github/workflows/ci.yml → vérifications automatiques (build, tests, syntaxe) à chaque push
 ├── package.json
 ├── vercel.json
 ├── .gitignore
-└── .env.example           → variables d'environnement nécessaires (TMDB_KEY, SUPABASE_*)
+└── .env.example           → variables d'environnement documentées
 ```
 
 ### Pourquoi `app.js` est généré
@@ -84,7 +93,7 @@ Vercel construit `app.js` à chaque déploiement (`npm run build`, voir `vercel.
 
 ## Synchronisation cloud (Supabase)
 
-Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamais les perdre) et de les retrouver sur un autre appareil via un "code de synchronisation" que tu choisis toi-même.
+Permet de sauvegarder l'état personnel complet (films, séries, listes films/séries, analyses, duels et réglages) et de le retrouver sur un autre appareil via un code secret. L'export JSON manuel utilise le même schéma versionné et reste recommandé comme sauvegarde indépendante.
 
 **Fusion, pas écrasement** : si tu notes un film sur ton PC et un autre sur ton téléphone avant de synchroniser, les deux sont conservés — rien n'est perdu. Si tu notes le *même* film des deux côtés, c'est la version la plus récente qui est gardée. Les suppressions sont respectées elles aussi (via un petit mécanisme de traces horodatées), donc un film supprimé sur un appareil ne réapparaît pas après une synchro depuis un autre appareil qui l'avait encore.
 

@@ -14,8 +14,54 @@ function withThemeTransition(applyFn) {
   setTimeout(() => root.classList.remove('theme-transitioning'), 350);
 }
 
+const DEFAULT_APP_NAME = 'Ludex Rating Companion';
+const APP_NAME_MAX_LENGTH = 80;
+
+// Les anciennes versions stockaient volontairement <em> autour du premier
+// mot. On accepte ce format historique, mais le stockage et le rendu sont
+// désormais exclusivement textuels : aucune donnée persistée ne passe par
+// innerHTML.
+function normalizeAppName(value) {
+  const plain = String(value || '')
+    .replace(/<\/?em>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, APP_NAME_MAX_LENGTH);
+  return plain || DEFAULT_APP_NAME;
+}
+
+function renderAppTitle(value) {
+  const titleEl = document.getElementById('main-app-title');
+  const words = normalizeAppName(value).split(' ');
+  const first = document.createElement('em');
+  first.textContent = words.shift();
+  titleEl.replaceChildren(first);
+  if (words.length) titleEl.append(document.createTextNode(` ${words.join(' ')}`));
+}
+
+const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let systemThemeListenerAttached = false;
+
+function readStoredTheme() {
+  try { return JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme; }
+  catch { return undefined; }
+}
+
+function ensureSystemThemeListener() {
+  if (systemThemeListenerAttached) return;
+  systemThemeListenerAttached = true;
+  systemThemeQuery.addEventListener('change', e => {
+    if (readStoredTheme() !== 'system') return;
+    const sysTheme = e.matches ? 'default' : 'filmnoir';
+    if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
+    document.documentElement.setAttribute('data-theme', sysTheme);
+    renderAll();
+  });
+}
+
 function loadSettings() {
-  const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "default" };
+  const defaultSettings = { appName: DEFAULT_APP_NAME, theme: 'default' };
   try {
     const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
     applySettings(saved);
@@ -25,7 +71,9 @@ function loadSettings() {
 }
 
 function applySettings(settings) {
-  document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
+  settings = settings && typeof settings === 'object' ? settings : {};
+  const appName = normalizeAppName(settings.appName);
+  renderAppTitle(appName);
   
   let themeToApply = settings.theme || "default";
   // Repli pour quiconque avait Méridien enregistré avant son retrait — un
@@ -34,17 +82,9 @@ function applySettings(settings) {
   if (themeToApply === 'meridien') themeToApply = 'default';
   
   if (themeToApply === "system") {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = systemThemeQuery.matches;
     themeToApply = prefersDark ? "default" : "filmnoir"; 
-    
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        if (JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme === 'system') {
-            const sysTheme = e.matches ? "default" : "filmnoir";
-            if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
-            document.documentElement.setAttribute('data-theme', sysTheme);
-            renderAll();
-        }
-    });
+    ensureSystemThemeListener();
   }
   
   // Charge les polices du thème qu'on vient d'activer (voir loadThemeFonts
@@ -53,7 +93,7 @@ function applySettings(settings) {
   // un thème déjà vu ne redéclenche aucune requête.
   if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(themeToApply);
   document.documentElement.setAttribute('data-theme', themeToApply);
-  document.getElementById('setting-app-name').value = (settings.appName || "").replace(/<\/?em>/g, '');
+  document.getElementById('setting-app-name').value = appName;
   document.getElementById('setting-genre-weights-enabled').checked = settings.genreWeightsEnabled !== false; // true par défaut (comportement historique conservé)
   const owned = loadOwnedProviders();
   document.querySelectorAll('.platform-chip').forEach(chip => {
@@ -68,16 +108,17 @@ function applySettings(settings) {
 }
 
 document.getElementById('settings-btn').addEventListener('click', () => {
-  lastFocusedBeforeModal = document.getElementById('settings-btn');
-  document.getElementById('settings-modal').classList.add('open');
-  document.getElementById('setting-app-name').focus();
+  openModalElement(document.getElementById('settings-modal'), {
+    initialFocus: document.getElementById('setting-app-name'),
+    returnFocus: document.getElementById('settings-btn'),
+  });
 });
 
 document.getElementById('settings-cancel').addEventListener('click', () => {
-  const s = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('lbx_settings') || '{}'); } catch { /* réglages corrompus : valeurs par défaut */ }
   applySettings(s); 
-  document.getElementById('settings-modal').classList.remove('open');
-  document.getElementById('settings-btn').focus();
+  closeModal(document.getElementById('settings-modal'));
 });
 
 function selectThemeCard(card) {
@@ -131,13 +172,10 @@ document.getElementById('platform-chips-grid').addEventListener('click', (e) => 
 });
 
 document.getElementById('settings-save').addEventListener('click', () => {
-  let rawName = document.getElementById('setting-app-name').value.trim();
-  if(!rawName) rawName = "Ludex Rating Companion";
-  const firstWord = rawName.split(' ')[0];
-  const formattedName = rawName.replace(firstWord, `<em>${firstWord}</em>`);
+  const appName = normalizeAppName(document.getElementById('setting-app-name').value);
   
   const newSettings = {
-    appName: formattedName,
+    appName,
     theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
@@ -147,8 +185,7 @@ document.getElementById('settings-save').addEventListener('click', () => {
   saveOwnedProviders(selectedProviders);
   applySettings(newSettings);
   renderAll();
-  document.getElementById('settings-modal').classList.remove('open');
-  document.getElementById('settings-btn').focus();
+  closeModal(document.getElementById('settings-modal'));
 });
 
 loadSettings();

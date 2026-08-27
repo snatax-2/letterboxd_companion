@@ -1,6 +1,18 @@
 import { rateLimit } from './_rateLimit.js';
 import { seededPageAndIndex, seededFraction } from './_seededPick.js';
 
+const UPSTREAM_TIMEOUT_MS = 10_000;
+
+async function fetchJson(url) {
+  const response = await fetch(url, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
+  if (!response.ok) {
+    const error = new Error(`Upstream HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+  return response.json();
+}
+
 export default async function handler(req, res) {
   // Limite large : l'auto-complétion peut déclencher plusieurs appels par minute
   // en usage normal (une requête par pause de frappe), donc on reste généreux —
@@ -10,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query;
+  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query || {};
   // Ludex 2.0 : le toggle Films/Séries de Découvrir doit pouvoir demander
   // la variante série de ces trois endpoints (choix du jour, classiques par
   // décennie, cinéma international) — mediaType='tv' bascule discover/movie
@@ -19,6 +31,18 @@ export default async function handler(req, res) {
   const tmdbMediaType = mediaType === 'tv' ? 'tv' : 'movie';
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
+
+  const textInputs = { query, tvQuery, personSearch, imdbId };
+  const invalidText = Object.entries(textInputs).find(([, value]) =>
+    value !== undefined && (typeof value !== 'string' || value.trim().length > 200));
+  if (invalidText) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(400).json({ error: 'Paramètre de recherche invalide.' });
+  }
+  if (!TMDB_KEY && !imdbId && !img) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(503).json({ error: 'Recherche de films non configurée côté serveur.' });
+  }
 
   // Les identifiants TMDb partent dans le CHEMIN de l'URL appelée
   // (…/movie/${id}/recommendations). Sans validation, une valeur comme
@@ -56,10 +80,9 @@ export default async function handler(req, res) {
       // au hasard DANS cette page. Pas de cache : sinon le même choix
       // reviendrait à chaque appel tant que le CDN ne revalide pas.
       const randomPage = Math.floor(Math.random() * 200) + 1;
-      const discoverRes = await fetch(
+      const discoverData = await fetchJson(
         `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=100&page=${randomPage}`
       );
-      const discoverData = await discoverRes.json();
       const results = discoverData.results || [];
       const pick = results.length > 0 ? results[Math.floor(Math.random() * results.length)] : null;
       res.setHeader('Cache-Control', 'no-store');
@@ -85,10 +108,9 @@ export default async function handler(req, res) {
       const PAGE_SIZE = 20;
       const { page, index } = seededPageAndIndex(seed, 200, PAGE_SIZE);
       const dateField = tmdbMediaType === 'tv' ? 'first_air_date' : 'primary_release_date';
-      const discoverRes = await fetch(
+      const discoverData = await fetchJson(
         `https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=${dateField}.desc&vote_count.gte=100&page=${page}`
       );
-      const discoverData = await discoverRes.json();
       const results = (discoverData.results || []).filter(m => m.poster_path);
       const pick = results.length > 0 ? results[index % results.length] : null;
       setCache(86400, 604800); // stable 24h : cohérent avec "même film toute la journée"
@@ -104,10 +126,9 @@ export default async function handler(req, res) {
       // FILM_DU_JOUR_KEY dans 11-discover.js — "Sortie de la semaine" ne
       // reste donc affichée que le mercredi, redevient Film du jour ensuite).
       const seed = parseInt(weeklyRelease, 10) || 0;
-      const nowPlayingRes = await fetch(
+      const nowPlayingData = await fetchJson(
         `https://api.themoviedb.org/3/movie/now_playing?api_key=${TMDB_KEY}&language=fr-FR&region=FR&page=1`
       );
-      const nowPlayingData = await nowPlayingRes.json();
       const results = (nowPlayingData.results || []).filter(m => m.poster_path);
       const pick = results.length > 0 ? results[Math.floor(seededFraction(seed) * results.length)] : null;
       setCache(86400, 604800);
@@ -118,10 +139,9 @@ export default async function handler(req, res) {
       // personId (fiche complète d'une personne déjà identifiée par son id) :
       // ici on cherche à identifier LA personne à partir d'un texte tapé dans
       // la barre de recherche, pour proposer sa filmographie.
-      const psRes = await fetch(
+      const psData = await fetchJson(
         `https://api.themoviedb.org/3/search/person?api_key=${TMDB_KEY}&language=fr-FR&query=${encodeURIComponent(personSearch)}`
       );
-      const psData = await psRes.json();
       setCache(3600, 21600);
       return res.status(200).json(psData);
 
@@ -130,10 +150,9 @@ export default async function handler(req, res) {
       // complète (cast + équipe technique) en un seul appel TMDb.
       const safePersonId = tmdbId(personId);
       if (!safePersonId) return badId();
-      const personRes = await fetch(
+      const personData = await fetchJson(
         `https://api.themoviedb.org/3/person/${safePersonId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=movie_credits`
       );
-      const personData = await personRes.json();
       setCache(86400, 172800); // 24h : une bio/filmographie change rarement d'un jour à l'autre
       return res.status(200).json(personData);
 
@@ -144,10 +163,9 @@ export default async function handler(req, res) {
       // explorer" qui vivait dans Profil et se basait sur l'Historique de
       // l'utilisateur. Celui-ci est purement éditorial : aucun lien avec
       // les données de l'utilisateur, une simple vitrine à parcourir.
-      const topRatedRes = await fetch(
+      const topRatedData = await fetchJson(
         `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=fr-FR&page=1`
       );
-      const topRatedData = await topRatedRes.json();
       setCache(86400, 172800); // 24h : un classement "tous temps" ne bouge pas d'un jour à l'autre
       return res.status(200).json(topRatedData);
 
@@ -157,21 +175,22 @@ export default async function handler(req, res) {
       // séries dans une même réponse (chaque item porte déjà media_type
       // 'movie'/'tv' côté TMDb), au lieu de deux appels séparés à fusionner
       // nous-mêmes (Vers Ludex 2.0 §06 : "Tendances mixte films/séries").
-      const trendRes = await fetch(
+      const trendData = await fetchJson(
         `https://api.themoviedb.org/3/trending/all/week?api_key=${TMDB_KEY}&language=fr-FR`
       );
-      const trendData = await trendRes.json();
       setCache(10800, 43200); // 3h, revalidation jusqu'à 12h (les tendances évoluent dans la journée)
       return res.status(200).json(trendData);
 
     } else if (img) {
       // Cas 4 : Proxy image (contourne CORS TMDb sur mobile Chrome)
       // Seules les URLs image.tmdb.org sont autorisées
-      const decoded = decodeURIComponent(img);
-      if (!decoded.startsWith('https://image.tmdb.org/')) {
+      if (typeof img !== 'string' || img.length > 500) return res.status(400).json({ error: 'URL invalide' });
+      let imageUrl;
+      try { imageUrl = new URL(decodeURIComponent(img)); } catch { return res.status(400).json({ error: 'URL invalide' }); }
+      if (imageUrl.protocol !== 'https:' || imageUrl.hostname !== 'image.tmdb.org') {
         return res.status(403).json({ error: 'URL non autorisée' });
       }
-      const imgRes = await fetch(decoded);
+      const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
       if (!imgRes.ok) return res.status(imgRes.status).end();
       const buffer = await imgRes.arrayBuffer();
       const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
@@ -186,10 +205,9 @@ export default async function handler(req, res) {
       // carrousel "D'après ton historique" quand le toggle Séries est actif).
       const safeId = tmdbId(id);
       if (!safeId) return badId();
-      const recRes = await fetch(
+      const recData = await fetchJson(
         `https://api.themoviedb.org/3/${tmdbMediaType}/${safeId}/recommendations?api_key=${TMDB_KEY}&language=fr-FR`
       );
-      const recData = await recRes.json();
       setCache(43200, 604800); // 12h, revalidation jusqu'à 7 jours
       return res.status(200).json(recData);
 
@@ -199,10 +217,10 @@ export default async function handler(req, res) {
       // même paramètre déjà utilisé ailleurs dans ce fichier.
       const safeId = tmdbId(id);
       if (!safeId) return badId();
-      const provRes = await fetch(
+      if (!/^[A-Z]{2}$/.test(String(providers))) return badId();
+      const provData = await fetchJson(
         `https://api.themoviedb.org/3/${tmdbMediaType}/${safeId}/watch/providers?api_key=${TMDB_KEY}`
       );
-      const provData = await provRes.json();
       // Retourner uniquement la région demandée pour alléger la réponse
       const region = providers; // ex: 'BE'
       const regionData = provData.results?.[region] || null;
@@ -221,10 +239,9 @@ export default async function handler(req, res) {
       // belles variantes sont souvent dans cette dernière catégorie.
       const safeImagesId = tmdbId(images);
       if (!safeImagesId) return badId();
-      const imagesRes = await fetch(
+      const imagesData = await fetchJson(
         `https://api.themoviedb.org/3/movie/${safeImagesId}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
       );
-      const imagesData = await imagesRes.json();
       // Ne renvoie que l'essentiel (chemins + langue), trié par note TMDb,
       // plafonné : inutile de transporter 80 variantes vers un téléphone.
       const posters = (imagesData.posters || [])
@@ -238,10 +255,9 @@ export default async function handler(req, res) {
       // juste au-dessus) — même logique, juste /tv/ au lieu de /movie/.
       const safeTvImagesId = tmdbId(tvImages);
       if (!safeTvImagesId) return badId();
-      const tvImagesRes = await fetch(
+      const tvImagesData = await fetchJson(
         `https://api.themoviedb.org/3/tv/${safeTvImagesId}/images?api_key=${TMDB_KEY}&include_image_language=fr,en,null`
       );
-      const tvImagesData = await tvImagesRes.json();
       const tvPosters = (tvImagesData.posters || [])
         .sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0))
         .slice(0, 24)
@@ -254,10 +270,9 @@ export default async function handler(req, res) {
       // détail épisode par épisode viendra en Phase 2, pas encore ici).
       const safeTvId = tmdbId(tvId);
       if (!safeTvId) return badId();
-      const tvRes = await fetch(
+      const tvData = await fetchJson(
         `https://api.themoviedb.org/3/tv/${safeTvId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids`
       );
-      const tvData = await tvRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
       return res.status(200).json(tvData);
 
@@ -269,10 +284,9 @@ export default async function handler(req, res) {
       const safeShowId = tmdbId(tvSeasonShowId);
       const safeSeasonNo = tmdbId(tvSeasonNumber);
       if (!safeShowId || !safeSeasonNo) return badId();
-      const seasonRes = await fetch(
+      const seasonData = await fetchJson(
         `https://api.themoviedb.org/3/tv/${safeShowId}/season/${safeSeasonNo}?api_key=${TMDB_KEY}&language=fr-FR`
       );
-      const seasonData = await seasonRes.json();
       setCache(21600, 604800); // 6h — une liste d'épisodes ne change plus une fois la saison sortie
       return res.status(200).json(seasonData);
 
@@ -280,10 +294,9 @@ export default async function handler(req, res) {
       // Cas : recherche de série (équivalent de la recherche de film,
       // voir plus bas `else` — mais TMDb sépare bien films et séries,
       // deux catalogues distincts).
-      const tvSearchRes = await fetch(
+      const tvSearchData = await fetchJson(
         `https://api.themoviedb.org/3/search/tv?api_key=${TMDB_KEY}&query=${encodeURIComponent(tvQuery)}&language=fr-FR`
       );
-      const tvSearchData = await tvSearchRes.json();
       setCache(3600, 86400); // 1h, comme la recherche de film
       return res.status(200).json(tvSearchData);
 
@@ -301,8 +314,7 @@ export default async function handler(req, res) {
         return res.status(200).json({ ratings: null });
       }
       try {
-        const omdbRes = await fetch(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${OMDB_KEY}`);
-        const omdbData = await omdbRes.json();
+        const omdbData = await fetchJson(`https://www.omdbapi.com/?i=${encodeURIComponent(imdbId)}&apikey=${OMDB_KEY}`);
         setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
         return res.status(200).json({ ratings: omdbData.Response === 'True' ? (omdbData.Ratings || []) : null });
       } catch {
@@ -335,10 +347,9 @@ export default async function handler(req, res) {
         if (isFeb29 && !isTargetLeap) return null;
         const dateStr = `${targetYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         try {
-          const r = await fetch(
+          const data = await fetchJson(
             `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&primary_release_date.gte=${dateStr}&primary_release_date.lte=${dateStr}&sort_by=popularity.desc`
           );
-          const data = await r.json();
           const films = (data.results || []).filter(m => m.poster_path).slice(0, 4);
           return films.length ? { yearsAgo, year: targetYear, films } : null;
         } catch {
@@ -362,8 +373,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ results: [] });
       }
       const pages = await Promise.all([1, 2].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=50&with_keywords=${kid}&page=${page}`)
-          .then(r => r.json()).catch(() => ({ results: [] }))
+        fetchJson(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=popularity.desc&vote_count.gte=50&with_keywords=${kid}&page=${page}`)
+          .catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
       setCache(604800, 2592000);
@@ -382,8 +393,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ results: [] });
       }
       const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=200&with_origin_country=${cc}&page=${page}`)
-          .then(r => r.json()).catch(() => ({ results: [] }))
+        fetchJson(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=200&with_origin_country=${cc}&page=${page}`)
+          .catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
       setCache(604800, 2592000); // une semaine, comme les décennies/studios
@@ -405,8 +416,8 @@ export default async function handler(req, res) {
         return res.status(200).json({ results: [] });
       }
       const pages = await Promise.all([1, 2, 3].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=primary_release_date.asc&vote_count.gte=20&with_companies=${sid}&page=${page}`)
-          .then(r => r.json()).catch(() => ({ results: [] }))
+        fetchJson(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&language=fr-FR&sort_by=primary_release_date.asc&vote_count.gte=20&with_companies=${sid}&page=${page}`)
+          .catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
       setCache(604800, 2592000); // une semaine, comme les décennies : ça ne bouge presque jamais
@@ -430,8 +441,8 @@ export default async function handler(req, res) {
       // (first_air_date) que pour les films (primary_release_date).
       const dateField = tmdbMediaType === 'tv' ? 'first_air_date' : 'primary_release_date';
       const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
-        fetch(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=500&${dateField}.gte=${startYear}-01-01&${dateField}.lte=${endYear}-12-31&page=${page}`)
-          .then(r => r.json()).catch(() => ({ results: [] }))
+        fetchJson(`https://api.themoviedb.org/3/discover/${tmdbMediaType}?api_key=${TMDB_KEY}&language=fr-FR&sort_by=vote_average.desc&vote_count.gte=500&${dateField}.gte=${startYear}-01-01&${dateField}.lte=${endYear}-12-31&page=${page}`)
+          .catch(() => ({ results: [] }))
       ));
       const merged = pages.flatMap(p => p.results || []).filter(m => m.poster_path);
       // Une semaine de cache : ce classement ne bouge presque jamais d'un
@@ -447,10 +458,9 @@ export default async function handler(req, res) {
       // besoin de le construire à la main comme les listes prédéfinies).
       const safeCollectionId = tmdbId(collectionId);
       if (!safeCollectionId) return badId();
-      const collectionRes = await fetch(
+      const collectionData = await fetchJson(
         `https://api.themoviedb.org/3/collection/${safeCollectionId}?api_key=${TMDB_KEY}&language=fr-FR`
       );
-      const collectionData = await collectionRes.json();
       setCache(21600, 604800); // 6h, comme les détails d'un film — aussi stable
       return res.status(200).json(collectionData);
 
@@ -458,23 +468,28 @@ export default async function handler(req, res) {
       // Cas 2 : Détails d'un film spécifique (infos + crédits)
       const safeId = tmdbId(id);
       if (!safeId) return badId();
-      const detailsRes = await fetch(
+      const detailsData = await fetchJson(
         `https://api.themoviedb.org/3/movie/${safeId}?api_key=${TMDB_KEY}&language=fr-FR&append_to_response=credits,videos,external_ids&include_video_language=fr,en,null`
       );
-      const detailsData = await detailsRes.json();
       setCache(21600, 604800); // 6h, revalidation jusqu'à 7 jours (infos très stables)
       return res.status(200).json(detailsData);
     } else {
       // Cas 1 : Recherche par titre
-      const searchRes = await fetch(
+      if (typeof query !== 'string' || !query.trim()) {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(400).json({ error: 'Recherche vide.' });
+      }
+      const searchData = await fetchJson(
         `https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}&language=fr-FR`
       );
-      const searchData = await searchRes.json();
       setCache(3600, 86400); // 1h, revalidation jusqu'à 1 jour
       return res.status(200).json(searchData);
     }
   } catch (error) {
     res.setHeader('Cache-Control', 'no-store'); // ne jamais mettre en cache une erreur
-    return res.status(500).json({ error: "Erreur lors de l'appel API" });
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') {
+      return res.status(504).json({ error: 'Le catalogue met trop de temps à répondre. Réessaie.' });
+    }
+    return res.status(502).json({ error: 'Le catalogue de films est temporairement indisponible.' });
   }
 }

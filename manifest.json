@@ -1,11 +1,10 @@
 {
   "name": "Ludex Rating Companion",
   "short_name": "Ludex",
-  "description": "Note tes films, garde un historique détaillé de tes critiques et gère ta watchlist avec les dispos streaming en Belgique.",
+  "description": "Journal personnel de films et séries : notes, historique, watchlists, suivi des saisons et statistiques.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
   "lang": "fr",

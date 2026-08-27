@@ -19,6 +19,7 @@ const ROOT = path.join(__dirname, '..');
 // Fichiers qui composent l'app shell (doivent rester synchronisés avec APP_SHELL dans sw.js)
 const APP_SHELL_FILES = [
   'index.html',
+  'bootstrap.js',
   'styles.min.css', // fichier réellement servi/mis en cache — styles.css est la source, jamais chargée directement (voir scripts/minify.js)
   'app.js',
   'manifest.json',

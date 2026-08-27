@@ -12,6 +12,11 @@ test('export inclut les series, pas seulement les films', async ({ page }) => {
         '1': { seasonName: 'Saison 1', watchedEpisodes: [1], totalEpisodes: 8, rating: { mode: 'detail', values: {}, score: '9.0', stars: '', review: '', date: '2026-01-01T00:00:00.000Z' } },
       } },
     ]));
+    localStorage.setItem('lbx_tv_watchlists_meta', JSON.stringify([{ id: 'default', name: 'À voir' }]));
+    localStorage.setItem('lbx_tv_watchlist_default', JSON.stringify([{ title: 'Severance', tmdbId: 95396, addedAt: '2026-01-02T00:00:00.000Z' }]));
+    localStorage.setItem('lbx_analyses', JSON.stringify([{ id: 'a1', filmId: 1, date: '2026-01-03T00:00:00.000Z', retour: {} }]));
+    localStorage.setItem('lbx_owned_providers', JSON.stringify(['Netflix']));
+    localStorage.setItem('lbx_settings', JSON.stringify({ appName: 'Mon Ludex', theme: 'default' }));
   });
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
 
@@ -28,10 +33,47 @@ test('export inclut les series, pas seulement les films', async ({ page }) => {
   const data = JSON.parse(content);
 
   console.log('structure exportee:', JSON.stringify(Object.keys(data)));
+  expect(data.schemaVersion).toBe(2);
   expect(data.history).toHaveLength(1);
   expect(data.tvShows).toHaveLength(1);
   expect(data.tvShows[0].title).toBe('True Detective');
   expect(data.tvShows[0].seasons['1'].rating.score).toBe('9.0');
+  expect(data.tvWatchlists.default[0].title).toBe('Severance');
+  expect(data.analyses).toHaveLength(1);
+  expect(data.ownedProviders).toEqual(['Netflix']);
+  expect(data.settings.appName).toBe('Mon Ludex');
+});
+
+test('import complet restaure watchlists series, analyses et plateformes', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+  await page.goto('/');
+
+  const backup = JSON.stringify({
+    schemaVersion: 2,
+    history: [],
+    tvShows: [],
+    watchlistsMeta: [{ id: 'default', name: 'À voir' }],
+    watchlists: { default: [] },
+    tvWatchlistsMeta: [{ id: 'default', name: 'Séries à voir' }],
+    tvWatchlists: { default: [{ title: 'The Bear', tmdbId: 136315, addedAt: '2026-01-01T00:00:00.000Z' }] },
+    analyses: [{ id: 'analysis-1', filmId: 1, date: '2026-01-01T00:00:00.000Z', retour: { synthese: 'Test' } }],
+    ownedProviders: ['MUBI'],
+    settings: { appName: 'Cinémathèque', theme: 'default' },
+  });
+  await page.evaluate(text => window.importLudexJson(text), backup);
+  await page.click('#modal-confirm');
+
+  const restored = await page.evaluate(() => ({
+    tvList: JSON.parse(localStorage.getItem('lbx_tv_watchlist_default')),
+    analyses: JSON.parse(localStorage.getItem('lbx_analyses')),
+    providers: JSON.parse(localStorage.getItem('lbx_owned_providers')),
+    settings: JSON.parse(localStorage.getItem('lbx_settings')),
+  }));
+  expect(restored.tvList[0].title).toBe('The Bear');
+  expect(restored.analyses[0].id).toBe('analysis-1');
+  expect(restored.providers).toEqual(['MUBI']);
+  expect(restored.settings.appName).toBe('Cinémathèque');
 });
 
 test('import ancien format (tableau simple, sans series) reste retrocompatible', async ({ page }) => {

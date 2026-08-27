@@ -46,6 +46,16 @@ import { createHash } from 'node:crypto';
 import { rateLimit } from './_rateLimit.js';
 
 const TABLE = 'ludex_sync';
+const MAX_PAYLOAD_BYTES = 1_500_000;
+const MAX_PAYLOAD_DEPTH = 12;
+const MAX_PAYLOAD_NODES = 50_000;
+const ALLOWED_PAYLOAD_KEYS = new Set([
+  'schemaVersion', 'exportedAt', 'history', 'historyTombstones',
+  'tvShows', 'tvShowTombstones', 'tvSeasonTombstones',
+  'watchlistsMeta', 'watchlists', 'watchlistTombstones', 'watchlistListTombstones',
+  'tvWatchlistsMeta', 'tvWatchlists', 'tvWatchlistTombstones', 'tvWatchlistListTombstones',
+  'settings', 'ownedProviders', 'analyses', 'duels', 'draft', 'preferences',
+]);
 
 // Longueur minimale d'un code NOUVEAU. Les codes déjà en base sont exemptés
 // (voir plus bas) : imposer la règle rétroactivement couperait l'utilisateur
@@ -72,6 +82,39 @@ function readCode(req) {
   if (typeof fromHeader === 'string' && fromHeader.trim()) return fromHeader.trim();
   const fromQuery = req.query?.code; // `?.` : req.query n'est pas garanti hors Vercel
   return typeof fromQuery === 'string' ? fromQuery.trim() : undefined;
+}
+
+function validatePayload(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return 'Corps de requête invalide.';
+  const unknownKey = Object.keys(payload).find(key => !ALLOWED_PAYLOAD_KEYS.has(key));
+  if (unknownKey) return `Champ de sauvegarde inconnu : ${unknownKey}.`;
+  const serialized = JSON.stringify(payload);
+  if (Buffer.byteLength(serialized, 'utf8') > MAX_PAYLOAD_BYTES) return 'Sauvegarde trop volumineuse.';
+
+  let nodes = 0;
+  const visit = (value, depth) => {
+    nodes++;
+    if (nodes > MAX_PAYLOAD_NODES || depth > MAX_PAYLOAD_DEPTH) return false;
+    if (!value || typeof value !== 'object') return true;
+    return Object.values(value).every(child => visit(child, depth + 1));
+  };
+  if (!visit(payload, 0)) return 'Sauvegarde trop complexe.';
+
+  const arrayKeys = ['history', 'historyTombstones', 'tvShows', 'tvShowTombstones', 'tvSeasonTombstones',
+    'watchlistsMeta', 'watchlistListTombstones', 'tvWatchlistsMeta', 'tvWatchlistListTombstones',
+    'ownedProviders', 'analyses'];
+  const wrongArray = arrayKeys.find(key => payload[key] !== undefined && !Array.isArray(payload[key]));
+  if (wrongArray) return `Le champ ${wrongArray} doit être une liste.`;
+  const objectKeys = ['watchlists', 'watchlistTombstones', 'tvWatchlists', 'tvWatchlistTombstones', 'settings', 'duels', 'draft', 'preferences'];
+  const wrongObject = objectKeys.find(key => payload[key] !== undefined && payload[key] !== null &&
+    (typeof payload[key] !== 'object' || Array.isArray(payload[key])));
+  if (wrongObject) return `Le champ ${wrongObject} doit être un objet.`;
+  return null;
+}
+
+function readRevisionHeader(req, name) {
+  const value = req.headers?.[name];
+  return typeof value === 'string' ? value.replace(/^W\//, '').replace(/^"|"$/g, '').trim() : '';
 }
 
 export default async function handler(req, res) {
@@ -158,6 +201,8 @@ export default async function handler(req, res) {
       if (!body || typeof body !== 'object') {
         return res.status(400).json({ error: 'Corps de requête invalide.' });
       }
+      const payloadError = validatePayload(body);
+      if (payloadError) return res.status(400).json({ error: payloadError });
 
       let existing;
       try {
@@ -175,23 +220,48 @@ export default async function handler(req, res) {
       }
 
       const hashed = storageKey(code);
-      const sbRes = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
-        method: 'POST',
+      const expectedRevision = readRevisionHeader(req, 'if-match');
+      const createOnly = readRevisionHeader(req, 'if-none-match') === '*';
+      if (existing.row && (createOnly || (expectedRevision && expectedRevision !== existing.row.updated_at))) {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(409).json({
+          error: 'La sauvegarde cloud a changé sur un autre appareil.',
+          payload: existing.row.payload,
+          revision: existing.row.updated_at,
+        });
+      }
+
+      const updatedAt = new Date().toISOString();
+      const useAtomicUpdate = !!(existing.row && !existing.legacy && expectedRevision);
+      const targetUrl = useAtomicUpdate
+        ? `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(hashed)}&updated_at=eq.${encodeURIComponent(expectedRevision)}&select=updated_at`
+        : `${SUPABASE_URL}/rest/v1/${TABLE}`;
+      const sbRes = await fetch(targetUrl, {
+        method: useAtomicUpdate ? 'PATCH' : 'POST',
         headers: {
           ...headers,
-          Prefer: 'resolution=merge-duplicates,return=minimal', // upsert sur la clé primaire sync_code
+          Prefer: useAtomicUpdate ? 'return=representation' : 'resolution=merge-duplicates,return=representation',
         },
-        body: JSON.stringify({
-          sync_code: hashed,
-          payload: body,
-          updated_at: new Date().toISOString(),
-        }),
+        body: JSON.stringify(useAtomicUpdate
+          ? { payload: body, updated_at: updatedAt }
+          : { sync_code: hashed, payload: body, updated_at: updatedAt }),
       });
 
       if (!sbRes.ok) {
         const errText = await sbRes.text();
         console.error('Supabase upsert error:', errText);
         return res.status(502).json({ error: "Erreur d'écriture cloud." });
+      }
+      let writtenRows = null;
+      try { writtenRows = await sbRes.json(); } catch { /* certains anciens mocks/clients ne renvoient aucun corps */ }
+      if (useAtomicUpdate && Array.isArray(writtenRows) && writtenRows.length === 0) {
+        const latest = await fetchRow(code);
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(409).json({
+          error: 'La sauvegarde cloud a changé sur un autre appareil.',
+          payload: latest.row?.payload || null,
+          revision: latest.row?.updated_at || null,
+        });
       }
 
       // La ligne héritée (indexée par le code en clair) vient d'être recopiée
@@ -210,7 +280,7 @@ export default async function handler(req, res) {
         }
       }
 
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, revision: updatedAt });
 
     } else {
       return res.status(405).json({ error: 'Méthode non autorisée.' });

@@ -35,9 +35,9 @@ function buildAnalysisSectionHtml(movieId, movieTitle) {
     <div class="mds-section-title">Analyse</div>
     <div class="analysis-form">
       <label class="analysis-label" for="analysis-technique">Analyse technique</label>
-      <textarea class="analysis-textarea" id="analysis-technique" rows="3" placeholder="Cadrage, lumière, montage, son, mise en scène..."></textarea>
+      <textarea class="analysis-textarea" id="analysis-technique" rows="3" maxlength="5000" placeholder="Cadrage, lumière, montage, son, mise en scène..."></textarea>
       <label class="analysis-label" for="analysis-theme">Analyse thématique</label>
-      <textarea class="analysis-textarea" id="analysis-theme" rows="3" placeholder="Sujet apparent vs sujet réel, comment la forme sert le fond..."></textarea>
+      <textarea class="analysis-textarea" id="analysis-theme" rows="3" maxlength="5000" placeholder="Sujet apparent vs sujet réel, comment la forme sert le fond..."></textarea>
       <button type="button" class="icon-btn analysis-submit-btn" id="analysis-submit-btn">
         <span class="analysis-submit-spinner" id="analysis-submit-spinner" style="display:none;" aria-hidden="true">${ICONS.refresh}</span>
         <span id="analysis-submit-label">Envoyer pour analyse</span>

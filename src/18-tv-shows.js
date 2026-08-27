@@ -1132,3 +1132,12 @@ if (localStorage.getItem('lbx_tv_continue_collapsed') === '1') {
   document.getElementById('tv-continue-toggle').setAttribute('aria-expanded', 'false');
   document.getElementById('tv-continue-toggle').classList.add('collapsed');
 }
+
+// Gestionnaires externalisés : les boutons restent natifs et la CSP peut
+// refuser le JavaScript inline sans désactiver les bascules Films/Séries.
+document.getElementById('tab-media-movie')?.addEventListener('click', () => setMediaType('movie'));
+document.getElementById('tab-media-tv')?.addEventListener('click', () => setMediaType('tv'));
+document.getElementById('hist-tab-movie')?.addEventListener('click', () => switchHistoryMediaFilter('movie'));
+document.getElementById('hist-tab-tv')?.addEventListener('click', () => switchHistoryMediaFilter('tv'));
+document.getElementById('stats-tab-movie')?.addEventListener('click', () => switchStatsMediaFilter('movie'));
+document.getElementById('stats-tab-tv')?.addEventListener('click', () => switchStatsMediaFilter('tv'));

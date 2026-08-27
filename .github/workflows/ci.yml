@@ -20,9 +20,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: npm
 
       - name: Installation des dépendances
         run: npm ci
+
+      - name: Audit des dépendances de production
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Validation des fichiers JSON (package.json, manifest.json, vercel.json)
         run: |
