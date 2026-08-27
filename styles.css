@@ -1659,6 +1659,83 @@
   }
 
   /* ═══════════════════════════════════════════
+     P7 · SÉRIES — widget « En cours », saisons, épisodes
+     ═══════════════════════════════════════════
+     §8 est catégorique : « Ne pas recréer des menus statut/saison/épisode
+     génériques si le code possède déjà le workflow de suivi. » Aucune ligne
+     de logique n'est touchée ici. Les huit comportements du widget listés en
+     §8.1 — visibilité conditionnelle, prochain épisode non vu, validation qui
+     avance, détection de la saison suivante, synopsis dépliable, pause,
+     masquer, repli mémorisé — sont ceux du dépôt, inchangés. La protection
+     anti-spoilers sur un épisode pas encore diffusé aussi.
+
+     Ce bloc ne fait que sortir le widget de sa carte et remettre chaque
+     information dans le bon registre typographique. */
+
+  /* La carte devient une ENTRÉE de liste, séparée par un filet plutôt
+     qu'enfermée dans un cadre — c'est un carnet de suivi, pas un tableau de
+     bord. La hauteur minimale est conservée : §8.1 exige une mise en page
+     stable même avec un titre d'épisode très long. */
+  [data-theme^="ludex-"] .tv-continue-card {
+    background: none; border: 0; border-radius: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 16px 56px 16px 0;
+  }
+  [data-theme^="ludex-"] .tv-continue-list { gap: 0; }
+  [data-theme^="ludex-"] .tv-continue-poster { border-radius: 2px; width: 64px; height: 96px; }
+
+  /* Trois registres, trois rôles : la série en micro-data, l'épisode en
+     titre d'œuvre, la date et la durée en mono. */
+  [data-theme^="ludex-"] .tv-continue-show-title {
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: var(--micro-ls); color: var(--text);
+  }
+  [data-theme^="ludex-"] .tv-continue-ep-title {
+    font-family: var(--font-display); font-style: italic; font-weight: 600;
+    font-size: 1.05rem; line-height: 1.25; margin-top: 5px;
+  }
+  [data-theme^="ludex-"] .tv-continue-meta {
+    font-family: var(--font-mono); font-size: var(--micro);
+    letter-spacing: 0.04em; color: var(--text); margin-top: 6px;
+  }
+  [data-theme^="ludex-"] .tv-continue-synopsis summary {
+    font-family: var(--font-mono); font-size: var(--micro);
+    letter-spacing: var(--micro-ls); text-transform: uppercase;
+    color: var(--text); font-weight: 500;
+  }
+  [data-theme^="ludex-"] .tv-continue-synopsis summary:hover { color: var(--text-hi); }
+
+  /* Le rond de validation garde sa place, sa taille et son geste : il perd
+     seulement sa couleur d'accent pour le contraste (§4.1 appliqué au même
+     principe — l'importance vient de la forme, pas de la teinte). */
+  [data-theme^="ludex-"] .tv-continue-check-btn {
+    background: var(--text-hi); color: var(--bg);
+  }
+  [data-theme^="ludex-"] .tv-continue-lock-badge {
+    background: none; border-color: var(--border-hi);
+  }
+  [data-theme^="ludex-"] .tv-continue-header {
+    font-family: var(--font-heading);
+    font-size: var(--heading-m); letter-spacing: var(--heading-m-ls);
+    text-transform: uppercase; font-weight: 700;
+    padding: 4px 0 14px;
+  }
+  [data-theme^="ludex-"] .tv-continue-count {
+    font-family: var(--font-mono); font-size: var(--micro); color: var(--text);
+  }
+
+  /* Les deux bandeaux de progression de saison : un filet gauche suffit à
+     les rattacher, sans reconstruire un panneau. Celui de fin de saison
+     garde un repère plus marqué — c'est lui qui ouvre la notation. */
+  [data-theme^="ludex-"] .tv-season-complete-banner,
+  [data-theme^="ludex-"] .tv-season-start-prompt {
+    background: none; border-radius: 0;
+    border-left-width: 1px; padding: 12px 0 12px 16px;
+  }
+  [data-theme^="ludex-"] .tv-season-complete-banner { border-left-color: var(--gold); }
+  [data-theme^="ludex-"] .tv-season-start-prompt { border-left-color: var(--border-hi); }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3

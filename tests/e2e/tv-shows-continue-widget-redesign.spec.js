@@ -10,6 +10,14 @@ test.beforeEach(async ({ page }) => {
       } },
     ]));
   });
+  // Polices Google bloquées : ce fichier enchaîne deux chargements de page
+  // (un initial, un rechargement pour vérifier la persistance de la
+  // préférence de repli), et le <link> injecté par loadThemeFonts met une
+  // dizaine de secondes à résoudre sur ce runner. Les deux cumulés
+  // dépassaient le délai de 30s — un échec de chronomètre, pas de
+  // comportement. Même parade que visual-regression et jetons-semantiques.
+  await page.route('**fonts.googleapis.com**', route => route.abort());
+  await page.route('**fonts.gstatic.com**', route => route.abort());
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.route('**/api/search?tvSeasonShowId=4607&tvSeasonNumber=1', route => route.fulfill({ json: {
     episodes: [

@@ -178,7 +178,14 @@ test('ombre du bouton Noter reste contenue (ne deborde plus sur les onglets vois
   // échouait alors que l'intention — un flou contenu — est mieux respectée
   // qu'avant. On vérifie donc le seuil, pas la valeur, pour que cet ajustement
   // reste possible sans rouvrir le test.
-  const lengths = shadow.match(/-?\d+(?:\.\d+)?px/g) || [];
+  // box-shadow peut porter PLUSIEURS couches séparées par des virgules. Les
+  // thèmes Ludex ajoutent un liseré `inset` autour du cercle en plus de
+  // l'ombre portée ; lire aveuglément la 3e longueur de la chaîne entière
+  // mesurait alors le flou du LISERÉ (0px), pas celui de l'ombre — un échec
+  // qui ne disait rien de l'intention testée. On isole la couche portée.
+  const couches = shadow.split(/,(?![^(]*\))/).map(c => c.trim());
+  const portee = couches.find(c => !c.includes('inset')) || couches[0];
+  const lengths = portee.match(/-?\d+(?:\.\d+)?px/g) || [];
   const blur = parseFloat(lengths[2]); // offset-x, offset-y, flou, étalement
   expect(blur, `ombre lue : ${shadow}`).toBeGreaterThan(0);
   expect(blur, `ombre lue : ${shadow}`).toBeLessThanOrEqual(8);
