@@ -26,10 +26,10 @@ const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique, fi
 const LEGACY_TV_WATCHLIST_KEY = 'lbx_tv_watchlist'; // ancienne clé (liste unique, séries — voir migration plus bas)
 
 function loadWatchlistsMeta(mediaType = 'movie') {
-  try { return JSON.parse(localStorage.getItem(watchlistsMetaKey(mediaType))) || []; } catch { return []; }
+  return readJsonStorage(watchlistsMetaKey(mediaType), [], Array.isArray);
 }
 function saveWatchlistsMeta(meta, mediaType = 'movie') {
-  localStorage.setItem(watchlistsMetaKey(mediaType), JSON.stringify(meta));
+  return writeJsonStorage(watchlistsMetaKey(mediaType), meta);
 }
 function watchlistStorageKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_${id}` : `lbx_watchlist_${id}`; }
 function watchlistTombstonesKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_tombstones_${id}` : `lbx_watchlist_tombstones_${id}`; }
@@ -46,16 +46,16 @@ function migrateLegacyWatchlist(mediaType = 'movie') {
   if (loadWatchlistsMeta(mediaType).length > 0) return; // déjà migré
   const legacyKey = mediaType === 'tv' ? LEGACY_TV_WATCHLIST_KEY : LEGACY_WATCHLIST_KEY;
   let legacyItems = [];
-  try { legacyItems = JSON.parse(localStorage.getItem(legacyKey)) || []; } catch {}
+  legacyItems = readJsonStorage(legacyKey, [], Array.isArray);
   let legacyTombstones = [];
   if (mediaType === 'movie') {
-    try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+    legacyTombstones = readJsonStorage(LEGACY_WATCHLIST_TOMBSTONES_KEY, [], Array.isArray);
   }
   const defaultId = 'default';
   saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }], mediaType);
-  localStorage.setItem(watchlistStorageKey(defaultId, mediaType), JSON.stringify(legacyItems));
-  localStorage.setItem(watchlistTombstonesKey(defaultId, mediaType), JSON.stringify(legacyTombstones));
-  localStorage.setItem(activeWatchlistKey(mediaType), defaultId);
+  writeJsonStorage(watchlistStorageKey(defaultId, mediaType), legacyItems);
+  writeJsonStorage(watchlistTombstonesKey(defaultId, mediaType), legacyTombstones);
+  writeTextStorage(activeWatchlistKey(mediaType), defaultId);
 }
 migrateLegacyWatchlist('movie');
 migrateLegacyWatchlist('tv');
@@ -99,10 +99,10 @@ function deleteWatchlistList(id, mediaType = 'movie') {
 }
 
 function loadWatchlist(listId, mediaType = 'movie') {
-  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType))) || []; } catch { return []; }
+  return readJsonStorage(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), [], Array.isArray);
 }
 function saveWatchlist(list, listId, mediaType = 'movie') {
-  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), JSON.stringify(list));
+  return writeJsonStorage(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), list);
 }
 
 // ── Ludex 2.0 : tri et filtre (voir Ludex_Specifications_Watchlist) ──

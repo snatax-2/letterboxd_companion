@@ -258,16 +258,15 @@ document.getElementById('tv-start-season-btn').addEventListener('click', startTr
 // total. Aucune note stockée ici (Phase 3) : la note de saison viendra
 // plus tard, la note globale de série ne sera jamais stockée du tout,
 // toujours recalculée à la volée à partir des saisons notées.
-const TV_SHOWS_KEY = 'lbx_tv_shows';
 let selectedSeasonNumber = null;
 let selectedSeasonName = null;
 let selectedSeasonEpisodeCount = 0;
 
 function loadTvShows() {
-  try { return JSON.parse(localStorage.getItem(TV_SHOWS_KEY)) || []; } catch { return []; }
+  return readRegisteredStorage('tvShows', []);
 }
 function saveTvShows(shows) {
-  localStorage.setItem(TV_SHOWS_KEY, JSON.stringify(shows));
+  return writeRegisteredStorage('tvShows', shows);
 }
 
 // ═══════════════════════════════════════════

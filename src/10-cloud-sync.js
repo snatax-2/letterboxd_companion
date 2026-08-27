@@ -121,11 +121,11 @@ function formatDateTime(iso) {
 // ─── Tombstones (traces de suppression) ─────────────────────────────────────
 
 function loadTombstones(storageKey) {
-  try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
+  return readJsonStorage(storageKey, [], Array.isArray);
 }
 
 function saveTombstones(storageKey, list) {
-  localStorage.setItem(storageKey, JSON.stringify(list));
+  return writeJsonStorage(storageKey, list);
 }
 
 function recordTombstone(storageKey, key) {
@@ -144,15 +144,6 @@ function removeTombstone(storageKey, key) {
 // mergeTombstoneLists, historyItemKey, watchlistItemKey, mergeHistory et
 // mergeWatchlist vivent maintenant dans 03b-pure-logic.js (logique pure,
 // testable automatiquement sans DOM — voir tests/merge-logic.test.js).
-
-function readJsonStorage(key, fallback = null) {
-  try {
-    const value = JSON.parse(localStorage.getItem(key));
-    return value ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 function mergeWatchlistCollection(remotePayload, mediaType = 'movie') {
   const isTv = mediaType === 'tv';
@@ -194,7 +185,7 @@ function mergeWatchlistCollection(remotePayload, mediaType = 'movie') {
       Array.isArray(remoteLists[id]) ? remoteLists[id] : [],
       mergedTombstones,
     );
-    localStorage.setItem(watchlistStorageKey(id, mediaType), JSON.stringify(mergedItems));
+    writeJsonStorage(watchlistStorageKey(id, mediaType), mergedItems);
     saveTombstones(watchlistTombstonesKey(id, mediaType), mergedTombstones);
     lists[id] = mergedItems;
     itemTombstones[id] = mergedTombstones;
@@ -214,7 +205,7 @@ function mergePersonalCollections(remotePayload) {
   });
   const analyses = [...analysesById.values()].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
   if (typeof saveAnalyses === 'function') saveAnalyses(analyses);
-  else localStorage.setItem('lbx_analyses', JSON.stringify(analyses));
+  else writeRegisteredStorage('analyses', analyses);
 
   const localDuels = readJsonStorage('lbx_duels', null);
   const remoteDuels = remotePayload?.duels && typeof remotePayload.duels === 'object' ? remotePayload.duels : null;
@@ -224,14 +215,14 @@ function mergePersonalCollections(remotePayload) {
   } else if (!localDuels?.updatedAt && remoteDuels?.updatedAt) {
     duels = remoteDuels;
   }
-  if (duels) localStorage.setItem('lbx_duels', JSON.stringify(duels));
+  if (duels) writeRegisteredStorage('duels', duels);
 
   const localProvidersRaw = localStorage.getItem('lbx_owned_providers');
   const ownedProviders = localProvidersRaw === null
     ? (Array.isArray(remotePayload?.ownedProviders) ? remotePayload.ownedProviders : [])
     : readJsonStorage('lbx_owned_providers', []);
   if (localProvidersRaw === null && remotePayload?.ownedProviders) {
-    localStorage.setItem('lbx_owned_providers', JSON.stringify(ownedProviders));
+    writeRegisteredStorage('ownedProviders', ownedProviders);
   }
 
   const localDraftRaw = localStorage.getItem('lbx_draft');
@@ -301,7 +292,7 @@ function mergeWithRemote(remotePayload) {
   const localSettings = readJsonStorage('lbx_settings', null);
   const settings = localSettings || remotePayload?.settings || null;
   if (remotePayload?.settings && !localSettings) {
-    localStorage.setItem('lbx_settings', JSON.stringify(remotePayload.settings));
+    writeRegisteredStorage('settings', remotePayload.settings);
   }
   applySettings(settings || {});
   const personal = mergePersonalCollections(remotePayload);
@@ -375,17 +366,21 @@ function currentLocalSnapshot({ includeExportDate = false } = {}) {
     tvWatchlists: tv.lists,
     tvWatchlistTombstones: tv.tombstones,
     tvWatchlistListTombstones: loadTombstones(TV_WATCHLIST_LIST_TOMBSTONES_KEY),
-    settings: readJsonStorage('lbx_settings', null),
-    ownedProviders: readJsonStorage('lbx_owned_providers', []),
+    settings: readRegisteredStorage('settings', null),
+    ownedProviders: readRegisteredStorage('ownedProviders', []),
     analyses: typeof loadAnalyses === 'function' ? loadAnalyses() : readJsonStorage('lbx_analyses', []),
-    duels: readJsonStorage('lbx_duels', null),
+    duels: readRegisteredStorage('duels', null),
     draft: readJsonStorage('lbx_draft', null),
     preferences: {
       focusMode: localStorage.getItem('lbx_focus_mode'),
       tvContinueCollapsed: localStorage.getItem('lbx_tv_continue_collapsed'),
     },
   };
-  if (includeExportDate) snapshot.exportedAt = new Date().toISOString();
+  if (includeExportDate) {
+    snapshot.exportedAt = new Date().toISOString();
+    const recovery = collectStorageRecovery();
+    if (recovery.length) snapshot.recovery = recovery;
+  }
   return snapshot;
 }
 

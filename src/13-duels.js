@@ -21,21 +21,18 @@ function duelFilmKey(item) {
 }
 
 function loadDuelsData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(DUELS_KEY)) || {};
-    // pairs : memoire des affrontements deja joues (cle canonique triee),
-    // pour ne JAMAIS reproposer deux fois le meme duel. Le || {} assure la
-    // compatibilite avec les donnees d'avant cette fonctionnalite.
-    return { ratings: d.ratings || {}, totalDuels: d.totalDuels || 0, pairs: d.pairs || {}, updatedAt: d.updatedAt || null };
-  }
-  catch { return { ratings: {}, totalDuels: 0, pairs: {} }; }
+  const d = readRegisteredStorage('duels', {});
+  // pairs : memoire des affrontements deja joues (cle canonique triee),
+  // pour ne JAMAIS reproposer deux fois le meme duel. Le || {} assure la
+  // compatibilite avec les donnees d'avant cette fonctionnalite.
+  return { ratings: d.ratings || {}, totalDuels: d.totalDuels || 0, pairs: d.pairs || {}, updatedAt: d.updatedAt || null };
 }
 
 function duelPairKey(keyA, keyB) {
   return [keyA, keyB].sort().join('||');
 }
 function saveDuelsData(data) {
-  localStorage.setItem(DUELS_KEY, JSON.stringify({ ...data, updatedAt: new Date().toISOString() }));
+  return writeRegisteredStorage('duels', { ...data, updatedAt: new Date().toISOString() });
 }
 
 function getDuelRating(data, key) {

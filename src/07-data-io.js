@@ -125,15 +125,17 @@ function describeSnapshotContents(snapshot) {
   }, 0);
   const analysisCount = Array.isArray(snapshot?.analyses) ? snapshot.analyses.length : 0;
   const duelCount = Number(snapshot?.duels?.totalDuels) || 0;
+  const recoveryCount = Array.isArray(snapshot?.recovery) ? snapshot.recovery.length : 0;
   const hasPreferences = !!(snapshot?.settings || snapshot?.draft || snapshot?.duels ||
     (Array.isArray(snapshot?.ownedProviders) && snapshot.ownedProviders.length));
-  const total = historyCount + tvCount + watchlistCount + analysisCount + duelCount + (hasPreferences ? 1 : 0);
+  const total = historyCount + tvCount + watchlistCount + analysisCount + duelCount + recoveryCount + (hasPreferences ? 1 : 0);
   const parts = [];
   if (historyCount) parts.push(`${historyCount} film${historyCount > 1 ? 's' : ''}`);
   if (tvCount) parts.push(`${tvCount} série${tvCount > 1 ? 's' : ''}`);
   if (watchlistCount) parts.push(`${watchlistCount} élément${watchlistCount > 1 ? 's' : ''} à voir`);
   if (analysisCount) parts.push(`${analysisCount} analyse${analysisCount > 1 ? 's' : ''}`);
   if (duelCount) parts.push(`${duelCount} duel${duelCount > 1 ? 's' : ''}`);
+  if (recoveryCount) parts.push(`${recoveryCount} copie${recoveryCount > 1 ? 's' : ''} de récupération`);
   if (hasPreferences && parts.length === 0) parts.push('préférences personnelles');
   return { total, label: parts.join(' · ') || 'des préférences uniquement' };
 }

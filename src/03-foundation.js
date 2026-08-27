@@ -145,13 +145,12 @@ let activeLikedFilter = false;
 //  STORAGE & DRAFT
 // ═══════════════════════════════════════════
 function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+  return readRegisteredStorage('history', []);
 }
 function saveHistory(history) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(history));
-    if (window.storage) window.storage.set(STORE_KEY, JSON.stringify(history));
-  } catch(e) { console.warn('Storage full', e); }
+  if (!writeRegisteredStorage('history', history)) return false;
+  if (window.storage) window.storage.set(STORE_KEY, JSON.stringify(history));
+  return true;
 }
 
 function saveDraft() {

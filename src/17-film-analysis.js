@@ -15,13 +15,11 @@
 // débloquer — Phase 5 du document) est volontairement repoussé plus tard,
 // une fois ce socle vécu un moment.
 
-const FILM_ANALYSES_KEY = 'lbx_analyses';
-
 function loadAnalyses() {
-  try { return JSON.parse(localStorage.getItem(FILM_ANALYSES_KEY)) || []; } catch { return []; }
+  return readRegisteredStorage('analyses', []);
 }
 function saveAnalyses(analyses) {
-  localStorage.setItem(FILM_ANALYSES_KEY, JSON.stringify(analyses));
+  return writeRegisteredStorage('analyses', analyses);
 }
 function getAnalysesForFilm(filmId) {
   return loadAnalyses()

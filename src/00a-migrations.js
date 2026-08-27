@@ -38,12 +38,10 @@
         // Ce fichier s'exécute avant 03b : la fonction est disponible quand
         // même car les DÉCLARATIONS de fonctions du script concaténé sont
         // hissées avant toute exécution.
-        const raw = localStorage.getItem(HISTORY_KEY);
-        if (!raw) return;
-        const history = JSON.parse(raw);
-        if (!Array.isArray(history)) return;
+        const history = readJsonStorage(HISTORY_KEY, null, Array.isArray);
+        if (!history) return;
         const migrated = history.map(normalizeHistoryItemV2);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
+        if (!writeJsonStorage(HISTORY_KEY, migrated)) throw new Error('Écriture locale refusée');
       },
     },
   ];
@@ -60,7 +58,7 @@
   try {
     const current = localStorage.getItem(HISTORY_KEY);
     if (current) {
-      localStorage.setItem(BACKUP_KEY, JSON.stringify({ fromVersion: stored, at: new Date().toISOString(), history: current }));
+      writeJsonStorage(BACKUP_KEY, { fromVersion: stored, at: new Date().toISOString(), history: current });
     }
   } catch { /* le quota peut refuser la copie : la migration reste tentée */ }
 
@@ -69,7 +67,7 @@
     try {
       migration.up();
       stored = migration.to;
-      localStorage.setItem(VERSION_KEY, String(stored));
+      if (!writeTextStorage(VERSION_KEY, stored)) throw new Error('Version de schéma non persistée');
     } catch (e) {
       // Échec : on s'arrête là, version inchangée depuis la dernière réussite,
       // données intactes. L'app fonctionne avec l'ancien schéma.
