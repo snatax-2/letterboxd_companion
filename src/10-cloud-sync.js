@@ -207,7 +207,7 @@ function mergePersonalCollections(remotePayload) {
   if (typeof saveAnalyses === 'function') saveAnalyses(analyses);
   else writeRegisteredStorage('analyses', analyses);
 
-  const localDuels = readJsonStorage('lbx_duels', null);
+  const localDuels = readRegisteredStorage('duels', null);
   const remoteDuels = remotePayload?.duels && typeof remotePayload.duels === 'object' ? remotePayload.duels : null;
   let duels = localDuels || remoteDuels;
   if (localDuels?.updatedAt && remoteDuels?.updatedAt) {
@@ -217,7 +217,7 @@ function mergePersonalCollections(remotePayload) {
   }
   if (duels) writeRegisteredStorage('duels', duels);
 
-  const localProvidersRaw = localStorage.getItem('lbx_owned_providers');
+  const localProvidersRaw = readTextStorage('lbx_owned_providers');
   const ownedProviders = localProvidersRaw === null
     ? (Array.isArray(remotePayload?.ownedProviders) ? remotePayload.ownedProviders : [])
     : readJsonStorage('lbx_owned_providers', []);
@@ -225,9 +225,9 @@ function mergePersonalCollections(remotePayload) {
     writeRegisteredStorage('ownedProviders', ownedProviders);
   }
 
-  const localDraftRaw = localStorage.getItem('lbx_draft');
-  const draft = localDraftRaw === null ? (remotePayload?.draft || null) : readJsonStorage('lbx_draft', null);
-  if (localDraftRaw === null && draft) localStorage.setItem('lbx_draft', JSON.stringify(draft));
+  const localDraftRaw = readTextStorage('lbx_draft');
+  const draft = localDraftRaw === null ? (remotePayload?.draft || null) : readRegisteredStorage('draft', null);
+  if (localDraftRaw === null && draft) writeRegisteredStorage('draft', draft);
 
   const preferences = {};
   const preferenceKeys = {
@@ -370,7 +370,7 @@ function currentLocalSnapshot({ includeExportDate = false } = {}) {
     ownedProviders: readRegisteredStorage('ownedProviders', []),
     analyses: typeof loadAnalyses === 'function' ? loadAnalyses() : readJsonStorage('lbx_analyses', []),
     duels: readRegisteredStorage('duels', null),
-    draft: readJsonStorage('lbx_draft', null),
+    draft: readRegisteredStorage('draft', null),
     preferences: {
       focusMode: localStorage.getItem('lbx_focus_mode'),
       tvContinueCollapsed: localStorage.getItem('lbx_tv_continue_collapsed'),

@@ -159,7 +159,7 @@ renderCriteriaAverageMarkers();
 
   const hasHistory = loadHistory().length > 0;
   const hasWatchlistItems = loadWatchlistsMeta().some(meta => {
-    try { return (JSON.parse(localStorage.getItem(`lbx_watchlist_${meta.id}`)) || []).length > 0; } catch { return false; }
+    return readJsonStorage(`lbx_watchlist_${meta.id}`, [], Array.isArray).length > 0;
   });
   if (hasHistory || hasWatchlistItems) {
     localStorage.setItem(ONBOARDING_SEEN_KEY, '1'); // a déjà des données, pas besoin de cet accueil

@@ -19,6 +19,7 @@ const LUDEX_STORAGE_REGISTRY = Object.freeze({
   duels: Object.freeze({ key: 'lbx_duels', version: 1, validate: isStorageObject, exportField: 'duels', synchronized: true, label: 'duels' }),
   settings: Object.freeze({ key: 'lbx_settings', version: 1, validate: isStorageObject, exportField: 'settings', synchronized: true, label: 'réglages' }),
   ownedProviders: Object.freeze({ key: 'lbx_owned_providers', version: 1, validate: Array.isArray, exportField: 'ownedProviders', synchronized: true, label: 'plateformes' }),
+  draft: Object.freeze({ key: 'lbx_draft', version: 1, validate: isStorageObject, exportField: 'draft', synchronized: true, label: 'brouillon de notation' }),
   watchlists: Object.freeze({ keyPrefix: 'lbx_watchlist_', version: 1, validate: Array.isArray, exportField: 'watchlists', synchronized: true, label: 'listes de films' }),
   tvWatchlists: Object.freeze({ keyPrefix: 'lbx_tv_watchlist_', version: 1, validate: Array.isArray, exportField: 'tvWatchlists', synchronized: true, label: 'listes de séries' }),
   tombstones: Object.freeze({ keyPattern: 'tombstone', version: 1, validate: Array.isArray, exportField: 'tombstones', synchronized: true, label: 'traces de suppression' }),
@@ -122,6 +123,15 @@ function writeJsonStorage(key, value) {
   } catch (error) {
     notifyStorageIssue('unavailable', key, error);
     return false;
+  }
+}
+
+function readTextStorage(key, fallback = null) {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch (error) {
+    notifyStorageIssue('unavailable', key, error);
+    return fallback;
   }
 }
 

@@ -61,4 +61,24 @@ describe('garde-fous localStorage', () => {
     assert.doesNotThrow(() => window.saveHistory([{ title: 'Heat' }]));
     assert.equal(window.saveHistory([{ title: 'Heat' }]), false);
   });
+
+  test('un brouillon corrompu est récupéré sans casser le formulaire', (t) => {
+    const window = loadAppInJsdom(t);
+    const raw = '{brouillon-casse';
+    window.localStorage.setItem('lbx_draft', raw);
+
+    assert.doesNotThrow(() => window.loadDraft());
+    assert.equal(window.localStorage.getItem('lbx_draft'), raw);
+    assert.equal(window.collectStorageRecovery().some(item => item.key === 'lbx_draft'), true);
+  });
+
+  test('réglages et plateformes passent par le registre validé', (t) => {
+    const window = loadAppInJsdom(t);
+
+    assert.equal(window.writeRegisteredStorage('settings', { theme: 'default' }), true);
+    assert.equal(window.saveOwnedProviders(['Netflix']), true);
+    assert.equal(JSON.stringify(window.readRegisteredStorage('settings', {})), JSON.stringify({ theme: 'default' }));
+    assert.equal(JSON.stringify(window.loadOwnedProviders()), JSON.stringify(['Netflix']));
+    assert.equal(window.writeRegisteredStorage('ownedProviders', { invalid: true }), false);
+  });
 });

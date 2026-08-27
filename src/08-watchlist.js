@@ -61,24 +61,23 @@ migrateLegacyWatchlist('movie');
 migrateLegacyWatchlist('tv');
 
 function getActiveWatchlistId(mediaType = 'movie') {
-  let id = localStorage.getItem(activeWatchlistKey(mediaType));
+  let id = readTextStorage(activeWatchlistKey(mediaType));
   const meta = loadWatchlistsMeta(mediaType);
   if (!id || !meta.find(l => l.id === id)) {
     id = meta[0]?.id || 'default';
-    localStorage.setItem(activeWatchlistKey(mediaType), id);
+    writeTextStorage(activeWatchlistKey(mediaType), id);
   }
   return id;
 }
 function setActiveWatchlistId(id, mediaType = 'movie') {
-  localStorage.setItem(activeWatchlistKey(mediaType), id);
+  return writeTextStorage(activeWatchlistKey(mediaType), id);
 }
 
 function createWatchlistList(name, mediaType = 'movie') {
   const meta = loadWatchlistsMeta(mediaType);
   const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   meta.push({ id, name: name.trim() || 'Nouvelle liste' });
-  saveWatchlistsMeta(meta, mediaType);
-  localStorage.setItem(watchlistStorageKey(id, mediaType), JSON.stringify([]));
+  if (!writeJsonStorage(watchlistStorageKey(id, mediaType), []) || !saveWatchlistsMeta(meta, mediaType)) return null;
   return id;
 }
 function renameWatchlistList(id, newName, mediaType = 'movie') {
@@ -468,6 +467,7 @@ function openWatchlistPicker(movie, year) {
     const name = newInput.value.trim();
     if (!name) { newInput.focus(); return; }
     const id = createWatchlistList(name);
+    if (!id) return;
     pickList(id);
   };
   newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
@@ -501,10 +501,9 @@ window.undoWatchlistDelete = function() {
   // Réinsère dans la liste d'ORIGINE (pas forcément celle active maintenant,
   // si l'utilisateur a changé de liste pendant la fenêtre d'annulation).
   const key = watchlistStorageKey(deletedWlListId);
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem(key)) || []; } catch {}
+  const list = readJsonStorage(key, [], Array.isArray);
   list.splice(Math.min(deletedWlItemIndex, list.length), 0, deletedWlItemCache);
-  localStorage.setItem(key, JSON.stringify(list));
+  if (!writeJsonStorage(key, list)) return;
   removeTombstone(watchlistTombstonesKey(deletedWlListId), watchlistItemKey(deletedWlItemCache));
   if (getActiveWatchlistId() === deletedWlListId) renderWatchlist();
   showToast('Retrait annulé.');
@@ -738,6 +737,7 @@ document.getElementById('wl-list-modal-confirm').addEventListener('click', () =>
   if (!name) { showToast('Donne un nom à la liste.'); return; }
   if (wlModalMode === 'create') {
     const id = createWatchlistList(name, wlModalMediaType);
+    if (!id) return;
     setActiveWatchlistId(id, wlModalMediaType);
     showToast(`Liste "${name}" créée.`);
   } else {

@@ -174,83 +174,79 @@ function saveDraft() {
     review: document.getElementById('review-text').value,
     tags: Array.from(activeContextTags)
   };
-  localStorage.setItem('lbx_draft', JSON.stringify(draft));
+  writeRegisteredStorage('draft', draft);
 }
 
 function loadDraft() {
-  try {
-    const draftStr = localStorage.getItem('lbx_draft');
-    if (!draftStr) {
-      setTodayDate();
-      return;
-    }
-    const draft = JSON.parse(draftStr);
-    
-    if (draft.title) {
-      document.getElementById('movie-title').value = draft.title;
-      document.getElementById('movie-year').value = draft.year || '';
-      document.getElementById('movie-poster').value = draft.poster || '';
-      document.getElementById('movie-genre').value = draft.genre || '';
-      document.getElementById('movie-runtime').value = draft.runtime || '';
-      document.getElementById('movie-director').value = draft.director || '';
-      document.getElementById('movie-actors').value = draft.actors || '';
-      document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
-      document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
-      document.getElementById('movie-search').value = draft.searchValue || '';
-      
-      const strip = document.getElementById('film-strip');
-      strip.classList.add('visible');
-      document.getElementById('strip-title').textContent = draft.title;
-      document.getElementById('strip-genre').innerHTML = buildStripMeta({
-        genre: draft.genre, runtime: draft.runtime, year: draft.year,
-        director: draft.director, actors: draft.actors
-      });
-      if (draft.poster) {
-        document.getElementById('strip-poster').src = draft.poster;
-        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
-        document.getElementById('strip-poster').style.display = 'block';
-      }
-      if (draft.tmdbScore) {
-        document.getElementById('strip-tmdb-score').textContent = draft.tmdbScore + '/10';
-        document.getElementById('strip-ratings').style.display = 'flex';
-      }
-    }
+  const draft = readRegisteredStorage('draft', null);
+  if (!draft) {
+    setTodayDate();
+    return;
+  }
 
-    if (draft.date) {
-      document.getElementById('view-date').value = draft.date;
-    } else {
-      setTodayDate();
-    }
+  if (draft.title) {
+    document.getElementById('movie-title').value = draft.title;
+    document.getElementById('movie-year').value = draft.year || '';
+    document.getElementById('movie-poster').value = draft.poster || '';
+    document.getElementById('movie-genre').value = draft.genre || '';
+    document.getElementById('movie-runtime').value = draft.runtime || '';
+    document.getElementById('movie-director').value = draft.director || '';
+    document.getElementById('movie-actors').value = draft.actors || '';
+    document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
+    document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
+    document.getElementById('movie-search').value = draft.searchValue || '';
 
-    if (draft.review) document.getElementById('review-text').value = draft.review;
-    
-    isLiked = draft.liked || false;
-    document.getElementById('heart-btn').classList.toggle('active', isLiked);
+    const strip = document.getElementById('film-strip');
+    strip.classList.add('visible');
+    document.getElementById('strip-title').textContent = draft.title;
+    document.getElementById('strip-genre').innerHTML = buildStripMeta({
+      genre: draft.genre, runtime: draft.runtime, year: draft.year,
+      director: draft.director, actors: draft.actors
+    });
+    if (draft.poster) {
+      document.getElementById('strip-poster').src = draft.poster;
+      document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
+      document.getElementById('strip-poster').style.display = 'block';
+    }
+    if (draft.tmdbScore) {
+      document.getElementById('strip-tmdb-score').textContent = draft.tmdbScore + '/10';
+      document.getElementById('strip-ratings').style.display = 'flex';
+    }
+  }
+
+  if (draft.date) {
+    document.getElementById('view-date').value = draft.date;
+  } else {
+    setTodayDate();
+  }
+
+  if (draft.review) document.getElementById('review-text').value = draft.review;
+
+  isLiked = draft.liked || false;
+  document.getElementById('heart-btn').classList.toggle('active', isLiked);
   document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
-    activeContextTags = new Set(draft.tags || []);
-    document.querySelectorAll('.ctx-tag').forEach(b => {
-      if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
-      else b.classList.remove('active');
+  activeContextTags = new Set(draft.tags || []);
+  document.querySelectorAll('.ctx-tag').forEach(b => {
+    if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+
+  if (draft.mode) setMode(draft.mode);
+  if (draft.quickRating) {
+    quickRating = parseFloat(draft.quickRating);
+    const radioId = 's' + (quickRating * 2);
+    const radioEl = document.getElementById(radioId);
+    if(radioEl) radioEl.checked = true;
+  }
+  if (draft.values) {
+    CRITERIA.forEach(c => {
+      if (draft.values[c]) document.getElementById(c).value = draft.values[c];
     });
-
-    if (draft.mode) setMode(draft.mode);
-    if (draft.quickRating) {
-      quickRating = parseFloat(draft.quickRating);
-      const radioId = 's' + (quickRating * 2);
-      const radioEl = document.getElementById(radioId);
-      if(radioEl) radioEl.checked = true;
-    }
-    if (draft.values) {
-      CRITERIA.forEach(c => {
-        if (draft.values[c]) document.getElementById(c).value = draft.values[c];
-      });
-    }
-    calculateScore();
-    updateAllSliders();
-    renderCriteriaAverageMarkers();
-
-  } catch(e) { console.error("Erreur de chargement du brouillon", e); }
+  }
+  calculateScore();
+  updateAllSliders();
+  renderCriteriaAverageMarkers();
 }
 
 // ═══════════════════════════════════════════

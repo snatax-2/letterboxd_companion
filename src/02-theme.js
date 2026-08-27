@@ -44,8 +44,7 @@ const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 let systemThemeListenerAttached = false;
 
 function readStoredTheme() {
-  try { return JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme; }
-  catch { return undefined; }
+  return readRegisteredStorage('settings', {}).theme;
 }
 
 function ensureSystemThemeListener() {
@@ -62,12 +61,7 @@ function ensureSystemThemeListener() {
 
 function loadSettings() {
   const defaultSettings = { appName: DEFAULT_APP_NAME, theme: 'default' };
-  try {
-    const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
-    applySettings(saved);
-  } catch {
-    applySettings(defaultSettings);
-  }
+  applySettings(readRegisteredStorage('settings', defaultSettings));
 }
 
 function applySettings(settings) {
@@ -116,9 +110,7 @@ document.getElementById('settings-btn').addEventListener('click', () => {
 });
 
 document.getElementById('settings-cancel').addEventListener('click', () => {
-  let s = {};
-  try { s = JSON.parse(localStorage.getItem('lbx_settings') || '{}'); } catch { /* réglages corrompus : valeurs par défaut */ }
-  applySettings(s); 
+  applySettings(readRegisteredStorage('settings', {}));
   closeModal(document.getElementById('settings-modal'));
 });
 
@@ -174,12 +166,11 @@ document.getElementById('theme-grid').addEventListener('keydown', e => {
   nextCard.focus();
 });
 
-const OWNED_PROVIDERS_KEY = 'lbx_owned_providers';
 function loadOwnedProviders() {
-  try { return JSON.parse(localStorage.getItem(OWNED_PROVIDERS_KEY)) || []; } catch { return []; }
+  return readRegisteredStorage('ownedProviders', []);
 }
 function saveOwnedProviders(list) {
-  localStorage.setItem(OWNED_PROVIDERS_KEY, JSON.stringify(list));
+  return writeRegisteredStorage('ownedProviders', list);
 }
 
 document.getElementById('platform-chips-grid').addEventListener('click', (e) => {
@@ -197,9 +188,8 @@ document.getElementById('settings-save').addEventListener('click', () => {
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
   
-  localStorage.setItem('lbx_settings', JSON.stringify(newSettings));
   const selectedProviders = Array.from(document.querySelectorAll('.platform-chip.selected')).map(c => c.dataset.provider);
-  saveOwnedProviders(selectedProviders);
+  if (!writeRegisteredStorage('settings', newSettings) || !saveOwnedProviders(selectedProviders)) return;
   applySettings(newSettings);
   renderAll();
   closeModal(document.getElementById('settings-modal'));
