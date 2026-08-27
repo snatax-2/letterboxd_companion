@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="default">
+<html lang="fr" data-theme="ludex-dark">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -75,6 +75,14 @@ var THEME_FONTS = {
   cinephile:   ['Poppins:wght@400;500;600;700;800', 'Fragment+Mono:ital@0;1'],
   moderne:     ['Syne:wght@400;700;800', 'DM+Sans:ital,wght@0,400;0,500;0,700;1,400', 'Martian+Mono:wght@400;600;700'],
   technicolor: ['Oswald:wght@400;600;700', 'Inter:wght@400;600;700', 'JetBrains+Mono:wght@400;600;700'],
+  // Ludex Archives & Éditorial — les deux thèmes de l'identité cible
+  // (voir styles.css, bloc LUDEX — ARCHIVES & ÉDITORIAL). Trois rôles
+  // distincts, conformément à la spec §2.2 : Playfair Display pour
+  // l'œuvre, Inter pour l'interface, JetBrains Mono pour la micro-data.
+  // L'italique de Playfair est demandé : la spec le privilégie pour les
+  // titres de films et de séries.
+  'ludex-dark':  ['Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700', 'Inter:wght@400;500;600;700', 'JetBrains+Mono:wght@400;500;700'],
+  'ludex-light': ['Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600;1,700', 'Inter:wght@400;500;600;700', 'JetBrains+Mono:wght@400;500;700'],
 };
 // Titillium Web sert à l'écran de démarrage et aux vignettes de thème dans
 // Réglages : elle est nécessaire quel que soit le thème.
@@ -83,7 +91,7 @@ var loadedFontSets = {};
 window.loadThemeFonts = function (theme) {
   if (loadedFontSets[theme]) return;          // déjà chargé : ne rien refaire
   loadedFontSets[theme] = true;
-  var fams = BASE_FONTS.concat(THEME_FONTS[theme] || THEME_FONTS.default);
+  var fams = BASE_FONTS.concat(THEME_FONTS[theme] || THEME_FONTS['ludex-dark']);
   var link = document.createElement('link');
   link.rel = 'stylesheet';
   link.href = 'https://fonts.googleapis.com/css2?' +
@@ -94,7 +102,10 @@ window.loadThemeFonts = function (theme) {
 (function themeSplash() {
   try {
     var settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
-    var theme = settings.theme || 'default';
+    // Ludex Dark est désormais le thème des NOUVEAUX utilisateurs. Ceux qui
+    // ont déjà un thème enregistré le gardent : ce repli ne s'applique
+    // qu'en l'absence totale de préférence.
+    var theme = settings.theme || 'ludex-dark';
     if (theme === 'system') {
       var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       theme = prefersDark ? 'default' : 'filmnoir';
@@ -106,6 +117,8 @@ window.loadThemeFonts = function (theme) {
       cinephile: { bg: '#F9F6F0', accent: '#4A2E1B' },
       moderne:   { bg: '#F9F6F0', accent: '#1E5AA8' },
       technicolor: { bg: '#101425', accent: '#DF2935' },
+      'ludex-dark':  { bg: '#0A0A0C', accent: '#D4AF37' },
+      'ludex-light': { bg: '#F5F4F0', accent: '#7A5F0F' },
     };
     window.loadThemeFonts(theme);
     var p = palettes[theme] || palettes.default;
@@ -154,7 +167,27 @@ window.loadThemeFonts = function (theme) {
 
       <label class="settings-label">Thème visuel</label>
       <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Thème visuel">
-        <div class="theme-card" data-theme="default" role="radio" aria-checked="true" tabindex="0" aria-label="Thème Letterboxd">
+        <!-- Ludex Archives & Éditorial : l'identité cible, en tête de grille.
+             Les six thèmes historiques restent disponibles en dessous
+             jusqu'à la fin de la migration (voir styles.css, bloc LUDEX —
+             ARCHIVES & ÉDITORIAL). -->
+        <div class="theme-card" data-theme="ludex-dark" role="radio" aria-checked="true" tabindex="0" aria-label="Thème Ludex Sombre">
+          <div class="theme-preview" style="background:#0A0A0C">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#FAFAFA;flex:1;border-radius:1px"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#33333B;width:62%;border-radius:1px"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#D4AF37"></div><div class="theme-preview-dot" style="background:#8E8E93"></div><div class="theme-preview-dot" style="background:#222222"></div></div>
+          </div>
+          <div class="theme-label" style="background:#121216;color:#FAFAFA;font-family:'Playfair Display',Georgia,serif;font-style:italic;letter-spacing:.01em;">Ludex Sombre</div>
+        </div>
+        <div class="theme-card" data-theme="ludex-light" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Ludex Clair">
+          <div class="theme-preview" style="background:#F5F4F0">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#111111;flex:1;border-radius:1px"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#C6C3B9;width:62%;border-radius:1px"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#7A5F0F"></div><div class="theme-preview-dot" style="background:#666663"></div><div class="theme-preview-dot" style="background:#E0E0E0"></div></div>
+          </div>
+          <div class="theme-label" style="background:#EFEDE6;color:#111111;font-family:'Playfair Display',Georgia,serif;font-style:italic;letter-spacing:.01em;">Ludex Clair</div>
+        </div>
+        <div class="theme-card" data-theme="default" role="radio" aria-checked="false" tabindex="0" aria-label="Thème Letterboxd">
           <div class="theme-preview" style="background:#14181c">
             <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1f2935;flex:1"></div></div>
             <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#ff8000;width:55%"></div></div>

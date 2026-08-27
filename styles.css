@@ -63,6 +63,41 @@
     --text-xl: 1.6rem;
     --text-2xl: 2.5rem;
 
+    /* ── Échelle éditoriale (LUDEX_Specification_Design_UX_V2.1 §2.2) ──
+       Quatre rôles nommés qui s'ajoutent à l'échelle ci-dessus sans la
+       remplacer : celle-ci reste en service sur les six thèmes existants,
+       ceux-là sont consommés par les écrans au fur et à mesure de leur
+       migration. Display XL est en clamp() plutôt qu'en deux valeurs
+       fixes : la spec demande 3.5rem sur PC et « clamp mobile », ce qui
+       est exactement ce que clamp() exprime en une seule déclaration. */
+    --display-xl: clamp(2.1rem, 8vw, 3.5rem);
+    --display-xl-lh: 0.92;
+    --display-xl-ls: -0.035em;
+    --heading-m: 1.25rem;
+    --heading-m-ls: 0.05em;
+    --body-ed: 0.9rem;
+    --body-ed-lh: 1.6;
+    --micro: 0.7rem;
+    --micro-ls: 0.08em;
+
+    /* Police d'œuvre. Repli sur --font-heading : les six thèmes existants
+       ne la déclarent pas et gardent donc exactement leur rendu actuel,
+       tandis que ludex-dark/light la redéfinissent en serif éditorial.
+       L'indirection est résolue au moment de l'usage, donc `var(--font-display)`
+       suit bien le thème actif. */
+    --font-display: var(--font-heading);
+
+    /* ── Espacement éditorial (§2.4) ──
+       Grille de 4px conservée (--space-1..6 ci-dessus), mais la respiration
+       verticale entre sections vaut environ le double de la marge
+       horizontale — c'est ce rapport, pas les valeurs prises une à une,
+       qui fait la différence entre une page de revue et un formulaire.
+       Les variantes desktop sont posées dans le bloc @media ≥1024px. */
+    --page-margin: 18px;
+    --section-gap: 40px;
+    --poster-gap: 8px;
+    --meta-gap: 8px;
+
     /* Une pilule reste une pilule quel que soit le thème — contrairement à
        --radius/--radius-sm (qui varient par thème pour la personnalité
        visuelle de chacun), ce rayon-ci ne doit jamais varier : sinon une
@@ -475,6 +510,161 @@
     mix-blend-mode: overlay;
   }
 
+
+  /* ═══════════════════════════════════════════
+     LUDEX — ARCHIVES & ÉDITORIAL
+     ═══════════════════════════════════════════
+     L'identité cible (voir LUDEX_Specification_Design_UX_V2.1, §2.1) :
+     deux thèmes, sombre et clair, qui remplaceront à terme les six
+     ci-dessus. Ils sont ajoutés À CÔTÉ d'eux, pas à leur place — le
+     retrait des anciens est la toute dernière étape de la migration
+     (§19 point 15 : « supprimer les anciens thèmes seulement lorsque
+     tous les écrans ont leur équivalent dark/light »). Tant qu'ils
+     cohabitent, les six instantanés de régression visuelle existants
+     restent un filet valide.
+
+     ── Sur le nommage des jetons ──
+     Attention au piège : dans Ludex, --text est le texte SECONDAIRE et
+     --text-hi le texte PRINCIPAL. La spec, elle, appelle --text le
+     principal et --muted le secondaire. La correspondance est donc :
+       spec --text (#FAFAFA)  →  --text-hi
+       spec --muted (#888888) →  --text
+
+     ── Sur l'or ──
+     --orange est le jeton d'accent INTERACTIF de l'app (72 usages :
+     onglet actif, pastille du switch, focus de recherche, curseurs,
+     bouton Noter). Le passer en blanc cassé / noir est ce qui retire
+     mécaniquement le jaune de la navigation, comme l'exige §2.1 et le
+     critère d'acceptation « le jaune n'est plus utilisé pour l'état
+     actif ni le bouton NOTER ». --gold reste le vrai or et garde son
+     rôle : étoiles, scores, médailles — la notation, rien d'autre.
+
+     ── Sur les contrastes ──
+     Toutes les valeurs ci-dessous ont été CALCULÉES, pas choisies à
+     l'œil : chaque couleur de texte passe WCAG AA (≥ 4.5:1) sur les
+     trois surfaces du thème, et chaque --*-fill-text passe AA sur son
+     aplat. Deux écarts assumés par rapport aux valeurs littérales de
+     la spec, pour cette raison précise :
+       · clair --text : #666663 au lieu de #6F6F6F (4.30:1 sur
+         --surface2, sous le seuil — même classe de bug que celle déjà
+         corrigée sur le thème par défaut, voir la note dans :root).
+       · clair --gold : #7A5F0F au lieu de #A8842B (2.67:1 sur
+         --surface2 — inutilisable en texte, or --gold EST une couleur
+         de texte ici : score, libellés de mois, médailles). La valeur
+         #A8842B de la spec est conservée telle quelle dans --ui-accent,
+         qui ne sert qu'en aplat et en bordure. */
+
+  [data-theme="ludex-dark"] {
+    color-scheme: dark;
+    --bg: #0A0A0C; --surface: #121216; --surface2: #1B1B20; --border: #222222;
+    --border-hi: #33333B; --text: #8E8E93; --text-hi: #FAFAFA; --text-mid: #B4B4B9;
+    /* Accent interactif monochrome — c'est ici que le jaune quitte l'interface. */
+    --orange: #FAFAFA;
+    /* L'or : notation uniquement. */
+    --gold: #D4AF37;
+    --blue: #8FA7BA; --red: #CF6B55; --green: #8CA07B;
+    --chart-movie: var(--gold); --chart-tv: #7FA0B8;
+    --solid-fill-text: #0A0A0C; --gold-fill-text: #0A0A0C;
+    --red-fill-text: #0A0A0C; --green-fill-text: #0A0A0C; --blue-fill-text: #0A0A0C;
+
+    /* Jetons propres à la nouvelle DA, consommés à partir de P1/P2 :
+       --glass pour les surfaces flottantes (navigation, feuilles),
+       --ui-accent pour l'or « de secours » quand aucune affiche ne
+       fournit de couleur. */
+    --glass: rgba(10, 10, 12, 0.65);
+    --ui-accent: #D4AF37;
+
+    /* Élévation très retenue : l'ombre ne sert plus à séparer des
+       cartes (§2.3 « pas de shadow de séparation »), seulement à faire
+       flotter ce qui flotte vraiment. Trois valeurs distinctes, comme
+       l'exige jetons-semantiques.spec.js. */
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.30);
+    --shadow-2: 0 6px 20px rgba(0, 0, 0, 0.45);
+    --shadow-3: 0 18px 50px rgba(0, 0, 0, 0.55);
+
+    /* §2.3 : affiches et boutons à 2px maximum. */
+    --radius: 2px; --radius-sm: 2px;
+    --slider-track-radius: 2px; --slider-thumb-radius: 50%;
+    --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 50%;
+
+    /* §2.2 — trois rôles distincts. --font-display est NOUVEAU : jusqu'ici
+       --font-heading servait à la fois aux titres d'œuvres et au chrome
+       (navigation, boutons, onglets). La spec sépare les deux — serif pour
+       l'œuvre, sans pour l'UI — donc le chrome garde --font-heading (désormais
+       en Inter) et les titres éditoriaux migreront vers --font-display,
+       écran par écran, à partir de P3. */
+    --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    --star-color: var(--gold);
+    --star-empty-color: #3A3A42;
+    --star-font: var(--font-body);
+    --star-shadow: none;
+    --star-symbol: '★';
+
+    /* §4.1 : icônes filaires 1.2-1.5px. */
+    --icon-stroke: 1.4;
+    --icon-linecap: round; --icon-linejoin: round;
+
+    --title-style: normal;
+    --title-spacing: 0.02em;
+    /* Pas de filet coloré sous l'en-tête : la séparation se fait par
+       l'espace, pas par un trait de marque (§2.3). */
+    --header-bar: transparent;
+  }
+
+  [data-theme="ludex-light"] {
+    color-scheme: light;
+    --bg: #F5F4F0; --surface: #EFEDE6; --surface2: #E9E7DF; --border: #E0E0E0;
+    --border-hi: #C6C3B9; --text: #666663; --text-hi: #111111; --text-mid: #514F4A;
+    --orange: #111111;
+    --gold: #7A5F0F;
+    --blue: #41586A; --red: #8C3527; --green: #4C5C38;
+    /* --chart-tv doit rester distinct de --chart-movie (= --gold) : ici
+       l'écart est un contraste de teinte (or chaud / bleu ardoise) autant
+       que de valeur. */
+    --chart-movie: var(--gold); --chart-tv: #41586A;
+    --solid-fill-text: #F5F4F0; --gold-fill-text: #F5F4F0;
+    --red-fill-text: #FFFFFF; --green-fill-text: #FFFFFF; --blue-fill-text: #FFFFFF;
+
+    --glass: rgba(245, 244, 240, 0.72);
+    /* Valeur littérale de la spec pour l'or clair : conservée ici parce que
+       --ui-accent ne sert qu'en aplat et en bordure, jamais en texte. */
+    --ui-accent: #A8842B;
+
+    /* Une ombre noire sur du papier crème fait une tache grise sale : les
+       trois niveaux sont teintés dans la palette du thème, même raisonnement
+       que les trois thèmes clairs existants. */
+    --shadow-1: 0 1px 2px rgba(30, 28, 22, 0.06);
+    --shadow-2: 0 6px 20px rgba(30, 28, 22, 0.10);
+    --shadow-3: 0 18px 50px rgba(30, 28, 22, 0.16);
+
+    --radius: 2px; --radius-sm: 2px;
+    --slider-track-radius: 2px; --slider-thumb-radius: 50%;
+    --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
+    --control-radius: 50%;
+
+    --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    --font-heading: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    --star-color: var(--gold);
+    --star-empty-color: #CFCCC2;
+    --star-font: var(--font-body);
+    --star-shadow: none;
+    --star-symbol: '★';
+
+    --icon-stroke: 1.4;
+    --icon-linecap: round; --icon-linejoin: round;
+
+    --title-style: normal;
+    --title-spacing: 0.02em;
+    --header-bar: transparent;
+  }
 
   /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
@@ -3678,6 +3868,16 @@
      distribuent le contenu existant à l'intérieur de l'onglet actif, sans
      jamais afficher deux vues simultanément. */
   @media (min-width: 1024px) {
+    /* Volet desktop de l'échelle d'espacement éditorial (§2.4) — mêmes
+       jetons, valeurs plus généreuses. Rien ne les consomme encore : ils
+       entrent en service écran par écran à partir de P3. */
+    :root {
+      --page-margin: 40px;
+      --section-gap: 68px;
+      --poster-gap: 16px;
+      --meta-gap: 10px;
+    }
+
     .layout, .mobile-nav { max-width: 1100px; }
 
     /* ── L'HISTORIQUE PERDAIT 85 % DE SON CONTENU ICI ──────────────────

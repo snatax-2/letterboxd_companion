@@ -15,7 +15,11 @@ function withThemeTransition(applyFn) {
 }
 
 function loadSettings() {
-  const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "default" };
+  // Ludex Sombre est le thème des NOUVEAUX utilisateurs (identité cible,
+  // voir styles.css bloc LUDEX — ARCHIVES & ÉDITORIAL). Ce défaut ne
+  // s'applique qu'en l'absence totale de préférence enregistrée : toute
+  // personne ayant déjà choisi un thème garde exactement le sien.
+  const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "ludex-dark" };
   try {
     const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
     applySettings(saved);
@@ -27,11 +31,11 @@ function loadSettings() {
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
-  let themeToApply = settings.theme || "default";
+  let themeToApply = settings.theme || "ludex-dark";
   // Repli pour quiconque avait Méridien enregistré avant son retrait — un
   // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
   // que de retomber sur des couleurs cohérentes.
-  if (themeToApply === 'meridien') themeToApply = 'default';
+  if (themeToApply === 'meridien') themeToApply = 'ludex-dark';
   
   if (themeToApply === "system") {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -59,7 +63,7 @@ function applySettings(settings) {
   document.querySelectorAll('.platform-chip').forEach(chip => {
     chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
   });
-  const th = settings.theme || 'default';
+  const th = settings.theme || 'ludex-dark';
   document.querySelectorAll('.theme-card').forEach(tc => {
     const isSelected = tc.dataset.theme === th;
     tc.classList.toggle('selected', isSelected);
@@ -90,6 +94,11 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     // Même remarque que dans applySettings : les polices du thème choisi
     // doivent être demandées, elles ne sont plus toutes préchargées.
+    // NOTE : la carte "Auto (Système)" pointe toujours sur l'ancienne paire
+    // default/filmnoir. La basculer vers ludex-dark/ludex-light changerait
+    // l'apparence des personnes qui ont DÉJÀ choisi "Auto" — c'est une
+    // préférence utilisateur, pas un détail de présentation, donc en
+    // attente d'arbitrage (voir le rapport P0).
     const picked = card.dataset.theme !== "system"
       ? card.dataset.theme
       : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "default" : "filmnoir");
@@ -138,7 +147,7 @@ document.getElementById('settings-save').addEventListener('click', () => {
   
   const newSettings = {
     appName: formattedName,
-    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
+    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'ludex-dark'}}).dataset.theme,
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
   

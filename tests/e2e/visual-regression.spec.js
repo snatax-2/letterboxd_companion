@@ -53,9 +53,13 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.route('**fonts.googleapis.com**', route => route.abort());
       await page.route('**fonts.gstatic.com**', route => route.abort());
       await seedStableHistory(page);
-      if (theme !== 'default') {
-        await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
-      }
+      // Le thème est posé EXPLICITEMENT pour tous, y compris "default".
+      // Avant, "default" était laissé sans réglage et dépendait donc du
+      // thème par défaut de l'app — devenu ludex-dark depuis l'introduction
+      // de l'identité Archives & Éditorial. Les deux captures "default"
+      // auraient silencieusement changé de thème sans que le nom du fichier
+      // ne le dise. Ces six thèmes-là sont figés jusqu'à leur retrait.
+      await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     });
 
     test(`Noter un film (${theme})`, async ({ page }) => {

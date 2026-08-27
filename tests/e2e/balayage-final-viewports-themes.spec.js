@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
 
 // Balayage large : les 5 écrans principaux, en mobile ET en desktop, sur
-// les 6 thèmes (12 combinaisons de viewport × thème, 5 écrans chacune),
+// les 8 thèmes (16 combinaisons de viewport × thème, 5 écrans chacune),
 // avec un état riche (historique films + séries, watchlist) plutôt qu'un
 // écran vide. Complémentaire aux specs a11y plus ciblées : celles-ci
 // isolent une vue ou un correctif précis, celui-ci vérifie qu'aucune
@@ -27,7 +27,7 @@ const SCREENS = [
 ];
 
 for (const viewport of [{ w: 390, h: 900, label: 'mobile' }, { w: 1440, h: 1000, label: 'desktop' }]) {
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+  for (const theme of ['ludex-dark', 'ludex-light', 'default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
     test(`balayage final : ${viewport.label} / ${theme}`, async ({ page }) => {
       // Budget élargi, et pas pour masquer un échec : ce test enchaîne CINQ
       // analyses axe-core complètes (une par écran principal) plus les

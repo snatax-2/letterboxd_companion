@@ -11,7 +11,11 @@ const { test, expect } = require('@playwright/test');
 // Ce test ne juge PAS l'esthétique : il vérifie des invariants structurels
 // qu'aucun ajustement de palette ne doit casser en silence.
 
-const THEMES = ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor'];
+// Les deux thèmes de l'identité cible (ludex-dark / ludex-light) sont
+// inclus dès leur introduction : c'est précisément sur eux que les
+// invariants comptent le plus, puisque ce sont eux qui remplaceront les six
+// autres à la fin de la migration.
+const THEMES = ['ludex-dark', 'ludex-light', 'default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor'];
 
 // Jetons qui doivent exister et ne jamais être vides, sur tous les thèmes.
 const JETONS_REQUIS = [
@@ -21,6 +25,11 @@ const JETONS_REQUIS = [
   '--chart-movie', '--chart-tv',
   '--shadow-1', '--shadow-2', '--shadow-3',
   '--radius-pill', '--solid-fill-text',
+  // Ajouté avec les thèmes Ludex : chaque SVG inline écrit
+  // stroke-width="var(--icon-stroke, N)". Si le jeton disparaît d'un thème,
+  // les icônes retombent silencieusement sur leur défaut littéral — un
+  // mélange de 1.5 et de 2 selon l'icône, jamais cohérent.
+  '--icon-stroke',
 ];
 
 // Paires qui doivent rester visuellement distinctes. Chacune correspond à un
@@ -63,6 +72,16 @@ for (const theme of THEMES) {
         localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));
       }, theme);
       await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
+      // Polices Google bloquées, même raisonnement que visual-regression.spec.js :
+      // loadThemeFonts() (index.html) injecte un <link> bloquant vers
+      // fonts.googleapis.com, dont la résolution peut prendre une dizaine de
+      // secondes selon le réseau du runner. Ce test ne lit que des propriétés
+      // personnalisées CSS — qu'une webfont ait été téléchargée ou non n'a
+      // aucune incidence sur leur valeur. Sans ce blocage, chaque test coûtait
+      // ~14s et la suite finissait par dépasser le délai sur les derniers
+      // thèmes, un échec qui ne disait rien du CSS testé.
+      await page.route('**fonts.googleapis.com**', route => route.abort());
+      await page.route('**fonts.gstatic.com**', route => route.abort());
       await page.goto('/');
       await page.waitForTimeout(600);
     });
