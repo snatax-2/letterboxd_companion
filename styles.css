@@ -3372,6 +3372,13 @@
   }
   .choix-du-jour-card {
     position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
+    /* width:100% INDISPENSABLE depuis le passage de <div> à <button>. Un <div>
+       est block-level et remplit son parent ; un <button>, même en
+       display:block, se dimensionne en shrink-to-fit. Or tout le contenu de
+       cette carte est en position:absolute (-bg, -overlay, -content) : sa
+       largeur intrinsèque vaut donc ZÉRO, et aspect-ratio a réduit la hauteur
+       à zéro avec elle. Carte invisible, surtitre « Choix du jour » orphelin. */
+    width: 100%;
     aspect-ratio: 4/3; background: var(--surface2);
   }
   .choix-du-jour-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
