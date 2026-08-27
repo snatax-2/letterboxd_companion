@@ -21,7 +21,7 @@
 // concerné plutôt que cachée ici.
 
 function installCollapsibleSearch(config) {
-  const { line, toggle, input, closeBtn, onOuvrir, onFermer } = config;
+  const { line, toggle, input, closeBtn, onOuvrir, onFermer, peutFermer } = config;
   if (!line || !toggle || !input) return null;
 
   function estOuverte() {
@@ -39,8 +39,15 @@ function installCollapsibleSearch(config) {
     onOuvrir?.();
   }
 
+  // peutFermer garde TOUS les chemins de fermeture, pas seulement le clic
+  // extérieur : sur Noter, où la ligne ne doit pas se replier tant qu'aucun
+  // sujet n'est retenu, Échap ne doit pas non plus escamoter le champ titre.
+  // Sans ce garde, le premier appui n'importe où sur l'écran repliait la
+  // ligne et laissait le formulaire sans aucun moyen visible de nommer ce
+  // qu'on note.
   function fermer({ rendreLeFocus = true } = {}) {
     if (!estOuverte()) return;
+    if (peutFermer && !peutFermer()) return;
     line.classList.remove('searching');
     toggle.setAttribute('aria-expanded', 'false');
     onFermer?.();

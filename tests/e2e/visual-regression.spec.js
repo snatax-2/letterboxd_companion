@@ -64,7 +64,15 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
 
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
-      await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
+      // Ce test ne capturait PAS l'écran Noter. Sur mobile, l'app arrive sur
+      // Découvrir (setTimeout(() => switchMobileNav('discover'), 0), fin de
+      // 01-navigation.js) : les six fichiers rating-*.png montraient donc un
+      // Découvrir encore vide, saisi avant le chargement de ses carrousels.
+      // Le formulaire de notation n'avait aucune couverture visuelle sur
+      // aucun thème — un filet qui rassurait sans rien retenir.
+      await page.click('#nav-rating');
+      await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {});
+      await page.waitForTimeout(400);
       await expect(page).toHaveScreenshot(`rating-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
     });
 

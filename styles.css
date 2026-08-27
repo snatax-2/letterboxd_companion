@@ -1970,6 +1970,43 @@
      souligne : c'est le trait du champ qui le remplace pendant la recherche,
      au même endroit. La ligne reprend l'écart que .card-title portait. */
   .search-line-wl { margin-bottom: var(--card-title-gap); }
+
+  /* ── Noter ──
+     La ligne garde sa rangée pleine largeur dans la grille de .search-row
+     (date et cœur restent en dessous, comme avant) : repliée, elle ne
+     s'efface pas, elle laisse la place au titre retenu. C'est le même texte
+     que le champ affichait — « Titre (année) », écrit par selectMovie — donc
+     rien n'est perdu au repli. */
+  .search-line-noter { grid-column: 1 / -1; min-height: 44px; }
+  .search-line-subject {
+    display: block; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--text-hi); font-family: var(--font-heading);
+    font-size: 0.95rem; font-weight: 600;
+  }
+  [data-theme^="ludex-"] .search-line-subject {
+    font-family: var(--font-display); font-style: italic;
+    font-size: 1.15rem; font-weight: 600;
+  }
+  /* La croix de ce champ EFFACE, elle ne referme pas : replier tant qu'aucun
+     sujet n'est retenu n'aurait mené nulle part. Elle garde donc son aspect
+     d'origine, juste replacée dans la ligne (elle était en position absolue
+     dans .search-input-wrap). */
+     Le fond gris et le rayon 50% de .search-clear-btn dessinaient une pastille
+     ronde au milieu d'un champ devenu nu : elle passe transparente, comme la
+     croix de fermeture des autres écrans, et gagne au passage une vraie cible
+     tactile (24px avant). */
+  /* Sélecteur descendant volontaire (0,2,0) : .search-clear-btn est déclaré
+     plus bas dans le fichier et l'emportait à spécificité égale — la croix
+     restait à 24px. */
+  .search-line-field .search-line-clear {
+    position: static; transform: none;
+    flex-shrink: 0; width: 44px; height: 44px;
+    align-items: center; justify-content: center;
+    background: none; border-radius: 0; font-size: 0.9rem;
+    color: var(--text);
+  }
+  .search-line-field .search-line-clear:hover { background: none; color: var(--text-hi); }
   /* Le bouton d'ajout voyage avec le champ : c'est sa paire, séparé de lui il
      ne voudrait plus rien dire. Il se contente de la place qu'il lui faut.
      width:auto est indispensable : sous 480px, .watchlist-add-btn passait à
