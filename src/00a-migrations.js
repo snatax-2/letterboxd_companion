@@ -46,6 +46,39 @@
         localStorage.setItem(HISTORY_KEY, JSON.stringify(migrated));
       },
     },
+    {
+      to: 3,
+      up: () => {
+        // v3 : le titre de l'en-tête passe de « Ludex Rating Companion » au
+        // wordmark LUDeX (voir DEFAULT_APP_NAME_HTML, 02-theme.js).
+        //
+        // appName est un RÉGLAGE UTILISATEUR : on ne remplace donc que la
+        // valeur qui correspond exactement à l'ancien défaut, c'est-à-dire
+        // celle de quelqu'un qui n'a jamais personnalisé son titre. Tout nom
+        // choisi par l'utilisateur est laissé strictement intact.
+        //
+        // Les deux formes de l'ancien défaut sont reconnues : celle posée par
+        // loadSettings() et celle que produisait settings-save en re-dérivant
+        // le balisage depuis le champ texte. Elles sont identiques
+        // aujourd'hui, mais s'appuyer sur cette coïncidence serait fragile.
+        //
+        // Littéraux plutôt que les constantes de 02-theme.js : ce fichier
+        // s'exécute avant lui, et un const n'est pas hissé (zone morte
+        // temporelle) — même raison que pour les clés de stockage ci-dessus.
+        const ANCIENS_DEFAUTS = [
+          '<em>Ludex</em> Rating Companion',
+          '<em>LUDEX</em> Rating Companion',
+        ];
+        const raw = localStorage.getItem('lbx_settings');
+        if (!raw) return; // aucun réglage stocké : le nouveau défaut s'applique seul
+        const settings = JSON.parse(raw);
+        if (!settings || typeof settings !== 'object') return;
+        // Idempotent : une valeur déjà migrée n'est plus dans la liste.
+        if (!ANCIENS_DEFAUTS.includes(settings.appName)) return;
+        settings.appName = 'LUD<em>e</em>X';
+        localStorage.setItem('lbx_settings', JSON.stringify(settings));
+      },
+    },
   ];
 
   const CURRENT_VERSION = MIGRATIONS.length > 0 ? MIGRATIONS[MIGRATIONS.length - 1].to : 1;

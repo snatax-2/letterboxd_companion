@@ -2,6 +2,20 @@
 //  THEMING & SETTINGS
 // ═══════════════════════════════════════════
 
+// ─── Wordmark par défaut ───────────────────────────────────────────────────
+// Repris du prototype Archives & Éditorial (.brand) : capitales très espacées
+// avec UNE lettre en serif italique minuscule au milieu. Ce n'est donc pas le
+// motif générique "premier mot en italique" que produit la sauvegarde des
+// Réglages — d'où les deux constantes, et la garde dans settings-save plus
+// bas : sans elle, ouvrir Réglages et sauvegarder sans rien changer écrasait
+// le wordmark composé par un LUDEX entièrement italique.
+//
+// Le champ « Nom de l'application » reste pleinement fonctionnel : un nom
+// personnalisé garde le traitement générique, seul le nom par défaut a droit
+// à sa composition dessinée.
+const DEFAULT_APP_NAME_TEXT = 'LUDEX';
+const DEFAULT_APP_NAME_HTML = 'LUD<em>e</em>X';
+
 // Applique une classe temporaire qui active une transition douce sur (quasi)
 // tous les éléments pendant un changement de thème, plutôt qu'un changement
 // de couleurs instantané et net. Limité à une courte fenêtre (350ms) pour ne
@@ -19,7 +33,7 @@ function loadSettings() {
   // voir styles.css bloc LUDEX — ARCHIVES & ÉDITORIAL). Ce défaut ne
   // s'applique qu'en l'absence totale de préférence enregistrée : toute
   // personne ayant déjà choisi un thème garde exactement le sien.
-  const defaultSettings = { appName: "<em>Ludex</em> Rating Companion", theme: "ludex-dark" };
+  const defaultSettings = { appName: DEFAULT_APP_NAME_HTML, theme: "ludex-dark" };
   try {
     const saved = JSON.parse(localStorage.getItem('lbx_settings')) || defaultSettings;
     applySettings(saved);
@@ -29,7 +43,7 @@ function loadSettings() {
 }
 
 function applySettings(settings) {
-  document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
+  document.getElementById('main-app-title').innerHTML = settings.appName || DEFAULT_APP_NAME_HTML;
   
   let themeToApply = settings.theme || "ludex-dark";
   // Repli pour quiconque avait Méridien enregistré avant son retrait — un
@@ -141,9 +155,13 @@ document.getElementById('platform-chips-grid').addEventListener('click', (e) => 
 
 document.getElementById('settings-save').addEventListener('click', () => {
   let rawName = document.getElementById('setting-app-name').value.trim();
-  if(!rawName) rawName = "Ludex Rating Companion";
+  if (!rawName) rawName = DEFAULT_APP_NAME_TEXT;
+  // Le nom par défaut retrouve sa composition dessinée plutôt que le motif
+  // générique : sans ça, un simple passage par Réglages suffisait à la perdre.
   const firstWord = rawName.split(' ')[0];
-  const formattedName = rawName.replace(firstWord, `<em>${firstWord}</em>`);
+  const formattedName = rawName.toUpperCase() === DEFAULT_APP_NAME_TEXT
+    ? DEFAULT_APP_NAME_HTML
+    : rawName.replace(firstWord, `<em>${firstWord}</em>`);
   
   const newSettings = {
     appName: formattedName,

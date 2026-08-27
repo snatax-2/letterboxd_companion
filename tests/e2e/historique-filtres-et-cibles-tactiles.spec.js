@@ -10,6 +10,13 @@ test('cibles tactiles : zone effective agrandie pour les 4 elements corriges', a
         date: '2026-01-01', savedAt: '2026-01-01T10:00:00.000Z' },
     ]));
   });
+  // Polices Google bloquees : ce fichier lance axe-core sur six themes, a
+  // ~28s par theme dont une dizaine passees a attendre le <link> injecte par
+  // loadThemeFonts. On fraisait le delai de 30s sans rien tester de plus :
+  // axe lit des styles CALCULES, la disponibilite d'une webfont n'y change
+  // rien.
+  await page.route('**fonts.googleapis.com**', route => route.abort());
+  await page.route('**fonts.gstatic.com**', route => route.abort());
   await page.route('**/api/search*', route => route.fulfill({ json: { results: [] } }));
   await page.goto('/');
   await page.click('#nav-rating');
