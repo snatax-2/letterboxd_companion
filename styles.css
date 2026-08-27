@@ -2546,8 +2546,8 @@
   .onboarding-slide p { font-size: 0.9rem; color: var(--text-mid); line-height: 1.55; }
 
   .onboarding-dots { display: flex; justify-content: center; gap: 7px; padding: 4px 0 16px; }
-  .onboarding-dot { width: 20px; height: 7px; border-radius: 4px; background: var(--border-hi); transform: scaleX(.35); transition: background-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
-  .onboarding-dot.active { background: var(--orange); transform: scaleX(1); }
+  .onboarding-dot { width: 7px; height: 7px; border-radius: 4px; background: var(--border-hi); transform: scaleX(1); pointer-events: none; transition: background-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out); }
+  .onboarding-dot.active { background: var(--orange); transform: scaleX(2.85); }
 
   .onboarding-actions { display: flex; justify-content: space-between; align-items: center; padding: 0 24px 24px; }
   .onboarding-skip { background: none; border: none; color: var(--text-mid); font-size: 0.82rem; cursor: pointer; padding: 8px; }
