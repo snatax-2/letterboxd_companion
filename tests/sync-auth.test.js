@@ -37,7 +37,7 @@ function makeRes() {
 function installFakeSupabase(rows) {
   const calls = [];
   global.fetch = async (url, options = {}) => {
-    calls.push({ url: String(url), method: options.method || 'GET', body: options.body, headers: options.headers || {} });
+    calls.push({ url: String(url), method: options.method || 'GET', body: options.body, headers: options.headers || {}, signal: options.signal });
     const method = options.method || 'GET';
     if (method === 'GET') {
       const match = String(url).match(/sync_code=eq\.([^&]+)/);
@@ -69,6 +69,7 @@ describe('api/sync.js — authentification', () => {
 
     assert.equal(res.statusCode, 200);
     assert.ok(calls[0].url.includes(sha256(code)), 'la PREMIÈRE recherche doit porter sur sha256(code)');
+    assert.ok(calls.every(call => call.signal instanceof AbortSignal), 'chaque appel Supabase doit avoir un délai maximal');
     // Le second appel interroge le code en clair : c'est le repli hérité,
     // volontaire (voir fetchRow dans api/sync.js). Il ne concerne que la
     // LECTURE d'une ligne créée avant ce changement — jamais une écriture.
@@ -214,6 +215,22 @@ describe('api/sync.js — authentification', () => {
     const patchCall = calls.find(call => call.method === 'PATCH');
     assert.ok(patchCall, 'une mise à jour avec révision doit être atomique');
     assert.match(patchCall.url, /updated_at=eq\./);
+  }));
+
+  test('une écriture Supabase bloquée retourne une erreur de passerelle', withEnv(async () => {
+    const handler = await loadHandler();
+    const code = 'UnCodeSuffisammentLong123';
+    let callCount = 0;
+    global.fetch = async () => {
+      callCount++;
+      if (callCount <= 2) return { ok: true, json: async () => [] };
+      throw new DOMException('Timeout', 'TimeoutError');
+    };
+    const res = makeRes();
+    await handler({ method: 'POST', headers: { 'x-sync-code': code }, query: {}, body: { history: [] } }, res);
+
+    assert.equal(res.statusCode, 502);
+    assert.match(res.body.error, /écriture cloud/i);
   }));
 });
 

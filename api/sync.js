@@ -49,6 +49,7 @@ const TABLE = 'ludex_sync';
 const MAX_PAYLOAD_BYTES = 1_500_000;
 const MAX_PAYLOAD_DEPTH = 12;
 const MAX_PAYLOAD_NODES = 50_000;
+const SUPABASE_TIMEOUT_MS = 8_000;
 const ALLOWED_PAYLOAD_KEYS = new Set([
   'schemaVersion', 'exportedAt', 'history', 'historyTombstones',
   'tvShows', 'tvShowTombstones', 'tvSeasonTombstones',
@@ -117,6 +118,13 @@ function readRevisionHeader(req, name) {
   return typeof value === 'string' ? value.replace(/^W\//, '').replace(/^"|"$/g, '').trim() : '';
 }
 
+function fetchSupabase(url, options = {}) {
+  return fetch(url, {
+    ...options,
+    signal: AbortSignal.timeout(SUPABASE_TIMEOUT_MS),
+  });
+}
+
 export default async function handler(req, res) {
   // Limite par IP : usage normal = 1 sauvegarde auto/45s + quelques clics manuels,
   // donc 30/min est très large pour un utilisateur légitime.
@@ -160,7 +168,7 @@ export default async function handler(req, res) {
     const hashed = storageKey(rawCode);
     for (const [key, legacy] of [[hashed, false], [rawCode, true]]) {
       const url = `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(key)}&select=payload,updated_at`;
-      const sbRes = await fetch(url, { headers });
+      const sbRes = await fetchSupabase(url, { headers });
       if (!sbRes.ok) throw new Error('read failed');
       const rows = await sbRes.json();
       if (rows.length) return { row: rows[0], legacy };
@@ -236,16 +244,21 @@ export default async function handler(req, res) {
       const targetUrl = useAtomicUpdate
         ? `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(hashed)}&updated_at=eq.${encodeURIComponent(expectedRevision)}&select=updated_at`
         : `${SUPABASE_URL}/rest/v1/${TABLE}`;
-      const sbRes = await fetch(targetUrl, {
-        method: useAtomicUpdate ? 'PATCH' : 'POST',
-        headers: {
-          ...headers,
-          Prefer: useAtomicUpdate ? 'return=representation' : 'resolution=merge-duplicates,return=representation',
-        },
-        body: JSON.stringify(useAtomicUpdate
-          ? { payload: body, updated_at: updatedAt }
-          : { sync_code: hashed, payload: body, updated_at: updatedAt }),
-      });
+      let sbRes;
+      try {
+        sbRes = await fetchSupabase(targetUrl, {
+          method: useAtomicUpdate ? 'PATCH' : 'POST',
+          headers: {
+            ...headers,
+            Prefer: useAtomicUpdate ? 'return=representation' : 'resolution=merge-duplicates,return=representation',
+          },
+          body: JSON.stringify(useAtomicUpdate
+            ? { payload: body, updated_at: updatedAt }
+            : { sync_code: hashed, payload: body, updated_at: updatedAt }),
+        });
+      } catch {
+        return res.status(502).json({ error: "Erreur d'écriture cloud." });
+      }
 
       if (!sbRes.ok) {
         const errText = await sbRes.text();
@@ -271,10 +284,11 @@ export default async function handler(req, res) {
       // échouer la synchro elle-même : les données sont déjà sauvegardées.
       if (existing.legacy) {
         try {
-          await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(code)}`, {
+          const cleanupRes = await fetchSupabase(`${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(code)}`, {
             method: 'DELETE',
             headers: { ...headers, Prefer: 'return=minimal' },
           });
+          if (!cleanupRes.ok) console.error('Nettoyage de la ligne héritée impossible.');
         } catch (err) {
           console.error('Nettoyage de la ligne héritée impossible :', err);
         }
