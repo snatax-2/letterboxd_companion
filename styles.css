@@ -1192,11 +1192,19 @@
   }
   [data-theme^="ludex-"] .choix-du-jour-overlay {
     /* Dégradé dérivé du fond du thème plutôt qu'un noir fixe : sur le thème
-       clair, un voile noir en bas d'affiche ferait une salissure. */
+       clair, un voile noir en bas d'affiche ferait une salissure.
+
+       Resserré après essai sur iPhone : il démarrait à 38 % de la hauteur et
+       délavait près de la moitié de l'affiche. Or il n'a qu'un seul travail
+       — porter le titre, le réalisateur et l'année, qui occupent le bas de
+       la carte. Il commence donc plus bas et monte plus vite : même lisibilité
+       sous le texte, beaucoup plus d'affiche visible au-dessus. C'est
+       l'affiche qui doit dominer (§1.2), pas le voile. */
     background: linear-gradient(
       to bottom,
-      transparent 38%,
-      color-mix(in srgb, var(--bg) 72%, transparent) 68%,
+      transparent 60%,
+      color-mix(in srgb, var(--bg) 58%, transparent) 79%,
+      color-mix(in srgb, var(--bg) 94%, transparent) 91%,
       var(--bg) 100%);
   }
   [data-theme^="ludex-"] .choix-du-jour-content {
