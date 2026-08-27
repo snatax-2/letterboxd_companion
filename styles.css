@@ -1542,6 +1542,123 @@
   }
 
   /* ═══════════════════════════════════════════
+     P6 · FICHES FILM ET SÉRIE
+     ═══════════════════════════════════════════
+     « Les fiches sont le lieu où la DA magazine est la plus forte » (§11).
+     Le comportement de l'en-tête, lui, ne bouge pas d'une ligne : il était
+     DÉJÀ conforme à la décision définitive de §40 — au défilement la petite
+     affiche rétrécit de 100px à 40px et RESTE visible, avec le titre et le
+     réalisateur/créateur ; seules les métadonnées secondaires, les scores
+     externes et « Changer l'affiche » disparaissent. Rien à implémenter, tout
+     à ne pas casser.
+
+     ── Une vraie régression corrigée ──
+     Le fond de l'en-tête était un dégradé écrit en dur en rgba(14,17,22),
+     posé par-dessus le backdrop TMDb. Tant que l'app n'avait que des thèmes
+     sombres, ça passait. Le thème clair l'a rendu intenable : le titre
+     (--text-hi = #111111), les métadonnées et le réalisateur s'affichaient
+     en quasi-noir SUR ce dégradé sombre — illisibles, vérifié en capture.
+     Le voile est maintenant dérivé de --bg : il suit le thème, le backdrop
+     transparaît toujours, et le texte reste lisible des deux côtés. */
+  [data-theme^="ludex-"] .mds-header {
+    background-image:
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--bg) 62%, transparent),
+        color-mix(in srgb, var(--bg) 94%, transparent) 88%),
+      var(--mds-backdrop, none);
+    border-bottom-color: var(--border);
+  }
+
+  /* Titre d'œuvre : serif italique. §2.2 réserve explicitement ce traitement
+     aux titres de films et de séries, et §11 fait des fiches l'endroit où il
+     porte le plus. L'ombre portée disparaît avec le dégradé qu'elle
+     compensait. */
+  [data-theme^="ludex-"] .mds-title {
+    font-family: var(--font-display);
+    font-style: italic; font-weight: 600;
+    font-size: 1.7rem; line-height: 1.1;
+    text-transform: none; letter-spacing: -0.015em;
+    text-shadow: none;
+  }
+  [data-theme^="ludex-"] .mds-header.compact .mds-title { font-size: 1.1rem; }
+  [data-theme^="ludex-"] .mds-poster { border-radius: 2px; }
+  [data-theme^="ludex-"] .mds-meta {
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--text);
+  }
+  [data-theme^="ludex-"] .mds-header-director { text-shadow: none; color: var(--text); }
+  [data-theme^="ludex-"] .mds-director-label {
+    font-family: var(--font-mono);
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+  }
+
+  /* §11 : « les tags sont du texte séparé par points médians plutôt que des
+     pills remplies ». Les notes externes cessent d'être des pastilles. */
+  [data-theme^="ludex-"] .mds-external-ratings { gap: 0; }
+  [data-theme^="ludex-"] .mds-external-rating {
+    background: none; border: 0; border-radius: 0; padding: 0 10px 0 0;
+    font-family: var(--font-mono); font-size: var(--micro);
+    letter-spacing: 0.04em; position: relative;
+  }
+  [data-theme^="ludex-"] .mds-external-rating + .mds-external-rating { padding-left: 10px; }
+  [data-theme^="ludex-"] .mds-external-rating + .mds-external-rating::before {
+    content: '·'; position: absolute; left: 0; color: var(--border-hi);
+  }
+
+  /* Titres de section : étiquettes de rubrique, donc micro-data mono. */
+  [data-theme^="ludex-"] .mds-section-title {
+    font-family: var(--font-mono); font-weight: 500;
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    color: var(--text); margin-bottom: 12px;
+  }
+  [data-theme^="ludex-"] .mds-section { margin-top: 30px; }
+
+  /* Actions en ghost fin (§11, tableau « Actions »). L'action principale
+     reste identifiable par le contraste, pas par une teinte. */
+  [data-theme^="ludex-"] .mds-action-btn {
+    background: none; border-color: var(--border-hi); border-radius: 2px;
+    font-size: var(--micro); letter-spacing: var(--micro-ls);
+    text-transform: uppercase; min-height: 44px;
+  }
+  [data-theme^="ludex-"] .mds-action-btn:hover { border-color: var(--text-hi); color: var(--text-hi); }
+  [data-theme^="ludex-"] .mds-action-btn.primary {
+    background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
+  }
+  [data-theme^="ludex-"] .mds-action-btn.primary:hover { color: var(--bg); }
+  [data-theme^="ludex-"] .mds-poster-change-btn {
+    border-radius: 2px;
+    font-family: var(--font-mono); font-size: var(--micro); letter-spacing: 0.04em;
+  }
+
+  /* Casting en carrousel : photo, nom, rôle — sans carte autour (§43). */
+  [data-theme^="ludex-"] .mds-cast-photo { border-width: 1px; border-color: var(--border); }
+
+  /* Onglets de saison : choisir une saison n'est pas noter. L'aplat doré
+     laisse place au contraste. */
+  [data-theme^="ludex-"] .tds-season-tab { border-radius: 2px; }
+  [data-theme^="ludex-"] .tds-season-tab.active {
+    background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
+  }
+
+  /* Feuille : coin supérieur franc mais généreux (§2.3 — « bottom sheets /
+     modales : radius supérieur 24px »). */
+  [data-theme^="ludex-"] .mds-box { border-radius: 20px 20px 0 0; }
+
+  /* « Ta note » gardait un fond, un rayon et un filet d'accent de 3px — la
+     dernière boîte de la fiche. Le filet gauche suffit à la rattacher, et le
+     score devient un vrai chiffre d'archive plutôt qu'un libellé gras. */
+  [data-theme^="ludex-"] .mds-personal {
+    background: none; border-radius: 0;
+    border-left: 1px solid var(--border-hi);
+    padding: 2px 0 2px 16px;
+  }
+  [data-theme^="ludex-"] .mds-personal-score {
+    font-family: var(--font-display); font-weight: 600; font-size: 1.5rem;
+  }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
