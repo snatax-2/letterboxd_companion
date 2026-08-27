@@ -35,6 +35,23 @@
        redéfinissent plus bas : une ombre noire sur du papier crème fait une
        tache grise sale, il leur faut une ombre teintée (même raisonnement
        que leur --box-shadow-style de signature, qui reste inchangé). */
+    /* ── Ce qui se pose SUR une affiche ──
+       Une affiche est une photo, pas une surface du thème : ce qu'on écrit
+       dessus doit rester lisible que le thème soit crème ou noir. Ces deux
+       valeurs sont donc volontairement INDÉPENDANTES de la palette, et c'est
+       la seule famille de jetons dans ce cas.
+       (Le titre du choix du jour, lui, est porté par un voile dérivé de
+       --bg : là c'est le voile qui s'adapte, pas le texte.) */
+    --on-poster: #FAFAFA;
+    --poster-scrim: linear-gradient(to top, rgba(10,10,12,0.62) 0%, rgba(10,10,12,0.18) 28%, transparent 52%);
+
+    /* Rayon des éléments que la mise en page APLATIT délibérément (puces de
+       filtre, champs, badges). Chaque thème garde son langage de formes :
+       Ludex aplatit vraiment (0), Cinéphile 70s et Technicolor retombent sur
+       leur petit rayon — leur rondeur est une signature, pas un espacement,
+       et ce n'est pas ce qu'on uniformise ici. */
+    --radius-flat: var(--radius-sm);
+
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
@@ -98,7 +115,7 @@
     /* 16px = la valeur littérale qu'utilisait déjà body avant d'être
        tokénisée. Les six thèmes historiques gardent donc exactement leur
        marge ; seuls ludex-dark/light passent aux valeurs éditoriales. */
-    --page-margin: 16px;
+    --page-margin: 18px;
     --section-gap: 40px;
     --poster-gap: 8px;
     --meta-gap: 8px;
@@ -112,37 +129,47 @@
        historiques ne bougent pas d'un pixel ; ludex-dark/light les mettent
        simplement à néant et laissent l'espace, l'alignement et la
        typographie faire le travail de séparation. */
-    --card-bg: var(--surface);
-    --card-border: 1px solid var(--border);
-    --card-radius: var(--radius);
-    --card-pad: 20px;
-    --card-shadow: var(--box-shadow-style, var(--shadow-2));
-    --card-title-rule: 1px solid var(--border);
-    --card-title-pad: 12px;
-    --card-title-gap: 18px;
+    /* ── Mise à néant de l'emboîtage — MISE EN PAGE DE L'APPLICATION ──
+       Ces valeurs venaient des deux thèmes Ludex ; elles vivent maintenant
+       ici, donc elles valent pour les quatre thèmes. Une information n'a pas
+       besoin d'être enfermée dans un rectangle pour exister : cartes,
+       panneaux et champs perdent fond, bordure, rayon et ombre ; leur inset
+       vient de la marge de page, leur séparation du rythme vertical.
+       Ce qui reste PROPRE à chaque thème : la palette, les polices et le
+       langage de formes (--radius, --radius-flat). Cinéphile 70s garde donc
+       sa rondeur et Technicolor la sienne — c'est leur signature, pas un
+       espacement. */
+    --card-bg: transparent;
+    --card-border: 0;
+    --card-radius: 0;
+    --card-pad: 0;
+    --card-shadow: none;
+    --card-title-rule: 0;
+    --card-title-pad: 0;
+    --card-title-gap: 16px;
 
-    --panel-bg: var(--bg);
-    --panel-border: 1px solid var(--border);
-    --panel-radius: var(--radius-sm);
+    --panel-bg: transparent;
+    --panel-border: 0;
+    --panel-radius: 0;
 
-    --field-bg: var(--bg);
-    --field-border: 1px solid var(--blue);
-    --field-radius: var(--radius-sm);
-    --field-focus-ring: var(--box-shadow-style, 0 0 0 3px rgba(64,188,244,0.18));
+    --field-bg: transparent;
+    --field-border: 0;
+    --field-radius: 0;
+    --field-focus-ring: none;
 
-    --ghost-bg: var(--surface);
+    --ghost-bg: transparent;
     --ghost-border: 1px solid var(--border);
 
-    --chip-bg: var(--bg);
+    --chip-bg: transparent;
     --chip-border: 1px solid var(--border);
-    --chip-radius: var(--radius-pill);
+    --chip-radius: var(--radius-flat);
 
     --btn-primary-bg: var(--blue);
     --btn-primary-text: var(--blue-fill-text);
     --btn-secondary-bg: var(--surface2);
 
     /* Rythme vertical entre les sections d'un écran. */
-    --section-rhythm: 20px;
+    --section-rhythm: var(--section-gap);
     --modal-radius: var(--radius);
 
     /* ── Lavis et anneaux d'accent ──
@@ -172,10 +199,24 @@
        parce que le badge ne vit PAS sur le fond de la page mais sur un voile
        sombre au-dessus d'une image — les couleurs qui conviennent à l'un ne
        conviennent pas forcément à l'autre. */
-    --score-high: var(--green);
-    --score-mid: var(--gold);
-    --score-low: var(--red);
-    --badge-scrim: rgba(14,17,22,0.75);
+    /* Couleurs de note — même famille que --on-poster : elles ne servent QUE
+       sur une affiche (le badge de la carte d'historique, en JS dans
+       06a-history-list.js et 18-tv-shows.js, et l'icône du badge vedette),
+       toujours sur un voile sombre. Elles sont donc fixes, pas dérivées de la
+       palette : elles valaient var(--green)/var(--gold)/var(--red), et les
+       teintes SOMBRES de Cinéphile 70s (or #7a5628, terre de Sienne
+       #4A2E1B), faites pour un fond crème, tombaient à 2,7:1 sur ce voile.
+       Mesuré sur les quatre thèmes. */
+    --score-high: #8CA07B;
+    --score-mid: #D4AF37;
+    --score-low: #CF6B55;
+    /* Voile du badge de note, posé sur une affiche : même famille que
+       --on-poster et --poster-scrim, donc indépendant de la palette.
+       Il était à 0.75 : le fond du thème traversait, et sur un fond crème la
+       note tombait à 2.6:1 une fois les cartes déboîtées. Mesuré sur les
+       quatre thèmes, il faut un voile quasi opaque pour que la couleur de la
+       note tienne quel que soit ce qu'il y a derrière. */
+    --badge-scrim: rgba(10,10,12,0.92);
 
     /* Une pilule reste une pilule quel que soit le thème — contrairement à
        --radius/--radius-sm (qui varient par thème pour la personnalité
@@ -444,6 +485,7 @@
          qui ne sert qu'en aplat et en bordure. */
 
   [data-theme="ludex-dark"] {
+    --radius-flat: 0; /* Ludex aplatit vraiment ; voir --radius-flat dans :root */
     color-scheme: dark;
     --bg: #0A0A0C; --surface: #121216; --surface2: #1B1B20; --border: #222222;
     --border-hi: #33333B; --text: #8E8E93; --text-hi: #FAFAFA; --text-mid: #B4B4B9;
@@ -494,33 +536,15 @@
        exister. Les cartes, panneaux et champs perdent fond, bordure, rayon
        et ombre ; leur inset vient désormais de la marge de page, et leur
        séparation du rythme vertical. */
-    --card-bg: transparent;
-    --card-border: 0;
-    --card-radius: 0;
-    --card-pad: 0;
-    --card-shadow: none;
-    --card-title-rule: 0;
-    --card-title-pad: 0;
-    --card-title-gap: 16px;
 
-    --panel-bg: transparent;
-    --panel-border: 0;
-    --panel-radius: 0;
 
     /* Le champ devient une ligne : la bordure basse est posée à part, dans
        la règle .search-input scopée plus bas (un jeton ne peut pas porter
        une bordure sur un seul côté sans annuler les trois autres). */
-    --field-bg: transparent;
-    --field-border: 0;
-    --field-radius: 0;
-    --field-focus-ring: none;
 
-    --ghost-bg: transparent;
     --ghost-border: 1px solid var(--border);
 
-    --chip-bg: transparent;
     --chip-border: 1px solid var(--border);
-    --chip-radius: 2px;
 
     /* CTA rectangulaire monochrome plutôt qu'une pilule colorée (§7) : son
        importance vient du contraste et de la forme, pas d'une teinte. */
@@ -528,8 +552,6 @@
     --btn-primary-text: var(--bg);
     --btn-secondary-bg: transparent;
 
-    --section-rhythm: var(--section-gap);
-    --page-margin: 18px;
     /* Les feuilles et modales gardent un rayon franc (§2.3) — ce sont les
        seuls éléments flottants qui y ont droit. */
     --modal-radius: 20px;
@@ -546,14 +568,10 @@
     /* Mêmes valeurs dans les DEUX thèmes : ce badge est toujours posé sur
        un voile sombre au-dessus d'une affiche, jamais sur le fond de la
        page. Mesuré sur ce voile : 7.00, 9.41 et 5.55 — tous AA. */
-    --score-high: #8CA07B;
-    --score-mid: #D4AF37;
-    --score-low: #CF6B55;
     /* Voile quasi opaque. À 0,75 l'affiche transparaissait : sur une affiche
        claire, aucune des trois couleurs de seuil ne passait AA (3.04, 4.09,
        2.41 mesurés). Le score doit rester lisible quelle que soit l'image
        derrière. */
-    --badge-scrim: rgba(10,10,12,0.92);
 
     --star-color: var(--gold);
     --star-empty-color: #3A3A42;
@@ -573,6 +591,7 @@
   }
 
   [data-theme="ludex-light"] {
+    --radius-flat: 0; /* Ludex aplatit vraiment ; voir --radius-flat dans :root */
     color-scheme: light;
     --bg: #F5F4F0; --surface: #EFEDE6; --surface2: #E9E7DF; --border: #E0E0E0;
     --border-hi: #C6C3B9; --text: #666663; --text-hi: #111111; --text-mid: #514F4A;
@@ -614,33 +633,15 @@
        exister. Les cartes, panneaux et champs perdent fond, bordure, rayon
        et ombre ; leur inset vient désormais de la marge de page, et leur
        séparation du rythme vertical. */
-    --card-bg: transparent;
-    --card-border: 0;
-    --card-radius: 0;
-    --card-pad: 0;
-    --card-shadow: none;
-    --card-title-rule: 0;
-    --card-title-pad: 0;
-    --card-title-gap: 16px;
 
-    --panel-bg: transparent;
-    --panel-border: 0;
-    --panel-radius: 0;
 
     /* Le champ devient une ligne : la bordure basse est posée à part, dans
        la règle .search-input scopée plus bas (un jeton ne peut pas porter
        une bordure sur un seul côté sans annuler les trois autres). */
-    --field-bg: transparent;
-    --field-border: 0;
-    --field-radius: 0;
-    --field-focus-ring: none;
 
-    --ghost-bg: transparent;
     --ghost-border: 1px solid var(--border);
 
-    --chip-bg: transparent;
     --chip-border: 1px solid var(--border);
-    --chip-radius: 2px;
 
     /* CTA rectangulaire monochrome plutôt qu'une pilule colorée (§7) : son
        importance vient du contraste et de la forme, pas d'une teinte. */
@@ -648,8 +649,6 @@
     --btn-primary-text: var(--bg);
     --btn-secondary-bg: transparent;
 
-    --section-rhythm: var(--section-gap);
-    --page-margin: 18px;
     /* Les feuilles et modales gardent un rayon franc (§2.3) — ce sont les
        seuls éléments flottants qui y ont droit. */
     --modal-radius: 20px;
@@ -666,14 +665,10 @@
     /* Mêmes valeurs dans les DEUX thèmes : ce badge est toujours posé sur
        un voile sombre au-dessus d'une affiche, jamais sur le fond de la
        page. Mesuré sur ce voile : 7.00, 9.41 et 5.55 — tous AA. */
-    --score-high: #8CA07B;
-    --score-mid: #D4AF37;
-    --score-low: #CF6B55;
     /* Voile quasi opaque. À 0,75 l'affiche transparaissait : sur une affiche
        claire, aucune des trois couleurs de seuil ne passait AA (3.04, 4.09,
        2.41 mesurés). Le score doit rester lisible quelle que soit l'image
        derrière. */
-    --badge-scrim: rgba(10,10,12,0.92);
 
     --star-color: var(--gold);
     --star-empty-color: #CFCCC2;
@@ -694,7 +689,7 @@
      ═══════════════════════════════════════════
      Ce que les jetons ne peuvent pas exprimer : une bordure sur un seul
      côté, un changement de police, un état actif qui passe d'un aplat à un
-     soulignement. Tout est scopé par [data-theme^="ludex-"], donc les six
+     soulignement. Tout est scopé par [data-theme], donc les six
      thèmes historiques ne voient rien de ce bloc. */
 
   /* ── Titre de section ──
@@ -703,7 +698,7 @@
      (§2.2 — sans, 1.25rem, capitales, tracking +0.05em, gras), en couleur
      principale plutôt qu'en gris secondaire. Le contraste de taille avec le
      corps (0.9rem) suffit à annoncer une nouvelle section. */
-  [data-theme^="ludex-"] .card-title {
+  [data-theme] .card-title {
     font-family: var(--font-heading);
     font-size: var(--heading-m);
     letter-spacing: var(--heading-m-ls);
@@ -713,7 +708,7 @@
   /* Le compteur redevient de la micro-data : du texte, pas une pilule
      remplie (§11 — « les tags sont du texte séparé par points médians
      plutôt que des pills remplies »). */
-  [data-theme^="ludex-"] .card-title-badge {
+  [data-theme] .card-title-badge {
     background: none; border: 0; padding: 0;
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
@@ -724,26 +719,26 @@
      §6 et §7 demandent explicitement une « ligne inférieure simple ». Le
      jeton --field-border met les quatre côtés à zéro ; la bordure basse est
      reposée ici, seule. */
-  [data-theme^="ludex-"] .search-input,
-  [data-theme^="ludex-"] .watchlist-add-input {
+  [data-theme] .search-input,
+  [data-theme] .watchlist-add-input {
     border-bottom: 1px solid var(--border-hi);
     padding-left: 28px; padding-right: 28px;
     font-family: var(--font-body);
     transition: border-color var(--dur-base) var(--ease-out);
   }
-  [data-theme^="ludex-"] .search-input:focus,
-  [data-theme^="ludex-"] .watchlist-add-input:focus {
+  [data-theme] .search-input:focus,
+  [data-theme] .watchlist-add-input:focus {
     border-bottom-color: var(--text-hi);
   }
-  [data-theme^="ludex-"] .search-input-icon { left: 2px; }
-  [data-theme^="ludex-"] .search-clear-btn { right: 0; }
+  [data-theme] .search-input-icon { left: 2px; }
+  [data-theme] .search-clear-btn { right: 0; }
 
   /* ── Filtres : du texte souligné, pas des pastilles ──
      Un rang d'options de tri se lit comme une ligne de sommaire. L'état
      actif se marque par le contraste ET par un filet sous le libellé — donc
      jamais par la seule couleur (§14, exigence d'accessibilité). */
-  [data-theme^="ludex-"] .filter-btn {
-    background: none; border: 0; border-radius: 0;
+  [data-theme] .filter-btn {
+    background: none; border: 0; border-radius: var(--radius-flat);
     border-bottom: 1px solid transparent;
     padding: 6px 0; margin-right: 4px;
     font-family: var(--font-heading);
@@ -752,9 +747,9 @@
     /* La cible tactile reste conforme malgré un padding réduit. */
     min-height: 44px;
   }
-  [data-theme^="ludex-"] .filter-row { gap: 18px; }
-  [data-theme^="ludex-"] .filter-btn:hover { color: var(--text-hi); }
-  [data-theme^="ludex-"] .filter-btn.active {
+  [data-theme] .filter-row { gap: 18px; }
+  [data-theme] .filter-btn:hover { color: var(--text-hi); }
+  [data-theme] .filter-btn.active {
     background: none; color: var(--text-hi);
     border-bottom-color: var(--text-hi);
   }
@@ -762,8 +757,8 @@
   /* ── Puces de genre : un contour fin, un actif monochrome ──
      Contrairement aux filtres, ce sont de vraies étiquettes : elles gardent
      une forme, mais rectangulaire et sans teinte de marque. */
-  [data-theme^="ludex-"] .genre-chip.active,
-  [data-theme^="ludex-"] .ctx-tag.active {
+  [data-theme] .genre-chip.active,
+  [data-theme] .ctx-tag.active {
     background: var(--text-hi);
     border-color: var(--text-hi);
     color: var(--bg);
@@ -772,24 +767,24 @@
   /* ── Boutons ──
      Ghost fin partout, sauf l'action principale, qui reste identifiable par
      le contraste et la forme — jamais par une teinte criarde (§7, §17). */
-  [data-theme^="ludex-"] .btn-new-review {
+  [data-theme] .btn-new-review {
     background: none;
     border: 1px solid var(--border-hi);
     color: var(--text-hi);
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     padding: 6px 12px;
   }
-  [data-theme^="ludex-"] .btn-new-review:hover {
+  [data-theme] .btn-new-review:hover {
     filter: none; border-color: var(--text-hi);
   }
-  [data-theme^="ludex-"] .btn { letter-spacing: 0.08em; }
-  [data-theme^="ludex-"] .btn-copy { border-color: var(--border-hi); }
+  [data-theme] .btn { letter-spacing: 0.08em; }
+  [data-theme] .btn-copy { border-color: var(--border-hi); }
 
   /* ── Panneau de pondérations ──
        Le panneau perd son cadre (--panel-border: 0). Un filet gauche unique
        suffit à rattacher son contenu au bouton qui l'a ouvert, sans
        reconstruire une boîte. */
-  [data-theme^="ludex-"] .weights-panel.open {
+  [data-theme] .weights-panel.open {
     border-left: 1px solid var(--border);
     border-width: 0 0 0 1px;
     padding: 4px 0 4px 16px;
@@ -806,7 +801,7 @@
      sur le reste du bandeau.
      Le champ « Nom de l'application » des Réglages reste intact : seule la
      présentation change, jamais la valeur. */
-  [data-theme^="ludex-"] .app-title {
+  [data-theme] .app-title {
     font-family: var(--font-heading);
     font-size: 1.05rem;
     font-weight: 700;
@@ -821,7 +816,7 @@
      capitales espacées — la composition du prototype (.brand / .brand span).
      text-transform: none est indispensable : .app-title met tout en
      capitales, et le « e » deviendrait un « E » sans cette annulation. */
-  [data-theme^="ludex-"] .app-title em {
+  [data-theme] .app-title em {
     font-family: var(--font-display);
     font-style: italic;
     font-weight: 600;
@@ -838,16 +833,16 @@
      tenait pas sur une ligne avec le bouton à côté. Cette raison disparaît
      avec le wordmark court — l'empilement ne coûtait plus que de la hauteur
      perdue en tête de chaque écran. */
-  [data-theme^="ludex-"] .app-header {
+  [data-theme] .app-header {
     margin-bottom: 28px;
     flex-direction: row;
     align-items: center;
     text-align: left;
   }
-  [data-theme^="ludex-"] .app-header .header-actions { justify-content: flex-end; }
+  [data-theme] .app-header .header-actions { justify-content: flex-end; }
   /* Le titre est le seul élément à porter la compensation d'interlettrage :
      aligné à gauche, le blanc de fin ne le décale plus, on l'annule. */
-  [data-theme^="ludex-"] .app-title { text-indent: 0; }
+  [data-theme] .app-title { text-indent: 0; }
 
   /* ── Libellé d'onglet actif ──
      Même cause : Inter en capitales est plus large que Fraunces, et
@@ -856,7 +851,7 @@
      colonne elle-même, donc inopérant — à 100 %, et l'ellipse prend le
      relais si un libellé reste trop long. Le raffinement typographique de la
      barre appartient à P2 ; ceci n'est que le correctif de la régression. */
-  [data-theme^="ludex-"] .nav-btn-label {
+  [data-theme] .nav-btn-label {
     /* Mesuré à 390px : une colonne d'onglet fait 70,5px. « HISTORIQUE »,
        le plus long des cinq libellés, demandait plus que ça en Inter — d'où
        le mot rogné en plein milieu. À 0.52rem et 0.02em, les cinq tiennent
@@ -866,15 +861,15 @@
     font-size: 0.52rem; letter-spacing: 0.02em;
     white-space: nowrap; text-overflow: ellipsis;
   }
-  [data-theme^="ludex-"] .nav-btn.active .nav-btn-label { max-width: 100%; }
+  [data-theme] .nav-btn.active .nav-btn-label { max-width: 100%; }
 
   /* ── État vide ──
        Message éditorial court, pas un grand panneau générique (§6). */
-  [data-theme^="ludex-"] .empty-state {
+  [data-theme] .empty-state {
     padding: 40px 0; font-size: var(--body-ed); line-height: var(--body-ed-lh);
     color: var(--text);
   }
-  [data-theme^="ludex-"] .empty-state-icon { opacity: 0.4; margin-bottom: 14px; }
+  [data-theme] .empty-state-icon { opacity: 0.4; margin-bottom: 14px; }
 
   /* ═══════════════════════════════════════════
      P2 · NAVIGATION — habillage Ludex
@@ -892,7 +887,7 @@
      La bordure est dérivée de la couleur de texte plutôt que de --border-hi :
      sur une surface translucide, un gris opaque tranche, une teinte de la
      couleur du texte à 10 % se fond. */
-  [data-theme^="ludex-"] .mobile-nav {
+  [data-theme] .mobile-nav {
     background: var(--glass);
     backdrop-filter: blur(24px) saturate(120%);
     -webkit-backdrop-filter: blur(24px) saturate(120%);
@@ -902,9 +897,9 @@
      (§2.1, critère d'acceptation « Navigation mobile »). La valeur est posée
      explicitement plutôt qu'héritée de --orange : la navigation ne doit pas
      redevenir colorée si l'accent interactif changeait un jour. */
-  [data-theme^="ludex-"] .nav-btn { color: var(--text); }
-  [data-theme^="ludex-"] .nav-btn.active { color: var(--text-hi); }
-  [data-theme^="ludex-"] .nav-btn:hover:not(.active) { color: var(--text-mid); }
+  [data-theme] .nav-btn { color: var(--text); }
+  [data-theme] .nav-btn.active { color: var(--text-hi); }
+  [data-theme] .nav-btn:hover:not(.active) { color: var(--text-mid); }
 
   /* ── Switch Films/Séries ──
      §23 : palette monochrome, fond sobre, actif clair, inactif gris,
@@ -916,23 +911,23 @@
      bouton mesurait (100% - 4px)/2 — la pastille ne coïncidait donc jamais
      tout à fait avec le bouton qu'elle est censée souligner. À zéro, les
      deux s'alignent au pixel, et la translation reste exacte. */
-  [data-theme^="ludex-"] .mode-tabs {
+  [data-theme] .mode-tabs {
     background: transparent;
     border: 1px solid var(--border);
     padding: 0;
     gap: 0;
   }
-  [data-theme^="ludex-"] .toggle-slider {
+  [data-theme] .toggle-slider {
     background: var(--surface2);
     border-color: var(--border-hi);
   }
-  [data-theme^="ludex-"] .mode-tab {
+  [data-theme] .mode-tab {
     color: var(--text); font-weight: 600;
     min-height: 44px;
     font-family: var(--font-heading);
     letter-spacing: 0.04em;
   }
-  [data-theme^="ludex-"] .mode-tab.active { color: var(--text-hi); font-weight: 700; }
+  [data-theme] .mode-tab.active { color: var(--text-hi); font-weight: 700; }
 
   /* ── Détaillé / Rapide ──
      Le seul .mode-tabs qui ne soit pas un switch Films/Séries : il n'a pas
@@ -940,15 +935,15 @@
      formulaire de notation. Il devient deux onglets plats, l'actif marqué
      par un filet inférieur ET par le contraste du texte — donc jamais par la
      seule couleur (§14). */
-  [data-theme^="ludex-"] .mode-tabs-plain {
+  [data-theme] .mode-tabs-plain {
     background: transparent; border: 0; padding: 0; gap: 26px;
     justify-content: flex-start;
   }
-  [data-theme^="ludex-"] .mode-tabs-plain .mode-tab {
+  [data-theme] .mode-tabs-plain .mode-tab {
     flex: 0 0 auto; padding: 8px 0;
-    border: 0; border-bottom: 1px solid transparent; border-radius: 0;
+    border: 0; border-bottom: 1px solid transparent; border-radius: var(--radius-flat);
   }
-  [data-theme^="ludex-"] .mode-tabs-plain .mode-tab.active {
+  [data-theme] .mode-tabs-plain .mode-tab.active {
     background: none;
     border-bottom-color: var(--text-hi);
     color: var(--text-hi);
@@ -966,22 +961,22 @@
      dessous de 861px), donc ces surcharges y vivent aussi — sinon le fond
      s'appliquerait aussi à l'onglet de bureau, qui n'a pas de cercle. */
   @media (max-width: 860px) {
-    [data-theme^="ludex-"] .nav-btn-primary .nav-btn-icon {
+    [data-theme] .nav-btn-primary .nav-btn-icon {
       background: var(--surface2);
       border-color: var(--bg);
       box-shadow:
         inset 0 0 0 1px color-mix(in srgb, var(--text-hi) 16%, transparent),
         var(--shadow-1);
     }
-    [data-theme^="ludex-"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme^="ludex-"] .nav-btn-primary-label { color: var(--text-hi); }
+    [data-theme] .nav-btn-primary .nav-btn-icon .icon,
+    [data-theme] .nav-btn-primary-label { color: var(--text-hi); }
 
-    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-icon {
+    [data-theme] .nav-btn-primary.active .nav-btn-icon {
       background: var(--text-hi);
       box-shadow: var(--shadow-1);
     }
-    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-icon .icon,
-    [data-theme^="ludex-"] .nav-btn-primary.active .nav-btn-primary-label { color: var(--bg); }
+    [data-theme] .nav-btn-primary.active .nav-btn-icon .icon,
+    [data-theme] .nav-btn-primary.active .nav-btn-primary-label { color: var(--bg); }
   }
 
   /* ═══════════════════════════════════════════
@@ -996,18 +991,18 @@
      Les classes sont posées par revealImagesWhenLoaded() et
      revealBackgroundWhenLoaded() (03-foundation.js), jamais par le rendu :
      sans JavaScript, aucune image n'est floutée ni masquée. */
-  [data-theme^="ludex-"] .progressive {
+  [data-theme] .progressive {
     filter: blur(10px);
     opacity: 0;
     transition: filter 600ms var(--ease-out), opacity 600ms var(--ease-out);
   }
-  [data-theme^="ludex-"] .progressive.is-loaded { filter: none; opacity: 1; }
+  [data-theme] .progressive.is-loaded { filter: none; opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
-    [data-theme^="ludex-"] .progressive { filter: none; opacity: 1; transition: none; }
+    [data-theme] .progressive { filter: none; opacity: 1; transition: none; }
   }
 
   /* ── Le switch, posé sur la page plutôt que dans un bandeau ── */
-  [data-theme^="ludex-"] .discover-segmented-wrap {
+  [data-theme] .discover-segmented-wrap {
     background: var(--bg);
     padding: 4px 0 12px;
     margin-bottom: var(--section-gap);
@@ -1019,18 +1014,18 @@
      — précisément l'ancrage visuel que la spec demande de préserver (§1.2).
      Rayon à 2px comme toute affiche (§2.3), et le titre repose sur le bas de
      l'image, façon couverture de revue. */
-  [data-theme^="ludex-"] .choix-du-jour-wrap { margin-bottom: var(--section-gap); }
-  [data-theme^="ludex-"] .choix-du-jour-eyebrow {
+  [data-theme] .choix-du-jour-wrap { margin-bottom: var(--section-gap); }
+  [data-theme] .choix-du-jour-eyebrow {
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text); margin-bottom: 12px;
   }
-  [data-theme^="ludex-"] .choix-du-jour-card {
+  [data-theme] .choix-du-jour-card {
     aspect-ratio: 2 / 3;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     background: var(--surface);
     max-height: 62vh;
   }
-  [data-theme^="ludex-"] .choix-du-jour-overlay {
+  [data-theme] .choix-du-jour-overlay {
     /* Dégradé dérivé du fond du thème plutôt qu'un noir fixe : sur le thème
        clair, un voile noir en bas d'affiche ferait une salissure.
 
@@ -1047,12 +1042,12 @@
       color-mix(in srgb, var(--bg) 94%, transparent) 91%,
       var(--bg) 100%);
   }
-  [data-theme^="ludex-"] .choix-du-jour-content {
+  [data-theme] .choix-du-jour-content {
     left: 18px; right: 18px; bottom: 18px;
   }
   /* Titre d'œuvre : serif, italique — le traitement que la spec réserve aux
      films et aux séries (§2.2). C'est ici qu'il porte le plus. */
-  [data-theme^="ludex-"] .choix-du-jour-title {
+  [data-theme] .choix-du-jour-title {
     font-family: var(--font-display);
     font-style: italic;
     font-weight: 600;
@@ -1061,13 +1056,13 @@
     letter-spacing: var(--display-xl-ls);
     text-shadow: none;
   }
-  [data-theme^="ludex-"] .choix-du-jour-director {
+  [data-theme] .choix-du-jour-director {
     font-family: var(--font-body);
     font-size: var(--body-ed);
     color: var(--text-mid); opacity: 1;
     margin-top: 10px; text-shadow: none;
   }
-  [data-theme^="ludex-"] .choix-du-jour-micro {
+  [data-theme] .choix-du-jour-micro {
     display: block; margin-top: 8px;
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
@@ -1078,14 +1073,14 @@
      Des affiches libres, sans carte visible (§5). Le titre de section reste
      de la micro-data mono : c'est une étiquette de rayon, pas un titre
      d'œuvre. */
-  [data-theme^="ludex-"] .carousel-block { margin-bottom: var(--section-gap); }
-  [data-theme^="ludex-"] .carousel-title {
+  [data-theme] .carousel-block { margin-bottom: var(--section-gap); }
+  [data-theme] .carousel-title {
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text); margin-bottom: 14px;
   }
-  [data-theme^="ludex-"] .carousel-row { gap: var(--poster-gap); }
-  [data-theme^="ludex-"] .poster-min {
-    border-radius: 2px;
+  [data-theme] .carousel-row { gap: var(--poster-gap); }
+  [data-theme] .poster-min {
+    border-radius: var(--radius-sm);
     background: var(--surface);
     width: 116px;
     transition: transform var(--dur-base) var(--ease-out);
@@ -1093,20 +1088,20 @@
   /* §12 et §17 : l'affiche s'ENFONCE légèrement, elle ne grossit jamais.
      Réservé au vrai survol pour ne pas déclencher au doigt sur mobile. */
   @media (hover: hover) {
-    [data-theme^="ludex-"] .poster-min:hover { transform: scale(0.98); }
-    [data-theme^="ludex-"] .choix-du-jour-card:hover { transform: scale(0.99); }
-    [data-theme^="ludex-"] .choix-du-jour-card {
+    [data-theme] .poster-min:hover { transform: scale(0.98); }
+    [data-theme] .choix-du-jour-card:hover { transform: scale(0.99); }
+    [data-theme] .choix-du-jour-card {
       transition: transform var(--dur-base) var(--ease-out);
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    [data-theme^="ludex-"] .poster-min,
-    [data-theme^="ludex-"] .choix-du-jour-card { transition: none; }
-    [data-theme^="ludex-"] .poster-min:hover,
-    [data-theme^="ludex-"] .choix-du-jour-card:hover { transform: none; }
+    [data-theme] .poster-min,
+    [data-theme] .choix-du-jour-card { transition: none; }
+    [data-theme] .poster-min:hover,
+    [data-theme] .choix-du-jour-card:hover { transform: none; }
   }
-  [data-theme^="ludex-"] .poster-min:focus-visible,
-  [data-theme^="ludex-"] .choix-du-jour-card:focus-visible {
+  [data-theme] .poster-min:focus-visible,
+  [data-theme] .choix-du-jour-card:focus-visible {
     outline: 2px solid var(--text-hi); outline-offset: 3px;
   }
 
@@ -1140,99 +1135,110 @@
   /* Tris : même vocabulaire que les filtres de l'Historique — du texte
      souligné. L'actif se marque par le contraste ET par le filet, jamais par
      la seule couleur (§14). */
-  [data-theme^="ludex-"] .wl-sort-row { gap: 18px; }
-  [data-theme^="ludex-"] .wl-sort-btn {
-    background: none; border: 0; border-radius: 0;
+  [data-theme] .wl-sort-row { gap: 18px; }
+  [data-theme] .wl-sort-btn {
+    background: none; border: 0; border-radius: var(--radius-flat);
     border-bottom: 1px solid transparent;
     padding: 6px 0; min-height: 44px;
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; color: var(--text); font-weight: 600;
   }
-  [data-theme^="ludex-"] .wl-sort-btn:hover { color: var(--text-hi); border-color: transparent; }
-  [data-theme^="ludex-"] .wl-sort-btn.active {
+  [data-theme] .wl-sort-btn:hover { color: var(--text-hi); border-color: transparent; }
+  [data-theme] .wl-sort-btn.active {
     background: none; color: var(--text-hi);
     border-bottom-color: var(--text-hi);
   }
-  [data-theme^="ludex-"] .wl-sort-btn-filter { margin-left: auto; }
+  [data-theme] .wl-sort-btn-filter { margin-left: auto; }
 
   /* Les listes nommées restent de vraies étiquettes — elles portent un nom
      que l'utilisateur a choisi, elles ont donc droit à une forme. Mais
      rectangulaire et monochrome : l'aplat bleu était le dernier accent
      coloré de cet écran. « Nouvelle liste » garde son contour en pointillés,
      qui dit bien qu'il s'agit d'ajouter, pas de sélectionner. */
-  [data-theme^="ludex-"] .wl-list-pill {
-    background: none; border-radius: 2px; color: var(--text);
+  [data-theme] .wl-list-pill {
+    background: none; border-radius: var(--radius-sm); color: var(--text);
     border-color: var(--border);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; min-height: 44px;
   }
-  [data-theme^="ludex-"] .wl-list-pill.active {
+  [data-theme] .wl-list-pill.active {
     background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
   }
 
   /* Champ d'ajout : une ligne et une action en ghost, pas un bloc plein. */
-  [data-theme^="ludex-"] .watchlist-add-input {
+  [data-theme] .watchlist-add-input {
     background: transparent; border: 0;
     border-bottom: 1px solid var(--border-hi);
-    border-radius: 0;
+    border-radius: var(--radius-flat);
   }
-  [data-theme^="ludex-"] .watchlist-add-input:focus { border-bottom-color: var(--text-hi); }
-  [data-theme^="ludex-"] .watchlist-add-btn {
+  [data-theme] .watchlist-add-input:focus { border-bottom-color: var(--text-hi); }
+  [data-theme] .watchlist-add-btn {
     background: none; color: var(--text-hi);
-    border: 1px solid var(--border-hi); border-radius: 2px;
+    border: 1px solid var(--border-hi); border-radius: var(--radius-sm);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; padding: 10px 14px; min-height: 44px;
   }
-  [data-theme^="ludex-"] .watchlist-add-btn:hover { opacity: 1; border-color: var(--text-hi); }
+  [data-theme] .watchlist-add-btn:hover { opacity: 1; border-color: var(--text-hi); }
 
   /* L'affiche presque seule : plus de cadre, rayon d'affiche. overflow reste
      hidden — le swipe s'appuie dessus pour masquer ses indices. */
-  [data-theme^="ludex-"] .wl-card {
-    background: transparent; border: 0; border-radius: 2px;
+  [data-theme] .wl-card {
+    background: transparent; border: 0; border-radius: var(--radius-sm);
   }
 
   /* ═══ NOTER ═══
      « Une mise en archive d'une œuvre, pas un formulaire administratif »
      (§7). */
 
-  [data-theme^="ludex-"] .date-input {
+  [data-theme] .date-input {
     background: transparent; border: 0;
-    border-bottom: 1px solid var(--border); border-radius: 0;
+    border-bottom: 1px solid var(--border); border-radius: var(--radius-flat);
     padding-left: 0; padding-right: 0;
     font-family: var(--font-mono); font-size: var(--body-ed);
     color: var(--text);
   }
-  [data-theme^="ludex-"] .date-input:focus { border-bottom-color: var(--text-hi); }
-  [data-theme^="ludex-"] .heart-btn {
-    background: transparent; border: 1px solid var(--border); border-radius: 2px;
+  [data-theme] .date-input:focus { border-bottom-color: var(--text-hi); }
+  [data-theme] .heart-btn {
+    background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm);
   }
-  [data-theme^="ludex-"] .focus-mode-toggle {
+  [data-theme] .focus-mode-toggle {
     background: none; border: 1px solid var(--border);
-    border-radius: 2px; color: var(--text);
+    border-radius: var(--radius-sm); color: var(--text);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; min-height: 44px;
   }
-  [data-theme^="ludex-"] .focus-mode-toggle[aria-pressed="true"] {
+  /* background:none est INDISPENSABLE, pas décoratif. La règle héritée
+     `.focus-mode-toggle.active` (plus bas) pose encore `background:
+     var(--orange)`, et le bouton porte À LA FOIS .active et
+     aria-pressed="true". Sans neutralisation, les deux se combinaient :
+     l'ancienne donnait le fond, celle-ci la couleur du texte.
+     Sur Ludex, --orange ET --text-hi valent #FAFAFA — le libellé était donc
+     BLANC SUR BLANC, invisible, et l'est resté sans que rien ne le signale.
+     Sur Cinéphile 70s cela donnait 1,3:1, sur Technicolor 1,75:1.
+     Spécificité 0,3,0 ici contre 0,2,0 là-bas : la neutralisation gagne quel
+     que soit l'ordre. */
+  [data-theme] .focus-mode-toggle[aria-pressed="true"] {
+    background: none;
     border-color: var(--text-hi); color: var(--text-hi);
   }
 
   /* Les valeurs de critère redeviennent de la micro-data lisible plutôt que
      des pastilles encadrées : sept petites boîtes empilées, c'était l'effet
      « formulaire » à lui tout seul. */
-  [data-theme^="ludex-"] .criterion-val {
-    background: none; border: 0; border-radius: 0; padding: 2px 0;
+  [data-theme] .criterion-val {
+    background: none; border: 0; border-radius: var(--radius-flat); padding: 2px 0;
     font-size: 1rem; text-align: right;
   }
-  [data-theme^="ludex-"] .criterion-val.affect-val { background: none; border: 0; }
-  [data-theme^="ludex-"] .weight-badge {
-    background: none; border: 0; border-radius: 0; padding: 0;
+  [data-theme] .criterion-val.affect-val { background: none; border: 0; }
+  [data-theme] .weight-badge {
+    background: none; border: 0; border-radius: var(--radius-flat); padding: 0;
     color: var(--text); font-size: var(--micro); letter-spacing: 0.04em;
   }
-  [data-theme^="ludex-"] .criterion-label {
+  [data-theme] .criterion-label {
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text-mid);
   }
-  [data-theme^="ludex-"] .criterion-block + .criterion-block { margin-top: 22px; }
+  [data-theme] .criterion-block + .criterion-block { margin-top: 22px; }
 
   /* ═══ PROFIL ═══
      « Une page de données éditorialisée : grands chiffres, beaucoup d'air,
@@ -1240,53 +1246,53 @@
 
   /* Les trois chiffres clés sortent de leurs boîtes. C'est leur TAILLE qui
      les distingue maintenant, pas un cadre autour. */
-  [data-theme^="ludex-"] .profile-hero-bento-card {
-    background: none; border: 0; border-radius: 0;
+  [data-theme] .profile-hero-bento-card {
+    background: none; border: 0; border-radius: var(--radius-flat);
     padding: 0; text-align: left;
   }
-  [data-theme^="ludex-"] .profile-hero-bento { gap: 20px 16px; }
-  [data-theme^="ludex-"] .profile-hero-header { align-items: flex-start; gap: 18px; }
-  [data-theme^="ludex-"] .kpi-val {
+  [data-theme] .profile-hero-bento { gap: 20px 16px; }
+  [data-theme] .profile-hero-header { align-items: flex-start; gap: 18px; }
+  [data-theme] .kpi-val {
     font-family: var(--font-display);
     font-style: normal; font-weight: 600;
     font-size: 2.4rem; line-height: 1;
     letter-spacing: -0.02em; margin-bottom: 8px;
   }
-  [data-theme^="ludex-"] .profile-hero-bento-wide .kpi-val { font-size: 1.7rem; }
+  [data-theme] .profile-hero-bento-wide .kpi-val { font-size: 1.7rem; }
   /* La carte large empilait son libellé et sa valeur sur une même ligne, l'un
      à gauche l'autre à droite, alors que les deux autres chiffres clés
      s'empilent. Elle s'aligne sur eux. */
-  [data-theme^="ludex-"] .profile-hero-bento-wide {
+  [data-theme] .profile-hero-bento-wide {
     display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 8px;
   }
   /* Le temps visionné n'est ni une note ni une série de graphique : il n'a pas
      à porter la couleur d'accent. */
   [data-theme="ludex-dark"], [data-theme="ludex-light"] { --kpi-time-color: var(--text-hi); }
-  [data-theme^="ludex-"] .kpi-label {
+  [data-theme] .kpi-label {
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text);
   }
   /* L'avatar n'est pas une note : il perd l'or. */
-  [data-theme^="ludex-"] .profile-hero-avatar {
+  [data-theme] .profile-hero-avatar {
     background: none; border: 1px solid var(--border-hi); color: var(--text-mid);
   }
   /* Le titre de sous-section garde son filet : ici il sépare deux graphiques
      à l'intérieur d'un même bloc, là où l'espace seul deviendrait ambigu. */
-  [data-theme^="ludex-"] .dash-box-title {
+  [data-theme] .dash-box-title {
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text); border-bottom-color: var(--border);
     padding-bottom: 8px; margin-bottom: 16px;
   }
-  [data-theme^="ludex-"] .dashboard-grid { gap: 28px; }
+  [data-theme] .dashboard-grid { gap: 28px; }
   /* L'accordéon des trophées : un dépliant, pas une alerte. */
-  [data-theme^="ludex-"] .badges-accordion summary {
+  [data-theme] .badges-accordion summary {
     color: var(--text-mid);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; min-height: 44px;
   }
-  [data-theme^="ludex-"] .badges-accordion summary:hover { color: var(--text-hi); }
+  [data-theme] .badges-accordion summary:hover { color: var(--text-hi); }
 
   /* ═══════════════════════════════════════════
      P5 · HISTORIQUE — polish, pas refonte
@@ -1308,84 +1314,84 @@
 
   /* Rayon d'affiche (§2.3) et gouttière tirée de l'échelle éditoriale.
      Rien d'autre ne bouge dans la grille. */
-  [data-theme^="ludex-"] .hist-grid { gap: var(--poster-gap); }
-  [data-theme^="ludex-"] .hist-grid-card { border-radius: 2px; background: var(--surface); }
+  [data-theme] .hist-grid { gap: var(--poster-gap); }
+  [data-theme] .hist-grid-card { border-radius: var(--radius-sm); background: var(--surface); }
 
   /* Le repère de mois n'est pas une note : il perd l'or au profit du
      contraste. Il reste sur une seule ligne avec son récap, comme avant. */
-  [data-theme^="ludex-"] .hist-month-label {
+  [data-theme] .hist-month-label {
     color: var(--text-hi);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
   }
-  [data-theme^="ludex-"] .hist-month-recap {
+  [data-theme] .hist-month-recap {
     color: var(--text); font-size: var(--micro); letter-spacing: 0.04em;
   }
-  [data-theme^="ludex-"] .hist-month-sep { padding: 26px 0 10px; }
+  [data-theme] .hist-month-sep { padding: 26px 0 10px; }
 
   /* Traitement vedette : §9.1 demande de CONSERVER l'indicateur personnel
      « mais désaturé et cohérent avec la DA ». Le cerclage doré de 2px et sa
      lueur de 16px cèdent la place à un filet clair d'un pixel. Le palier
      reste parfaitement lisible — c'est la taille de la carte qui le dit
      d'abord, le filet ne fait que confirmer. */
-  [data-theme^="ludex-"] .hist-grid-card-isolated,
-  [data-theme^="ludex-"] .hist-grid-card-pair,
-  [data-theme^="ludex-"] .hist-grid-card-banner {
+  [data-theme] .hist-grid-card-isolated,
+  [data-theme] .hist-grid-card-pair,
+  [data-theme] .hist-grid-card-banner {
     border: 1px solid color-mix(in srgb, var(--text-hi) 45%, transparent);
     box-shadow: none;
   }
   /* Le badge vedette passe de l'aplat doré au verre sombre. L'or ne
      disparaît pas — il se replie sur le seul glyphe, cœur ou étoile, où il
      signifie encore quelque chose. */
-  [data-theme^="ludex-"] .hist-grid-featured-badge {
+  [data-theme] .hist-grid-featured-badge {
     background: var(--badge-scrim);
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-    border: 1px solid color-mix(in srgb, #FAFAFA 10%, transparent);
-    border-radius: 2px;
-    color: #FAFAFA;
+    border: 1px solid color-mix(in srgb, var(--on-poster) 10%, transparent);
+    border-radius: var(--radius-sm);
+    color: var(--on-poster);
     box-shadow: none;
     font-size: var(--micro); letter-spacing: 0.04em;
   }
-  [data-theme^="ludex-"] .hist-grid-featured-badge .icon { color: var(--score-mid); }
-  [data-theme^="ludex-"] .hist-grid-badge {
-    border-radius: 2px;
-    border-color: color-mix(in srgb, #FAFAFA 10%, transparent);
+  [data-theme] .hist-grid-featured-badge .icon { color: var(--score-mid); }
+  [data-theme] .hist-grid-badge {
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--on-poster) 10%, transparent);
   }
-  [data-theme^="ludex-"] .hist-grid-card .hist-action-btn {
-    border-color: color-mix(in srgb, #FAFAFA 10%, transparent);
-    color: #FAFAFA;
+  [data-theme] .hist-grid-card .hist-action-btn {
+    border-color: color-mix(in srgb, var(--on-poster) 10%, transparent);
+    color: var(--on-poster);
   }
   /* La progression d'une série est une donnée, pas une note : elle quitte
      l'or et sa lueur pour un simple trait clair. */
-  [data-theme^="ludex-"] .hist-grid-progress-fill {
-    background: #FAFAFA; box-shadow: none;
+  [data-theme] .hist-grid-progress-fill {
+    background: var(--on-poster); box-shadow: none;
   }
   /* Le dégradé de pied des cartes vedettes existait pour rendre lisible un
      badge doré posé à même l'affiche. Le badge porte désormais son propre
      voile opaque : le dégradé n'a plus à faire ce travail et peut redevenir
      ce qu'il aurait toujours dû être — un simple assombrissement de pied,
      pas un rideau. */
-  [data-theme^="ludex-"] .hist-grid-card-isolated::after,
-  [data-theme^="ludex-"] .hist-grid-card-pair::after,
-  [data-theme^="ludex-"] .hist-grid-card-banner::after {
-    background: linear-gradient(to top, rgba(10,10,12,0.62) 0%, rgba(10,10,12,0.18) 28%, transparent 52%);
+  [data-theme] .hist-grid-card-isolated::after,
+  [data-theme] .hist-grid-card-pair::after,
+  [data-theme] .hist-grid-card-banner::after {
+    background: var(--poster-scrim);
   }
 
   /* Entrée vedette (le dernier film noté). Le titre était déjà en italique —
      mais en --font-heading, devenu Inter : un italique de police
      d'interface. Il rejoint la police d'œuvre, qui est faite pour ça. Le
      score reste en or : là, c'est bien une note. */
-  [data-theme^="ludex-"] .hero-entry {
+  [data-theme] .hero-entry {
     padding: 4px 0 24px; border-bottom-color: var(--border);
   }
-  [data-theme^="ludex-"] .hero-entry-poster { border-radius: 2px; }
-  [data-theme^="ludex-"] .hero-entry-eyebrow {
+  [data-theme] .hero-entry-poster { border-radius: var(--radius-sm); }
+  [data-theme] .hero-entry-eyebrow {
     font-size: var(--micro); letter-spacing: var(--micro-ls); color: var(--text);
   }
-  [data-theme^="ludex-"] .hero-entry-title {
+  [data-theme] .hero-entry-title {
     font-family: var(--font-display);
     font-size: 1.7rem; letter-spacing: -0.02em;
   }
-  [data-theme^="ludex-"] .hero-entry-score {
+  [data-theme] .hero-entry-score {
     font-family: var(--font-display); font-size: 2.4rem;
   }
 
@@ -1408,7 +1414,7 @@
      en quasi-noir SUR ce dégradé sombre — illisibles, vérifié en capture.
      Le voile est maintenant dérivé de --bg : il suit le thème, le backdrop
      transparaît toujours, et le texte reste lisible des deux côtés. */
-  [data-theme^="ludex-"] .mds-header {
+  [data-theme] .mds-header {
     background-image:
       linear-gradient(
         to bottom,
@@ -1422,87 +1428,87 @@
      aux titres de films et de séries, et §11 fait des fiches l'endroit où il
      porte le plus. L'ombre portée disparaît avec le dégradé qu'elle
      compensait. */
-  [data-theme^="ludex-"] .mds-title {
+  [data-theme] .mds-title {
     font-family: var(--font-display);
     font-style: italic; font-weight: 600;
     font-size: 1.7rem; line-height: 1.1;
     text-transform: none; letter-spacing: -0.015em;
     text-shadow: none;
   }
-  [data-theme^="ludex-"] .mds-header.compact .mds-title { font-size: 1.1rem; }
-  [data-theme^="ludex-"] .mds-poster { border-radius: 2px; }
-  [data-theme^="ludex-"] .mds-meta {
+  [data-theme] .mds-header.compact .mds-title { font-size: 1.1rem; }
+  [data-theme] .mds-poster { border-radius: var(--radius-sm); }
+  [data-theme] .mds-meta {
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: 0.04em;
     text-transform: uppercase; color: var(--text);
   }
-  [data-theme^="ludex-"] .mds-header-director { text-shadow: none; color: var(--text); }
-  [data-theme^="ludex-"] .mds-director-label {
+  [data-theme] .mds-header-director { text-shadow: none; color: var(--text); }
+  [data-theme] .mds-director-label {
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
   }
 
   /* §11 : « les tags sont du texte séparé par points médians plutôt que des
      pills remplies ». Les notes externes cessent d'être des pastilles. */
-  [data-theme^="ludex-"] .mds-external-ratings { gap: 0; }
-  [data-theme^="ludex-"] .mds-external-rating {
-    background: none; border: 0; border-radius: 0; padding: 0 10px 0 0;
+  [data-theme] .mds-external-ratings { gap: 0; }
+  [data-theme] .mds-external-rating {
+    background: none; border: 0; border-radius: var(--radius-flat); padding: 0 10px 0 0;
     font-family: var(--font-mono); font-size: var(--micro);
     letter-spacing: 0.04em; position: relative;
   }
-  [data-theme^="ludex-"] .mds-external-rating + .mds-external-rating { padding-left: 10px; }
-  [data-theme^="ludex-"] .mds-external-rating + .mds-external-rating::before {
+  [data-theme] .mds-external-rating + .mds-external-rating { padding-left: 10px; }
+  [data-theme] .mds-external-rating + .mds-external-rating::before {
     content: '·'; position: absolute; left: 0; color: var(--border-hi);
   }
 
   /* Titres de section : étiquettes de rubrique, donc micro-data mono. */
-  [data-theme^="ludex-"] .mds-section-title {
+  [data-theme] .mds-section-title {
     font-family: var(--font-mono); font-weight: 500;
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     color: var(--text); margin-bottom: 12px;
   }
-  [data-theme^="ludex-"] .mds-section { margin-top: 30px; }
+  [data-theme] .mds-section { margin-top: 30px; }
 
   /* Actions en ghost fin (§11, tableau « Actions »). L'action principale
      reste identifiable par le contraste, pas par une teinte. */
-  [data-theme^="ludex-"] .mds-action-btn {
-    background: none; border-color: var(--border-hi); border-radius: 2px;
+  [data-theme] .mds-action-btn {
+    background: none; border-color: var(--border-hi); border-radius: var(--radius-sm);
     font-size: var(--micro); letter-spacing: var(--micro-ls);
     text-transform: uppercase; min-height: 44px;
   }
-  [data-theme^="ludex-"] .mds-action-btn:hover { border-color: var(--text-hi); color: var(--text-hi); }
-  [data-theme^="ludex-"] .mds-action-btn.primary {
+  [data-theme] .mds-action-btn:hover { border-color: var(--text-hi); color: var(--text-hi); }
+  [data-theme] .mds-action-btn.primary {
     background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
   }
-  [data-theme^="ludex-"] .mds-action-btn.primary:hover { color: var(--bg); }
-  [data-theme^="ludex-"] .mds-poster-change-btn {
-    border-radius: 2px;
+  [data-theme] .mds-action-btn.primary:hover { color: var(--bg); }
+  [data-theme] .mds-poster-change-btn {
+    border-radius: var(--radius-sm);
     font-family: var(--font-mono); font-size: var(--micro); letter-spacing: 0.04em;
   }
 
   /* Casting en carrousel : photo, nom, rôle — sans carte autour (§43). */
-  [data-theme^="ludex-"] .mds-cast-photo { border-width: 1px; border-color: var(--border); }
+  [data-theme] .mds-cast-photo { border-width: 1px; border-color: var(--border); }
 
   /* Onglets de saison : choisir une saison n'est pas noter. L'aplat doré
      laisse place au contraste. */
-  [data-theme^="ludex-"] .tds-season-tab { border-radius: 2px; }
-  [data-theme^="ludex-"] .tds-season-tab.active {
+  [data-theme] .tds-season-tab { border-radius: var(--radius-sm); }
+  [data-theme] .tds-season-tab.active {
     background: var(--text-hi); border-color: var(--text-hi); color: var(--bg);
   }
 
   /* Feuille : coin supérieur franc mais généreux (§2.3 — « bottom sheets /
      modales : radius supérieur 24px »). */
-  [data-theme^="ludex-"] .mds-box { border-radius: 20px 20px 0 0; }
+  [data-theme] .mds-box { border-radius: 20px 20px 0 0; }
 
   /* « Ta note » gardait un fond, un rayon et un filet d'accent de 3px — la
      dernière boîte de la fiche. Le filet gauche suffit à la rattacher, et le
      score devient un vrai chiffre d'archive plutôt qu'un libellé gras. */
-  [data-theme^="ludex-"] .mds-personal {
-    background: none; border-radius: 0;
+  [data-theme] .mds-personal {
+    background: none; border-radius: var(--radius-flat);
     border-left: 1px solid var(--border-hi);
     padding: 2px 0 2px 16px;
   }
-  [data-theme^="ludex-"] .mds-personal-score {
+  [data-theme] .mds-personal-score {
     font-family: var(--font-display); font-weight: 600; font-size: 1.5rem;
   }
 
@@ -1524,64 +1530,64 @@
      qu'enfermée dans un cadre — c'est un carnet de suivi, pas un tableau de
      bord. La hauteur minimale est conservée : §8.1 exige une mise en page
      stable même avec un titre d'épisode très long. */
-  [data-theme^="ludex-"] .tv-continue-card {
-    background: none; border: 0; border-radius: 0;
+  [data-theme] .tv-continue-card {
+    background: none; border: 0; border-radius: var(--radius-flat);
     border-bottom: 1px solid var(--border);
     padding: 16px 56px 16px 0;
   }
-  [data-theme^="ludex-"] .tv-continue-list { gap: 0; }
-  [data-theme^="ludex-"] .tv-continue-poster { border-radius: 2px; width: 64px; height: 96px; }
+  [data-theme] .tv-continue-list { gap: 0; }
+  [data-theme] .tv-continue-poster { border-radius: var(--radius-sm); width: 64px; height: 96px; }
 
   /* Trois registres, trois rôles : la série en micro-data, l'épisode en
      titre d'œuvre, la date et la durée en mono. */
-  [data-theme^="ludex-"] .tv-continue-show-title {
+  [data-theme] .tv-continue-show-title {
     font-family: var(--font-mono);
     font-size: var(--micro); letter-spacing: var(--micro-ls); color: var(--text);
   }
-  [data-theme^="ludex-"] .tv-continue-ep-title {
+  [data-theme] .tv-continue-ep-title {
     font-family: var(--font-display); font-style: italic; font-weight: 600;
     font-size: 1.05rem; line-height: 1.25; margin-top: 5px;
   }
-  [data-theme^="ludex-"] .tv-continue-meta {
+  [data-theme] .tv-continue-meta {
     font-family: var(--font-mono); font-size: var(--micro);
     letter-spacing: 0.04em; color: var(--text); margin-top: 6px;
   }
-  [data-theme^="ludex-"] .tv-continue-synopsis summary {
+  [data-theme] .tv-continue-synopsis summary {
     font-family: var(--font-mono); font-size: var(--micro);
     letter-spacing: var(--micro-ls); text-transform: uppercase;
     color: var(--text); font-weight: 500;
   }
-  [data-theme^="ludex-"] .tv-continue-synopsis summary:hover { color: var(--text-hi); }
+  [data-theme] .tv-continue-synopsis summary:hover { color: var(--text-hi); }
 
   /* Le rond de validation garde sa place, sa taille et son geste : il perd
      seulement sa couleur d'accent pour le contraste (§4.1 appliqué au même
      principe — l'importance vient de la forme, pas de la teinte). */
-  [data-theme^="ludex-"] .tv-continue-check-btn {
+  [data-theme] .tv-continue-check-btn {
     background: var(--text-hi); color: var(--bg);
   }
-  [data-theme^="ludex-"] .tv-continue-lock-badge {
+  [data-theme] .tv-continue-lock-badge {
     background: none; border-color: var(--border-hi);
   }
-  [data-theme^="ludex-"] .tv-continue-header {
+  [data-theme] .tv-continue-header {
     font-family: var(--font-heading);
     font-size: var(--heading-m); letter-spacing: var(--heading-m-ls);
     text-transform: uppercase; font-weight: 700;
     padding: 4px 0 14px;
   }
-  [data-theme^="ludex-"] .tv-continue-count {
+  [data-theme] .tv-continue-count {
     font-family: var(--font-mono); font-size: var(--micro); color: var(--text);
   }
 
   /* Les deux bandeaux de progression de saison : un filet gauche suffit à
      les rattacher, sans reconstruire un panneau. Celui de fin de saison
      garde un repère plus marqué — c'est lui qui ouvre la notation. */
-  [data-theme^="ludex-"] .tv-season-complete-banner,
-  [data-theme^="ludex-"] .tv-season-start-prompt {
-    background: none; border-radius: 0;
+  [data-theme] .tv-season-complete-banner,
+  [data-theme] .tv-season-start-prompt {
+    background: none; border-radius: var(--radius-flat);
     border-left-width: 1px; padding: 12px 0 12px 16px;
   }
-  [data-theme^="ludex-"] .tv-season-complete-banner { border-left-color: var(--gold); }
-  [data-theme^="ludex-"] .tv-season-start-prompt { border-left-color: var(--border-hi); }
+  [data-theme] .tv-season-complete-banner { border-left-color: var(--gold); }
+  [data-theme] .tv-season-start-prompt { border-left-color: var(--border-hi); }
 
   /* ═══════════════════════════════════════════
      P8 · MOTION — gravité et mise au point
@@ -1604,10 +1610,10 @@
      au milieu de l'étoile. Seule la durée passe de --dur-fast (140ms) aux
      ~200ms demandés, avec la courbe signature. L'étoile vide s'allège pour
      lire comme un contour patiné plutôt qu'une forme grise pleine. */
-  [data-theme^="ludex-"] .rating-stars label.left-half::after {
+  [data-theme] .rating-stars label.left-half::after {
     transition: clip-path 200ms var(--ease-out);
   }
-  [data-theme^="ludex-"] .rating-stars label.left-half::before {
+  [data-theme] .rating-stars label.left-half::before {
     opacity: 0.35;
   }
 
@@ -1626,12 +1632,12 @@
      <main> ne contient ni la barre de navigation ni les feuilles — toutes
      deux sont ses sœurs dans le DOM. La transformation ne crée donc aucun
      bloc conteneur qui piégerait un position: fixed. */
-  html[data-theme^="ludex-"] main,
-  html[data-theme^="ludex-"] .app-header {
+  html[data-theme] main,
+  html[data-theme] .app-header {
     transition: transform var(--dur-base) var(--ease-out);
   }
-  html[data-theme^="ludex-"] body:has(.modal-overlay.open) main,
-  html[data-theme^="ludex-"] body:has(.modal-overlay.open) .app-header {
+  html[data-theme] body:has(.modal-overlay.open) main,
+  html[data-theme] body:has(.modal-overlay.open) .app-header {
     transform: scale(0.96);
   }
 
@@ -1641,11 +1647,11 @@
      couvrent déjà le chargement d'affiche et le push-in ; celui-ci ferme les
      deux ajouts ci-dessus. */
   @media (prefers-reduced-motion: reduce) {
-    html[data-theme^="ludex-"] main,
-    html[data-theme^="ludex-"] .app-header { transition: none; }
-    html[data-theme^="ludex-"] body:has(.modal-overlay.open) main,
-    html[data-theme^="ludex-"] body:has(.modal-overlay.open) .app-header { transform: none; }
-    [data-theme^="ludex-"] .rating-stars label.left-half::after { transition: none; }
+    html[data-theme] main,
+    html[data-theme] .app-header { transition: none; }
+    html[data-theme] body:has(.modal-overlay.open) main,
+    html[data-theme] body:has(.modal-overlay.open) .app-header { transform: none; }
+    [data-theme] .rating-stars label.left-half::after { transition: none; }
   }
 
   /* ═══════════════════════════════════════════
@@ -1768,7 +1774,7 @@
   .search-line-close:hover { color: var(--text-hi); }
   .search-line-close .icon { width: 17px; height: 17px; }
 
-  [data-theme^="ludex-"] .search-line-toggle { border-radius: 2px; }
+  [data-theme] .search-line-toggle { border-radius: var(--radius-sm); }
 
   /* ── Historique ──
      La bascule portait l'écart qui la sépare des tris ; .search-line-shrink
@@ -1796,7 +1802,7 @@
     color: var(--text-hi); font-family: var(--font-heading);
     font-size: 0.95rem; font-weight: 600;
   }
-  [data-theme^="ludex-"] .search-line-subject {
+  [data-theme] .search-line-subject {
     font-family: var(--font-display); font-style: italic;
     font-size: 1.15rem; font-weight: 600;
   }
@@ -1904,7 +1910,7 @@
   }
 
   /* Titre d'œuvre en serif dans les thèmes Ludex, comme partout ailleurs. */
-  [data-theme^="ludex-"] .dsr-title {
+  [data-theme] .dsr-title {
     font-family: var(--font-display); font-style: italic;
     font-weight: 600; font-size: 1.05rem;
   }
@@ -2273,7 +2279,7 @@
      à faire (§2.1). Le contraste maximal du thème fait d'ailleurs un meilleur
      repère qu'une teinte moyenne — c'est un indicateur d'accessibilité, il
      doit se voir sans hésitation. */
-  [data-theme^="ludex-"] :focus-visible {
+  [data-theme] :focus-visible {
     outline-color: var(--text-hi);
   }
 
