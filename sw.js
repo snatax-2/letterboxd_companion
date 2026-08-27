@@ -8,7 +8,7 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-cb452f0b79';
+const CACHE_NAME = 'ludex-shell-c07a50f370';
 
 const APP_SHELL = [
   '/',
@@ -18,7 +18,12 @@ const APP_SHELL = [
   '/favicon.png',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png'
+  '/icon-512.png',
+  // Chargée par la PAGE (écran de démarrage, voir #app-splash dans
+  // index.html), donc nécessaire hors-ligne — contrairement aux icônes
+  // maskable, que seul l'OS lit au moment de l'installation et qu'il serait
+  // inutile de précacher.
+  '/icon-256.png'
 ];
 
 self.addEventListener('install', (event) => {
