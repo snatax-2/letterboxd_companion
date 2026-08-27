@@ -1837,6 +1837,161 @@
   }
 
   /* ═══════════════════════════════════════════
+     DÉCOUVRIR — RECHERCHE UNIFIÉE
+     ═══════════════════════════════════════════
+     Une loupe qui se déplie en champ de recherche. Voir
+     src/11b-discover-search.js pour le comportement et le raisonnement.
+
+     Ces règles ne sont PAS scopées aux thèmes Ludex : c'est une
+     fonctionnalité, pas une couche de présentation, et elle doit fonctionner
+     sur les six thèmes historiques tant qu'ils existent. Seules les valeurs
+     viennent des jetons, donc chaque thème l'habille lui-même. */
+
+  .discover-topline {
+    display: flex; align-items: center; gap: 8px;
+    position: relative;
+  }
+  /* La bascule occupe toute la place restante et se rétracte quand la
+     recherche s'ouvre. flex-basis à 0 avec overflow caché : elle se replie
+     sans passer à la ligne ni déformer ses deux boutons pendant le trajet. */
+  .discover-topline .mode-tabs {
+    flex: 1 1 auto; min-width: 0; margin-bottom: 0;
+    transition: flex-grow var(--dur-base) var(--ease-out),
+                opacity var(--dur-fast) var(--ease-out);
+  }
+  .discover-topline.searching .mode-tabs {
+    flex-grow: 0; flex-basis: 0; opacity: 0;
+    overflow: hidden; pointer-events: none;
+  }
+
+  .discover-search-toggle {
+    flex: 0 0 auto;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    cursor: pointer;
+    transition: opacity var(--dur-fast) var(--ease-out),
+                color var(--dur-fast) var(--ease-out),
+                border-color var(--dur-fast) var(--ease-out);
+  }
+  .discover-search-toggle:hover { color: var(--text-hi); border-color: var(--border-hi); }
+  .discover-search-toggle .icon { width: 19px; height: 19px; }
+  /* La loupe ne disparaît pas du DOM : elle s'efface pendant que le champ
+     prend sa place, ce qui donne le sentiment que l'une devient l'autre.
+     visibility (et pas display) pour que la transition d'opacité ait lieu. */
+  .discover-topline.searching .discover-search-toggle {
+    opacity: 0; visibility: hidden; pointer-events: none;
+    width: 0; border-width: 0; margin: 0;
+    transition: opacity var(--dur-fast) var(--ease-out), visibility 0s linear var(--dur-fast);
+  }
+
+  /* Le champ grandit depuis la droite, là où était la loupe, jusqu'à occuper
+     toute la ligne. C'est ce trajet qui fait la continuité entre les deux
+     états. */
+  .discover-search-field {
+    position: absolute; right: 0; top: 0; bottom: 0;
+    display: flex; align-items: center; gap: 8px;
+    width: 44px; opacity: 0; pointer-events: none;
+    padding: 0 2px;
+    border-bottom: 1px solid var(--border-hi);
+    transition: width var(--dur-base) var(--ease-out),
+                opacity var(--dur-fast) var(--ease-out);
+  }
+  .discover-topline.searching .discover-search-field {
+    width: 100%; opacity: 1; pointer-events: auto;
+  }
+  .discover-search-field-icon {
+    width: 18px; height: 18px; flex-shrink: 0; color: var(--text-mid);
+  }
+  .discover-search-input {
+    flex: 1; min-width: 0;
+    background: none; border: 0; outline: none;
+    color: var(--text-hi); font-family: var(--font-body);
+    font-size: 0.95rem; padding: 10px 0;
+  }
+  .discover-search-input::placeholder { color: var(--text); }
+  .discover-search-close {
+    flex-shrink: 0; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: none; border: 0; color: var(--text); cursor: pointer;
+  }
+  .discover-search-close:hover { color: var(--text-hi); }
+  .discover-search-close .icon { width: 17px; height: 17px; }
+
+  /* ── Résultats ──
+     Un panneau qui se pose SOUS la ligne plutôt qu'une vue de remplacement :
+     les carrousels restent en place et reviennent intacts à la fermeture. */
+  /* La ligne de bascule porte normalement l'écart de section qui la sépare du
+     choix du jour. Pendant une recherche, ce qui suit n'est plus le choix du
+     jour mais les résultats : garder cet écart creusait un trou de près de
+     60px entre le champ et sa première réponse. */
+  .discover-topline.searching { margin-bottom: calc(var(--section-gap, 40px) * -0.55); }
+  .discover-search-panel { margin: 10px 0 4px; }
+  .discover-search-status {
+    font-family: var(--font-mono); font-size: var(--micro, 0.7rem);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text); padding: 4px 0 10px;
+  }
+  .discover-search-status:empty { display: none; }
+  .discover-search-results { display: flex; flex-direction: column; }
+  /* Tant qu'une recherche est affichée, les carrousels et le choix du jour
+     s'effacent. Les laisser sous les résultats donnait une page à deux
+     sujets : on faisait défiler ses réponses pour tomber sur des propositions
+     sans rapport. Ils ne sont pas démontés, seulement masqués — ils
+     reviennent intacts à la fermeture. */
+  /* !important assumé, et nécessaire : loadCarousel() (11-discover.js) pilote
+     l'affichage de chaque bloc par un style INLINE (display:block quand le
+     carrousel a des résultats, none sinon), et un style inline bat une règle
+     de feuille. Sans cette priorité, les carrousels garnis restaient visibles
+     sous les résultats — le défaut ne se voyait qu'avec de vraies données,
+     puisqu'un carrousel vide est déjà masqué par sa propre logique. */
+  .discover-searching-active .choix-du-jour-wrap,
+  .discover-searching-active .carousel-block { display: none !important; }
+  .dsr-item {
+    display: flex; align-items: center; gap: 14px; width: 100%;
+    padding: 10px 0; min-height: 44px;
+    background: none; border: 0;
+    border-bottom: 1px solid var(--border);
+    color: inherit; cursor: pointer; text-align: left;
+    font-family: var(--font-body);
+  }
+  .dsr-item:last-child { border-bottom: 0; }
+  .dsr-item:hover .dsr-title { color: var(--text-hi); }
+  .dsr-thumb {
+    width: 42px; flex-shrink: 0; aspect-ratio: 2 / 3;
+    object-fit: cover; border-radius: 2px; background: var(--surface2);
+    display: block;
+  }
+  /* Une personne n'est pas une affiche : vignette carrée, coins ronds. */
+  .dsr-thumb-person { aspect-ratio: 1 / 1; border-radius: 50%; width: 42px; }
+  .dsr-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .dsr-title {
+    font-size: 0.92rem; font-weight: 600; color: var(--text-hi);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .dsr-meta {
+    font-family: var(--font-mono); font-size: var(--micro, 0.7rem);
+    letter-spacing: 0.05em; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+
+  /* Titre d'œuvre en serif dans les thèmes Ludex, comme partout ailleurs. */
+  [data-theme^="ludex-"] .dsr-title {
+    font-family: var(--font-display); font-style: italic;
+    font-weight: 600; font-size: 1.05rem;
+  }
+  [data-theme^="ludex-"] .discover-search-toggle { border-radius: 2px; }
+
+  /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
+     alors un changement d'état instantané — la fonction reste entière. */
+  @media (prefers-reduced-motion: reduce) {
+    .discover-topline .mode-tabs,
+    .discover-search-toggle,
+    .discover-search-field { transition: none; }
+  }
+
+  /* ═══════════════════════════════════════════
      TOUCHES SIGNATURES PAR THÈME
      ═══════════════════════════════════════════
      Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
@@ -2252,6 +2407,13 @@
   :focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+  }
+  /* L'anneau de focus signale une INTERACTION, pas une note : l'or n'y a rien
+     à faire (§2.1). Le contraste maximal du thème fait d'ailleurs un meilleur
+     repère qu'une teinte moyenne — c'est un indicateur d'accessibilité, il
+     doit se voir sans hésitation. */
+  [data-theme^="ludex-"] :focus-visible {
+    outline-color: var(--text-hi);
   }
 
   /* ═══ ÉTAT D'ERREUR RÉSEAU ÉLÉGANT ═══

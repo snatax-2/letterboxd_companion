@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query;
+  const { query, multiQuery, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query;
   // Ludex 2.0 : le toggle Films/Séries de Découvrir doit pouvoir demander
   // la variante série de ces trois endpoints (choix du jour, classiques par
   // décennie, cinéma international) — mediaType='tv' bascule discover/movie
@@ -112,6 +112,29 @@ export default async function handler(req, res) {
       const pick = results.length > 0 ? results[Math.floor(seededFraction(seed) * results.length)] : null;
       setCache(86400, 604800);
       return res.status(200).json({ result: pick });
+
+    } else if (multiQuery) {
+      // Recherche unifiée : films, séries ET personnes en une seule requête.
+      //
+      // Pourquoi search/multi plutôt que les trois recherches existantes
+      // (query / tvQuery / personSearch) enchaînées côté client :
+      //   · budget — le limiteur autorise 60 requêtes par minute et par IP, et
+      //     l'onglet Découvrir en consomme déjà 7 rien qu'à son ouverture.
+      //     Trois appels par frappe débouncée l'épuiseraient en quelques
+      //     recherches ;
+      //   · classement — TMDb ordonne lui-même les trois types par
+      //     pertinence. Fusionner trois listes séparées obligerait à
+      //     réinventer cet ordre, et mal.
+      //
+      // Branche purement additive : aucune des recherches existantes n'est
+      // modifiée, elles restent utilisées par Noter, la watchlist et les
+      // séries.
+      const multiRes = await fetch(
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&language=fr-FR&include_adult=false&query=${encodeURIComponent(multiQuery)}`
+      );
+      const multiData = await multiRes.json();
+      setCache(3600, 86400); // même fraîcheur que les autres recherches
+      return res.status(200).json(multiData);
 
     } else if (personSearch) {
       // Cas 8 : Recherche de personne PAR NOM (ex: "tarantino") — différent de
