@@ -19,6 +19,10 @@ test('chercher "199" dans l\'historique filtre par decennie 1990', async ({ page
   ]));
   await page.goto('/');
   await page.click('#nav-history');
+  // Le champ de filtre vit derrière une loupe qui se déplie : il faut
+  // l'ouvrir avant de pouvoir écrire dedans (voir decouvrir-recherche.spec.js
+  // et historique-recherche-repliable.spec.js pour le motif lui-même).
+  await page.click('#history-search-toggle');
   await page.fill('#history-search', '199');
   await page.waitForTimeout(300);
 

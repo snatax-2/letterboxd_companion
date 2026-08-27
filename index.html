@@ -820,16 +820,31 @@ window.loadThemeFonts = function (theme) {
           <span class="card-title-badge" id="hist-count-badge">0 film</span>
         </h3>
 
-        <div class="mode-tabs" id="hist-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
+        <!-- Recherche repliable : même motif que Découvrir et À voir. La
+             loupe occupe le bout de la ligne de bascule ; au tap, la bascule
+             se rétracte et le champ prend toute la ligne. Voir
+             src/03c-collapsible-search.js. -->
+        <div class="search-line search-line-historique" id="hist-search-line">
+          <div class="mode-tabs search-line-shrink" id="hist-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
           <button class="mode-tab active" id="hist-tab-movie" onclick="switchHistoryMediaFilter('movie')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" class="icon mode-tab-icon icon-clap"><path d="M2.5 10.5C2.5 6.72876 2.5 4.84315 3.67157 3.67157C4.84315 2.5 6.72876 2.5 10.5 2.5H13.5C17.2712 2.5 19.1569 2.5 20.3284 3.67157C21.5 4.84315 21.5 6.72876 21.5 10.5V13.5C21.5 17.2712 21.5 19.1569 20.3284 20.3284C19.1569 21.5 17.2712 21.5 13.5 21.5H10.5C6.72876 21.5 4.84315 21.5 3.67157 20.3284C2.5 19.1569 2.5 17.2712 2.5 13.5V10.5Z"/><path d="M3 8H22"/><path d="M6 8L11.5 2.5"/><path d="M13 8L18.5 2.5"/><path d="M6.5 17.5H10.5" stroke-linecap="round"/><path d="M6.5 13.5L15.5 13.5" stroke-linecap="round"/></svg> Films</button>
           <button class="mode-tab" id="hist-tab-tv" onclick="switchHistoryMediaFilter('tv')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" class="icon mode-tab-icon icon-tv"><path d="M2 14C2 10.2288 2 8.34315 3.17157 7.17157C4.34315 6 6.22876 6 10 6H14C17.7712 6 19.6569 6 20.8284 7.17157C22 8.34315 22 10.2288 22 14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14Z"/><path class="antenna" d="M9 3L12 6L16 2" stroke-linejoin="round"/></svg> Séries</button>
         </div>
 
-        <div class="search-wrap" style="margin-bottom: 14px;">
-          <div class="search-input-wrap">
-            <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
-            <button type="button" class="search-clear-btn" id="history-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
+          <button type="button" class="search-line-toggle" id="history-search-toggle"
+                  aria-label="Rechercher dans l'historique"
+                  aria-expanded="false" aria-controls="history-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" class="icon" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+
+          <div class="search-line-field" id="history-search-field">
+            <svg class="search-line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" class="search-input" id="history-search" placeholder="Titre, réalisateur, acteur, année…" autocomplete="off" aria-label="Rechercher dans l'historique">
+            <!-- Une seule croix, pas deux : elle referme la ligne, et refermer
+                 relâche le filtre. Deux boutons « vider » et « fermer » côte à
+                 côte n'auraient différé que par ce qu'ils laissent à l'écran. -->
+            <button type="button" class="search-line-close" id="history-search-clear-btn" aria-label="Fermer la recherche et effacer le filtre">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         </div>
 
@@ -961,7 +976,7 @@ window.loadThemeFonts = function (theme) {
                      role="combobox" aria-expanded="false" aria-autocomplete="list"
                      aria-controls="discover-search-results">
               <button type="button" class="search-line-close" id="discover-search-close" aria-label="Fermer la recherche">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
           </div>

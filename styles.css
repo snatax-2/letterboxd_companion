@@ -1856,7 +1856,12 @@
      carte) occupe toute la largeur restante et se rétracte quand la recherche
      s'ouvre. flex-basis à 0 avec overflow caché : il se replie sans passer à
      la ligne ni se déformer pendant le trajet. */
-  .search-line-shrink {
+  /* Sélecteur descendant volontaire (0,2,0) : .mode-tabs pose un
+     margin-bottom de 18px et est déclaré plus bas dans le fichier — à
+     spécificité égale il l'emportait, et la marge, qui compte dans la hauteur
+     de la ligne flex, décentrait la loupe de 9px vers le bas tout en tirant
+     le trait du champ trop bas à l'ouverture. */
+  .search-line .search-line-shrink {
     flex: 1 1 auto; min-width: 0; margin-bottom: 0;
     transition: flex-grow var(--dur-base) var(--ease-out),
                 opacity var(--dur-fast) var(--ease-out);
@@ -1891,17 +1896,29 @@
   /* Le champ grandit depuis la droite, là où était la loupe, jusqu'à occuper
      toute la ligne. C'est ce trajet qui fait la continuité entre les deux
      états. */
+  /* visibility, et pas seulement opacity : un champ à opacity 0 reste
+     focalisable au clavier et présent dans l'arbre d'accessibilité. Replié,
+     il faisait donc une étape de tabulation invisible, et un lecteur d'écran
+     annonçait un champ de recherche que personne ne voyait.
+     Le délai est asymétrique : 0s à l'ouverture (sinon la croissance
+     démarrerait sur un élément encore invisible), la durée complète à la
+     fermeture (sinon le champ disparaîtrait d'un coup au lieu de se
+     rétracter). */
   .search-line-field {
     position: absolute; right: 0; top: 0; bottom: 0;
     display: flex; align-items: center; gap: 8px;
-    width: 44px; opacity: 0; pointer-events: none;
+    width: 44px; opacity: 0; pointer-events: none; visibility: hidden;
     padding: 0 2px;
     border-bottom: 1px solid var(--border-hi);
     transition: width var(--dur-base) var(--ease-out),
-                opacity var(--dur-fast) var(--ease-out);
+                opacity var(--dur-fast) var(--ease-out),
+                visibility 0s linear var(--dur-base);
   }
   .search-line.searching .search-line-field {
-    width: 100%; opacity: 1; pointer-events: auto;
+    width: 100%; opacity: 1; pointer-events: auto; visibility: visible;
+    transition: width var(--dur-base) var(--ease-out),
+                opacity var(--dur-fast) var(--ease-out),
+                visibility 0s linear 0s;
   }
   .search-line-icon {
     width: 18px; height: 18px; flex-shrink: 0; color: var(--text-mid);
@@ -1921,6 +1938,16 @@
   .search-line-input::placeholder,
   .search-line-field .search-input::placeholder,
   .search-line-field .watchlist-add-input::placeholder { color: var(--text); }
+  /* .search-input:focus et .watchlist-add-input:focus posent un cadre bleu et
+     un halo, définis PLUS BAS dans le fichier. Spécificité 0,3,1 ici, pour
+     gagner sans dépendre de l'ordre : dans une ligne repliable, c'est le
+     trait sous la ligne qui marque la mise au point, pas un cadre autour du
+     champ. L'anneau :focus-visible du clavier, lui, reste intact. */
+  .search-line .search-line-field .search-input:focus,
+  .search-line .search-line-field .watchlist-add-input:focus {
+    background: none; border: 0; box-shadow: none;
+  }
+
   .search-line-close {
     flex-shrink: 0; width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
@@ -1930,6 +1957,13 @@
   .search-line-close .icon { width: 17px; height: 17px; }
 
   [data-theme^="ludex-"] .search-line-toggle { border-radius: 2px; }
+
+  /* ── Historique ──
+     La bascule portait l'écart qui la sépare des tris ; .search-line-shrink
+     le remet à zéro (il gênerait le repli), la ligne le reprend donc à son
+     compte. Le champ de filtre, lui, ne prend plus de place dans le flux :
+     c'est autant de gagné avant la première affiche. */
+  .search-line-historique { margin-bottom: 18px; }
 
   /* §12 et §44 : le mouvement doit pouvoir être coupé. Le dépliage devient
      alors un changement d'état instantané — la fonction reste entière. */
@@ -5030,7 +5064,8 @@
     }
     .mobile-view-anim { animation: mobileViewIn .22s ease-out; }
     
-    .search-input, .date-input, input[type="number"], .watchlist-add-input, .settings-input, .settings-select { 
+    .search-input, .date-input, input[type="number"], .watchlist-add-input, .settings-input, .settings-select,
+    .search-line-input { 
       font-size: 16px !important; /* Évite le zoom auto intempestif sur iOS */
     }
     

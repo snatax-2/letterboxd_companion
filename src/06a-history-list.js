@@ -82,14 +82,33 @@ const historySearchEl = document.getElementById('history-search');
 const historySearchClearBtn = document.getElementById('history-search-clear-btn');
 historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
-  historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
   clearTimeout(histSearchTimer);
   histSearchTimer = setTimeout(renderActiveHistoryView, 150);
 });
-historySearchClearBtn.addEventListener('click', () => {
-  historySearchEl.value = '';
-  historySearchEl.dispatchEvent(new Event('input'));
-  historySearchEl.focus();
+
+// Le champ vit maintenant derrière une loupe qui se déplie (même motif que
+// Découvrir et À voir, voir src/03c-collapsible-search.js). L'ancien bouton
+// « vider » devient la croix de fermeture : deux boutons côte à côte
+// n'auraient différé que par ce qu'ils laissent à l'écran.
+//
+// Refermer relâche le filtre, et ce n'est pas un raccourci de confort : un
+// filtre actif dont le champ est replié serait un état CACHÉ. On verrait une
+// liste amputée sans plus rien à l'écran pour dire pourquoi, et le compteur
+// de la carte contredirait le contenu. Tant que le champ n'est pas vide, le
+// clic extérieur ne referme pas (03c) — on ne perd donc pas sa saisie par
+// mégarde.
+installCollapsibleSearch({
+  line: document.getElementById('hist-search-line'),
+  toggle: document.getElementById('history-search-toggle'),
+  input: historySearchEl,
+  closeBtn: historySearchClearBtn,
+  onFermer() {
+    if (!historySearchEl.value) return;
+    historySearchEl.value = '';
+    historySearchQuery = '';
+    clearTimeout(histSearchTimer);
+    renderActiveHistoryView();
+  },
 });
 
 // ═══════════════════════════════════════════

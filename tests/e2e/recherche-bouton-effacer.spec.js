@@ -51,15 +51,21 @@ test('bouton effacer sur le champ de recherche de l\'historique, filtre bien la 
   await page.goto('/');
   await page.click('#nav-history');
   await page.waitForTimeout(300);
+  // Le champ de filtre est désormais replié derrière une loupe. La croix
+  // n'apparaît donc plus selon le CONTENU du champ mais selon l'ÉTAT de la
+  // ligne : elle en est devenue la fermeture. Ce que ce test protège — vider
+  // ramène la liste entière — n'a pas bougé.
   await expect(page.locator('#history-search-clear-btn')).toBeHidden();
-  await page.fill('#history-search', 'Film Test');
+  await page.click('#history-search-toggle');
   await expect(page.locator('#history-search-clear-btn')).toBeVisible();
+  await page.fill('#history-search', 'Film Test');
   await page.waitForTimeout(300);
   await expect(page.locator('.hist-item')).toHaveCount(1);
   await page.click('#history-search-clear-btn');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
   await expect(page.locator('#history-search')).toHaveValue('');
   await expect(page.locator('.hist-item')).toHaveCount(2);
+  await expect(page.locator('#history-search-clear-btn')).toBeHidden();
 });
 
 test('accessibilite : recherche avec bouton effacer + fenetre modale avec verre depoli', async ({ page }) => {
