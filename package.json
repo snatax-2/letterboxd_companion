@@ -9,6 +9,8 @@
     "test": "node --test --test-concurrency=1 tests/*.test.js",
     "pretest:e2e": "node scripts/build-app-js.js && node scripts/minify.js --css-only",
     "test:e2e": "playwright test",
+    "prequality:budgets": "node scripts/build-app-js.js",
+    "quality:budgets": "node scripts/check-quality-budgets.js",
     "precheck:load": "node scripts/build-app-js.js",
     "check:load": "node scripts/check-load.js",
     "prelint": "node scripts/build-app-js.js",

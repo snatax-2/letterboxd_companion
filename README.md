@@ -143,7 +143,15 @@ La logique la plus critique de l'app (calcul du score, fusion de la synchro clou
 
 ```bash
 npm test
+npm run quality:budgets
 ```
+
+`quality:budgets` vérifie sans modifier les fichiers que le cœur minifié reste
+sous 150 KiB gzip et que le HTML initial reste sous 1 200 nœuds. Le test E2E
+`performance-guardrails.spec.js` contrôle aussi le DOM après démarrage et
+confirme que `renderAll`/les statistiques exposent des mesures locales via
+`getLudexPerformanceSummary()`. Ces durées restent dans le navigateur : aucune
+télémétrie personnelle n'est envoyée.
 
 Ce que ça couvre :
 - **`tests/score.test.js`** — calcul du score en mode rapide et en mode détaillé (moyenne pondérée), conversion en étoiles.
@@ -350,23 +358,26 @@ git config core.hooksPath .githooks
 
 1. Va sur https://vercel.com/new et importe le dépôt GitHub que tu viens de créer.
 2. Vercel détecte automatiquement :
-   - les fichiers statiques à la racine (`index.html`, `styles.css`, `app.js`) ;
+   - les fichiers statiques à la racine (`index.html`, `styles.min.css`, `app.js`) ;
    - `api/search.js` comme fonction serverless (Node.js).
-3. **Avant de déployer**, ajoute la variable d'environnement dans l'écran de configuration du projet (ou après, dans `Settings > Environment Variables`) :
-   - Nom : `TMDB_KEY`
-   - Valeur : ta clé TMDb
-   - Environnements : Production, Preview, Development
+3. **Avant de déployer**, reporte dans `Settings > Environment Variables` les
+   variables utiles listées dans `.env.example` (`TMDB_KEY`, puis selon les
+   fonctions activées : OMDb, Gemini, Supabase et Upstash Redis). Ne commit
+   jamais leurs valeurs.
 4. Clique sur **Deploy**.
 
 Chaque nouveau `git push` sur `main` redéploiera automatiquement en production ; chaque push sur une autre branche/PR génère un déploiement de preview isolé.
 
 ### Minification au déploiement
 
-`vercel.json` exécute `npm run build && node scripts/minify-for-deploy.js`. La seconde étape minifie `app.js` et `styles.css` (Terser + clean-css) **uniquement dans l'environnement de build Vercel** — mesuré : ~95 Ko → ~48 Ko gzippé pour le JS, ~45 Ko → ~29 Ko pour le CSS, soit environ moitié moins de données à charger sur le premier accès (avant que le service worker ne mette tout en cache).
-
-Le fichier `app.js` commité dans Git reste volontairement lisible (utile pour les diffs et les revues) : cette étape ne touche jamais aux fichiers du dépôt, seulement à la copie éphémère que Vercel sert aux utilisateurs. La CI (`npm run build:js`, sans la minification) continue de comparer contre cette version lisible.
+`vercel.json` exécute `npm run build`. Cette commande assemble `app.js` depuis
+`src/`, lance le lint, minifie le JavaScript, génère `styles.min.css`, puis met
+à jour le hash du service worker. `app.js` et `styles.min.css` sont des
+artefacts générés et ne doivent jamais être édités directement.
 
 ## Points à vérifier
 
-- Le endpoint `/api/search` gère 5 cas via des query params (`query`, `id`, `providers`, `img`, `recommendations`), avec mise en cache CDN adaptée à chaque type de donnée.
+- Le endpoint `/api/search` route plusieurs opérations TMDb/OMDb via des query
+  params ; toute nouvelle branche doit ajouter son contrat dans
+  `tests/search-api.test.js` et définir explicitement validation, timeout et cache.
 - `app.js` est généré depuis `src/` à chaque build — voir la section "Structure du projet" plus haut si tu ajoutes du code.

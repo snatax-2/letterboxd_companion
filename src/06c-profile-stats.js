@@ -414,8 +414,10 @@ let statsDirty = true; // vrai au démarrage : le premier vrai rendu doit avoir 
 // bénéficie aussi de l'optimisation "ne recalculer que si Profil est
 // visible" plutôt que de la contourner silencieusement.
 function renderActiveStatsView() {
-  if (statsMediaFilter === 'tv') { if (typeof renderTvStats === 'function') renderTvStats(); }
-  else renderStats();
+  return measureLudexPerformance('renderStats', () => {
+    if (statsMediaFilter === 'tv') { if (typeof renderTvStats === 'function') renderTvStats(); }
+    else renderStats();
+  });
 }
 
 function renderAll() {
@@ -428,14 +430,16 @@ function renderAll() {
   // renderProfileIfDirty() au moment où l'utilisateur bascule dessus (voir
   // 01-navigation.js). renderHistory() reste inconditionnel : c'est
   // généralement la vue qu'on regarde au moment de l'appel.
-  const profileView = document.getElementById('view-profile');
-  if (profileView && profileView.classList.contains('active')) {
-    renderActiveStatsView();
-    statsDirty = false;
-  } else {
-    statsDirty = true;
-  }
-  renderActiveHistoryView();
+  return measureLudexPerformance('renderAll', () => {
+    const profileView = document.getElementById('view-profile');
+    if (profileView && profileView.classList.contains('active')) {
+      renderActiveStatsView();
+      statsDirty = false;
+    } else {
+      statsDirty = true;
+    }
+    renderActiveHistoryView();
+  });
 }
 
 // Appelée quand l'onglet Profil devient visible : rattrape un renderStats()
