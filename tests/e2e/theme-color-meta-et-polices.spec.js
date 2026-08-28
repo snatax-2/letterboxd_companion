@@ -17,11 +17,11 @@ test('le meta theme-color suit le theme actif', async ({ page }) => {
   const initial = await metaCouleur();
   expect(initial).toBe(await bgDuTheme());
 
-  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'technicolor'));
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'light'));
   await page.waitForTimeout(200);
-  const tech = await metaCouleur();
-  expect(tech).toBe(await bgDuTheme());
-  expect(tech).not.toBe(initial); // la bascule a bien change quelque chose
+  const light = await metaCouleur();
+  expect(light).toBe(await bgDuTheme());
+  expect(light).not.toBe(initial); // la bascule a bien change quelque chose
 });
 test('les polices sont chargees depuis le head avec preconnect', async ({ page }) => {
   await page.goto('/');

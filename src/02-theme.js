@@ -42,6 +42,23 @@ function renderAppTitle(value) {
 
 const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
 let systemThemeListenerAttached = false;
+const THEME_PREFERENCES = new Set(['dark', 'light', 'system']);
+const LEGACY_LIGHT_THEMES = new Set(['carnet', 'cinephile', 'moderne']);
+
+// Les anciennes préférences restent lisibles dans les sauvegardes et sont
+// converties une seule fois vers la nouvelle paire Dark/Light. Les autres
+// réglages de l'objet sont conservés tels quels.
+function normalizeThemePreference(theme) {
+  if (THEME_PREFERENCES.has(theme)) return theme;
+  if (LEGACY_LIGHT_THEMES.has(theme)) return 'light';
+  return 'dark';
+}
+
+function resolveThemePreference(theme) {
+  const preference = normalizeThemePreference(theme);
+  if (preference !== 'system') return preference;
+  return systemThemeQuery.matches ? 'dark' : 'light';
+}
 
 function readStoredTheme() {
   return readRegisteredStorage('settings', {}).theme;
@@ -52,7 +69,7 @@ function ensureSystemThemeListener() {
   systemThemeListenerAttached = true;
   systemThemeQuery.addEventListener('change', e => {
     if (readStoredTheme() !== 'system') return;
-    const sysTheme = e.matches ? 'default' : 'filmnoir';
+    const sysTheme = e.matches ? 'dark' : 'light';
     if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
     document.documentElement.setAttribute('data-theme', sysTheme);
     renderAll();
@@ -60,8 +77,12 @@ function ensureSystemThemeListener() {
 }
 
 function loadSettings() {
-  const defaultSettings = { appName: DEFAULT_APP_NAME, theme: 'default' };
-  applySettings(readRegisteredStorage('settings', defaultSettings));
+  const defaultSettings = { appName: DEFAULT_APP_NAME, theme: 'dark' };
+  const stored = readRegisteredStorage('settings', defaultSettings);
+  const normalizedTheme = normalizeThemePreference(stored.theme);
+  const normalizedSettings = { ...stored, theme: normalizedTheme };
+  if (stored.theme !== normalizedTheme) writeRegisteredStorage('settings', normalizedSettings);
+  applySettings(normalizedSettings);
 }
 
 function applySettings(settings) {
@@ -69,17 +90,9 @@ function applySettings(settings) {
   const appName = normalizeAppName(settings.appName);
   renderAppTitle(appName);
   
-  let themeToApply = settings.theme || "default";
-  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
-  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
-  // que de retomber sur des couleurs cohérentes.
-  if (themeToApply === 'meridien') themeToApply = 'default';
-  
-  if (themeToApply === "system") {
-    const prefersDark = systemThemeQuery.matches;
-    themeToApply = prefersDark ? "default" : "filmnoir"; 
-    ensureSystemThemeListener();
-  }
+  const themePreference = normalizeThemePreference(settings.theme);
+  const themeToApply = resolveThemePreference(themePreference);
+  if (themePreference === 'system') ensureSystemThemeListener();
   
   // Charge les polices du thème qu'on vient d'activer (voir loadThemeFonts
   // dans index.html) : seules celles du thème actif sont téléchargées, donc
@@ -93,7 +106,7 @@ function applySettings(settings) {
   document.querySelectorAll('.platform-chip').forEach(chip => {
     chip.classList.toggle('selected', owned.includes(chip.dataset.provider));
   });
-  const th = settings.theme || 'default';
+  const th = themePreference;
   document.querySelectorAll('.theme-card').forEach(tc => {
     const isSelected = tc.dataset.theme === th;
     tc.classList.toggle('selected', isSelected);
@@ -126,9 +139,7 @@ function selectThemeCard(card) {
   withThemeTransition(() => {
     // Même remarque que dans applySettings : les polices du thème choisi
     // doivent être demandées, elles ne sont plus toutes préchargées.
-    const picked = card.dataset.theme !== "system"
-      ? card.dataset.theme
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "default" : "filmnoir");
+    const picked = resolveThemePreference(card.dataset.theme);
     if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(picked);
     document.documentElement.setAttribute('data-theme', picked);
   });
@@ -184,7 +195,7 @@ document.getElementById('settings-save').addEventListener('click', () => {
   
   const newSettings = {
     appName,
-    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'default'}}).dataset.theme,
+    theme: (document.querySelector('.theme-card.selected')||{dataset:{theme:'dark'}}).dataset.theme,
     genreWeightsEnabled: document.getElementById('setting-genre-weights-enabled').checked,
   };
   

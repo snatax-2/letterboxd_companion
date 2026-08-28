@@ -11,7 +11,7 @@ const { test, expect } = require('@playwright/test');
 // Ce test ne juge PAS l'esthétique : il vérifie des invariants structurels
 // qu'aucun ajustement de palette ne doit casser en silence.
 
-const THEMES = ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor'];
+const THEMES = ['dark', 'light'];
 
 // Jetons qui doivent exister et ne jamais être vides, sur tous les thèmes.
 const JETONS_REQUIS = [

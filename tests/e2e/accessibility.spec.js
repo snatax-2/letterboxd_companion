@@ -49,11 +49,11 @@ async function waitForStableUi(page) {
   await page.locator('#app-splash').waitFor({ state: 'detached' });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test.describe(`Accessibilité — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedRichState(page);
-      if (theme !== 'default') {
+      if (theme !== 'dark') {
         await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       }
     });
@@ -175,12 +175,12 @@ test('le groupe de thèmes utilise un roving tabindex et les flèches', async ({
 
   await selected.focus();
   await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.theme-card[data-theme="carnet"]')).toHaveAttribute('aria-checked', 'true');
-  await expect(page.locator('.theme-card[data-theme="carnet"]')).toBeFocused();
+  await expect(page.locator('.theme-card[data-theme="light"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.theme-card[data-theme="light"]')).toBeFocused();
   await expect(page.locator('.theme-card[tabindex="0"]')).toHaveCount(1);
 
   await page.keyboard.press('End');
   await expect(page.locator('.theme-card[data-theme="system"]')).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.theme-card[data-theme="default"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.theme-card[data-theme="dark"]')).toHaveAttribute('aria-checked', 'true');
 });

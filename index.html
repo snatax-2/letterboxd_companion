@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" data-theme="default">
+<html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <link rel="icon" type="image/png" href="favicon.png">
@@ -8,7 +8,7 @@
 
 <!-- SEO de base -->
 <meta name="description" content="Journal personnel de films et séries : notes, historique, watchlists, suivi des saisons et statistiques.">
-<meta name="theme-color" content="#0d1117">
+<meta name="theme-color" content="#0A0A0C">
 <link rel="canonical" href="https://ludex-three.vercel.app/">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
@@ -37,10 +37,10 @@
      choisi — comme pour un écran de démarrage natif, un rendu par défaut fixe
      est la norme (l'app applique le vrai thème dès que le JS a tourné). -->
 <style>
-  #app-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#14181c;transition:opacity .4s ease,visibility .4s ease;}
+  #app-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0A0A0C;transition:opacity .4s ease,visibility .4s ease;}
   #app-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
   #app-splash img{width:88px;height:88px;border-radius:20px;animation:splashPulse 1.4s ease-in-out infinite;}
-  #app-splash .app-splash-title{font-family:'Titillium Web',sans-serif;font-size:1.3rem;font-weight:900;letter-spacing:.15em;color:#fff;}
+  #app-splash .app-splash-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;letter-spacing:.15em;color:#FAFAFA;}
   @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:.85;}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -77,59 +77,27 @@
 
       <label class="settings-label">Thème visuel</label>
       <div class="theme-grid" id="theme-grid" role="radiogroup" aria-label="Thème visuel">
-        <div class="theme-card" data-theme="default" role="radio" aria-checked="true" tabindex="0" aria-label="Thème Letterboxd">
-          <div class="theme-preview" style="background:#14181c">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1f2935;flex:1"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#ff8000;width:55%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#40bcf4"></div><div class="theme-preview-dot" style="background:#00e054"></div><div class="theme-preview-dot" style="background:#ff4040"></div></div>
+        <div class="theme-card" data-theme="dark" role="radio" aria-checked="true" tabindex="0" aria-label="Thème sombre">
+          <div class="theme-preview" style="background:#0A0A0C">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#18181C;flex:1;border:1px solid #222"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#FAFAFA;width:55%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#FAFAFA"></div><div class="theme-preview-dot" style="background:#888"></div><div class="theme-preview-dot" style="background:#D4AF37"></div></div>
           </div>
-          <div class="theme-label" style="background:#1f2935;color:#9ab;font-family:'Titillium Web',sans-serif">Letterboxd</div>
+          <div class="theme-label" style="background:#18181C;color:#FAFAFA;font-family:'Inter',sans-serif">DARK</div>
         </div>
-        <div class="theme-card" data-theme="carnet" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème Carnet de Voyage">
-          <div class="theme-preview" style="background:#FAF3EC">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#F4E9E1;flex:1;border:1px dashed #D9BFB0"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#B8695E,#556B52);width:65%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#B8695E"></div><div class="theme-preview-dot" style="background:#C9A576"></div><div class="theme-preview-dot" style="background:#556B52"></div></div>
+        <div class="theme-card" data-theme="light" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème clair">
+          <div class="theme-preview" style="background:#F5F4F0">
+            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#ECEBE6;flex:1;border:1px solid #E0E0E0"></div></div>
+            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#111;width:55%"></div></div>
+            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#111"></div><div class="theme-preview-dot" style="background:#6F6F6F"></div><div class="theme-preview-dot" style="background:#A8842B"></div></div>
           </div>
-          <div class="theme-label" style="background:#F4E9E1;color:#3D2B26;font-family:'Special Elite',monospace;">CARNET DE VOYAGE</div>
-        </div>
-        <div class="theme-card" data-theme="filmnoir" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème Film Noir">
-          <div class="theme-preview" style="background:#050505">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#111;flex:1;border:1px solid #333;border-radius:0"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#555;width:65%;border-radius:0"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#fff;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#aaa;border-radius:0;width:8px;height:8px"></div><div class="theme-preview-dot" style="background:#555;border-radius:0;width:8px;height:8px"></div></div>
-          </div>
-          <div class="theme-label" style="background:#000;color:#e0e0e0;font-family:'Cinzel',serif;letter-spacing:.08em;border-top:1px solid #333;">FILM NOIR</div>
-        </div>
-        <div class="theme-card" data-theme="cinephile" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème Néo-Rétro 70s Cinéphile">
-          <div class="theme-preview" style="background:#F9F6F0">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#4A2E1B;flex:1;border-radius:8px"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#DAC0A3;width:65%;border-radius:8px"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#4A2E1B"></div><div class="theme-preview-dot" style="background:#DAC0A3"></div><div class="theme-preview-dot" style="background:#5C6E58"></div></div>
-          </div>
-          <div class="theme-label" style="background:#EDE2D0;color:#2e1d12;font-family:'Poppins',sans-serif;font-weight:700;">CINÉPHILE 70s</div>
-        </div>
-        <div class="theme-card" data-theme="moderne" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème Moderne (Bauhaus)">
-          <div class="theme-preview" style="background:#F9F6F0">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1E5AA8;flex:1;border-radius:6px"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:#DD6B47;width:65%;border-radius:6px"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#1E5AA8"></div><div class="theme-preview-dot" style="background:#DD6B47"></div><div class="theme-preview-dot" style="background:#7A5507"></div></div>
-          </div>
-          <div class="theme-label" style="background:#1E5AA8;color:#fff;font-family:'Syne',sans-serif;font-weight:800;">MODERNE</div>
-        </div>
-        <div class="theme-card" data-theme="technicolor" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème Technicolor">
-          <div class="theme-preview" style="background:#101425; border: 2px solid #E6AF2E;">
-            <div class="theme-preview-row"><div class="theme-preview-bar" style="background:#1A223B;flex:1;border:1px solid #2A3454"></div></div>
-            <div class="theme-preview-row" style="margin-top:4px"><div class="theme-preview-bar" style="background:linear-gradient(90deg,#DF2935,#E6AF2E);width:65%"></div></div>
-            <div class="theme-preview-dots"><div class="theme-preview-dot" style="background:#DF2935"></div><div class="theme-preview-dot" style="background:#E6AF2E"></div><div class="theme-preview-dot" style="background:#5C7DAA"></div></div>
-          </div>
-          <div class="theme-label" style="background:#1A223B;color:#E6AF2E;font-family:'Oswald',sans-serif;letter-spacing:.06em;border-top:2px solid #E6AF2E;">TECHNICOLOR</div>
+          <div class="theme-label" style="background:#ECEBE6;color:#111;font-family:'Inter',sans-serif">LIGHT</div>
         </div>
         <div class="theme-card" data-theme="system" role="radio" aria-checked="false" tabindex="-1" aria-label="Thème automatique (système)">
-          <div class="theme-preview" style="background:linear-gradient(135deg, #14181c 50%, #050505 50%)">
+          <div class="theme-preview" style="background:linear-gradient(135deg, #0A0A0C 50%, #F5F4F0 50%)">
              <div style="text-align:center; margin-top: 15px; font-size: 1.2rem;"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="icon"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
           </div>
-          <div class="theme-label" style="background:#1f2935;color:#fff;font-family:var(--font-heading)">Auto (Système)</div>
+          <div class="theme-label" style="background:#18181C;color:#FAFAFA;font-family:'Inter',sans-serif">SYSTÈME</div>
         </div>
       </div>
 

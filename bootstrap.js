@@ -5,19 +5,15 @@
 // Ce fichier externe remplace l'ancien script inline afin que la CSP puisse
 // interdire l'exécution JavaScript inline.
 const THEME_FONTS = Object.freeze({
-  default: ['Fraunces:ital,wght@0,600;1,600', 'Work+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400', 'IBM+Plex+Mono:wght@400;500;600'],
-  carnet: ['Special+Elite', 'Lora:ital,wght@0,400;0,500;0,600;0,700;1,400', 'Courier+Prime:ital,wght@0,400;0,700;1,400', 'Caveat:wght@400;600;700'],
-  filmnoir: ['Cinzel:wght@400;700;900', 'Inter:wght@400;600;700', 'Space+Mono:ital,wght@0,400;0,700;1,400'],
-  cinephile: ['Poppins:wght@400;500;600;700;800', 'Fragment+Mono:ital@0;1'],
-  moderne: ['Syne:wght@400;700;800', 'DM+Sans:ital,wght@0,400;0,500;0,700;1,400', 'Martian+Mono:wght@400;600;700'],
-  technicolor: ['Oswald:wght@400;600;700', 'Inter:wght@400;600;700', 'JetBrains+Mono:wght@400;600;700'],
+  dark: ['Playfair+Display:ital,wght@0,500;0,600;0,700;1,500', 'Inter:wght@400;500;600;700', 'JetBrains+Mono:wght@400;500;600'],
+  light: ['Playfair+Display:ital,wght@0,500;0,600;0,700;1,500', 'Inter:wght@400;500;600;700', 'JetBrains+Mono:wght@400;500;600'],
 });
 
-const BASE_FONTS = ['Titillium+Web:ital,wght@0,300;0,400;0,600;0,700;1,400'];
+const BASE_FONTS = [];
 const loadedFontSets = new Set();
 
 window.loadThemeFonts = function loadThemeFonts(theme) {
-  const safeTheme = Object.prototype.hasOwnProperty.call(THEME_FONTS, theme) ? theme : 'default';
+  const safeTheme = Object.prototype.hasOwnProperty.call(THEME_FONTS, theme) ? theme : 'dark';
   if (loadedFontSets.has(safeTheme)) return;
   loadedFontSets.add(safeTheme);
 
@@ -41,20 +37,19 @@ function relativeLuminance(hex) {
 (function themeSplash() {
   try {
     const settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
-    let theme = settings.theme || 'default';
+    const lightLegacyThemes = new Set(['carnet', 'cinephile', 'moderne']);
+    let theme = settings.theme || 'dark';
+    if (lightLegacyThemes.has(theme)) theme = 'light';
+    else if (!['dark', 'light', 'system'].includes(theme)) theme = 'dark';
     if (theme === 'system') {
-      theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'default' : 'filmnoir';
+      theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     const palettes = {
-      default: '#14181c',
-      carnet: '#FAF3EC',
-      filmnoir: '#050505',
-      cinephile: '#F9F6F0',
-      moderne: '#F9F6F0',
-      technicolor: '#101425',
+      dark: '#0A0A0C',
+      light: '#F5F4F0',
     };
-    const safeTheme = Object.prototype.hasOwnProperty.call(palettes, theme) ? theme : 'default';
+    const safeTheme = Object.prototype.hasOwnProperty.call(palettes, theme) ? theme : 'dark';
     const background = palettes[safeTheme];
     window.loadThemeFonts(safeTheme);
 
@@ -62,9 +57,9 @@ function relativeLuminance(hex) {
     if (!splash) return;
     splash.style.background = background;
     const title = splash.querySelector('.app-splash-title');
-    if (title) title.style.color = relativeLuminance(background) > 0.35 ? '#14181c' : '#ffffff';
+    if (title) title.style.color = relativeLuminance(background) > 0.35 ? '#111111' : '#FAFAFA';
   } catch {
-    window.loadThemeFonts('default');
+    window.loadThemeFonts('dark');
   }
 })();
 

@@ -47,13 +47,13 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.route('**fonts.googleapis.com**', route => route.abort());
       await page.route('**fonts.gstatic.com**', route => route.abort());
       await seedStableHistory(page);
-      if (theme !== 'default') {
+      if (theme !== 'dark') {
         await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       }
     });

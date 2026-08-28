@@ -301,7 +301,7 @@ test('mobile (390px) reste totalement inchange : une seule colonne, conteneur a 
 });
 
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   // Corrigé lors de la fusion : cette boucle ne faisait auparavant que
   // console.log les violations sans jamais les faire échouer (aucun expect())
   // — un test qui passait toujours, quel que soit le résultat réel.
