@@ -47,6 +47,21 @@ async function seedStableHistory(page) {
   });
 }
 
+async function useDeterministicScreenshotFonts(page) {
+  // Les polices Google sont volontairement bloquées dans cette spec. Sans
+  // famille de repli explicite, la machine locale et ubuntu-latest peuvent
+  // choisir des fontes système différentes et produire de faux diffs. Les
+  // trois variantes DejaVu sont installées avec Chromium/Playwright sous
+  // Linux et conservent les trois rôles typographiques du design.
+  await page.addStyleTag({ content: `
+    :root {
+      --font-heading: "DejaVu Serif", serif !important;
+      --font-body: "DejaVu Sans", sans-serif !important;
+      --font-mono: "DejaVu Sans Mono", monospace !important;
+    }
+  ` });
+}
+
 for (const theme of ['dark', 'light']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
@@ -60,6 +75,7 @@ for (const theme of ['dark', 'light']) {
 
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
+      await useDeterministicScreenshotFonts(page);
       await page.click('#nav-rating');
       await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`rating-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
@@ -67,6 +83,7 @@ for (const theme of ['dark', 'light']) {
 
     test(`Historique (${theme})`, async ({ page }) => {
       await page.goto('/');
+      await useDeterministicScreenshotFonts(page);
       await page.click('#nav-history');
       await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
