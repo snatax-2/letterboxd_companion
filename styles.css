@@ -6,42 +6,16 @@
 
   /* ── VARIABLES GLOBALES ET THÈMES ── */
   :root {
-    /* ── Système de mouvement ──
-       Trois durées et une courbe signature, utilisées PARTOUT : c'est la
-       cohérence de ces valeurs (pas leur raffinement individuel) qui donne
-       la sensation "premium". --ease-out démarre vite et se pose en douceur,
-       le caractère des interfaces natives. */
-    --dur-fast: 140ms;   /* micro-retours : survols, pressions, toggles */
-    --dur-base: 240ms;   /* transitions structurantes : cartes, panneaux */
-    --dur-slow: 420ms;   /* entrées en scène : modales, feuilles, bannières */
+    --dur-fast: 140ms;
+    --dur-base: 240ms;
+    --dur-slow: 420ms;
     --ease-out: cubic-bezier(.2, .8, .2, 1);
-    --ease-spring: cubic-bezier(.34, 1.3, .64, 1); /* léger rebond, pour les confirmations */
+    --ease-spring: cubic-bezier(.34, 1.3, .64, 1);
 
-    /* ── Échelle d'élévation ──
-       Trois niveaux d'ombre au lieu d'ombres improvisées au cas par cas :
-       posé / soulevé / au-dessus de tout (modales, bannières).
-
-       Ces trois jetons existaient déjà mais n'étaient utilisés QUE 3 fois
-       sur 44 box-shadow — les 41 autres étaient écrites en dur, chacune
-       avec ses propres décalages et opacités, si bien que deux éléments de
-       même niveau hiérarchique pouvaient porter des profondeurs
-       différentes. Généralisés ici.
-
-       Ces valeurs-ci conviennent aux thèmes SOMBRES (défaut, Film Noir,
-       Technicolor) : du noir semi-opaque sur un fond sombre. Les trois
-       thèmes clairs les redéfinissent plus bas — une ombre noire sur du
-       papier crème fait une tache grise sale, ils ont besoin d'une ombre
-       teintée dans leur propre palette (même raisonnement que leur
-       --box-shadow-style de signature, qui reste inchangé). */
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
 
-    /* ── Échelle d'espacement ──
-       Six paliers plutôt que des valeurs de gap/padding choisies au cas par
-       cas. Un audit a compté 14 valeurs de gap différentes (1px à 22px)
-       avant l'introduction de cette échelle — la migration se fait
-       progressivement, composant par composant, pas d'un coup. */
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -49,12 +23,6 @@
     --space-5: 24px;
     --space-6: 32px;
 
-    /* ── Échelle typographique ──
-       Sept paliers nommés par usage plutôt que par valeur, pour remplacer
-       progressivement les 42 tailles de police distinctes trouvées lors
-       d'un audit. xs=labels/badges, sm=corps secondaire, base=corps
-       principal, md=sous-titres, lg=titres de section, xl=titres d'écran,
-       2xl=chiffres clés (KPI). */
     --text-xs: 0.72rem;
     --text-sm: 0.8rem;
     --text-base: 0.88rem;
@@ -63,140 +31,74 @@
     --text-xl: 1.6rem;
     --text-2xl: 2.5rem;
 
-    /* Une pilule reste une pilule quel que soit le thème — contrairement à
-       --radius/--radius-sm (qui varient par thème pour la personnalité
-       visuelle de chacun), ce rayon-ci ne doit jamais varier : sinon une
-       pilule sur un thème à faible --radius ne serait plus une pilule. */
     --radius-pill: 999px;
 
-    /* color-scheme fait correspondre les contrôles natifs du navigateur
-       (sélecteur de date, notamment) à l'ambiance du thème plutôt que de
-       toujours afficher un widget clair par défaut — sans quoi cet élément
-       reste visuellement décalé du reste de l'interface, très soignée par
-       ailleurs. */
     color-scheme: dark;
 
-    --slider-thumb-size: 14px; /* doit correspondre à la largeur réelle du curseur ci-dessous, pour les graduations */
-    /* Ludex 2.0 — palette par défaut : inspirée de Technicolor (bleu nuit +
-       or) mais redessinée pour ce rôle précis, une seule couleur chaude
-       dominante plutôt que la palette Letterboxd (orange/bleu/vert)
-       héritée de l'ancien thème "Méridien", retiré. Le lie-de-vin reste
-       rare — fonds d'affiche et dégradés, jamais un accent interactif. */
-    --bg: #0E1116; --surface: #181C22; --surface2: #212B38; --border: #2A3340;
-    /* --text éclairci de #8A90A0 à #8F95A5 : 4.48:1 seulement sur --surface2,
-       juste sous le seuil AA — trouvé par axe-core sur le badge de comptage de
-       l'Historique ("6 films · 0 série"), qui est le seul endroit où --text se
-       pose sur la surface la plus claire. La nouvelle valeur passe partout :
-       6.31:1 sur --bg, 5.71:1 sur --surface, 4.78:1 sur --surface2. */
-    --border-hi: #3D4A5C; --text: #8F95A5; --text-hi: #EDE6D8; --text-mid: #9BA1AE;
-    --orange: #C89B3C; --gold: #C89B3C; --blue: #C89B3C; --red: #8B2E2E; --green: #7C8B6F;
-    /* Ce thème n'a délibérément qu'UN accent (orange = gold = blue) — cohérent
-       partout où --blue sert d'accent interactif (barre de recherche, onglets,
-       curseur "Impact affectif"...). Le graphique "Activité mensuelle" pose un
-       problème différent : il a besoin de DEUX couleurs mutuellement
-       distinctes pour ses deux séries (films/séries), ce qu'aucun jeton
-       d'accent existant ne peut fournir ici puisqu'ils valent tous la même
-       chose. --chart-tv est une couleur dédiée, choisie uniquement pour se
-       distinguer de --gold — jamais utilisée ailleurs, donc sans effet sur le
-       reste du thème. Voir .month-chart-bar plus bas.
-       Bug réel corrigé ici, pas seulement une préférence : avant ce jeton,
-       .month-chart-bar.movie et .tv utilisaient var(--gold)/var(--blue)
-       directement, IDENTIQUES dans ce thème — les deux séries du graphique
-       rendaient exactement la même couleur, totalement indiscernables
-       (capture d'écran à l'appui). */
-    --chart-movie: var(--gold); --chart-tv: #2C5670;
-    /* Couleur de texte à utiliser SUR un fond plein rouge/vert/bleu (indices
-       de swipe, tampons...) — calculée par contraste WCAG, pas devinée : le
-       bon choix (blanc ou noir) varie selon la couleur ET selon le thème,
-       parfois même à l'intérieur d'un même thème (ex: rouge très saturé mais
-       bleu clair). Voir l'audit complet dans la conversation. */
-    --red-fill-text: #EDE6D8; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
-    /* Texte posé sur un aplat d'accent (or, orange...). Existait déjà mais
-       n'était déclaré QUE par Carnet et Cinéphile : les quatre autres thèmes
-       passaient par le repli littéral `var(--solid-fill-text)`,
-       recopié 26 fois dans le fichier. Le déclarer ici donne exactement la
-       même couleur à ces quatre thèmes (le repli valait déjà #0d1117), mais
-       la valeur n'existe plus qu'à UN endroit — les deux thèmes qui la
-       redéfinissent continuent de gagner par cascade. */
-    --solid-fill-text: #0d1117;
-    --radius: 4px; --radius-sm: 3px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%;
-    --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --font-heading: 'Fraunces', serif;
-    --font-body: 'Work Sans', sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
+    --slider-thumb-size: 14px;
     
-    /* Variables de personnalisation des étoiles */
-    --star-color: #C89B3C;
-    --star-empty-color: #3D4A5C;
+    --bg: #0A0A0C;
+    --surface: #141414;
+    --surface2: #1A1A1A;
+    --border: #222222;
+    --border-hi: #333333;
+    --text: #888888;
+    --text-hi: #FAFAFA;
+    --text-mid: #AAAAAA;
+
+    --orange: #D4AF37;
+    --gold: #D4AF37;
+    --blue: #D4AF37;
+    --red: #8B2E2E;
+    --green: #4F9268;
+
+    --chart-movie: var(--gold);
+    --chart-tv: #666666;
+
+    --red-fill-text: #FAFAFA;
+    --green-fill-text: #111111;
+    --blue-fill-text: #111111;
+    --solid-fill-text: #111111;
+
+    --radius: 2px;
+    --radius-sm: 2px;
+    --slider-track-radius: 2px;
+    --slider-thumb-radius: 2px;
+    --control-radius: 2px;
+    --slider-thumb-rotate: 0deg;
+    --slider-thumb-clip: none;
+
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    --star-color: #D4AF37;
+    --star-empty-color: #333333;
     --star-font: Arial, sans-serif;
     --star-shadow: none;
     --star-symbol: '★';
-    --icon-stroke: 1.6;
-    --icon-linecap: round; --icon-linejoin: round;
-  }
+    --icon-stroke: 1.2;
+    --icon-linecap: round;
+    --icon-linejoin: round;
+}
 
-  [data-theme="carnet"] {
     color-scheme: light;
-    /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
-       de Bord, et l'ancien cluster "vintage clair" trop redondant avec
-       Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
-       de cinéphile physique, entre carte postale et journal manuscrit —
-       structure précise d'Anderson + âme intime de Journal, sans reprendre
-       les bruns de Cinéphile (déjà pris) : duo rose poudré / sauge.
-       Le corps de texte utilise une police PROPORTIONNELLE (pas monospace
-       partout comme l'ancien Journal) — c'était un vrai risque de lisibilité
-       sur les critiques longues, corrigé ici dès la conception. */
-    --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
-    --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
-    --orange: #B8695E; /* Rose Poudré */
-    --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
-    --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    --solid-fill-text: #fff;
-    /* Même correctif que Moderne : le rose poudré en TEXTE sur la barre
-       d'onglets claire donne 3.51:1 en 10px gras (seuil 4.5, mesuré par
-       axe-core). Assombri dans la même famille — 5.27:1. Les surfaces
-       remplies en --orange gardent leur teinte d'origine, ce token ne sert
-       qu'au texte. */
-    --accent-text: #9C4632;
-    --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Special Elite', monospace; /* esprit machine à écrire pour titres/labels/chiffres */
-    --font-body: 'Lora', serif; /* proportionnelle et chaleureuse pour le corps de texte — le vrai correctif face à l'ancien Journal */
-    --font-mono: 'Courier Prime', monospace;
-    --review-font: 'Caveat', cursive; /* le détail le plus mémorable de l'ancien Journal : la critique personnelle en vraie écriture manuscrite */
+    --bg: #F5F4F0;
+    --surface: #FFFFFF;
+    --surface2: #E8E7E3;
+    --border: #E0E0E0;
+    --border-hi: #CCCCCC;
+    --text: #6F6F6F;
+    --text-hi: #111111;
+    --text-mid: #888888;
+    --solid-fill-text: #FAFAFA;
 
-    /* Étoiles : tampon de gare / ticket composté, esprit carnet de voyage */
-    --star-color: #B8695E;
-    --star-empty-color: #D9BFB0;
-    --star-font: 'Special Elite', monospace;
-    --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
-    --star-symbol: '❂';
-    --icon-stroke: 1.5;
-    --icon-linecap: round; --icon-linejoin: round;
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
+    --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
+}
 
-    /* Élévation dans la palette du thème : une ombre noire sur ce papier
-       crème virerait au gris sale. Même teinte que la signature ci-dessous. */
-    --shadow-1: 0 1px 3px rgba(184, 105, 94, 0.20);
-    --shadow-2: 0 4px 12px rgba(184, 105, 94, 0.26);
-    --shadow-3: 0 8px 28px rgba(120, 68, 60, 0.28);
 
-    --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
-    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
-    --bg-size: 100% 27px;
-    /* Tri-bande carte postale, dans la palette propre du thème (pas celle d'Anderson) */
-    --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
-  }
 
   /* Carnet : --solid-fill-text (#fff) sert à la fois du texte sur fond
      --orange (#B8695E, ton moyen, a besoin de texte SOMBRE — 4.02:1 en
@@ -209,110 +111,8 @@
      cours — chaque nouvel élément à fond orange doit rejoindre cette
      liste, pas être patché isolément). Noir choisi pour une marge
      confortable (4.70:1). */
-  [data-theme="carnet"] .btn-new-review,
-  [data-theme="carnet"] .backup-reminder-btn,
-  [data-theme="carnet"] .mode-tab.active,
-  [data-theme="carnet"] .focus-mode-toggle.active,
-  [data-theme="carnet"] .empty-state-cta,
-  [data-theme="carnet"] .wl-picker-new-form button,
-  [data-theme="carnet"] .wrapped-share-btn,
-  [data-theme="carnet"] .onboarding-next,
-  [data-theme="carnet"] #update-banner-reload-btn,
-  [data-theme="carnet"] .mds-action-btn.primary,
-  [data-theme="carnet"] .on-this-day-badge,
-  [data-theme="carnet"] .platform-chip.selected,
-  [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
-  [data-theme="carnet"] .nav-btn-primary-label,
-  [data-theme="carnet"] .tv-continue-check-btn {
-    color: #000;
-  }
 
-  [data-theme="filmnoir"] {
-    color-scheme: dark;
-    /* 12. Film Noir - Clair-obscur véritable */
-    --bg: #050505; --surface: #111111; --surface2: #1a1a1a; --border: #333333;
-    --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
-    --orange: #ffffff; 
-    --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est blanc ici : texte clair impossible */
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
-    --slider-thumb-clip: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); /* octogone, esprit iris/objectif de projecteur */
-    --control-radius: 0px; /* reste anguleux, cohérent avec le reste du thème */
-    --font-heading: 'Cinzel', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-    
-    /* Étoiles Film Noir : Blanc argenté impérial et intemporel */
-    --star-color: #ffffff;
-    --star-empty-color: #333333;
-    --star-font: 'Cinzel', serif;
-    --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
-    --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
-    --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
-    /* Angles francs plutôt qu'arrondis, cohérent avec le radius:0 de ce
-       thème — même logique que l'icône Noter en losange sur Moderne. */
-    --icon-linecap: square; --icon-linejoin: miter;
-    
-    --review-font: var(--font-mono); 
-    --review-bg: #000000;
-    /* Faisceau de projecteur qui s'estompe, plutôt qu'une ligne franche */
-    --header-bar: linear-gradient(to right, transparent, #ffffff 50%, transparent);
-  }
 
-  [data-theme="cinephile"] {
-    color-scheme: light;
-    /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
-       bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
-       sur des angles nets : ici tout est délibérément arrondi et sépia,
-       esprit vieux fauteuils de cinéma et pellicule argentique. */
-    --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
-    --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
-    --orange: #4A2E1B; /* Terre de Sienne */
-    --gold: #7a5628;    /* Ambre Brûlé, assombri (était #DAC0A3) : 1.36:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet */
-    --blue: #4d5d4a;    /* Olive Vintage, assombri (était #5C6E58) : 4.46:1 seulement sur le badge "Impact affectif", tout juste sous le seuil — trouvé lors de l'audit complet */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #8B4226; --green: #5C6E58;
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
-    --radius: 18px; --radius-sm: 12px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
-    --control-radius: 50%;
-    --font-heading: 'Poppins', sans-serif;
-    --font-body: 'Poppins', sans-serif;
-    --font-mono: 'Fragment Mono', monospace;
-
-    /* Étoiles : sépia chaud, forme "objectif de projecteur" */
-    --star-color: #4A2E1B;
-    --star-empty-color: #DAC0A3;
-    --star-font: 'Poppins', sans-serif;
-    --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
-    --star-symbol: '◉';
-    --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
-    --icon-linecap: round; --icon-linejoin: round;
-    --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
-
-    /* Élévation en sépia plutôt qu'en noir, cohérente avec le fond crème. */
-    --shadow-1: 0 1px 3px rgba(74, 46, 27, 0.16);
-    --shadow-2: 0 4px 12px rgba(74, 46, 27, 0.22);
-    --shadow-3: 0 8px 28px rgba(74, 46, 27, 0.26);
-
-    --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
-    /* Bande sépia tri-tons, dans la palette du moodboard */
-    --header-bar: linear-gradient(to right, #4A2E1B 33%, #DAC0A3 33%, #DAC0A3 66%, #5C6E58 66%);
-  }
 
   /* Le texte "#0d1117" (quasi noir) utilisé sur les boutons à fond plein
      (mode-tab.active, focus-mode-toggle.active, btn-save, empty-state-cta...)
@@ -323,138 +123,20 @@
      partout où ce même problème se posait) plutôt que de corriger chaque
      bouton séparément au fil des retours. */
 
-  [data-theme="moderne"] {
-    color-scheme: light;
-    /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
-       d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
-       nettes, précision géométrique, papier millimétré d'architecte. Le
-       mécanisme de couleur tirée de l'affiche du film (voir plus bas,
-       .hist-item/.wl-card border-left, déjà unique à ce thème) reste intact
-       — c'est un vrai atout distinctif, pas une raison de le changer. */
-    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #1E5AA8;
-    --border-hi: #1E5AA8; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
-    --orange: #DD6B47; /* Terracotta, légèrement plus saturée qu'avant */
-    --gold: #7A5507;   /* Moutarde -> ocre profond : deux essais precedents (#D9A62E, #A6790F) manquaient encore de contraste, verifie mathematiquement cette fois (6.22:1) */
-    --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #DD6B47;
-    --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    /* --gold est ici un ocre PROFOND (#7A5507, assombri deux fois pour le
-       contraste), alors que les surfaces remplies en or supposent partout
-       ailleurs un or CLAIR et posent dessus var(--solid-fill-text),
-       quasi noir. Moderne ne declarant pas --solid-fill-text, le repli
-       s'appliquait : 2.82:1 sur le bouton de tri actif de "A voir", sous le
-       seuil. Le 6.22:1 cite dans le commentaire de --gold ci-dessus est
-       precisement celui de --bg sur cet ocre : l'intention etait donc bien un
-       texte clair, seul le cablage manquait. */
-    --gold-fill-text: var(--bg);
-    /* Accent en TEXTE sur une surface claire : #DD6B47 sur la barre d'onglets
-       donne 3.24:1 en 10px gras (seuil 4.5). Meme famille de teinte, assombrie
-       juste ce qu'il faut — 5.35:1. Le token ne touche que le texte : les
-       surfaces remplies en --orange gardent leur teinte d'origine. */
-    --accent-text: #B34524;
-    --radius: 10px; --radius-sm: 6px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
-    --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
-    --font-heading: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'Martian Mono', monospace;
-
-    --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
-    --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
-    --icon-stroke: 2.25;
-    /* Angles francs, cohérent avec le losange du bouton Noter et le refus
-       général des formes rondes dans ce thème. */
-    --icon-linecap: square; --icon-linejoin: miter;
-
-    /* Élévation en bleu encre, dans la palette du thème (fond blanc). */
-    --shadow-1: 0 1px 3px rgba(30, 90, 168, 0.14);
-    --shadow-2: 0 4px 12px rgba(30, 90, 168, 0.18);
-    --shadow-3: 0 8px 28px rgba(30, 90, 168, 0.22);
-
-    --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
-    /* Grille fine façon papier millimétré d'architecte, à peine visible —
-       la signature la plus neuve du thème, aucun autre thème ne l'utilise. */
-    --bg-texture: linear-gradient(rgba(30,90,168,0.05) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(30,90,168,0.05) 1px, transparent 1px);
-    --bg-size: 24px 24px, 24px 24px;
-    /* Bloc plein (pas un dégradé tri-bande, motif déjà pris par Cinéphile et
-       Carnet) : cohérent avec l'esprit "aplat de couleur" du Bauhaus. */
-    --header-bar: var(--blue);
-  }
   /* Accent tiré de la couleur dominante de l'affiche (voir 00c-poster-color.js)
      — signature du thème "Moderne". Se rabat sur la bordure normale du thème
      si l'extraction a échoué (CORS, image non chargée, etc.). */
-  [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
 
-  [data-theme="technicolor"] {
-    color-scheme: dark;
-    /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
-       obscure, or vintage, rouge écarlate) directement dans l'interface. */
-    --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
-    --border-hi: #3D4A73; --text: #98A2B4; --text-hi: #F4F1E1; --text-mid: #98A2B4;
-    --orange: #E6AF2E; --gold: #E6AF2E; --blue: #7C9DC5; --red: #DF2935; --green: #4F9268;
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
-    --radius: 8px; --radius-sm: 6px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Oswald', sans-serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-
-    /* Étoiles en or vintage, légère lueur chaude plutôt qu'une ombre dure */
-    --star-color: #E6AF2E;
-    --star-empty-color: #3D4A73;
-    --star-font: 'Oswald', sans-serif;
-    --star-shadow: 0 0 5px rgba(230, 175, 46, 0.45);
-    --star-symbol: '★';
-    --icon-stroke: 2;
-    --icon-linecap: round; --icon-linejoin: round;
-
-    --title-style: normal;
-    --title-spacing: 0.06em;
-    --header-bar: linear-gradient(to right, #DF2935 50%, #E6AF2E 50%);
-  }
 
   /* Bordures de séparation en or vintage translucide plutôt que le gris neutre
      générique, pour cette ambiance particulière. */
-  [data-theme="technicolor"] .card,
-  [data-theme="technicolor"] .hist-item,
-  [data-theme="technicolor"] .wl-card { border-color: rgba(230, 175, 46, 0.2); }
 
   /* Boutons principaux : ombre portée au survol, rappel direct de la
      profondeur travaillée sur l'icône. */
-  [data-theme="technicolor"] .btn-save:hover {
-    box-shadow: 0 4px 14px rgba(223, 41, 53, 0.35);
-  }
 
   /* Aberration chromatique subtile au survol du titre principal et des titres
      de film — le clin d'œil Technicolor le plus direct, à dose homéopathique. */
-  [data-theme="technicolor"] .app-title:hover,
-  [data-theme="technicolor"] .mds-title:hover {
-    text-shadow: 2px 0px 0px rgba(0, 255, 255, 0.35), -2px 0px 0px rgba(255, 0, 255, 0.35);
-    transition: text-shadow var(--dur-base) var(--ease-out);
-  }
   @media (prefers-reduced-motion: reduce) {
-    [data-theme="technicolor"] .app-title:hover,
-    [data-theme="technicolor"] .mds-title:hover { text-shadow: none; }
   }
 
   /* Grain de film discret sur le fond général — texture plutôt qu'un bleu nuit
@@ -463,17 +145,6 @@
      fois par le GPU et jamais repeint pendant le défilement, alors qu'un
      background-blend-mode directement sur le body peut coûter à chaque frame
      de défilement, surtout sur mobile. pointer-events:none = purement décoratif. */
-  [data-theme="technicolor"] body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.55;
-    background-image: url('data:image/png;base64,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');
-    background-repeat: repeat;
-    mix-blend-mode: overlay;
-  }
 
 
   /* ═══════════════════════════════════════════
@@ -484,10 +155,6 @@
      défilement — les textures vivent sur des pseudo-éléments fixes). */
 
   /* ── L'Original (défaut) ── */
-  html:not([data-theme]) .card:hover,
-  [data-theme="default"] .card:hover {
-    border-color: var(--border-hi);
-  }
   /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
      "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
      libellé d'interface — l'italique Fraunces reste le traitement par
@@ -604,7 +271,7 @@
      voir juste en dessous) — bordure + lueur douce + dégradé + badge,
      factorisés ici une seule fois plutôt que trois fois identiques. */
   .hist-grid-card-isolated, .hist-grid-card-pair, .hist-grid-card-banner {
-    border: 2px solid var(--gold); box-shadow: 0 0 16px color-mix(in srgb, var(--gold) 35%, transparent);
+    border: 2px solid var(--gold);
   }
   .hist-grid-card-isolated::after, .hist-grid-card-pair::after, .hist-grid-card-banner::after {
     content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -630,7 +297,7 @@
     background: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text));
     padding: 4px 9px; border-radius: var(--radius-pill); font-size: 0.64rem; font-weight: 700;
     font-family: var(--font-mono); display: flex; align-items: center; gap: 3px;
-    box-shadow: var(--shadow-1);
+
   }
   .hist-grid-featured-badge .icon { width: 0.85em; height: 0.85em; }
   /* Barre de progression intégrée en bas de l'affiche (séries uniquement) —
@@ -649,7 +316,7 @@
   }
   .hist-grid-progress-fill {
     height: 100%; background: var(--gold);
-    box-shadow: 0 0 4px color-mix(in srgb, var(--gold) 60%, transparent);
+
     transition: width var(--dur-base) var(--ease-out);
   }
   /* Actions modifier/supprimer — coin opposé au badge de note, toujours
@@ -740,8 +407,8 @@
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
   }
   .watchlist-scroller .wl-card {
-    background: transparent; border: none; margin-bottom: 0;
-  }
+      margin-bottom: 0;
+   }
   .watchlist-scroller .wl-card-content {
     flex-direction: column; padding: 0; gap: 6px;
   }
@@ -777,28 +444,9 @@
 
   /* ── Film Noir : clair-obscur ── */
   /* Vignettage permanent, comme un tirage argentique contrasté */
-  [data-theme="filmnoir"] body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
-  }
   /* Les affiches en noir et blanc — LA promesse du thème. La couleur revient
      au survol là où il existe (desktop) ; sur mobile, tout reste argentique. */
-  [data-theme="filmnoir"] .hist-item img,
-  [data-theme="filmnoir"] .wl-card img,
-  [data-theme="filmnoir"] .poster-min img,
-  [data-theme="filmnoir"] .duel-poster,
-  [data-theme="filmnoir"] .mds-poster {
-    filter: grayscale(1) contrast(1.08);
-    transition: filter var(--dur-base) var(--ease-out);
-  }
-  [data-theme="filmnoir"] .hist-item:hover img,
-  [data-theme="filmnoir"] .wl-card:hover img,
-  [data-theme="filmnoir"] .poster-min:hover img {
-    filter: grayscale(0) contrast(1);
-  }
   /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
-  [data-theme="filmnoir"] .app-title { text-shadow: 3px 3px 0 rgba(255,255,255,0.12); }
 
   /* ── Moderne : verre dépoli + grille d'architecte ── */
   /* Le verre dépoli est LE trait distinctif du thème (avec la grille et le
@@ -809,29 +457,16 @@
      compris la fiche film/série). backdrop-filter seul se pose PAR-DESSUS
      l'image existante, sans la remplacer. */
   @supports (backdrop-filter: blur(8px)) {
-    [data-theme="moderne"] .mds-header {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
   }
 
   /* ── Carnet de Voyage : reliure et tampon ── */
   /* Bordures en pointillés, esprit page de carnet cousue à la main — hérité
      de l'ancien Journal de Bord, le trait le plus reconnaissable des trois
      thèmes fusionnés ici. */
-  [data-theme="carnet"] .card { border-style: dashed; }
-  [data-theme="carnet"] .card-title {
-    border-bottom: 1px dotted var(--border-hi);
-    padding-bottom: 5px;
-  }
 
   /* ── Cinéphile 70s : papier chaud ── */
   /* Halo chaud sur les étoiles (halation de projection) — le grain n'est pas
      repris ici : sur fond clair il salirait plus qu'il n'habille. */
-  [data-theme="cinephile"] .stars, [data-theme="cinephile"] .duel-medal-gold {
-    filter: drop-shadow(0 0 3px rgba(139, 66, 38, 0.35));
-  }
-  [data-theme="cinephile"] .card { box-shadow: var(--shadow-1); }
 
   /* ── Méridien : revue éditoriale ── */
   /* Filets fins au-dessus des titres, rubrique de magazine */
@@ -1061,7 +696,7 @@
     font-size: 0.82rem; font-family: var(--font-heading); cursor: pointer;
     display: flex; align-items: center; gap: 6px;
     transition: all var(--dur-fast);
-    box-shadow: var(--box-shadow-style, none);
+
   }
   .icon-btn:hover { transform: translateY(-1px); border-color: var(--border-hi); color: var(--text-hi); }
   /* #settings-btn est un icon-btn sans texte (juste l'icône) — zone tactile
@@ -1113,11 +748,10 @@
      grille à deux colonnes, à la demande de l'utilisateur). */
   .mobile-nav {
     display: flex; margin: 0 auto 16px auto; max-width: 800px;
-    background: color-mix(in srgb, var(--surface) 55%, transparent);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border: 1px solid var(--border-hi); border-radius: var(--radius-pill);
-    box-shadow: var(--box-shadow-style, var(--shadow-2));
+    background: rgba(10,10,12, 0.65);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-pill);
     padding: 4px;
   }
   .nav-btn {
@@ -1255,12 +889,7 @@
   .nav-btn.active .nav-btn-label { max-width: 90px; opacity: 1; margin-top: 1px; }
 
   /* ── CARDS ── */
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px;
-    box-shadow: var(--box-shadow-style, var(--shadow-2));
-    width: 100%;
-  }
+  .card { width: 100%; }
   /* .card-title porte maintenant <h3> (hiérarchie de titres, WCAG 1.3.1) —
      margin remis à zéro explicitement : la marge haut par défaut du
      navigateur sur <h3> n'était pas neutralisée par le seul margin-bottom
@@ -1302,9 +931,9 @@
     border-radius: var(--radius-sm); color: var(--text-hi); padding: 10px 36px 10px 36px;
     font-family: var(--font-heading); font-size: 0.9rem; outline: none;
     width: 100%;
-    box-shadow: var(--box-shadow-style, none);
+
   }
-  .search-input:focus { box-shadow: var(--box-shadow-style, 0 0 0 3px rgba(64,188,244,0.18)); border-color: var(--blue); }
+  .search-input:focus {  border-color: var(--blue); }
   .search-input::placeholder { color: var(--text); }
   .search-clear-btn {
     position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
@@ -1318,14 +947,14 @@
   .date-input {
     background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--text-mid); padding: 10px 12px; font-family: var(--font-heading);
-    font-size: 0.85rem; outline: none; width: 100%; box-shadow: none;
+    font-size: 0.85rem; outline: none; width: 100%;
   }
   .date-input:focus { border-color: var(--border-hi); }
 
   .heart-btn {
     background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm);
     color: var(--star-empty-color); padding: 10px 14px; font-size: 1.1rem; cursor: pointer; transition: all var(--dur-base);
-    display: flex; align-items: center; justify-content: center; min-width: 44px; box-shadow: none;
+    display: flex; align-items: center; justify-content: center; min-width: 44px;
   }
   .heart-btn.active { color: var(--red); border-color: var(--red); background: rgba(255, 64, 64, 0.15); }
 
@@ -1366,7 +995,7 @@
   .suggestions {
     position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2);
     border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-    z-index: 999; overflow: hidden; box-shadow: var(--shadow-3); display: none;
+    z-index: 999; overflow: hidden;  display: none;
   }
   .suggestion-item {
     display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer;
@@ -1404,7 +1033,7 @@
   .poster-picker-box {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     width: min(92vw, 480px); max-height: 80vh; display: flex; flex-direction: column;
-    box-shadow: var(--shadow-3);
+
   }
   .poster-picker-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -1472,7 +1101,7 @@
     position: fixed; left: 12px; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom));
     z-index: 900; display: flex; align-items: center; gap: 10px;
     background: var(--surface2); border: 1px solid var(--border-hi); border-radius: var(--radius);
-    padding: 10px 12px; box-shadow: var(--shadow-3);
+    padding: 10px 12px;
     animation: backupSlideIn .35s cubic-bezier(.2,.8,.2,1);
   }
   @keyframes backupSlideIn { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -1697,10 +1326,7 @@
      que l'inactif, lui, se lisait très bien. Présent aussi sur main.
      On lui rend le fond plein d'avant Ludex 2.0 : la couleur de texte
      redevient posée sur l'orange, ce pour quoi elle est faite. */
-  .mode-tabs-plain .mode-tab.active {
-    background: var(--orange);
-    border-color: var(--orange);
-  }
+  .mode-tabs-plain .mode-tab.active { background: var(--surface2); border-color: var(--surface2); color: var(--text-hi); }
   /* Ludex 2.0 : pastille glissante (voir Ludex_Switch_Animation) — le
      fond n'est plus posé directement sur le bouton actif (.mode-tab.active
      ci-dessus, désormais transparent) mais sur cet élément séparé qui
@@ -1711,10 +1337,14 @@
   .mode-tabs { position: relative; }
   .toggle-slider {
     position: absolute; top: 0; left: 0; width: 50%; height: 100%;
-    background: var(--orange); border: 1px solid var(--orange); border-radius: var(--radius-sm);
+    background: var(--surface2); border: 1px solid var(--surface2); border-radius: var(--radius-sm);
     transition: transform var(--dur-base) var(--ease-out); z-index: 0;
   }
-  .mode-tabs.series-active .toggle-slider { transform: translateX(100%); }
+  .mode-tabs.series-active .toggle-slider {
+    position: absolute; top: 0; left: 0; width: 50%; height: 100%;
+    background: var(--surface2); border: 1px solid var(--surface2); border-radius: var(--radius-sm);
+    transition: transform var(--dur-base) var(--ease-out); z-index: 0;
+  }
   /* Ludex 2.0 : icônes des 5 bascules Films/Séries (voir ICONS.compass/
      bookmark/clapperboardStroke/tv, 00b-icons.js) — taille fixe pour ne
      pas dépendre du font-size variable du bouton parent. */
@@ -1865,14 +1495,14 @@
      slider est actif. :focus-visible ne s'affiche que pour la navigation clavier
      (pas au clic souris), donc ça n'ajoute pas de bruit visuel en usage normal. */
   input[type="range"]:focus-visible {
-    box-shadow: 0 0 0 3px rgba(255,128,0,0.45);
+
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none; width: 14px; height: 14px; border-radius: var(--slider-thumb-radius, 50%);
     clip-path: var(--slider-thumb-clip, none);
     transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); border: 2px solid var(--orange); cursor: pointer;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.35), var(--shadow-1);
+
     transition: transform var(--dur-fast), box-shadow var(--dur-fast);
   }
   input[type="range"]::-webkit-slider-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
@@ -1881,7 +1511,7 @@
     clip-path: var(--slider-thumb-clip, none);
     transform: rotate(var(--slider-thumb-rotate, 0deg));
     background: var(--surface); cursor: pointer; border: 2px solid var(--orange);
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.35); transition: transform var(--dur-fast);
+     transition: transform var(--dur-fast);
   }
   input[type="range"]::-moz-range-thumb:hover { transform: rotate(var(--slider-thumb-rotate, 0deg)) scale(1.25); }
   
@@ -2054,7 +1684,7 @@
     background: var(--review-bg, var(--bg));
     color: var(--text-hi);
   }
-  .review-textarea:focus { border-color: var(--orange); box-shadow: var(--box-shadow-style, 0 0 0 2px rgba(255,128,0,0.1)); }
+  .review-textarea:focus { border-color: var(--orange);  }
   .review-textarea::placeholder { color: var(--text-mid); opacity: 0.5;}
 
   /* Signature du thème "Carnet de Voyage" (héritée de l'ancien Journal de
@@ -2063,36 +1693,21 @@
      alignée précisément sur les lignes. background-attachment:local fait
      défiler les lignes AVEC le texte (sinon elles resteraient fixes derrière
      un texte qui scrolle). */
-  [data-theme="carnet"] .review-textarea {
-    font-family: 'Caveat', cursive;
-    font-size: 1.4rem;
-    line-height: 30px;
-    padding-top: 6px;
-    /* background-origin: content-box aligne l'origine du dégradé sur le début
-       du texte (après le padding), pas sur le coin du champ — sinon le
-       padding-top créait un décalage entre les lignes et l'endroit où le
-       texte commence réellement à s'écrire. La ligne est positionnée à ~80%
-       de la hauteur de ligne, là où repose la base des lettres (une police
-       manuscrite comme Caveat a des jambages qui descendent sous la ligne). */
-    background-origin: content-box;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--border) 23px, var(--border) 24px, transparent 24px, transparent 30px);
-    background-attachment: local;
-  }
 
   /* ── ACTION BUTTONS ── */
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn {
-    border: none; border-radius: var(--radius-sm); padding: 11px 16px; font-family: var(--font-heading);
+    border: 1px solid var(--border-hi); border-radius: var(--radius-sm); padding: 11px 16px; font-family: var(--font-heading);
     font-size: 0.85rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
     cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; min-width: 120px;
     transition: opacity var(--dur-fast), transform var(--dur-fast), background var(--dur-fast);
-    box-shadow: var(--box-shadow-style, none);
+    background: transparent; color: var(--text-hi);
   }
   .btn:hover { opacity: 1; transform: translateY(-1px); }
   .btn:active { transform: scale(.96); }
-  .btn-copy { background: var(--surface2); color: var(--text-hi); border: 1px solid var(--border-hi); }
-  .btn-copy.copied { background: var(--green); color: var(--solid-fill-text); border-color: var(--green); }
-  .btn-save { background: var(--blue); color: var(--blue-fill-text); font-weight: 800; }
+  .btn-copy { background: transparent; color: var(--text-hi); border: 1px solid var(--border-hi); }
+  .btn-copy.copied { background: transparent; color: var(--green); border-color: var(--green); }
+  .btn-save { background: var(--surface2); color: var(--text-hi); font-weight: 800; border: 1px solid var(--border-hi); }
 
   /* ── STATS COLUMN ── */
   
@@ -2121,7 +1736,7 @@
      contain-intrinsic-size donne une hauteur estimée pour que la barre de
      défilement reste juste avant que la carte ne soit réellement rendue.
      Pas de virtualisation en JS : une ligne de CSS suffit à ce volume. */
-  .hist-item, .wl-card { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+  .hist-item, .wl-card {  content-visibility: auto; contain-intrinsic-size: auto 240px;  }
   .hist-item {
     /* Ludex 2.0 : fusionné avec .hist-grid-card (voir plus haut dans ce
        fichier) — une SEULE déclaration pour .hist-item désormais, pas deux
@@ -2129,11 +1744,11 @@
        (piège déjà rencontré sur .mds-header, .wl-card, .mds-title cette
        même session). Plus de fond/bordure de ligne : c'est une cellule de
        grille de posters maintenant.
-       position:relative;overflow:hidden;border-radius:8px;aspect-ratio:2/3;
-       background:var(--surface2);cursor:pointer — voir la vraie
+       position:relative;overflow:hidden;aspect-ratio:2/3;
+       cursor:pointer — voir la vraie
        déclaration groupée avec .hist-grid-card plus haut. */
     transition: transform var(--dur-fast), opacity var(--dur-base) var(--ease-out);
-  }
+   }
   /* Rendu paresseux des longues listes : le navigateur ne calcule la mise en
      page et le dessin QUE des cartes proches de l'écran, au lieu de toutes les
      centaines de films de l'historique à chaque frame de défilement.
@@ -2233,9 +1848,9 @@
 
   /* ── WATCHLIST ── */
   .watchlist-add-row { display: flex; gap: 8px; margin-bottom: 14px; width: 100%; }
-  .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color var(--dur-fast); box-shadow: var(--box-shadow-style, none); min-width: 0; }
+  .watchlist-add-input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-hi); padding: 8px 12px; font-family: var(--font-heading); font-size: 0.85rem; outline: none; transition: border-color var(--dur-fast);  min-width: 0; }
   .watchlist-add-input:focus { border-color: var(--blue); }
-  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap; box-shadow: var(--box-shadow-style, none); }
+  .watchlist-add-btn { background: var(--blue); border: none; border-radius: var(--radius-sm); color: var(--blue-fill-text); padding: 8px 14px; font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity var(--dur-fast); white-space: nowrap;  }
   .watchlist-add-btn:hover { opacity: 0.85; }
   .watchlist-scroller { max-height: 480px; overflow-y: auto; }
 
@@ -2268,11 +1883,11 @@
   .wl-list-pill .icon { width: 1em; height: 1em; }
 
   .wl-card {
-    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+
     margin-bottom: 8px; transition: border-color var(--dur-fast); position: relative; width: 100%;
     overflow: hidden; /* cache les indices de swipe tant qu'on ne glisse pas */
     touch-action: pan-y; /* le scroll vertical de la liste reste natif, le swipe horizontal reste géré par notre JS */
-  }
+   }
   .wl-card-content {
     display: flex; gap: 10px; padding: 10px; background: var(--bg); position: relative; z-index: 1; width: 100%;
   }
@@ -2304,7 +1919,7 @@
   .wl-btn.del:hover { color: var(--red); }
 
   .wl-suggest-wrap { position: relative; width: 100%; }
-  .wl-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 998; overflow: hidden; box-shadow: var(--shadow-3); display: none; }
+  .wl-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border-hi); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); z-index: 998; overflow: hidden;  display: none; }
   .wl-suggest-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background var(--dur-fast); }
   .wl-suggest-item:last-child { border-bottom: none; }
   .wl-suggest-item:hover { background: var(--bg); }
@@ -2313,7 +1928,7 @@
   .wl-suggest-year { color: var(--text); font-size: 0.75rem; }
 
   /* ── TOAST ── */
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; box-shadow: var(--shadow-3);}
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: color-mix(in srgb, var(--surface2) 60%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-hi); border-radius: 8px; padding: 10px 22px; font-size: 0.84rem; color: var(--text-hi); font-family: var(--font-body); opacity: 0; transition: all var(--dur-base); z-index: 9999; pointer-events: none; white-space: nowrap; }
 
   /* Tirer vers le bas pour rafraîchir : indicateur fixe en haut de l'écran,
      translaté vers le bas et pivoté en JS au fil du geste (voir 01-navigation.js),
@@ -2364,8 +1979,8 @@
   }
   .duel-side:hover { border-color: var(--gold); transform: translateY(-2px); }
   .duel-side:active { transform: scale(.97); }
-  .duel-side.duel-winner { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), var(--shadow-2); }
-  .duel-poster { width: 84px; height: 124px; object-fit: cover; border-radius: var(--radius-sm); box-shadow: var(--shadow-1); }
+  .duel-side.duel-winner { border-color: var(--gold);  }
+  .duel-poster { width: 84px; height: 124px; object-fit: cover; border-radius: var(--radius-sm);  }
   .duel-poster-ph { display: flex; align-items: center; justify-content: center; background: var(--bg); font-size: 1.6rem; color: var(--text-mid); }
   .duel-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.82rem; color: var(--text-hi); line-height: 1.25; overflow-wrap: break-word; max-width: 100%; }
   .duel-year { font-size: 0.72rem; color: var(--text-mid); }
@@ -2410,7 +2025,7 @@
 
   /* ── Cartes Profil : Il y a un an / Heatmap / Décennies ── */
   .year-ago-body { display: flex; gap: 12px; align-items: center; }
-  .year-ago-poster { width: 52px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: var(--shadow-1); }
+  .year-ago-poster { width: 52px; height: 76px; object-fit: cover; border-radius: var(--radius-sm); flex-shrink: 0;  }
   .year-ago-poster-ph { display: flex; align-items: center; justify-content: center; background: var(--surface2); color: var(--text-mid); font-size: 1.2rem; }
   .year-ago-title { font-family: var(--font-heading); font-weight: 700; font-size: 0.92rem; color: var(--text-hi); }
   .year-ago-meta { font-size: 0.78rem; color: var(--text-mid); margin-top: 3px; }
@@ -2561,7 +2176,7 @@
     border-bottom: none; border-radius: 12px 12px 0 0; padding: 12px 16px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     font-size: 0.82rem; color: var(--text-hi); font-family: var(--font-body);
-    box-shadow: var(--shadow-3); z-index: 9997; transition: transform var(--dur-base) var(--ease-out);
+     z-index: 9997; transition: transform var(--dur-base) var(--ease-out);
   }
   .update-banner.show { transform: translate(-50%, 0); }
   #update-banner-reload-btn {
@@ -2606,7 +2221,7 @@
      où l'ordre du DOM se trouvait être le bon par hasard). */
   #person-detail-sheet { z-index: 10011; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--shadow-3); transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
+  .modal-box { background: var(--surface); border: 1px solid var(--border-hi); border-radius: var(--radius); padding: 24px; max-width: 380px; width: 90%; max-height: 85vh; overflow-y: auto; overscroll-behavior: contain;  transform: scale(.92); opacity: 0; transition: transform .22s var(--ease-out), opacity .18s var(--ease-out); }
   .modal-overlay.open .modal-box { transform: scale(1); opacity: 1; }
   .modal-title { color: var(--text-hi); font-weight: 700; margin-bottom: 12px; font-family: var(--font-heading); font-size: 1.2rem;}
   .theme-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px; }
@@ -2619,10 +2234,6 @@
   .theme-card.selected::after { content:"✓"; position:absolute; top:5px; right:5px; font-size:.65rem; font-weight:900; color:#000; background:var(--blue); border-radius:50%; width:16px; height:16px; line-height:16px; text-align:center; display:block; }
   .theme-preview { height:60px; display:flex; flex-direction:column; gap:4px; padding:8px 10px; position:relative;}
   
-  [data-theme="default"].theme-card .theme-preview::before {
-    content:''; position:absolute; top:15px; left:10px; width:80%; height:1px;
-    background: linear-gradient(to right, #00e054 33%, #40bcf4 33%, #40bcf4 66%, #ff8000 66%);
-  }
 
   .theme-preview-row { display:flex; align-items:center; gap:4px; height:9px; }
   .theme-preview-bar { height:9px; border-radius:3px; }
@@ -2657,7 +2268,7 @@
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); z-index: 6;
-    box-shadow: var(--shadow-1);
+
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
   }
@@ -2701,7 +2312,7 @@
      se réduit — pour toujours garder l'essentiel visible en lisant le reste. */
   .mds-header.compact { padding-top: 12px; padding-bottom: 8px; gap: 10px; align-items: center; }
   .mds-header.compact .mds-header-left { width: 40px; }
-  .mds-header.compact .mds-poster { width: 40px; box-shadow: none; }
+  .mds-header.compact .mds-poster { width: 40px;  }
   .mds-header.compact .mds-poster-ph { width: 40px; height: 60px; font-size: 1rem; }
   .mds-header.compact .mds-meta,
   .mds-header.compact .mds-score-stamp,
@@ -2710,7 +2321,7 @@
   .mds-header.compact .mds-title { font-size: 0.95rem; }
   .mds-header-left { width: 100px; flex-shrink: 0; transition: width var(--dur-base) var(--ease-out); }
   .mds-poster-wrap { position: relative; width: 100%; }
-  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0; box-shadow: var(--shadow-2); transition: width var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); display: block; }
+  .mds-poster { width: 100px; border-radius: var(--radius-sm); flex-shrink: 0;  transition: width var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out); display: block; }
   .mds-poster-ph {
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
     background: var(--surface2); font-size: 2rem; color: var(--text-mid);
@@ -2769,7 +2380,7 @@
     border-radius: 50%; background: var(--bg);
     border: 2px solid var(--poster-accent, var(--gold));
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transform: rotate(-11deg); box-shadow: var(--shadow-1);
+    transform: rotate(-11deg);
     animation: stampImpact .45s cubic-bezier(.2,1.4,.4,1) both;
     animation-delay: .15s;
   }
@@ -2870,15 +2481,20 @@
   /* Regroupée sous l'affiche (colonne étroite) plutôt qu'en pleine largeur
      déconnectée — les boutons forment un seul bloc visuel avec l'affiche. */
   .mds-actions { display: flex; gap: 8px; }
-  .mds-action-btn { flex: 1; }
   .mds-action-btn {
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
     padding: 8px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
-    background: var(--surface2); color: var(--text-hi); font-family: var(--font-heading);
+    background: transparent; color: var(--text-hi); font-family: var(--font-heading);
+    font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all var(--dur-fast); white-space: nowrap;
+  }
+  .mds-action-btn {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border-hi);
+    background: transparent; color: var(--text-hi); font-family: var(--font-heading);
     font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all var(--dur-fast); white-space: nowrap;
   }
   .mds-action-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .mds-action-btn.primary { background: var(--orange); border-color: var(--orange); color: var(--solid-fill-text); }
+  .mds-action-btn.primary { background: var(--surface2); border-color: var(--border-hi); color: var(--text-hi); }
   .mds-action-btn.primary:hover { opacity: 0.9; color: var(--solid-fill-text); }
   .mds-action-btn .icon { width: 1em; height: 1em; flex-shrink: 0; }
 
@@ -2909,7 +2525,7 @@
   .mds-score-compare-track { position: relative; height: 4px; background: var(--border); border-radius: 2px; }
   .mds-score-compare-mark { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); }
   .mds-score-compare-mark.tmdb { background: var(--text-hi); }
-  .mds-score-compare-mark.mine { background: var(--gold); box-shadow: 0 0 0 2px var(--surface2); }
+  .mds-score-compare-mark.mine { background: var(--gold);  }
   .mds-score-compare-legend { display: flex; justify-content: space-between; font-size: 0.62rem; color: var(--text-mid); margin-top: 5px; font-family: var(--font-mono); }
 
   /* Plateformes de streaming (voir fetchAndRenderProviders(),
@@ -3248,7 +2864,7 @@
     background: linear-gradient(90deg, var(--red), var(--gold)); color: #fff; font-weight: 800;
     font-size: 0.88rem; font-family: var(--font-heading); cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    box-shadow: 0 4px 15px color-mix(in srgb, var(--red) 30%, transparent);
+
     transition: transform var(--dur-fast);
   }
   .btn-share-gradient:active { transform: scale(0.97); }
@@ -3486,23 +3102,13 @@
        bas — seul le positionnement change, le style (couleurs, police,
        disposition icône/texte) est déjà défini plus haut, partagé avec PC. */
     .mobile-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      margin: 0 12px calc(12px + env(safe-area-inset-bottom)) 12px;
-      border-radius: 22px;
-      z-index: 1000;
-      box-shadow: var(--shadow-3);
-      max-width: none;
-      /* Fond semi-transparent + flou : le contenu qui défile en dessous
-         glisse élégamment derrière la barre, plutôt qu'un fond plein qui
-         cache tout net. Opacité encore réduite sur demande (55%, était
-         75%) pour laisser plus transparaître à travers, flou inchangé
-         (16px) — les icônes/texte restent lisibles grâce au flou qui
-         "efface" les détails du contenu défilant derrière, même avec
-         moins de teinte opaque par-dessus. */
-      background: color-mix(in srgb, var(--surface) 55%, transparent);
-      backdrop-filter: blur(18px) saturate(160%);
-      -webkit-backdrop-filter: blur(18px) saturate(160%);
-    }
+    display: flex; margin: 0 auto 16px auto; max-width: 800px;
+    background: rgba(10,10,12, 0.65);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-pill);
+    padding: 4px;
+  }
     /* Chaque .nav-btn porte déjà son propre radius 999px (bloc commun
        ci-dessus) : plus besoin de caler les coins extérieurs de la barre
        sur les boutons de bord, chaque capsule est indépendante. */
@@ -3539,7 +3145,7 @@
       width: 68px; height: 68px; margin: 0; border-radius: 50%;
       background: var(--orange); border: 4px solid var(--surface);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      box-shadow: var(--shadow-1);
+
     }
     .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text); }
     .nav-btn-primary-label {
@@ -3556,15 +3162,6 @@
        débordement visuel le long de la diagonale (48×√2 ≈ 68px) — donne
        un débordement comparable aux ~5px du cercle plutôt que la
        diagonale complète d'un carré de même côté. */
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 48px; height: 48px; border-radius: 8px;
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
-      transform: rotate(-45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */
@@ -3651,13 +3248,13 @@
        width: 100% et n'était donc pas touchée. */
     .app-header { order: 0; width: 100%; }
     .mobile-nav {
-      order: 1; width: 100%;
-      /* Reste atteignable pendant le défilement : sans ça, sur un onglet
-         long (Profil fait 2637px de haut), la barre remontait hors de vue
-         dès les premiers pixels de scroll. */
-      position: sticky; top: 0; z-index: 900;
-      background: var(--surface);
-    }
+    display: flex; margin: 0 auto 16px auto; max-width: 800px;
+    background: rgba(10,10,12, 0.65);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-pill);
+    padding: 4px;
+  }
     /* main (pas .layout) : l'ajout du lien d'évitement (phase 5 de l'audit,
        WCAG 2.4.1) a inséré <main id="contenu"> entre <body> et .layout —
        .layout n'est donc plus un enfant flex DIRECT de body, et son
@@ -3678,7 +3275,14 @@
      distribuent le contenu existant à l'intérieur de l'onglet actif, sans
      jamais afficher deux vues simultanément. */
   @media (min-width: 1024px) {
-    .layout, .mobile-nav { max-width: 1100px; }
+    .layout, .mobile-nav {
+    display: flex; margin: 0 auto 16px auto; max-width: 800px;
+    background: rgba(10,10,12, 0.65);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-pill);
+    padding: 4px;
+  }
 
     /* ── L'HISTORIQUE PERDAIT 85 % DE SON CONTENU ICI ──────────────────
        Ce bloc posait `column-count: 2` sur .history-scroller pour obtenir

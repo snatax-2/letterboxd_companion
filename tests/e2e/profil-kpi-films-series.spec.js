@@ -107,7 +107,7 @@ test('retour vers Films restaure les vrais KPI films', async ({ page }) => {
   await expect(page.locator('#kpi-total')).toHaveText('1');
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite stats series - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
     await goToTvStats(page);

@@ -47,7 +47,7 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.route('**fonts.googleapis.com**', route => route.abort());

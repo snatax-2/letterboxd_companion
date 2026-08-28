@@ -151,7 +151,7 @@ test('supprimer la derniere saison retire toute la serie, avec message adapte', 
   await expect(page.locator('#tv-history-list .hist-grid-card')).toHaveCount(0);
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite suppression de saison - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));
@@ -329,7 +329,7 @@ test.describe('Badge, note de carte, réouverture et suppression', () => {
     await expect(page.locator('#hist-count-badge')).toContainText('0 série');
   });
 
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+  for (const theme of ['dark', 'light']) {
     test(`accessibilite historique series (badge/note/suppression) - ${theme}`, async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       await goToTvHistory(page);

@@ -131,7 +131,7 @@ test('serie jamais suivie : pas de note globale, bouton Noter/Suivre pre-remplit
   await expect(page.locator('.tds-season-tab').first()).toBeVisible();
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite fiche detaillee serie - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));

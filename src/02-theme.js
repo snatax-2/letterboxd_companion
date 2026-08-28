@@ -27,19 +27,16 @@ function loadSettings() {
 function applySettings(settings) {
   document.getElementById('main-app-title').innerHTML = settings.appName || "<em>Ludex</em> Rating Companion";
   
-  let themeToApply = settings.theme || "default";
-  // Repli pour quiconque avait Méridien enregistré avant son retrait — un
-  // data-theme inconnu laisserait l'app sans variables CSS définies plutôt
-  // que de retomber sur des couleurs cohérentes.
-  if (themeToApply === 'meridien') themeToApply = 'default';
+  let themeToApply = settings.theme || "system";
+  if (!['dark', 'light', 'system'].includes(themeToApply)) themeToApply = 'system';
   
   if (themeToApply === "system") {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    themeToApply = prefersDark ? "default" : "filmnoir"; 
+    themeToApply = prefersDark ? "dark" : "light";
     
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
         if (JSON.parse(localStorage.getItem('lbx_settings') || '{}').theme === 'system') {
-            const sysTheme = e.matches ? "default" : "filmnoir";
+            const sysTheme = e.matches ? "dark" : "light";
             if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(sysTheme);
             document.documentElement.setAttribute('data-theme', sysTheme);
             renderAll();
@@ -92,7 +89,7 @@ function selectThemeCard(card) {
     // doivent être demandées, elles ne sont plus toutes préchargées.
     const picked = card.dataset.theme !== "system"
       ? card.dataset.theme
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "default" : "filmnoir");
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light");
     if (typeof window.loadThemeFonts === 'function') window.loadThemeFonts(picked);
     document.documentElement.setAttribute('data-theme', picked);
   });

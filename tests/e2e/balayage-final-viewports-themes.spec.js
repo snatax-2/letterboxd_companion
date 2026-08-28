@@ -27,7 +27,7 @@ const SCREENS = [
 ];
 
 for (const viewport of [{ w: 390, h: 900, label: 'mobile' }, { w: 1440, h: 1000, label: 'desktop' }]) {
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+  for (const theme of ['dark', 'light']) {
     test(`balayage final : ${viewport.label} / ${theme}`, async ({ page }) => {
       // Budget élargi, et pas pour masquer un échec : ce test enchaîne CINQ
       // analyses axe-core complètes (une par écran principal) plus les
