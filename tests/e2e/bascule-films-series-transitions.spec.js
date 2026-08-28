@@ -37,22 +37,22 @@ test('Decouvrir est utilisable des l\'installation, sans aucune note', async ({ 
   await expect(page.locator('#choix-du-jour-card')).toContainText('Matrix');
 
   // La CARTE elle-même, pas seulement son conteneur — et pas seulement son
-  // texte. Ces deux assertions manquaient, et c'est exactement par là qu'une
-  // régression est passée en production : la carte a été rendue en 0×0, donc
-  // invisible, pendant que ce test restait vert. `.choix-du-jour-wrap` était
-  // bien « visible » (il contient le surtitre « Choix du jour », qui a sa
-  // propre hauteur) et `toContainText` lit textContent, ce qui réussit sur un
-  // élément de taille nulle. On vérifie donc la carte, sa taille réelle et
-  // son ratio.
+  // texte. Le pilote Archives & Editorial n'est plus un hero recadré en 4:3 :
+  // il juxtapose une vraie affiche 2:3 et un bloc éditorial. On vérifie donc
+  // la taille du bouton ET la proportion de l'affiche, ce qui protège la
+  // nouvelle composition sans réintroduire l'ancien recadrage.
   await expect(page.locator('#choix-du-jour-card')).toBeVisible();
   const boite = await page.locator('#choix-du-jour-card').evaluate((el) => {
     const r = el.getBoundingClientRect();
     return { w: Math.round(r.width), h: Math.round(r.height) };
   });
   expect(boite.w, `largeur de la carte : ${JSON.stringify(boite)}`).toBeGreaterThan(200);
-  // aspect-ratio: 4/3 — une carte qui perdrait sa largeur perdrait aussi sa
-  // hauteur, le ratio est donc le contrôle qui attrape les deux d'un coup.
-  expect(boite.h / boite.w, `ratio : ${JSON.stringify(boite)}`).toBeCloseTo(3 / 4, 1);
+  expect(boite.h, `hauteur de la composition : ${JSON.stringify(boite)}`).toBeGreaterThan(180);
+  const affiche = await page.locator('.choix-du-jour-poster-wrap').evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { w: r.width, h: r.height };
+  });
+  expect(affiche.h / affiche.w, `ratio affiche : ${JSON.stringify(affiche)}`).toBeCloseTo(3 / 2, 1);
   await expect(page.locator('.choix-du-jour-title')).toBeVisible();
 
   // Et rien n'y invite à noter d'abord : c'était tout l'objet du changement.

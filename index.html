@@ -793,14 +793,46 @@
 
     <div class="right-view active" id="view-discover">
       <div class="card" id="discover-card-wrap">
-        <!-- Ludex 2.0 : refonte complète de Découvrir depuis zéro (voir
-             Ludex_Specifications_Decouverte.pdf) — plus de swipe, de jeu de
-             devinette, de quiz, d'angles morts ni de "Parcourir". Trois
-             blocs seulement : toggle Films/Séries sticky, Choix du jour
-             (hero plein cadre, affiche + titre seulement), et 4 carrousels
-             d'affiches pures. Duels a été déplacé vers Profil (voir
-             #duels-card, view-profile) — seul son emplacement dans le DOM
-             change, 13-duels.js n'a pas été modifié. -->
+        <!-- Archives & Editorial — Découvrir sert d'écran pilote à la
+             refonte. La structure fonctionnelle existante reste intacte :
+             bascule Films/Séries, choix du jour et cinq carrousels. La
+             recherche ajoutée ici ouvre les vraies fiches Film, Série et
+             Personne ; elle ne remplace aucun parcours de notation. -->
+        <header class="discover-editorial-header">
+          <div class="discover-editorial-heading">
+            <div class="discover-editorial-kicker">Archives / Sélections</div>
+            <h2 class="discover-editorial-title">Découvrir</h2>
+          </div>
+          <form class="editorial-search" id="discover-search" role="search" aria-label="Rechercher dans le catalogue">
+            <label class="visually-hidden" for="discover-search-input">Rechercher un film, une série, un réalisateur ou un acteur</label>
+            <input
+              type="search"
+              id="discover-search-input"
+              class="editorial-search-input"
+              placeholder="Film, série, personne…"
+              autocomplete="off"
+              autocapitalize="words"
+              enterkeyhint="search"
+              aria-controls="discover-search-results"
+              aria-describedby="discover-search-help"
+              disabled
+            >
+            <button
+              type="button"
+              class="editorial-search-toggle"
+              id="discover-search-toggle"
+              aria-label="Ouvrir la recherche"
+              aria-expanded="false"
+              aria-controls="discover-search-results"
+            >
+              <span class="editorial-search-icon editorial-search-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+              <span class="editorial-search-icon editorial-search-icon-close" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+            </button>
+            <span class="visually-hidden" id="discover-search-help">Saisis au moins deux caractères. Échap ferme la recherche.</span>
+          </form>
+        </header>
+        <section class="discover-search-results" id="discover-search-results" aria-live="polite" aria-busy="false" hidden></section>
+
         <div class="discover-segmented-wrap">
           <div class="mode-tabs discover-seg-tabs"><div class="toggle-slider" aria-hidden="true"></div>
             <button type="button" class="mode-tab active discover-seg-btn" data-media-type="movie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" class="icon mode-tab-icon icon-clap"><path d="M2.5 10.5C2.5 6.72876 2.5 4.84315 3.67157 3.67157C4.84315 2.5 6.72876 2.5 10.5 2.5H13.5C17.2712 2.5 19.1569 2.5 20.3284 3.67157C21.5 4.84315 21.5 6.72876 21.5 10.5V13.5C21.5 17.2712 21.5 19.1569 20.3284 20.3284C19.1569 21.5 17.2712 21.5 13.5 21.5H10.5C6.72876 21.5 4.84315 21.5 3.67157 20.3284C2.5 19.1569 2.5 17.2712 2.5 13.5V10.5Z"/><path d="M3 8H22"/><path d="M6 8L11.5 2.5"/><path d="M13 8L18.5 2.5"/><path d="M6.5 17.5H10.5" stroke-linecap="round"/><path d="M6.5 13.5L15.5 13.5" stroke-linecap="round"/></svg> Films</button>

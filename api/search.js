@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Trop de requêtes, réessaie dans un instant.' });
   }
 
-  const { query, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query || {};
+  const { query, multiQuery, id, providers, img, recommendations, trending, personId, personSearch, random, images, tvImages, dailyPick, weeklyRelease, decadeTop, collectionId, studioId, countryCode, keywordId, onThisDay, imdbId, tvQuery, tvId, tvSeasonShowId, tvSeasonNumber, mediaType, topRated } = req.query || {};
   // Ludex 2.0 : le toggle Films/Séries de Découvrir doit pouvoir demander
   // la variante série de ces trois endpoints (choix du jour, classiques par
   // décennie, cinéma international) — mediaType='tv' bascule discover/movie
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   const TMDB_KEY = process.env.TMDB_KEY;
   const OMDB_KEY = process.env.OMDB_KEY;
 
-  const textInputs = { query, tvQuery, personSearch, imdbId };
+  const textInputs = { query, multiQuery, tvQuery, personSearch, imdbId };
   const invalidText = Object.entries(textInputs).find(([, value]) =>
     value !== undefined && (typeof value !== 'string' || value.trim().length > 200));
   if (invalidText) {
@@ -51,7 +51,7 @@ export default async function handler(req, res) {
   // encodeURIComponent() ne conviendrait pas ici : il échapperait les `/`
   // légitimes d'autres usages et masquerait une entrée absurde au lieu de la
   // refuser. Ces identifiants sont TOUS numériques — on valide, on n'encode pas.
-  // (query, tvQuery, personSearch et imdbId, eux, sont du texte libre : ils
+  // (query, multiQuery, tvQuery, personSearch et imdbId, eux, sont du texte libre : ils
   // passent déjà par encodeURIComponent plus bas, ce qui est correct pour eux.)
   const tmdbId = (value) => (/^[0-9]{1,12}$/.test(String(value)) ? String(value) : null);
   const badId = () => {
@@ -133,6 +133,38 @@ export default async function handler(req, res) {
       const pick = results.length > 0 ? results[Math.floor(seededFraction(seed) * results.length)] : null;
       setCache(86400, 604800);
       return res.status(200).json({ result: pick });
+
+    } else if (multiQuery) {
+      // Recherche éditoriale transversale de Découvrir. TMDb fournit un
+      // endpoint multi qui classe dans UNE réponse films, séries et personnes
+      // selon leur pertinence. On évite ainsi trois requêtes parallèles à
+      // chaque pause de frappe, tout en conservant les fiches spécialisées
+      // existantes côté client pour l'ouverture d'un résultat.
+      const safeMultiQuery = multiQuery.trim();
+      if (!safeMultiQuery) {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(400).json({ error: 'Recherche vide.' });
+      }
+      const multiData = await fetchJson(
+        `https://api.themoviedb.org/3/search/multi?api_key=${TMDB_KEY}&language=fr-FR&query=${encodeURIComponent(safeMultiQuery)}&include_adult=false`
+      );
+      const results = (multiData.results || [])
+        .filter(item => ['movie', 'tv', 'person'].includes(item.media_type))
+        .filter(item => item.id && (item.title || item.name))
+        .slice(0, 18)
+        .map(item => ({
+          id: item.id,
+          media_type: item.media_type,
+          title: item.title || item.name || '',
+          release_date: item.release_date || item.first_air_date || '',
+          poster_path: item.poster_path || item.profile_path || null,
+          known_for_department: item.known_for_department || '',
+          known_for: item.media_type === 'person'
+            ? (item.known_for || []).slice(0, 3).map(credit => credit.title || credit.name).filter(Boolean)
+            : [],
+        }));
+      setCache(3600, 86400);
+      return res.status(200).json({ results });
 
     } else if (personSearch) {
       // Cas 8 : Recherche de personne PAR NOM (ex: "tarantino") — différent de

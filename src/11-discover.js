@@ -1,12 +1,9 @@
 // ═══════════════════════════════════════════
-//  DÉCOUVRIR — feuille blanche (voir Ludex_Specifications_Decouverte.pdf)
+//  DÉCOUVRIR — pilote Archives & Editorial
 // ═══════════════════════════════════════════
-// Plus de swipe, de jeu de devinette, de quiz, d'angles morts ni de
-// "Parcourir" : trois blocs seulement — toggle Films/Séries sticky, Choix
-// du jour (hero plein cadre, affiche + titre seulement), et 4 carrousels
-// horizontaux d'affiches pures (Nouveautés, Classiques intemporels, Cinéma
-// international, D'après ton historique). Duels a été déplacé vers Profil
-// (voir 13-duels.js, inchangé — seul son emplacement dans le DOM change).
+// La refonte porte sur la présentation, pas sur la logique : la bascule
+// Films/Séries, le choix stable du jour et les cinq sources de carrousels
+// restent les mêmes. La recherche transversale ouvre les fiches existantes.
 
 let discoverMediaType = 'movie'; // 'movie' | 'tv' — état du toggle, partagé par les 4 blocs
 // discoverLoaded vit désormais dans 01-navigation.js (voir le commentaire
@@ -24,6 +21,236 @@ function normalizeItem(m) {
     backdrop_path: m.backdrop_path,
   };
 }
+
+// ═══════════════════════════════════════════
+//  RECHERCHE ÉDITORIALE TRANSVERSALE
+// ═══════════════════════════════════════════
+// Une loupe compacte devient un vrai champ sans déplacer brutalement le
+// contenu. La requête TMDb multi rassemble films, séries et personnes en un
+// seul appel ; les résultats réutilisent ensuite les feuilles détaillées de
+// production, sans nouveau parcours simulé.
+const discoverSearchEl = document.getElementById('discover-search');
+const discoverSearchInput = document.getElementById('discover-search-input');
+const discoverSearchToggle = document.getElementById('discover-search-toggle');
+const discoverSearchResults = document.getElementById('discover-search-results');
+let discoverSearchTimer = null;
+let discoverSearchAbortController = null;
+let discoverSearchRequestId = 0;
+
+function prepareEditorialImages(scope) {
+  if (!scope) return;
+  scope.querySelectorAll('img.editorial-image').forEach(image => {
+    const reveal = () => image.classList.add('is-loaded');
+    if (image.complete && image.naturalWidth > 0) requestAnimationFrame(reveal);
+    else {
+      image.addEventListener('load', reveal, { once: true });
+      // Même en cas d'image indisponible, le navigateur ne doit pas laisser
+      // un flou opaque éternel : le fond neutre du conteneur prend le relais.
+      image.addEventListener('error', reveal, { once: true });
+    }
+  });
+}
+
+function clearDiscoverSearchResults() {
+  if (!discoverSearchResults) return;
+  discoverSearchResults.hidden = true;
+  discoverSearchResults.innerHTML = '';
+  discoverSearchResults.setAttribute('aria-busy', 'false');
+}
+
+function setDiscoverSearchOpen(open, { restoreFocus = false } = {}) {
+  if (!discoverSearchEl || !discoverSearchInput || !discoverSearchToggle) return;
+  discoverSearchEl.classList.toggle('is-open', open);
+  discoverSearchInput.disabled = !open;
+  discoverSearchToggle.setAttribute('aria-expanded', String(open));
+  discoverSearchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Ouvrir la recherche');
+  if (open) {
+    requestAnimationFrame(() => discoverSearchInput.focus());
+    return;
+  }
+
+  clearTimeout(discoverSearchTimer);
+  discoverSearchAbortController?.abort();
+  discoverSearchAbortController = null;
+  discoverSearchRequestId += 1;
+  discoverSearchInput.value = '';
+  clearDiscoverSearchResults();
+  if (restoreFocus) discoverSearchToggle.focus();
+}
+
+function discoverSearchStatus(message, state = 'idle') {
+  if (!discoverSearchResults) return;
+  discoverSearchResults.hidden = false;
+  discoverSearchResults.dataset.state = state;
+  discoverSearchResults.setAttribute('aria-busy', String(state === 'loading'));
+  discoverSearchResults.innerHTML = `
+    <div class="discover-search-status" role="status">
+      ${state === 'loading' ? '<span class="discover-search-loader" aria-hidden="true"></span>' : ''}
+      <span>${escAttr(message)}</span>
+    </div>`;
+}
+
+function discoverPersonDepartment(department) {
+  const labels = {
+    Acting: 'Interprétation',
+    Directing: 'Réalisation',
+    Writing: 'Écriture',
+    Production: 'Production',
+    Camera: 'Image',
+  };
+  return labels[department] || 'Personne';
+}
+
+function discoverResultMeta(item) {
+  if (item.media_type === 'movie') {
+    return ['Film', (item.release_date || '').slice(0, 4)].filter(Boolean).join(' · ');
+  }
+  if (item.media_type === 'tv') {
+    return ['Série', (item.release_date || '').slice(0, 4)].filter(Boolean).join(' · ');
+  }
+  const knownFor = Array.isArray(item.known_for) ? item.known_for.filter(Boolean).slice(0, 2).join(', ') : '';
+  return [discoverPersonDepartment(item.known_for_department), knownFor].filter(Boolean).join(' · ');
+}
+
+function discoverResultPlaceholder(mediaType) {
+  if (mediaType === 'tv') return ICONS.tv;
+  if (mediaType === 'person') return ICONS.person;
+  return ICONS.clapperboardStroke;
+}
+
+function renderDiscoverSearchResults(items, queryText) {
+  if (!discoverSearchResults) return;
+  if (!items.length) {
+    discoverSearchStatus(`Aucun résultat pour « ${queryText} ».`, 'empty');
+    return;
+  }
+
+  discoverSearchResults.hidden = false;
+  discoverSearchResults.dataset.state = 'results';
+  discoverSearchResults.setAttribute('aria-busy', 'false');
+  discoverSearchResults.innerHTML = `
+    <div class="discover-search-results-heading">
+      <span>Résultats</span>
+      <span>${items.length.toString().padStart(2, '0')}</span>
+    </div>
+    <div class="discover-search-results-list">
+      ${items.map((item, index) => {
+        const imageUrl = item.poster_path ? tmdbImage(item.poster_path, 'w185') : '';
+        const isPerson = item.media_type === 'person';
+        return `
+          <button type="button" class="discover-search-result" data-search-result-id="${escAttr(String(item.id))}" data-search-result-type="${escAttr(item.media_type)}" data-search-result-title="${escAttr(item.title)}" aria-label="Ouvrir la fiche de ${escAttr(item.title)}">
+            <span class="discover-search-result-index" aria-hidden="true">${String(index + 1).padStart(2, '0')}</span>
+            <span class="discover-search-result-media${isPerson ? ' is-person' : ''}">
+              ${imageUrl
+                ? `<img class="editorial-image" src="${imageUrl}" alt="" loading="lazy">`
+                : `<span class="discover-search-result-placeholder" aria-hidden="true">${discoverResultPlaceholder(item.media_type)}</span>`}
+            </span>
+            <span class="discover-search-result-copy">
+              <span class="discover-search-result-title">${escAttr(item.title)}</span>
+              <span class="discover-search-result-meta">${escAttr(discoverResultMeta(item))}</span>
+            </span>
+            <span class="discover-search-result-arrow" aria-hidden="true">↗</span>
+          </button>`;
+      }).join('')}
+    </div>`;
+  prepareEditorialImages(discoverSearchResults);
+}
+
+async function runDiscoverSearch(rawQuery) {
+  const queryText = rawQuery.trim();
+  if (queryText.length < 2) {
+    discoverSearchAbortController?.abort();
+    clearDiscoverSearchResults();
+    return;
+  }
+
+  discoverSearchAbortController?.abort();
+  discoverSearchAbortController = new AbortController();
+  const requestId = ++discoverSearchRequestId;
+  discoverSearchStatus('Recherche dans les archives…', 'loading');
+  try {
+    const response = await fetch(`/api/search?multiQuery=${encodeURIComponent(queryText)}`, {
+      signal: discoverSearchAbortController.signal,
+    });
+    if (!response.ok) throw new Error(`Recherche HTTP ${response.status}`);
+    const data = await response.json();
+    if (requestId !== discoverSearchRequestId) return;
+    renderDiscoverSearchResults(Array.isArray(data.results) ? data.results : [], queryText);
+  } catch (error) {
+    if (error.name === 'AbortError' || requestId !== discoverSearchRequestId) return;
+    discoverSearchStatus('La recherche est momentanément indisponible. Réessaie.', 'error');
+  }
+}
+
+discoverSearchToggle?.addEventListener('click', () => {
+  const shouldOpen = !discoverSearchEl.classList.contains('is-open');
+  hapticPulse(discoverSearchToggle, 'light');
+  setDiscoverSearchOpen(shouldOpen, { restoreFocus: !shouldOpen });
+});
+
+discoverSearchInput?.addEventListener('input', () => {
+  clearTimeout(discoverSearchTimer);
+  discoverSearchAbortController?.abort();
+  // Une réponse déjà arrivée dans la file des microtâches peut gagner la
+  // course contre abort(). L'identifiant l'invalide immédiatement, avant
+  // même le prochain appel debouncé.
+  discoverSearchRequestId += 1;
+  const queryText = discoverSearchInput.value.trim();
+  if (queryText.length < 2) {
+    clearDiscoverSearchResults();
+    return;
+  }
+  discoverSearchStatus('Recherche dans les archives…', 'loading');
+  discoverSearchTimer = setTimeout(() => runDiscoverSearch(queryText), 250);
+});
+
+discoverSearchEl?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  clearTimeout(discoverSearchTimer);
+  runDiscoverSearch(discoverSearchInput.value);
+});
+
+discoverSearchEl?.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    setDiscoverSearchOpen(false, { restoreFocus: true });
+    return;
+  }
+  if (event.key === 'ArrowDown' && event.target === discoverSearchInput) {
+    const firstResult = discoverSearchResults?.querySelector('.discover-search-result');
+    if (firstResult) {
+      event.preventDefault();
+      firstResult.focus();
+    }
+  }
+});
+
+discoverSearchResults?.addEventListener('keydown', (event) => {
+  const results = [...discoverSearchResults.querySelectorAll('.discover-search-result')];
+  const currentIndex = results.indexOf(document.activeElement);
+  if (currentIndex < 0) return;
+  if (event.key === 'ArrowDown' && results[currentIndex + 1]) {
+    event.preventDefault();
+    results[currentIndex + 1].focus();
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    if (results[currentIndex - 1]) results[currentIndex - 1].focus();
+    else discoverSearchInput.focus();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    setDiscoverSearchOpen(false, { restoreFocus: true });
+  }
+});
+
+discoverSearchResults?.addEventListener('click', (event) => {
+  const result = event.target.closest('.discover-search-result');
+  if (!result) return;
+  const { searchResultId: id, searchResultType: type, searchResultTitle: title } = result.dataset;
+  setDiscoverSearchOpen(false, { restoreFocus: true });
+  if (type === 'tv') openTvDetailSheet(id);
+  else if (type === 'person') openPersonDetailSheet(id, title);
+  else openMovieDetailSheet(id);
+});
 
 // ── Toggle Films/Séries ──
 const discoverSegBtns = document.querySelectorAll('.discover-seg-btn');
@@ -72,7 +299,13 @@ async function loadChoixDuJour() {
   }
 
   blocChoixDuJour(heroEl).style.display = '';
-  heroEl.innerHTML = `<span class="skeleton-bg" style="display:block;width:100%;height:100%;border-radius:16px;"></span>`;
+  heroEl.innerHTML = `
+    <span class="choix-du-jour-poster-wrap skeleton-bg" aria-hidden="true"></span>
+    <span class="choix-du-jour-skeleton-copy" aria-hidden="true">
+      <span class="skeleton-text short skeleton-bg"></span>
+      <span class="skeleton-text long skeleton-bg"></span>
+      <span class="skeleton-text short skeleton-bg"></span>
+    </span>`;
   try {
     const daysSinceEpoch = Math.floor(Date.now() / 86400000);
     const res = await fetch(`/api/search?dailyPick=${daysSinceEpoch}&mediaType=${discoverMediaType}`);
@@ -132,18 +365,29 @@ function blocChoixDuJour(heroEl) {
 function renderChoixDuJour(item) {
   const heroEl = document.getElementById('choix-du-jour-card');
   if (!heroEl) return;
-  const posterUrl = item.poster_path ? tmdbImage(item.poster_path, 'w780') : '';
+  const posterUrl = item.poster_path ? tmdbImage(item.poster_path, 'w342') : '';
+  const mediaLabel = discoverMediaType === 'tv' ? 'Série du jour' : 'Film du jour';
+  const creatorLabel = discoverMediaType === 'tv' ? 'Créée par' : 'Réalisé par';
   blocChoixDuJour(heroEl).style.display = '';  // annule un masquage laissé par un échec précédent
   heroEl.innerHTML = `
-    <span class="choix-du-jour-bg" style="background-image:url('${posterUrl}')"></span>
-    <span class="choix-du-jour-overlay"></span>
+    <span class="choix-du-jour-poster-wrap">
+      ${posterUrl
+        ? `<img class="choix-du-jour-poster editorial-image" src="${posterUrl}" alt="Affiche de ${escAttr(item.title)}">`
+        : `<span class="choix-du-jour-poster-placeholder" aria-hidden="true">${discoverMediaType === 'tv' ? ICONS.tv : ICONS.clapperboardStroke}</span>`}
+      <span class="choix-du-jour-catalogue-index" aria-hidden="true">01</span>
+    </span>
     <span class="choix-du-jour-content">
+      <span class="choix-du-jour-kicker">${mediaLabel}</span>
       <span class="choix-du-jour-title">${escAttr(item.title)}</span>
-      ${item.director ? `<span class="choix-du-jour-director">Réalisé par ${escAttr(item.director)}</span>` : ''}
+      ${item.director ? `<span class="choix-du-jour-director"><span>${creatorLabel}</span> ${escAttr(item.director)}</span>` : ''}
+      ${item.year ? `<span class="choix-du-jour-year">${escAttr(item.year)}</span>` : ''}
+      <span class="choix-du-jour-open">Ouvrir la fiche <span aria-hidden="true">↗</span></span>
     </span>
   `;
   heroEl.dataset.itemId = String(item.id);
   heroEl.dataset.mediaType = discoverMediaType;
+  heroEl.setAttribute('aria-label', `Voir la fiche de ${item.title}`);
+  prepareEditorialImages(heroEl);
 }
 
 document.getElementById('choix-du-jour-card')?.addEventListener('click', function() {
@@ -307,9 +551,10 @@ async function loadCarousel(key) {
     rowEl.innerHTML = items.map(item => `
       <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}" aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path
-          ? `<img src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
+          ? `<img class="editorial-image" src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
           : ''}
       </button>`).join('');
+    prepareEditorialImages(rowEl);
   } catch (e) {
     console.warn(`Impossible de charger le carrousel ${key}`, e);
     blockEl.style.display = 'none';

@@ -473,6 +473,22 @@
     outline-offset: 2px;
   }
 
+  /* Texte disponible aux technologies d'assistance sans créer de décalage
+     visuel. Une classe unique remplace les variantes ad hoc et sert notamment
+     aux libellés de la recherche éditoriale compacte. */
+  .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
   /* ═══ ÉTAT D'ERREUR RÉSEAU ÉLÉGANT ═══
      Quand TMDb échoue : un état dessiné avec action de reprise, pas un vide
      ou un toast générique qui disparaît. */
@@ -2927,70 +2943,407 @@
   .top-item-name { font-weight: 600; color: var(--text-hi); }
 
   /* ═══════════════════════════════════════════
-     DÉCOUVRIR — feuille blanche (Ludex_Specifications_Decouverte.pdf)
+     DÉCOUVRIR — pilote Archives & Editorial
      ═══════════════════════════════════════════
-     Trois blocs : toggle Films/Séries sticky, Choix du jour (hero plein
-     cadre), 4 carrousels d'affiches pures. */
+     L'écran est composé comme une page de revue : typographie, filets,
+     affiches et espace négatif remplacent les panneaux de dashboard. */
+  #discover-card-wrap { counter-reset: discover-carousel; }
 
-  /* Le toggle Films/Séries réutilise .mode-tabs/.mode-tab (déjà éprouvé
-     dans Historique) plutôt qu'un composant maison — seul l'habillage
-     "sticky en tête d'écran" est spécifique à Découvrir. */
-  .discover-segmented-wrap {
-    position: sticky; top: 0; z-index: 5; background: var(--bg);
-    border-radius: var(--radius-sm);
+  .discover-editorial-header {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    min-height: 118px;
+    margin-bottom: var(--space-3);
+    padding: var(--space-4) 0 var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+  .discover-editorial-heading { min-width: 0; }
+  .discover-editorial-kicker {
+    margin-bottom: var(--space-2);
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .discover-editorial-title {
+    margin: 0;
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 12vw, 4.35rem);
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.88;
   }
 
-  .choix-du-jour-wrap { margin-bottom: 24px; }
+  /* Loupe 44×44 qui s'ouvre vers la gauche. Le fond opaque pendant
+     l'expansion évite que le grand titre reste lisible sous le champ. */
+  .editorial-search {
+    position: absolute;
+    right: 0;
+    bottom: var(--space-4);
+    z-index: 4;
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    transition:
+      width 360ms var(--ease-out),
+      border-color var(--dur-base) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out);
+  }
+  .editorial-search.is-open {
+    width: min(100%, 440px);
+    border-color: var(--text-mid);
+  }
+  .editorial-search-input {
+    width: 100%;
+    height: 100%;
+    padding: 0 54px 0 var(--space-4);
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-hi);
+    font-family: var(--font-body);
+    font-size: 16px;
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity var(--dur-base) var(--ease-out), transform 360ms var(--ease-out);
+  }
+  .editorial-search.is-open .editorial-search-input {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .editorial-search-input::placeholder { color: var(--text); opacity: 1; }
+  .editorial-search-input::-webkit-search-cancel-button { display: none; }
+  .editorial-search-toggle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border: 0;
+    background: var(--bg);
+    color: var(--text-hi);
+    cursor: pointer;
+  }
+  .editorial-search-icon {
+    position: absolute;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    transition: opacity var(--dur-base) var(--ease-out), transform 360ms var(--ease-out);
+  }
+  .editorial-search-icon .icon { width: 20px; height: 20px; }
+  .editorial-search-icon-open { opacity: 1; transform: rotate(0deg) scale(1); }
+  .editorial-search-icon-close { opacity: 0; transform: rotate(-60deg) scale(.72); }
+  .editorial-search.is-open .editorial-search-icon-open { opacity: 0; transform: rotate(60deg) scale(.72); }
+  .editorial-search.is-open .editorial-search-icon-close { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  .discover-search-results {
+    margin: 0 0 var(--space-5);
+    padding: var(--space-2) 0 var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+  .discover-search-results-heading {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-2) 0 var(--space-3);
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .discover-search-results-list { display: flex; flex-direction: column; }
+  .discover-search-result {
+    display: grid;
+    grid-template-columns: 28px 44px minmax(0, 1fr) 20px;
+    gap: var(--space-3);
+    align-items: center;
+    width: 100%;
+    min-height: 70px;
+    padding: var(--space-2) 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-hi);
+    text-align: left;
+    cursor: pointer;
+    transition: padding-inline var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out);
+  }
+  .discover-search-result:hover,
+  .discover-search-result:focus-visible {
+    padding-inline: var(--space-2);
+    background: color-mix(in srgb, var(--text-hi) 4%, transparent);
+  }
+  .discover-search-result-index,
+  .discover-search-result-meta {
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    letter-spacing: 0.04em;
+  }
+  .discover-search-result-media {
+    display: grid;
+    width: 36px;
+    height: 54px;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--poster-radius);
+    background: var(--surface2);
+  }
+  .discover-search-result-media.is-person {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+  }
+  .discover-search-result-media img { width: 100%; height: 100%; object-fit: cover; }
+  .discover-search-result-placeholder { display: grid; width: 100%; height: 100%; place-items: center; color: var(--text); }
+  .discover-search-result-placeholder .icon { width: 18px; height: 18px; }
+  .discover-search-result-copy { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+  .discover-search-result-title {
+    overflow: hidden;
+    font-family: var(--font-heading);
+    font-size: 1.03rem;
+    font-weight: 600;
+    line-height: 1.12;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .discover-search-result-meta {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .discover-search-result-arrow { color: var(--text-mid); font-size: 1rem; }
+  .discover-search-status {
+    display: flex;
+    min-height: 88px;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    color: var(--text-mid);
+    font-size: var(--text-sm);
+    text-align: center;
+  }
+  .discover-search-loader {
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border-hi);
+    border-top-color: var(--text-hi);
+    border-radius: 50%;
+    animation: discoverSearchSpin .8s linear infinite;
+  }
+  @keyframes discoverSearchSpin { to { transform: rotate(360deg); } }
+
+  /* La pastille glissante et les icônes historiques restent celles de
+     .mode-tabs ; seul leur environnement est espacé comme une commande de
+     catalogue, pas comme une rangée de boutons de formulaire. */
+  .discover-segmented-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin-bottom: var(--space-5);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .discover-seg-tabs {
+    width: min(100%, 288px);
+    margin: 0 0 0 auto;
+  }
+
+  .choix-du-jour-wrap { margin-bottom: clamp(42px, 8vw, 72px); }
   .choix-du-jour-eyebrow {
-    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--text-mid); margin-bottom: 8px;
+    margin-bottom: var(--space-2);
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
   .choix-du-jour-card {
-    position: relative; border-radius: 16px; overflow: hidden; cursor: pointer;
-    /* width:100% INDISPENSABLE depuis le passage de <div> à <button>. Un <div>
-       est block-level et remplit son parent ; un <button>, même en
-       display:block, se dimensionne en shrink-to-fit. Or tout le contenu de
-       cette carte est en position:absolute (-bg, -overlay, -content) : sa
-       largeur intrinsèque vaut donc ZÉRO, et aspect-ratio a réduit la hauteur
-       à zéro avec elle. Carte invisible, surtitre « Choix du jour » orphelin. */
+    display: grid;
+    grid-template-columns: minmax(112px, 34%) minmax(0, 1fr);
+    gap: clamp(18px, 5vw, 40px);
+    align-items: center;
     width: 100%;
-    aspect-ratio: 4/3; background: var(--surface2);
+    min-height: 214px;
+    padding: var(--space-4) 0;
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
   }
-  .choix-du-jour-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .choix-du-jour-bg {
-    position: absolute; inset: 0; background-size: cover; background-position: center;
+  .choix-du-jour-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+  .choix-du-jour-poster-wrap {
+    position: relative;
+    display: grid;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    place-items: center;
+    overflow: hidden;
+    border-radius: var(--poster-radius);
+    background: var(--surface2);
   }
-  .choix-du-jour-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to bottom, transparent 30%, rgba(14,17,22,0.95) 100%);
+  .choix-du-jour-poster,
+  .choix-du-jour-poster-placeholder { width: 100%; height: 100%; }
+  .choix-du-jour-poster { display: block; object-fit: cover; }
+  .choix-du-jour-poster-placeholder { display: grid; place-items: center; color: var(--text); }
+  .choix-du-jour-poster-placeholder .icon { width: 32px; height: 32px; }
+  .choix-du-jour-catalogue-index {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 5px 7px;
+    background: var(--bg);
+    color: var(--text-hi);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
   }
-  .choix-du-jour-content { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+  .choix-du-jour-content { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; }
+  .choix-du-jour-kicker,
+  .choix-du-jour-year,
+  .choix-du-jour-open {
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .choix-du-jour-kicker { margin-bottom: var(--space-3); color: var(--text-mid); }
   .choix-du-jour-title {
-    font-family: var(--font-heading); font-weight: 700; font-size: 1.4rem;
-    color: var(--text-hi); margin: 0; line-height: 1.15;
-    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 8vw, 3.5rem);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
   }
   .choix-du-jour-director {
-    font-size: 0.8rem; color: var(--text-hi); opacity: 0.8; margin-top: 6px;
-    text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+    margin-top: var(--space-3);
+    color: var(--text-hi);
+    font-size: var(--text-sm);
+    line-height: 1.35;
   }
+  .choix-du-jour-director span { color: var(--text); }
+  .choix-du-jour-year { margin-top: var(--space-2); color: var(--text); }
+  .choix-du-jour-open {
+    margin-top: clamp(18px, 6vw, 42px);
+    padding-bottom: 4px;
+    border-bottom: 1px solid currentColor;
+    color: var(--text-hi);
+  }
+  .choix-du-jour-skeleton-copy { display: flex; flex-direction: column; gap: var(--space-3); }
+  .choix-du-jour-skeleton-copy .skeleton-text { margin: 0; }
 
-  .carousel-block { margin-bottom: 22px; }
+  .editorial-image {
+    opacity: 0;
+    filter: blur(10px);
+    transform: scale(1.025);
+    transition: opacity 600ms var(--ease-out), filter 600ms var(--ease-out), transform 600ms var(--ease-out);
+  }
+  .editorial-image.is-loaded { opacity: 1; filter: blur(0); transform: scale(1); }
+
+  .carousel-block {
+    counter-increment: discover-carousel;
+    margin-bottom: clamp(38px, 7vw, 64px);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
   .carousel-title {
-    font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--text-mid); margin-bottom: 10px;
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(1.15rem, 4vw, 1.55rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .carousel-title::before {
+    content: counter(discover-carousel, decimal-leading-zero);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
   }
   .carousel-row {
-    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px;
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    padding: 2px 2px var(--space-2);
+    scroll-padding-inline: 2px;
+    scroll-snap-type: x proximity;
     scrollbar-width: none;
   }
   .carousel-row::-webkit-scrollbar { display: none; }
   .poster-min {
-    flex-shrink: 0; width: 108px; aspect-ratio: 2/3; border-radius: 8px;
-    background: var(--surface2); cursor: pointer; overflow: hidden;
+    flex: 0 0 116px;
+    width: 116px;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--poster-radius);
+    background: var(--surface2);
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
   }
   .poster-min:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .poster-min img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .poster-min img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  @media (hover: hover) and (pointer: fine) {
+    .poster-min:hover { transform: scale(.98); }
+    .choix-du-jour-card:hover .choix-du-jour-poster-wrap { transform: scale(.985); }
+  }
+  .choix-du-jour-poster-wrap { transition: transform var(--dur-base) var(--ease-out); }
+
+  @media (max-width: 380px) {
+    .discover-editorial-title { font-size: 2.35rem; }
+    .choix-du-jour-card { grid-template-columns: 108px minmax(0, 1fr); gap: var(--space-4); }
+    .choix-du-jour-title { font-size: 1.62rem; }
+    .discover-search-result { grid-template-columns: 22px 40px minmax(0, 1fr) 16px; gap: var(--space-2); }
+    .discover-search-result-media { width: 34px; height: 51px; }
+    .discover-search-result-media.is-person { width: 40px; height: 40px; }
+  }
+
+  @media (min-width: 861px) {
+    .discover-segmented-wrap { top: 68px; }
+  }
+
+  @media (min-width: 1024px) {
+    .discover-editorial-header { min-height: 168px; padding-top: var(--space-6); }
+    .discover-editorial-title { font-size: 5.5rem; }
+    .choix-du-jour-card {
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 430px;
+      padding-block: var(--space-6);
+    }
+    .choix-du-jour-title { max-width: 680px; font-size: clamp(3.4rem, 6vw, 5.9rem); }
+    .choix-du-jour-director { font-size: var(--text-base); }
+    .carousel-row { gap: var(--space-3); }
+    .poster-min { flex-basis: 154px; width: 154px; }
+  }
 
   /* ══════════════════════════════════════════════════════════════════
      ARCHIVES & EDITORIAL — P1 : UNBOXING

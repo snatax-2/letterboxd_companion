@@ -12,10 +12,7 @@ test('recherche principale : une erreur API precise est affichee, pas traitee co
   await page.goto('/');
   await page.click('#nav-rating');
   await page.fill('#movie-search', 'Dune');
-  await page.waitForTimeout(500);
-
-  const toast = await page.locator('#toast').textContent();
-  expect(toast).toContain('Trop de requêtes');
+  await expect(page.locator('#toast')).toContainText('Trop de requêtes');
 });
 
 test('recherche watchlist : meme comportement', async ({ page }) => {
@@ -26,10 +23,7 @@ test('recherche watchlist : meme comportement', async ({ page }) => {
   await page.goto('/');
   await page.click('#nav-watchlist');
   await page.fill('#watchlist-input', 'Dune');
-  await page.waitForTimeout(500);
-
-  const toast = await page.locator('#toast').textContent();
-  expect(toast).toContain("Erreur lors de l'appel API");
+  await expect(page.locator('#toast')).toContainText("Erreur lors de l'appel API");
 });
 
 test('selecteur d\'affiches : une erreur API precise s\'affiche, pas "aucune affiche disponible"', async ({ page }) => {
