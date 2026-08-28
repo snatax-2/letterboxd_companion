@@ -30,7 +30,7 @@ for (const theme of ['dark', 'light']) {
 
     expect(styles.navBackground).toBe('rgba(10, 10, 12, 0.78)');
     expect(styles.activeColor).toBe('rgb(250, 250, 250)');
-    expect(styles.inactiveColor).toBe('rgb(154, 154, 159)');
+    expect(styles.inactiveColor).toBe('rgb(200, 200, 204)');
     expect(styles.primaryBackground).toBe('rgb(250, 250, 250)');
     expect(styles.primaryColor).toBe('rgb(10, 10, 12)');
   });
