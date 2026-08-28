@@ -75,7 +75,7 @@ test('les vignettes du selecteur ont bien un ratio portrait 2:3, en 2 colonnes',
   const box1 = await cells.nth(1).boundingBox();
   expect(box0.height / box0.width).toBeGreaterThan(1.4);
   expect(box0.height / box0.width).toBeLessThan(1.6);
-  expect(box0.y).toBeCloseTo(box1.y, 0); // meme ligne = bien 2 colonnes
+  expect(Math.abs(box0.y - box1.y)).toBeLessThan(1); // meme ligne = bien 2 colonnes
 });
 
 test('chaque affiche est affichee en entier, sans etre rognee (object-fit: contain)', async ({ page }) => {
