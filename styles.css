@@ -27,12 +27,9 @@
        même niveau hiérarchique pouvaient porter des profondeurs
        différentes. Généralisés ici.
 
-       Ces valeurs-ci conviennent aux thèmes SOMBRES (défaut, Film Noir,
-       Technicolor) : du noir semi-opaque sur un fond sombre. Les trois
-       thèmes clairs les redéfinissent plus bas — une ombre noire sur du
-       papier crème fait une tache grise sale, ils ont besoin d'une ombre
-       teintée dans leur propre palette (même raisonnement que leur
-       --box-shadow-style de signature, qui reste inchangé). */
+       Les valeurs par défaut conviennent au thème Dark. Le thème Light les
+       redéfinit plus bas avec une opacité moindre, pour éviter une tache
+       grise trop lourde sur le papier clair. */
     --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.18);
     --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.26);
     --shadow-3: 0 8px 28px rgba(0, 0, 0, 0.38);
@@ -88,6 +85,8 @@
     --red-fill-text: #FAFAFA; --green-fill-text: #0A0A0C; --blue-fill-text: #0A0A0C;
     --solid-fill-text: #0A0A0C;
     --radius: 4px; --radius-sm: 3px;
+    --poster-radius: 2px;
+    --section-space: clamp(28px, 5vw, 48px);
     --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%;
     --control-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
     --font-heading: 'Playfair Display', Georgia, serif;
@@ -120,364 +119,14 @@
     --shadow-3: 0 8px 28px rgba(17, 17, 17, 0.14);
   }
 
-  [data-theme="carnet"] {
-    color-scheme: light;
-    /* Carnet de Voyage — fusion de trois thèmes retirés (Wes Anderson, Journal
-       de Bord, et l'ancien cluster "vintage clair" trop redondant avec
-       Cinéphile 70s, qui lui reste intact à côté). Concept propre : un carnet
-       de cinéphile physique, entre carte postale et journal manuscrit —
-       structure précise d'Anderson + âme intime de Journal, sans reprendre
-       les bruns de Cinéphile (déjà pris) : duo rose poudré / sauge.
-       Le corps de texte utilise une police PROPORTIONNELLE (pas monospace
-       partout comme l'ancien Journal) — c'était un vrai risque de lisibilité
-       sur les critiques longues, corrigé ici dès la conception. */
-    --bg: #FAF3EC; --surface: #F4E9E1; --surface2: #EDDCD1; --border: #D9BFB0;
-    --border-hi: #B8695E; --text: #6B5049; --text-hi: #3D2B26; --text-mid: #785D54;
-    --orange: #B8695E; /* Rose Poudré */
-    --gold: #7a5628;   /* Sable Chaud, assombri (était #C9A576) : 1.72:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet, jamais vérifié dans ce contexte précis avant */
-    --blue: #556B52;   /* Sauge, assombrie : la premiere teinte (#556B52) manquait de contraste sur la nav active (verifie par axe-core) */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #B8695E; --green: #556B52; /* assombri : la premiere teinte (#6F8568) manquait de contraste sur fond clair (verifie par axe-core) */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 4.02:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    --solid-fill-text: #fff;
-    /* Même correctif que Moderne : le rose poudré en TEXTE sur la barre
-       d'onglets claire donne 3.51:1 en 10px gras (seuil 4.5, mesuré par
-       axe-core). Assombri dans la même famille — 5.27:1. Les surfaces
-       remplies en --orange gardent leur teinte d'origine, ce token ne sert
-       qu'au texte. */
-    --accent-text: #9C4632;
-    --radius: 5px; --radius-sm: 4px; /* ni les angles francs d'Anderson (0) ni le style Journal (2) — un compromis assumé, propre à ce thème */
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Special Elite', monospace; /* esprit machine à écrire pour titres/labels/chiffres */
-    --font-body: 'Lora', serif; /* proportionnelle et chaleureuse pour le corps de texte — le vrai correctif face à l'ancien Journal */
-    --font-mono: 'Courier Prime', monospace;
-    --review-font: 'Caveat', cursive; /* le détail le plus mémorable de l'ancien Journal : la critique personnelle en vraie écriture manuscrite */
-
-    /* Étoiles : tampon de gare / ticket composté, esprit carnet de voyage */
-    --star-color: #B8695E;
-    --star-empty-color: #D9BFB0;
-    --star-font: 'Special Elite', monospace;
-    --star-shadow: 1px 1px 0px rgba(61, 43, 38, 0.2);
-    --star-symbol: '❂';
-    --icon-stroke: 1.5;
-    --icon-linecap: round; --icon-linejoin: round;
-
-    /* Élévation dans la palette du thème : une ombre noire sur ce papier
-       crème virerait au gris sale. Même teinte que la signature ci-dessous. */
-    --shadow-1: 0 1px 3px rgba(184, 105, 94, 0.20);
-    --shadow-2: 0 4px 12px rgba(184, 105, 94, 0.26);
-    --shadow-3: 0 8px 28px rgba(120, 68, 60, 0.28);
-
-    --box-shadow-style: 3px 3px 0px rgba(184, 105, 94, 0.18);
-    --bg-texture: repeating-linear-gradient(0deg, transparent, transparent 26px, rgba(184, 105, 94, 0.08) 26px, rgba(184, 105, 94, 0.08) 27px);
-    --bg-size: 100% 27px;
-    /* Tri-bande carte postale, dans la palette propre du thème (pas celle d'Anderson) */
-    --header-bar: linear-gradient(to right, #B8695E 33%, #C9A576 33%, #C9A576 66%, #556B52 66%);
-  }
-
-  /* Carnet : --solid-fill-text (#fff) sert à la fois du texte sur fond
-     --orange (#B8695E, ton moyen, a besoin de texte SOMBRE — 4.02:1 en
-     blanc, sous le seuil) et sur fond --green (#556B52, plus sombre, a
-     besoin de texte CLAIR — 3.61:1 en noir) : aucune valeur unique ne
-     satisfait les deux, donc changer --solid-fill-text globalement
-     casserait l'un des deux cas. Correctif ciblé sur les éléments à fond
-     orange trouvés lors de l'audit complet (13 au total, dont "Nouvelle
-     critique", l'onglet "Détaillé" et "Valider l'épisode" du widget En
-     cours — chaque nouvel élément à fond orange doit rejoindre cette
-     liste, pas être patché isolément). Noir choisi pour une marge
-     confortable (4.70:1). */
-  [data-theme="carnet"] .btn-new-review,
-  [data-theme="carnet"] .backup-reminder-btn,
-  [data-theme="carnet"] .mode-tab.active,
-  [data-theme="carnet"] .focus-mode-toggle.active,
-  [data-theme="carnet"] .empty-state-cta,
-  [data-theme="carnet"] .wl-picker-new-form button,
-  [data-theme="carnet"] .wrapped-share-btn,
-  [data-theme="carnet"] .onboarding-next,
-  [data-theme="carnet"] #update-banner-reload-btn,
-  [data-theme="carnet"] .mds-action-btn.primary,
-  [data-theme="carnet"] .on-this-day-badge,
-  [data-theme="carnet"] .platform-chip.selected,
-  [data-theme="carnet"] .nav-btn-primary .nav-btn-icon .icon,
-  [data-theme="carnet"] .nav-btn-primary-label,
-  [data-theme="carnet"] .tv-continue-check-btn {
-    color: #000;
-  }
-
-  [data-theme="filmnoir"] {
-    color-scheme: dark;
-    /* 12. Film Noir - Clair-obscur véritable */
-    --bg: #050505; --surface: #111111; --surface2: #1a1a1a; --border: #333333;
-    --border-hi: #555555; --text: #a0a0a0; --text-hi: #e0e0e0; --text-mid: #888888;
-    --orange: #ffffff; 
-    --gold: #cccccc; --blue: #ffffff; --red: #555555; --green: #999999;
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red-fill-text: #fff; --green-fill-text: #0d1117; --blue-fill-text: #0d1117; /* --blue est blanc ici : texte clair impossible */
-    --radius: 0px; --radius-sm: 0px;
-    --slider-track-radius: 0px; --slider-thumb-radius: 0px; --slider-thumb-rotate: 0deg;
-    --slider-thumb-clip: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%); /* octogone, esprit iris/objectif de projecteur */
-    --control-radius: 0px; /* reste anguleux, cohérent avec le reste du thème */
-    --font-heading: 'Cinzel', serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'Space Mono', monospace;
-    
-    /* Étoiles Film Noir : Blanc argenté impérial et intemporel */
-    --star-color: #ffffff;
-    --star-empty-color: #333333;
-    --star-font: 'Cinzel', serif;
-    --star-shadow: 0 0 2px rgba(255, 255, 255, 0.4);
-    --star-symbol: '✪'; /* étoile cerclée, esprit projecteur/interrogatoire */
-    --icon-stroke: 1.75; /* traits fins et élégants, cohérents avec la police Cinzel */
-    /* Angles francs plutôt qu'arrondis, cohérent avec le radius:0 de ce
-       thème — même logique que l'icône Noter en losange sur Moderne. */
-    --icon-linecap: square; --icon-linejoin: miter;
-    
-    --review-font: var(--font-mono); 
-    --review-bg: #000000;
-    /* Faisceau de projecteur qui s'estompe, plutôt qu'une ligne franche */
-    --header-bar: linear-gradient(to right, transparent, #ffffff 50%, transparent);
-  }
-
-  [data-theme="cinephile"] {
-    color-scheme: light;
-    /* Néo-Rétro 70s — L'Éditorial Cinéphile : chaleureux, arrondi, journal de
-       bord. À l'opposé de Wes Anderson (autre thème clair/vintage) qui mise
-       sur des angles nets : ici tout est délibérément arrondi et sépia,
-       esprit vieux fauteuils de cinéma et pellicule argentique. */
-    --bg: #F9F6F0; --surface: #F3EDE2; --surface2: #EDE2D0; --border: #DAC0A3;
-    --border-hi: #4A2E1B; --text: #6b5645; --text-hi: #2e1d12; --text-mid: #6E5A47; /* assombri : #8a7460 etait sous le seuil de contraste (4.1:1), jamais teste sur cet ecran avant */
-    --orange: #4A2E1B; /* Terre de Sienne */
-    --gold: #7a5628;    /* Ambre Brûlé, assombri (était #DAC0A3) : 1.36:1 seulement contre surface2 sur le gros score — trouvé lors de l'audit complet */
-    --blue: #4d5d4a;    /* Olive Vintage, assombri (était #5C6E58) : 4.46:1 seulement sur le badge "Impact affectif", tout juste sous le seuil — trouvé lors de l'audit complet */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #8B4226; --green: #5C6E58;
-    --red-fill-text: #fff; --green-fill-text: #fff; --blue-fill-text: #fff;
-    --radius: 18px; --radius-sm: 12px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none; /* pleinement arrondi, à l'opposé d'Anderson/Scuderia/Noir */
-    --control-radius: 50%;
-    --font-heading: 'Poppins', sans-serif;
-    --font-body: 'Poppins', sans-serif;
-    --font-mono: 'Fragment Mono', monospace;
-
-    /* Étoiles : sépia chaud, forme "objectif de projecteur" */
-    --star-color: #4A2E1B;
-    --star-empty-color: #DAC0A3;
-    --star-font: 'Poppins', sans-serif;
-    --star-shadow: 1px 1px 0px rgba(74,46,27,0.25);
-    --star-symbol: '◉';
-    --icon-stroke: 2.2; /* traits ronds et pleins, cohérent avec la géométrie "Avant Garde" */
-    --icon-linecap: round; --icon-linejoin: round;
-    --solid-fill-text: var(--bg); /* accent sombre : texte clair sur fond plein, pas de #0d1117 illisible */
-
-    /* Élévation en sépia plutôt qu'en noir, cohérente avec le fond crème. */
-    --shadow-1: 0 1px 3px rgba(74, 46, 27, 0.16);
-    --shadow-2: 0 4px 12px rgba(74, 46, 27, 0.22);
-    --shadow-3: 0 8px 28px rgba(74, 46, 27, 0.26);
-
-    --box-shadow-style: 3px 3px 0px rgba(74,46,27,0.15);
-    /* Bande sépia tri-tons, dans la palette du moodboard */
-    --header-bar: linear-gradient(to right, #4A2E1B 33%, #DAC0A3 33%, #DAC0A3 66%, #5C6E58 66%);
-  }
-
-  /* Le texte "#0d1117" (quasi noir) utilisé sur les boutons à fond plein
-     (mode-tab.active, focus-mode-toggle.active, btn-save, empty-state-cta...)
-     est pensé pour un accent CLAIR/vif (orange, rouge, blanc...) sur la
-     plupart des thèmes. Certains thèmes (Cinéphile, Classique, Journal) ont
-     des accents sombres, voire noirs — du texte presque noir dessus est
-     illisible. Voir --solid-fill-text (déclarée par thème plus bas, utilisée
-     partout où ce même problème se posait) plutôt que de corriger chaque
-     bouton séparément au fil des retours. */
-
-  [data-theme="moderne"] {
-    color-scheme: light;
-    /* Moderne — repensé autour du Bauhaus/modernisme architectural plutôt que
-       d'un vague "style d'appli contemporaine" : blocs de couleurs primaires
-       nettes, précision géométrique, papier millimétré d'architecte. Le
-       mécanisme de couleur tirée de l'affiche du film (voir plus bas,
-       .hist-item/.wl-card border-left, déjà unique à ce thème) reste intact
-       — c'est un vrai atout distinctif, pas une raison de le changer. */
-    --bg: #F9F6F0; --surface: #FFFFFF; --surface2: #F0EBE0; --border: #1E5AA8;
-    --border-hi: #1E5AA8; --text: #3a3a3a; --text-hi: #1a1a1a; --text-mid: #666666;
-    --orange: #DD6B47; /* Terracotta, légèrement plus saturée qu'avant */
-    --gold: #7A5507;   /* Moutarde -> ocre profond : deux essais precedents (#D9A62E, #A6790F) manquaient encore de contraste, verifie mathematiquement cette fois (6.22:1) */
-    --blue: #1E5AA8;   /* Cobalt, légèrement plus saturé */
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red: #DD6B47;
-    --green: #3B7A5A; /* teinte propre — corrige la fusion accidentelle avec le bleu de l'ancienne version */
-    --red-fill-text: #0d1117; --green-fill-text: #fff; --blue-fill-text: #fff; /* red-fill-text passe au noir (etait blanc) : 3.35:1 sur le bouton de confirmation destructive, sous le seuil — trouve en testant la suppression de saison sur les 7 themes */
-    /* --gold est ici un ocre PROFOND (#7A5507, assombri deux fois pour le
-       contraste), alors que les surfaces remplies en or supposent partout
-       ailleurs un or CLAIR et posent dessus var(--solid-fill-text),
-       quasi noir. Moderne ne declarant pas --solid-fill-text, le repli
-       s'appliquait : 2.82:1 sur le bouton de tri actif de "A voir", sous le
-       seuil. Le 6.22:1 cite dans le commentaire de --gold ci-dessus est
-       precisement celui de --bg sur cet ocre : l'intention etait donc bien un
-       texte clair, seul le cablage manquait. */
-    --gold-fill-text: var(--bg);
-    /* Accent en TEXTE sur une surface claire : #DD6B47 sur la barre d'onglets
-       donne 3.24:1 en 10px gras (seuil 4.5). Meme famille de teinte, assombrie
-       juste ce qu'il faut — 5.35:1. Le token ne touche que le texte : les
-       surfaces remplies en --orange gardent leur teinte d'origine. */
-    --accent-text: #B34524;
-    --radius: 10px; --radius-sm: 6px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 0%; --slider-thumb-rotate: 45deg; --slider-thumb-clip: none; /* losange, vocabulaire géométrique Bauhaus */
-    --control-radius: 4px; /* légèrement carré, précision architecturale, sans franchir au 0 net */
-    --font-heading: 'Syne', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-    --font-mono: 'Martian Mono', monospace;
-
-    --star-color: #7A5507; --star-empty-color: #E5DFD0; --star-font: 'Syne', sans-serif;
-    --star-shadow: none; --star-symbol: '■'; /* bloc plein — déjà juste, conservé */
-    --icon-stroke: 2.25;
-    /* Angles francs, cohérent avec le losange du bouton Noter et le refus
-       général des formes rondes dans ce thème. */
-    --icon-linecap: square; --icon-linejoin: miter;
-
-    /* Élévation en bleu encre, dans la palette du thème (fond blanc). */
-    --shadow-1: 0 1px 3px rgba(30, 90, 168, 0.14);
-    --shadow-2: 0 4px 12px rgba(30, 90, 168, 0.18);
-    --shadow-3: 0 8px 28px rgba(30, 90, 168, 0.22);
-
-    --box-shadow-style: 5px 5px 0px rgba(30,90,168,0.15);
-    /* Grille fine façon papier millimétré d'architecte, à peine visible —
-       la signature la plus neuve du thème, aucun autre thème ne l'utilise. */
-    --bg-texture: linear-gradient(rgba(30,90,168,0.05) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(30,90,168,0.05) 1px, transparent 1px);
-    --bg-size: 24px 24px, 24px 24px;
-    /* Bloc plein (pas un dégradé tri-bande, motif déjà pris par Cinéphile et
-       Carnet) : cohérent avec l'esprit "aplat de couleur" du Bauhaus. */
-    --header-bar: var(--blue);
-  }
-  /* Accent tiré de la couleur dominante de l'affiche (voir 00c-poster-color.js)
-     — signature du thème "Moderne". Se rabat sur la bordure normale du thème
-     si l'extraction a échoué (CORS, image non chargée, etc.). */
-  [data-theme="moderne"] .hist-item { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .wl-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .tv-show-card { border-left: 4px solid var(--poster-accent, var(--border)); }
-  [data-theme="moderne"] .mds-box { border-top: 5px solid var(--poster-accent, var(--blue)); }
-
-  [data-theme="technicolor"] {
-    color-scheme: dark;
-    /* Technicolor — la palette de l'icône de l'app (bleu nuit de salle
-       obscure, or vintage, rouge écarlate) directement dans l'interface. */
-    --bg: #101425; --surface: #1A223B; --surface2: #212B4A; --border: #2A3454;
-    --border-hi: #3D4A73; --text: #98A2B4; --text-hi: #F4F1E1; --text-mid: #98A2B4;
-    --orange: #E6AF2E; --gold: #E6AF2E; --blue: #7C9DC5; --red: #DF2935; --green: #4F9268;
-    /* --chart-movie/--chart-tv : jetons dédiés au graphique "Activité
-       mensuelle", séparés des jetons d'accent --gold/--blue (voir la note
-       complète dans :root). Ici les deux se distinguent déjà bien visuellement
-       (vérifié à l'écran) : mêmes valeurs, juste un point de vérité séparé
-       pour que le graphique ne dépende plus silencieusement de --blue si son
-       usage en accent venait à changer. */
-    --chart-movie: var(--gold); --chart-tv: var(--blue);
-    --red-fill-text: #FFFFFF; --green-fill-text: #0d1117; --blue-fill-text: #0d1117;
-    --radius: 8px; --radius-sm: 6px;
-    --slider-track-radius: var(--radius-pill); --slider-thumb-radius: 50%; --slider-thumb-rotate: 0deg; --slider-thumb-clip: none;
-    --control-radius: 50%;
-    --font-heading: 'Oswald', sans-serif;
-    --font-body: 'Inter', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-
-    /* Étoiles en or vintage, légère lueur chaude plutôt qu'une ombre dure */
-    --star-color: #E6AF2E;
-    --star-empty-color: #3D4A73;
-    --star-font: 'Oswald', sans-serif;
-    --star-shadow: 0 0 5px rgba(230, 175, 46, 0.45);
-    --star-symbol: '★';
-    --icon-stroke: 2;
-    --icon-linecap: round; --icon-linejoin: round;
-
-    --title-style: normal;
-    --title-spacing: 0.06em;
-    --header-bar: linear-gradient(to right, #DF2935 50%, #E6AF2E 50%);
-  }
-
-  /* Bordures de séparation en or vintage translucide plutôt que le gris neutre
-     générique, pour cette ambiance particulière. */
-  [data-theme="technicolor"] .card,
-  [data-theme="technicolor"] .hist-item,
-  [data-theme="technicolor"] .wl-card { border-color: rgba(230, 175, 46, 0.2); }
-
-  /* Boutons principaux : ombre portée au survol, rappel direct de la
-     profondeur travaillée sur l'icône. */
-  [data-theme="technicolor"] .btn-save:hover {
-    box-shadow: 0 4px 14px rgba(223, 41, 53, 0.35);
-  }
-
-  /* Aberration chromatique subtile au survol du titre principal et des titres
-     de film — le clin d'œil Technicolor le plus direct, à dose homéopathique. */
-  [data-theme="technicolor"] .app-title:hover,
-  [data-theme="technicolor"] .mds-title:hover {
-    text-shadow: 2px 0px 0px rgba(0, 255, 255, 0.35), -2px 0px 0px rgba(255, 0, 255, 0.35);
-    transition: text-shadow var(--dur-base) var(--ease-out);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    [data-theme="technicolor"] .app-title:hover,
-    [data-theme="technicolor"] .mds-title:hover { text-shadow: none; }
-  }
-
-  /* Grain de film discret sur le fond général — texture plutôt qu'un bleu nuit
-     parfaitement uni, cohérent avec le reste de l'identité Technicolor.
-     Sur un pseudo-élément FIXE plutôt qu'en fond du body : composité une seule
-     fois par le GPU et jamais repeint pendant le défilement, alors qu'un
-     background-blend-mode directement sur le body peut coûter à chaque frame
-     de défilement, surtout sur mobile. pointer-events:none = purement décoratif. */
-  [data-theme="technicolor"] body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.55;
-    background-image: url('data:image/png;base64,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');
-    background-repeat: repeat;
-    mix-blend-mode: overlay;
-  }
-
-
-  /* ═══════════════════════════════════════════
-     TOUCHES SIGNATURES PAR THÈME
-     ═══════════════════════════════════════════
-     Dans l'esprit du travail fait sur Technicolor : chaque thème reçoit 2-3
-     détails fidèles à SON concept, peu coûteux (rien qui repeint au
-     défilement — les textures vivent sur des pseudo-éléments fixes). */
-
-  /* ── L'Original (défaut) ── */
-  html:not([data-theme]) .card:hover,
-  [data-theme="dark"] .card:hover {
-    border-color: var(--border-hi);
-  }
+  /* Les anciens noms de thèmes restent acceptés uniquement par la migration
+     de préférences dans 02-theme.js. Le runtime visuel ne contient plus que
+     les palettes Dark et Light validées pour Archives & Editorial. */
   /* Ludex 2.0 : le titre de la fiche film/série (mds-title) est traité
      "façon affiche" (capitales, gras, non-italique) plutôt qu'un simple
      libellé d'interface — l'italique Fraunces reste le traitement par
-     défaut ailleurs (ex: .hero-entry-title de l'historique). Appliqué aux
-     6 thèmes (décision confirmée : compositions identiques partout,
-     seules les couleurs/polices changent déjà par thème via les tokens). */
+     défaut ailleurs (ex: .hero-entry-title de l'historique). La composition
+     est identique en Dark et Light ; seuls les tokens changent. */
   .mds-header-director {
     text-shadow: 0 1px 8px rgba(0,0,0,0.5);
   }
@@ -503,7 +152,7 @@
   }
 
   /* ── Ludex 2.0 : composition de l'Historique — filets + séparateurs de
-     mois plutôt que des cartes empilées en boîte. Appliqué aux 6 thèmes.
+     mois plutôt que des cartes empilées en boîte. Appliqué aux deux thèmes.
      Scopé via #view-history (spécificité ID, englobe #history-list ET
      #tv-history-list) plutôt que de simples classes .hist-item/.hist-item-
      content : leurs styles d'origine sont déclarés PLUS BAS dans ce fichier
@@ -701,7 +350,7 @@
 
   /* ── Ludex 2.0 : Watchlist en grille d'affiches 3 colonnes plutôt qu'une
      liste de lignes — "une watchlist se parcourt des yeux, elle ne se lit
-     pas comme une liste" (Vers Ludex 2.0 §03). Appliqué aux 6 thèmes. Le
+     pas comme une liste" (Vers Ludex 2.0 §03). Appliqué aux deux thèmes. Le
      swipe horizontal est désactivé pour ce mode (voir isDefaultComposition()
      dans attachWatchlistSwipeHandlers, 08-watchlist.js) : .wl-actions reste
      le chemin d'action, déjà toujours visible en overlay (position absolute)
@@ -759,66 +408,6 @@
      commun) — remplace elle-même l'ancienne capsule pleine, jugée trop
      appuyée à l'usage. */
 
-  /* ── Film Noir : clair-obscur ── */
-  /* Vignettage permanent, comme un tirage argentique contrasté */
-  [data-theme="filmnoir"] body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
-  }
-  /* Les affiches en noir et blanc — LA promesse du thème. La couleur revient
-     au survol là où il existe (desktop) ; sur mobile, tout reste argentique. */
-  [data-theme="filmnoir"] .hist-item img,
-  [data-theme="filmnoir"] .wl-card img,
-  [data-theme="filmnoir"] .poster-min img,
-  [data-theme="filmnoir"] .duel-poster,
-  [data-theme="filmnoir"] .mds-poster {
-    filter: grayscale(1) contrast(1.08);
-    transition: filter var(--dur-base) var(--ease-out);
-  }
-  [data-theme="filmnoir"] .hist-item:hover img,
-  [data-theme="filmnoir"] .wl-card:hover img,
-  [data-theme="filmnoir"] .poster-min:hover img {
-    filter: grayscale(0) contrast(1);
-  }
-  /* Titres au fer : ombre dure décalée, façon affiche sérigraphiée */
-  [data-theme="filmnoir"] .app-title { text-shadow: 3px 3px 0 rgba(255,255,255,0.12); }
-
-  /* ── Moderne : verre dépoli + grille d'architecte ── */
-  /* Le verre dépoli est LE trait distinctif du thème (avec la grille et le
-     losange des curseurs) — poussé ici comme sa vraie signature plutôt qu'un
-     détail isolé sur l'en-tête. N'écrase plus le fond (background:) comme
-     avant : ça annulait silencieusement le backdrop TMDb commun aux 6
-     thèmes (décision confirmée : compositions identiques partout, y
-     compris la fiche film/série). backdrop-filter seul se pose PAR-DESSUS
-     l'image existante, sans la remplacer. */
-  @supports (backdrop-filter: blur(8px)) {
-    [data-theme="moderne"] .mds-header {
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-  }
-
-  /* ── Carnet de Voyage : reliure et tampon ── */
-  /* Bordures en pointillés, esprit page de carnet cousue à la main — hérité
-     de l'ancien Journal de Bord, le trait le plus reconnaissable des trois
-     thèmes fusionnés ici. */
-  [data-theme="carnet"] .card { border-style: dashed; }
-  [data-theme="carnet"] .card-title {
-    border-bottom: 1px dotted var(--border-hi);
-    padding-bottom: 5px;
-  }
-
-  /* ── Cinéphile 70s : papier chaud ── */
-  /* Halo chaud sur les étoiles (halation de projection) — le grain n'est pas
-     repris ici : sur fond clair il salirait plus qu'il n'habille. */
-  [data-theme="cinephile"] .stars, [data-theme="cinephile"] .duel-medal-gold {
-    filter: drop-shadow(0 0 3px rgba(139, 66, 38, 0.35));
-  }
-  [data-theme="cinephile"] .card { box-shadow: var(--shadow-1); }
-
-  /* ── Méridien : revue éditoriale ── */
-  /* Filets fins au-dessus des titres, rubrique de magazine */
   /* ═══ RETOUR TACTILE SYSTÉMATIQUE ═══
      Chaque élément interactif s'enfonce légèrement sous le doigt — la
      sensation "ça répond" des apps natives. Un seul endroit, une seule
@@ -1126,14 +715,7 @@
      de contour à pleine (voir .icon-outline/.icon-solid ci-dessous) —
      Découvrir est déjà pleine au repos (rien à basculer), Historique reste
      un pictogramme à traits (3 barres verticales, pas de forme à remplir). */
-  /* --accent-text : l'accent utilisé comme TEXTE, distinct de l'accent utilisé
-     comme fond. Sur les deux thèmes clairs (Carnet, Moderne), la teinte
-     d'accent passe très bien en aplat mais échoue en texte de 10px sur la
-     barre d'onglets translucide (3.51:1 et 3.35:1 mesurés par axe-core, seuil
-     4.5). Même démarche que --solid-fill-text, introduit plus haut pour le
-     problème symétrique — plutôt que de corriger chaque endroit séparément.
-     Les thèmes qui ne le déclarent pas gardent --orange tel quel. */
-  .nav-btn.active { color: var(--accent-text, var(--orange)); background: none; }
+  .nav-btn.active { color: var(--orange); background: none; }
   /* Ludex 2.0 : agrandie de 1.2rem à 1.55rem (~30%) — le texte n'étant
      visible que sur l'onglet actif (voir .nav-btn-label plus bas),
      l'icône porte désormais l'essentiel du repère visuel, elle doit se
@@ -2043,28 +1625,6 @@
   .review-textarea:focus { border-color: var(--orange); box-shadow: var(--box-shadow-style, 0 0 0 2px rgba(255,128,0,0.1)); }
   .review-textarea::placeholder { color: var(--text-mid); opacity: 0.5;}
 
-  /* Signature du thème "Carnet de Voyage" (héritée de l'ancien Journal de
-     Bord — le détail le plus mémorable des trois thèmes fusionnés) : la zone
-     de critique devient une vraie page de carnet lignée, écriture manuscrite
-     alignée précisément sur les lignes. background-attachment:local fait
-     défiler les lignes AVEC le texte (sinon elles resteraient fixes derrière
-     un texte qui scrolle). */
-  [data-theme="carnet"] .review-textarea {
-    font-family: 'Caveat', cursive;
-    font-size: 1.4rem;
-    line-height: 30px;
-    padding-top: 6px;
-    /* background-origin: content-box aligne l'origine du dégradé sur le début
-       du texte (après le padding), pas sur le coin du champ — sinon le
-       padding-top créait un décalage entre les lignes et l'endroit où le
-       texte commence réellement à s'écrire. La ligne est positionnée à ~80%
-       de la hauteur de ligne, là où repose la base des lettres (une police
-       manuscrite comme Caveat a des jambages qui descendent sous la ligne). */
-    background-origin: content-box;
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 23px, var(--border) 23px, var(--border) 24px, transparent 24px, transparent 30px);
-    background-attachment: local;
-  }
-
   /* ── ACTION BUTTONS ── */
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .btn {
@@ -2238,8 +1798,6 @@
     transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
   }
   .wl-sort-btn:hover { border-color: var(--border-hi); color: var(--text-hi); }
-  /* --gold-fill-text : sur Moderne, --gold est un ocre PROFOND alors que ces
-     surfaces supposent partout ailleurs un or clair (voir le bloc du thème). */
   .wl-sort-btn.active { background: var(--gold); border-color: var(--gold); color: var(--gold-fill-text, var(--solid-fill-text)); }
   .wl-sort-btn-filter { margin-left: auto; }
   .wl-list-pill {
@@ -3082,7 +2640,7 @@
   /* Avertissement "code de synchronisation trop court". Volontairement discret
      (pas un bandeau d'erreur bloquant) : l'ancien code continue de fonctionner,
      on signale un risque, on n'interdit rien. Couleurs prises aux tokens du
-     thème pour rester lisible sur les 6 palettes. */
+     thème pour rester lisible en Dark comme en Light. */
   .sync-code-warning {
     margin-bottom: 10px; padding: 8px 10px;
     border-left: 3px solid var(--red);
@@ -3425,6 +2983,144 @@
   .poster-min:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   .poster-min img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+  /* ══════════════════════════════════════════════════════════════════
+     ARCHIVES & EDITORIAL — P1 : UNBOXING
+     ══════════════════════════════════════════════════════════════════
+     Les anciens panneaux `.card` structuraient chaque écran comme un
+     dashboard. La hiérarchie repose désormais sur le rythme vertical, les
+     titres et les filets. Les surfaces qui portent une fonction propre
+     (modales, suggestions, widget En cours, alertes et CTA) conservent leur
+     boîte dans leurs règles dédiées. */
+  .card {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  #col-rating > .card {
+    padding-block: var(--space-5);
+  }
+  #col-rating > .card:first-child { padding-top: 0; }
+  #col-rating > .card + .card {
+    border-top: 1px solid var(--border);
+  }
+  #notation-card { margin-top: var(--space-2) !important; }
+
+  #view-profile { gap: 0; }
+  #view-profile > .card {
+    padding-block: var(--section-space);
+    border-top: 1px solid var(--border);
+  }
+  #view-profile > .wrapped-entry-card {
+    margin-block: var(--space-2);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--surface2), transparent);
+  }
+
+  .layout .card-title {
+    margin-bottom: var(--space-5);
+    padding-bottom: 0;
+    border-bottom: 0;
+    color: var(--text-hi);
+    font-size: clamp(1.08rem, 2.8vw, 1.35rem);
+    font-weight: 600;
+    line-height: 1.18;
+    text-transform: none;
+    letter-spacing: 0.01em;
+  }
+  .layout .card-title-badge {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+
+  /* Les statistiques deviennent une composition, pas une grille de widgets. */
+  .dashboard-grid {
+    gap: var(--space-6);
+    margin-bottom: 0;
+  }
+  .dash-box {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .dash-box-title {
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom-color: var(--border);
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    font-weight: 600;
+  }
+
+  .profile-info-grid { gap: 0; }
+  .profile-info-item {
+    padding: var(--space-4);
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  .profile-info-item:first-child { border-left: 0; padding-left: 0; }
+
+  .profile-hero-bento { gap: 0; }
+  .profile-hero-bento-card {
+    padding: var(--space-2) var(--space-3);
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  .profile-hero-bento-wide {
+    margin-top: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Les affiches fournissent la couleur ; leur cadre reste presque brut. */
+  .choix-du-jour-card,
+  .poster-min,
+  .poster-min img,
+  .hist-grid-card,
+  .hero-entry-poster,
+  .watchlist-scroller .wl-poster,
+  .watchlist-scroller .wl-poster img,
+  .film-strip-poster,
+  .tv-continue-poster,
+  .mds-poster,
+  .mds-saga-poster,
+  .pds-film-poster,
+  .on-this-day-poster {
+    border-radius: var(--poster-radius);
+  }
+  .hist-grid-card,
+  .hero-entry-poster,
+  .poster-min {
+    background-color: color-mix(in srgb, var(--text-hi) 5%, var(--bg));
+  }
+
+  /* Une surface reste nécessaire ici : elle décrit un épisode actionnable,
+     pas une simple section de mise en page. */
+  .tv-continue-card {
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: none;
+  }
+
+  @media (max-width: 480px) {
+    .dashboard-grid { gap: var(--space-5); }
+    .profile-info-item { padding-inline: var(--space-3); }
+  }
+
   /* ── OPTIMISATION RESPONSIVE COMPLETE (ZÉRO DÉCALAGE) ── */
   @media (max-width: 860px) {
     body { 
@@ -3523,10 +3219,7 @@
        .nav-btn-primary quel que soit la hauteur réelle de la barre, et
        comme il est plus grand qu'elle, il déborde un peu au-dessus ET
        en dessous au lieu de flotter uniquement collé au bord supérieur.
-       Le PRINCIPE s'applique à tous les thèmes, mais la FORME s'adapte à
-       l'esprit de chacun (cercle par défaut, losange pour Moderne — voir
-       plus bas — qui a délibérément banni les formes rondes ailleurs dans
-       l'app). Le libellé "Noter" vit DANS le cercle (icône + texte réduit
+       Le libellé "Noter" vit DANS le cercle (icône + texte réduit
        empilés), pas en dehors comme les autres onglets — évite tout risque
        de chevauchement avec le reste de la barre.
        flex: 0 0 74px (au lieu d'hériter du flex:1 des 4 autres onglets)
@@ -3555,24 +3248,6 @@
       color: var(--solid-fill-text); font-family: var(--font-heading);
       line-height: 1;
     }
-
-    /* Moderne : pas de rond ici non plus, cohérent avec le curseur en
-       losange déjà utilisé partout ailleurs dans ce thème. Même centrage
-       que la version par défaut (hérité de la règle du dessus), seule la
-       forme change : carré pivoté à 45° au lieu d'un cercle. Côté plus
-       petit que le cercle (48px vs 68px) car la rotation étire le
-       débordement visuel le long de la diagonale (48×√2 ≈ 68px) — donne
-       un débordement comparable aux ~5px du cercle plutôt que la
-       diagonale complète d'un carré de même côté. */
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon {
-      width: 48px; height: 48px; border-radius: 8px;
-      transform: translate(-50%, -50%) rotate(45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon,
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .nav-btn-primary-label {
-      transform: rotate(-45deg);
-    }
-    [data-theme="moderne"] .nav-btn-primary .nav-btn-icon .icon { width: 15px; height: 15px; }
 
     /* Le toast doit maintenant dégager la barre de nav flottante (marge +
        hauteur propre), plus haut qu'avant où la barre était plaquée au bord. */

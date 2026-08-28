@@ -60,6 +60,7 @@ for (const theme of ['dark', 'light']) {
 
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
+      await page.click('#nav-rating');
       await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`rating-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
     });
