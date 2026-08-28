@@ -81,6 +81,11 @@
     --bg: #0A0A0C; --surface: #111114; --surface2: #18181C; --border: #222222;
     --border-hi: #343438; --text: #888888; --text-hi: #FAFAFA; --text-mid: #B4B4B8;
     --orange: #FAFAFA; --gold: #D4AF37; --blue: #C8C8CC; --red: #A8423A; --green: #72866A;
+    --nav-glass: rgba(10, 10, 12, 0.78); --nav-border: rgba(250, 250, 250, 0.14);
+    --nav-muted: #9A9A9F; --nav-active: #FAFAFA;
+    --nav-primary-bg: #FAFAFA; --nav-primary-text: #0A0A0C;
+    --toggle-bg: rgba(136, 136, 136, 0.10); --toggle-active-bg: #FAFAFA;
+    --toggle-active-text: #111111;
     --chart-movie: var(--gold); --chart-tv: #77777E;
     --red-fill-text: #FAFAFA; --green-fill-text: #0A0A0C; --blue-fill-text: #0A0A0C;
     --solid-fill-text: #0A0A0C;
@@ -686,16 +691,16 @@
      grille à deux colonnes, à la demande de l'utilisateur). */
   .mobile-nav {
     display: flex; margin: 0 auto 16px auto; max-width: 800px;
-    background: color-mix(in srgb, var(--surface) 55%, transparent);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border: 1px solid var(--border-hi); border-radius: var(--radius-pill);
-    box-shadow: var(--box-shadow-style, var(--shadow-2));
+    background: var(--nav-glass);
+    backdrop-filter: blur(20px) saturate(120%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+    border: 1px solid var(--nav-border); border-radius: var(--radius-pill);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
     padding: 4px;
   }
   .nav-btn {
     flex: 1; min-width: 0; padding: 10px 2px; background: transparent; border: none;
-    color: var(--text); font-family: var(--font-heading);
+    color: var(--nav-muted); font-family: var(--font-body);
     font-size: 0.64rem; font-weight: 700; text-transform: uppercase;
     cursor: pointer; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 3px; transition: color var(--dur-base);
@@ -715,14 +720,14 @@
      de contour à pleine (voir .icon-outline/.icon-solid ci-dessous) —
      Découvrir est déjà pleine au repos (rien à basculer), Historique reste
      un pictogramme à traits (3 barres verticales, pas de forme à remplir). */
-  .nav-btn.active { color: var(--orange); background: none; }
+  .nav-btn.active { color: var(--nav-active); background: none; }
   /* Ludex 2.0 : agrandie de 1.2rem à 1.55rem (~30%) — le texte n'étant
      visible que sur l'onglet actif (voir .nav-btn-label plus bas),
      l'icône porte désormais l'essentiel du repère visuel, elle doit se
      remarquer davantage qu'avant. margin-bottom retiré : gap sur .nav-btn
      gère déjà l'espacement avec le libellé, pas besoin des deux. */
   .nav-btn-icon { font-size: 1.55rem; position: relative; display: inline-block; }
-  .nav-btn:hover:not(.active) { color: var(--text-hi); }
+  .nav-btn:hover:not(.active) { color: var(--nav-active); }
 
   /* Ludex 2.0 : petit "pop" au tap (voir wireTapPopAnimation(),
      01-navigation.js) — icône de navigation OU d'un des 5 switches
@@ -1245,15 +1250,16 @@
   .tv-continue-header.collapsed .tv-continue-chevron { transform: rotate(-90deg); }
 
   /* ── TABS: DÉTAILLÉ / RAPIDE ── */
-  .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--bg); border-radius: var(--radius-sm); padding: 4px; }
+  .mode-tabs { display: flex; gap: 4px; margin-bottom: 18px; background: var(--toggle-bg); border-radius: var(--radius-sm); padding: 4px; }
   .mode-tab {
     flex: 1; text-align: center; padding: 7px; border: none; border-radius: var(--radius-sm); cursor: pointer;
-    font-family: var(--font-heading); font-size: 0.82rem; font-weight: 700; color: var(--text); background: transparent;
+    font-family: var(--font-body); font-size: 0.82rem; font-weight: 650; color: var(--text); background: transparent;
     transition: background-color var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
     display: flex; align-items: center; justify-content: center; gap: 6px;
     position: relative; z-index: 1;
   }
-  .mode-tab.active { background: transparent; color: var(--solid-fill-text); border: 1px solid transparent; font-weight: 800; }
+  .mode-tab.active { background: transparent; color: var(--toggle-active-text); border: 1px solid transparent; font-weight: 750; }
+  .mode-tabs:not(.mode-tabs-plain) .mode-tab { min-height: 44px; }
   /* Bug corrigé : la règle ci-dessus rend le bouton actif TRANSPARENT et lui
      donne la couleur de texte prévue pour la pastille orange qui glisse
      dessous (.toggle-slider). Le groupe "Détaillé / Rapide" est le seul des
@@ -1267,6 +1273,7 @@
   .mode-tabs-plain .mode-tab.active {
     background: var(--orange);
     border-color: var(--orange);
+    color: var(--solid-fill-text);
   }
   /* Ludex 2.0 : pastille glissante (voir Ludex_Switch_Animation) — le
      fond n'est plus posé directement sur le bouton actif (.mode-tab.active
@@ -1278,7 +1285,8 @@
   .mode-tabs { position: relative; }
   .toggle-slider {
     position: absolute; top: 0; left: 0; width: 50%; height: 100%;
-    background: var(--orange); border: 1px solid var(--orange); border-radius: var(--radius-sm);
+    background: var(--toggle-active-bg); border: 1px solid color-mix(in srgb, var(--toggle-active-bg) 70%, var(--border-hi));
+    border-radius: var(--radius-sm); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14);
     transition: transform var(--dur-base) var(--ease-out); z-index: 0;
   }
   .mode-tabs.series-active .toggle-slider { transform: translateX(100%); }
@@ -3194,7 +3202,7 @@
       margin: 0 12px calc(12px + env(safe-area-inset-bottom)) 12px;
       border-radius: 22px;
       z-index: 1000;
-      box-shadow: var(--shadow-3);
+      box-shadow: 0 12px 38px rgba(0, 0, 0, 0.42);
       max-width: none;
       /* Fond semi-transparent + flou : le contenu qui défile en dessous
          glisse élégamment derrière la barre, plutôt qu'un fond plein qui
@@ -3203,9 +3211,9 @@
          (16px) — les icônes/texte restent lisibles grâce au flou qui
          "efface" les détails du contenu défilant derrière, même avec
          moins de teinte opaque par-dessus. */
-      background: color-mix(in srgb, var(--surface) 55%, transparent);
-      backdrop-filter: blur(18px) saturate(160%);
-      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      background: var(--nav-glass);
+      backdrop-filter: blur(20px) saturate(120%);
+      -webkit-backdrop-filter: blur(20px) saturate(120%);
     }
     /* Chaque .nav-btn porte déjà son propre radius 999px (bloc commun
        ci-dessus) : plus besoin de caler les coins extérieurs de la barre
@@ -3238,14 +3246,14 @@
     .nav-btn-primary .nav-btn-icon {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 68px; height: 68px; margin: 0; border-radius: 50%;
-      background: var(--orange); border: 4px solid var(--surface);
+      background: var(--nav-primary-bg); border: 4px solid #0A0A0C;
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
-      box-shadow: var(--shadow-1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
     }
-    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--solid-fill-text); }
+    .nav-btn-primary .nav-btn-icon .icon { width: 17px; height: 17px; color: var(--nav-primary-text); }
     .nav-btn-primary-label {
       font-size: 0.54rem; font-weight: 800; letter-spacing: 0.03em;
-      color: var(--solid-fill-text); font-family: var(--font-heading);
+      color: var(--nav-primary-text); font-family: var(--font-body);
       line-height: 1;
     }
 
@@ -3339,8 +3347,13 @@
          long (Profil fait 2637px de haut), la barre remontait hors de vue
          dès les premiers pixels de scroll. */
       position: sticky; top: 0; z-index: 900;
-      background: var(--surface);
+      background: var(--nav-glass);
     }
+    .nav-btn-label { max-width: 110px; opacity: 1; margin-top: 1px; }
+    .nav-btn-primary .nav-btn-icon {
+      display: inline-flex; align-items: center; gap: 5px; color: var(--nav-active);
+    }
+    .nav-btn-primary-label { color: inherit; font-size: 0.64rem; }
     /* main (pas .layout) : l'ajout du lien d'évitement (phase 5 de l'audit,
        WCAG 2.4.1) a inséré <main id="contenu"> entre <body> et .layout —
        .layout n'est donc plus un enfant flex DIRECT de body, et son
