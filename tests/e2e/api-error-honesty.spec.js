@@ -22,6 +22,7 @@ test('recherche watchlist : meme comportement', async ({ page }) => {
   }));
   await page.goto('/');
   await page.click('#nav-watchlist');
+  await page.click('#watchlist-search-toggle');
   await page.fill('#watchlist-input', 'Dune');
   await expect(page.locator('#toast')).toContainText("Erreur lors de l'appel API");
 });

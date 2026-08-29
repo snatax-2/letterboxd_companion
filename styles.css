@@ -3656,6 +3656,7 @@
     border: 0;
     border-radius: var(--poster-radius);
     background: var(--surface2);
+    aspect-ratio: 2 / 3;
   }
   #watchlist-card .watchlist-scroller .wl-card-content,
   #watchlist-card .watchlist-scroller .wl-card-open {
@@ -3663,7 +3664,8 @@
     height: 100%;
     background: transparent;
   }
-  #watchlist-card .watchlist-scroller .wl-card-open { border: 0; }
+  #watchlist-card .watchlist-scroller .wl-card-open { gap: 0; border: 0; }
+  #watchlist-card .watchlist-scroller .wl-body { display: none; }
   #watchlist-card .watchlist-scroller .wl-poster,
   #watchlist-card .watchlist-scroller .wl-poster img {
     width: 100%;
