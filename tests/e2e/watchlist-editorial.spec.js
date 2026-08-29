@@ -197,6 +197,31 @@ test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et 
     expect(box.width).toBeGreaterThanOrEqual(44);
     expect(box.height).toBeGreaterThanOrEqual(44);
   }
+
+  const actions = await page.locator('.wl-card').first().locator('.wl-actions').evaluate(element => {
+    const style = getComputedStyle(element);
+    return {
+      direction: style.flexDirection,
+      background: style.backgroundColor,
+      width: element.getBoundingClientRect().width,
+    };
+  });
+  expect(actions.direction).toBe('column');
+  expect(actions.background).toBe('rgba(0, 0, 0, 0)');
+  expect(actions.width).toBeLessThanOrEqual(44);
+});
+
+test('la loupe À voir reste centrée dans sa cible tactile', async ({ page }) => {
+  const alignment = await page.locator('#watchlist-search-toggle').evaluate(toggle => {
+    const button = toggle.getBoundingClientRect();
+    const icon = toggle.querySelector('.watchlist-search-icon-open').getBoundingClientRect();
+    return {
+      horizontal: Math.abs((button.left + button.width / 2) - (icon.left + icon.width / 2)),
+      vertical: Math.abs((button.top + button.height / 2) - (icon.top + icon.height / 2)),
+    };
+  });
+  expect(alignment.horizontal).toBeLessThanOrEqual(1);
+  expect(alignment.vertical).toBeLessThanOrEqual(1);
 });
 
 test('À voir ne déborde pas sur 360, 390, 430 ni desktop', async ({ page }) => {

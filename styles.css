@@ -3480,6 +3480,8 @@
   }
   .watchlist-search-icon {
     position: absolute;
+    top: 50%;
+    left: 50%;
     display: grid;
     width: 20px;
     height: 20px;
@@ -3487,10 +3489,10 @@
     transition: opacity var(--dur-base) var(--ease-out), transform 360ms var(--ease-out);
   }
   .watchlist-search-icon .icon { width: 20px; height: 20px; }
-  .watchlist-search-icon-open { opacity: 1; transform: rotate(0deg) scale(1); }
-  .watchlist-search-icon-close { opacity: 0; transform: rotate(-60deg) scale(.72); }
-  .watchlist-editorial-search.is-open .watchlist-search-icon-open { opacity: 0; transform: rotate(60deg) scale(.72); }
-  .watchlist-editorial-search.is-open .watchlist-search-icon-close { opacity: 1; transform: rotate(0deg) scale(1); }
+  .watchlist-search-icon-open { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  .watchlist-search-icon-close { opacity: 0; transform: translate(-50%, -50%) rotate(-60deg) scale(.72); }
+  .watchlist-editorial-search.is-open .watchlist-search-icon-open { opacity: 0; transform: translate(-50%, -50%) rotate(60deg) scale(.72); }
+  .watchlist-editorial-search.is-open .watchlist-search-icon-close { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
 
   .watchlist-editorial-search .wl-suggestions {
     top: calc(100% + var(--space-1));
@@ -3677,16 +3679,14 @@
   #watchlist-card .watchlist-scroller .wl-actions {
     top: var(--space-1);
     right: var(--space-1);
-    gap: 0;
+    flex-direction: column;
+    gap: 2px;
     padding: 0;
-    overflow: hidden;
-    border: 1px solid rgba(250, 250, 250, 0.14);
-    border-radius: var(--radius-sm);
-    background: rgba(10, 10, 12, 0.78);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    border: 0;
+    background: transparent;
   }
   #watchlist-card .watchlist-scroller .wl-btn {
+    position: relative;
     display: grid;
     width: 44px;
     height: 44px;
@@ -3694,12 +3694,34 @@
     padding: 0;
     border-radius: 0;
     color: #C8C8CC;
+    isolation: isolate;
   }
-  #watchlist-card .watchlist-scroller .wl-btn + .wl-btn { border-left: 1px solid rgba(250, 250, 250, 0.12); }
+  #watchlist-card .watchlist-scroller .wl-btn::before {
+    position: absolute;
+    z-index: -1;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(250, 250, 250, 0.18);
+    border-radius: 50%;
+    background: rgba(10, 10, 12, 0.74);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+    content: '';
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
   #watchlist-card .watchlist-scroller .wl-btn .icon { width: 15px; height: 15px; }
   #watchlist-card .watchlist-scroller .wl-btn.rate { color: #D4AF37; }
-  #watchlist-card .watchlist-scroller .wl-btn:hover { background: rgba(250, 250, 250, 0.1); color: #FAFAFA; }
-  #watchlist-card .watchlist-scroller .wl-btn.rate:hover { background: rgba(212, 175, 55, 0.14); color: #E0C16A; }
+  #watchlist-card .watchlist-scroller .wl-btn:hover { background: transparent; color: #FAFAFA; }
+  #watchlist-card .watchlist-scroller .wl-btn:hover::before,
+  #watchlist-card .watchlist-scroller .wl-btn:focus-visible::before {
+    border-color: rgba(250, 250, 250, 0.36);
+    background: rgba(10, 10, 12, 0.9);
+    transform: scale(1.06);
+  }
+  #watchlist-card .watchlist-scroller .wl-btn.rate:hover { background: transparent; color: #E0C16A; }
+  #watchlist-card .watchlist-scroller .wl-btn.rate:hover::before,
+  #watchlist-card .watchlist-scroller .wl-btn.rate:focus-visible::before { background: rgba(38, 31, 14, 0.9); }
   #watchlist-card .watchlist-scroller > .empty-state,
   #watchlist-card .watchlist-scroller > .wl-empty-suggestions { grid-column: 1 / -1; }
   #watchlist-card .empty-state { padding: clamp(42px, 10vw, 72px) var(--space-4); }
