@@ -3161,8 +3161,8 @@
     -webkit-backdrop-filter: blur(14px);
   }
   .discover-seg-tabs {
-    width: min(100%, 288px);
-    margin: 0 auto;
+    width: 100%;
+    margin: 0;
   }
 
   .choix-du-jour-wrap { margin-bottom: clamp(42px, 8vw, 72px); }

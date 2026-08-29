@@ -82,9 +82,10 @@ test('la loupe devient un champ, reste tactile et se referme proprement au clavi
 
   const switchWrapBox = await page.locator('.discover-segmented-wrap').boundingBox();
   const switchBox = await page.locator('.discover-seg-tabs').boundingBox();
-  const switchCenter = switchBox.x + switchBox.width / 2;
-  const wrapCenter = switchWrapBox.x + switchWrapBox.width / 2;
-  expect(Math.abs(switchCenter - wrapCenter)).toBeLessThanOrEqual(1);
+  expect(Math.abs(switchBox.x - switchWrapBox.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(
+    (switchBox.x + switchBox.width) - (switchWrapBox.x + switchWrapBox.width),
+  )).toBeLessThanOrEqual(1);
 
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
   await expect(input).toBeDisabled();
