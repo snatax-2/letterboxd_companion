@@ -3162,7 +3162,7 @@
   }
   .discover-seg-tabs {
     width: min(100%, 288px);
-    margin: 0 0 0 auto;
+    margin: 0 auto;
   }
 
   .choix-du-jour-wrap { margin-bottom: clamp(42px, 8vw, 72px); }
