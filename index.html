@@ -719,22 +719,63 @@
     
     <div class="right-view" id="view-watchlist">
       <div class="card" id="watchlist-card">
-        <!-- Ludex 2.0 : toggle Films/Séries — même principe que Découvrir et
-             Historique. Titre + badge compteur déplacés DANS chaque
-             section (un jeu par média) plutôt que partagés en haut : le
-             jeu partagé restait bloqué sur les infos films même en
-             basculant vers Séries — un des symptômes de désynchronisation
-             signalés (voir Ludex_Specifications_Watchlist). -->
-        <div class="mode-tabs" id="wl-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
-          <button type="button" class="mode-tab active" id="wl-tab-movie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" class="icon mode-tab-icon icon-clap"><path d="M2.5 10.5C2.5 6.72876 2.5 4.84315 3.67157 3.67157C4.84315 2.5 6.72876 2.5 10.5 2.5H13.5C17.2712 2.5 19.1569 2.5 20.3284 3.67157C21.5 4.84315 21.5 6.72876 21.5 10.5V13.5C21.5 17.2712 21.5 19.1569 20.3284 20.3284C19.1569 21.5 17.2712 21.5 13.5 21.5H10.5C6.72876 21.5 4.84315 21.5 3.67157 20.3284C2.5 19.1569 2.5 17.2712 2.5 13.5V10.5Z"/><path d="M3 8H22"/><path d="M6 8L11.5 2.5"/><path d="M13 8L18.5 2.5"/><path d="M6.5 17.5H10.5" stroke-linecap="round"/><path d="M6.5 13.5L15.5 13.5" stroke-linecap="round"/></svg> Films</button>
-          <button type="button" class="mode-tab" id="wl-tab-tv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" class="icon mode-tab-icon icon-tv"><path d="M2 14C2 10.2288 2 8.34315 3.17157 7.17157C4.34315 6 6.22876 6 10 6H14C17.7712 6 19.6569 6 20.8284 7.17157C22 8.34315 22 10.2288 22 14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14Z"/><path class="antenna" d="M9 3L12 6L16 2" stroke-linejoin="round"/></svg> Séries</button>
+        <!-- Archives & Editorial — « À voir » reste la bibliothèque
+             fonctionnelle existante : listes multiples, tri, filtres,
+             ajout direct, fiches et suivi. Seule sa composition change.
+             Les deux champs historiques sont déplacés dans le header afin
+             de devenir une loupe éditoriale sans modifier leurs contrats. -->
+        <header class="watchlist-editorial-header">
+          <div class="watchlist-editorial-heading">
+            <div class="watchlist-editorial-kicker">Archives / Bibliothèque</div>
+            <h2 class="watchlist-editorial-title">À voir</h2>
+          </div>
+
+          <div class="watchlist-search-stack">
+            <div class="watchlist-editorial-search is-current" id="watchlist-movie-search" role="search" aria-label="Rechercher un film ou une personne à ajouter" data-watchlist-search="movie">
+              <div class="watchlist-search-control">
+                <label class="visually-hidden" for="watchlist-input">Rechercher un film, un réalisateur ou un acteur</label>
+                <input type="search" class="watchlist-add-input" id="watchlist-input" placeholder="Film ou personne…" autocomplete="off" autocapitalize="words" enterkeyhint="search" aria-controls="wl-suggestions" disabled>
+                <button type="button" class="watchlist-add-btn" id="watchlist-add-btn" disabled>Ajouter</button>
+                <button type="button" class="watchlist-search-toggle" id="watchlist-search-toggle" aria-label="Ouvrir la recherche Films" aria-expanded="false" aria-controls="wl-suggestions">
+                  <span class="watchlist-search-icon watchlist-search-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                  <span class="watchlist-search-icon watchlist-search-icon-close" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                </button>
+              </div>
+              <div class="wl-suggestions" id="wl-suggestions" aria-live="polite"></div>
+            </div>
+
+            <div class="watchlist-editorial-search" id="watchlist-tv-search" role="search" aria-label="Rechercher une série à ajouter" data-watchlist-search="tv" hidden>
+              <div class="watchlist-search-control">
+                <label class="visually-hidden" for="wl-tv-input">Rechercher une série à ajouter</label>
+                <input type="search" class="watchlist-add-input" id="wl-tv-input" placeholder="Série…" autocomplete="off" autocapitalize="words" enterkeyhint="search" aria-controls="wl-tv-suggestions" disabled>
+                <button type="button" class="watchlist-add-btn" id="wl-tv-add-btn" disabled>Ajouter</button>
+                <button type="button" class="watchlist-search-toggle" id="wl-tv-search-toggle" aria-label="Ouvrir la recherche Séries" aria-expanded="false" aria-controls="wl-tv-suggestions">
+                  <span class="watchlist-search-icon watchlist-search-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                  <span class="watchlist-search-icon watchlist-search-icon-close" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+                </button>
+              </div>
+              <div class="wl-suggestions" id="wl-tv-suggestions" aria-live="polite"></div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Le switch identitaire garde exactement ses deux icônes, sa
+             pastille glissante et le gestionnaire d'animation partagé. -->
+        <div class="watchlist-segmented-wrap">
+          <div class="mode-tabs watchlist-seg-tabs" id="wl-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
+            <button type="button" class="mode-tab active" id="wl-tab-movie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" class="icon mode-tab-icon icon-clap"><path d="M2.5 10.5C2.5 6.72876 2.5 4.84315 3.67157 3.67157C4.84315 2.5 6.72876 2.5 10.5 2.5H13.5C17.2712 2.5 19.1569 2.5 20.3284 3.67157C21.5 4.84315 21.5 6.72876 21.5 10.5V13.5C21.5 17.2712 21.5 19.1569 20.3284 20.3284C19.1569 21.5 17.2712 21.5 13.5 21.5H10.5C6.72876 21.5 4.84315 21.5 3.67157 20.3284C2.5 19.1569 2.5 17.2712 2.5 13.5V10.5Z"/><path d="M3 8H22"/><path d="M6 8L11.5 2.5"/><path d="M13 8L18.5 2.5"/><path d="M6.5 17.5H10.5" stroke-linecap="round"/><path d="M6.5 13.5L15.5 13.5" stroke-linecap="round"/></svg> Films</button>
+            <button type="button" class="mode-tab" id="wl-tab-tv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" class="icon mode-tab-icon icon-tv"><path d="M2 14C2 10.2288 2 8.34315 3.17157 7.17157C4.34315 6 6.22876 6 10 6H14C17.7712 6 19.6569 6 20.8284 7.17157C22 8.34315 22 10.2288 22 14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14Z"/><path class="antenna" d="M9 3L12 6L16 2" stroke-linejoin="round"/></svg> Séries</button>
+          </div>
         </div>
 
         <div id="wl-movie-section">
-          <h3 class="card-title">
-            <span id="watchlist-active-name">À voir</span>
+          <header class="watchlist-collection-header">
+            <div>
+              <div class="watchlist-collection-kicker">Collection active</div>
+              <h3 class="card-title"><span id="watchlist-active-name">À voir</span></h3>
+            </div>
             <span class="card-title-badge" id="watchlist-count-badge">0 film</span>
-          </h3>
+          </header>
           <div class="wl-lists-row" id="wl-lists-row"></div>
           <div class="wl-sort-row" id="wl-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récents</button>
@@ -750,21 +791,19 @@
             </summary>
             <div class="genre-chips" id="wl-genre-chips"></div>
           </details>
-          <div class="watchlist-add-row wl-suggest-wrap">
-            <input type="text" class="watchlist-add-input" id="watchlist-input" placeholder="Rechercher un film à ajouter..." autocomplete="off">
-            <button class="watchlist-add-btn" id="watchlist-add-btn">+ Ajouter</button>
-            <div class="wl-suggestions" id="wl-suggestions"></div>
-          </div>
           <div class="watchlist-scroller" id="watchlist-list">
             <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les films que tu veux voir.</div>
           </div>
         </div>
 
         <div id="wl-tv-section" style="display:none;">
-          <h3 class="card-title">
-            <span id="wl-tv-active-name">À voir</span>
+          <header class="watchlist-collection-header">
+            <div>
+              <div class="watchlist-collection-kicker">Collection active</div>
+              <h3 class="card-title"><span id="wl-tv-active-name">À voir</span></h3>
+            </div>
             <span class="card-title-badge" id="wl-tv-count-badge">0 série</span>
-          </h3>
+          </header>
           <div class="wl-lists-row" id="wl-tv-lists-row"></div>
           <div class="wl-sort-row" id="wl-tv-sort-row">
             <button type="button" class="wl-sort-btn active" data-sort="recent">Récentes</button>
@@ -779,11 +818,6 @@
             </summary>
             <div class="genre-chips" id="wl-tv-genre-chips"></div>
           </details>
-          <div class="watchlist-add-row wl-suggest-wrap">
-            <input type="text" class="watchlist-add-input" id="wl-tv-input" placeholder="Rechercher une série à ajouter..." autocomplete="off">
-            <button class="watchlist-add-btn" id="wl-tv-add-btn">+ Ajouter</button>
-            <div class="wl-suggestions" id="wl-tv-suggestions"></div>
-          </div>
           <div class="watchlist-scroller" id="wl-tv-list">
             <div class="empty-state"><div class="empty-state-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" class="icon"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div>Rien au programme pour l'instant — ajoute les séries que tu veux voir.</div>
           </div>

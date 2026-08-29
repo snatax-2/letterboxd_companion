@@ -3345,6 +3345,406 @@
     .poster-min { flex-basis: 154px; width: 154px; }
   }
 
+  /* ═══════════════════════════════════════════
+     À VOIR — bibliothèque Archives & Editorial
+     ═══════════════════════════════════════════
+     La logique de listes reste intacte ; la composition privilégie le
+     catalogue, les affiches et les filets plutôt que les panneaux. */
+  .watchlist-editorial-header {
+    position: relative;
+    display: flex;
+    min-height: 118px;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+    padding: var(--space-4) 0 var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+  .watchlist-editorial-heading { min-width: 0; }
+  .watchlist-editorial-kicker,
+  .watchlist-collection-kicker {
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .watchlist-editorial-kicker { margin-bottom: var(--space-2); }
+  .watchlist-editorial-title {
+    margin: 0;
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 12vw, 4.35rem);
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.88;
+  }
+
+  /* La pile occupe la largeur disponible pour que le champ s'ouvre vers la
+     gauche sans déplacer le titre. Une seule recherche est rendue à la fois
+     selon l'état du switch Films/Séries. */
+  .watchlist-search-stack {
+    position: absolute;
+    right: 0;
+    bottom: var(--space-4);
+    z-index: 9;
+    display: flex;
+    width: min(100%, 440px);
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  .watchlist-editorial-search {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    pointer-events: auto;
+    transition: width 360ms var(--ease-out);
+  }
+  .watchlist-editorial-search[hidden] { display: none; }
+  .watchlist-editorial-search.is-open { width: 100%; }
+  .watchlist-search-control {
+    display: flex;
+    width: 100%;
+    height: 44px;
+    overflow: hidden;
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    transition: border-color var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out);
+  }
+  .watchlist-editorial-search.is-open .watchlist-search-control { border-color: var(--text-mid); }
+  .watchlist-editorial-search .watchlist-add-input {
+    flex: 1 1 auto;
+    width: 0;
+    min-width: 0;
+    height: 42px;
+    padding: 0 0 0 var(--space-4);
+    border: 0;
+    border-radius: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-hi);
+    font-family: var(--font-body);
+    font-size: 16px;
+    opacity: 0;
+    transform: translateX(14px);
+    transition: opacity var(--dur-base) var(--ease-out), transform 360ms var(--ease-out);
+  }
+  .watchlist-editorial-search.is-open .watchlist-add-input {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .watchlist-editorial-search .watchlist-add-input::placeholder { color: var(--text); opacity: 1; }
+  .watchlist-editorial-search .watchlist-add-input::-webkit-search-cancel-button { display: none; }
+  .watchlist-editorial-search .watchlist-add-btn {
+    flex: 0 0 0;
+    width: 0;
+    min-width: 0;
+    height: 42px;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    border-left: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text-hi);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    opacity: 0;
+    text-transform: uppercase;
+    transition: width 360ms var(--ease-out), flex-basis 360ms var(--ease-out), opacity var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+  }
+  .watchlist-editorial-search.is-open .watchlist-add-btn {
+    flex-basis: 72px;
+    width: 72px;
+    border-left-color: var(--border);
+    opacity: 1;
+  }
+  .watchlist-editorial-search .watchlist-add-btn:hover { background: var(--surface2); opacity: 1; }
+  .watchlist-search-toggle {
+    position: relative;
+    display: grid;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 42px;
+    place-items: center;
+    border: 0;
+    background: var(--bg);
+    color: var(--text-hi);
+    cursor: pointer;
+  }
+  .watchlist-search-icon {
+    position: absolute;
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    transition: opacity var(--dur-base) var(--ease-out), transform 360ms var(--ease-out);
+  }
+  .watchlist-search-icon .icon { width: 20px; height: 20px; }
+  .watchlist-search-icon-open { opacity: 1; transform: rotate(0deg) scale(1); }
+  .watchlist-search-icon-close { opacity: 0; transform: rotate(-60deg) scale(.72); }
+  .watchlist-editorial-search.is-open .watchlist-search-icon-open { opacity: 0; transform: rotate(60deg) scale(.72); }
+  .watchlist-editorial-search.is-open .watchlist-search-icon-close { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  .watchlist-editorial-search .wl-suggestions {
+    top: calc(100% + var(--space-1));
+    max-height: min(380px, 55vh);
+    overflow-y: auto;
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    box-shadow: var(--shadow-3);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .watchlist-editorial-search .wl-suggest-item {
+    width: 100%;
+    min-height: 62px;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-family: var(--font-body);
+    text-align: left;
+  }
+  .watchlist-editorial-search .wl-suggest-item:hover { background: var(--surface2); }
+  .watchlist-editorial-search .wl-suggest-poster { border-radius: var(--poster-radius); }
+  .watchlist-editorial-search .wl-suggest-title { font-family: var(--font-heading); font-weight: 600; }
+  .watchlist-editorial-search .wl-suggest-year { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; }
+
+  /* Même pastille glissante qu'ailleurs, sur toute la largeur du filet. */
+  .watchlist-segmented-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin-bottom: var(--space-5);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .watchlist-seg-tabs { width: 100%; margin: 0; }
+
+  .watchlist-collection-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-3);
+    padding-top: var(--space-2);
+  }
+  .watchlist-collection-kicker { margin-bottom: var(--space-2); color: var(--text); }
+  #watchlist-card .watchlist-collection-header .card-title {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: var(--font-heading);
+    font-size: clamp(1.45rem, 6vw, 2.25rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  #watchlist-card .watchlist-collection-header .card-title-badge {
+    flex-shrink: 0;
+    padding-bottom: 2px;
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  #watchlist-card .wl-lists-row {
+    gap: 0;
+    margin: 0 0 var(--space-2);
+    padding: 0 0 var(--space-1);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  #watchlist-card .wl-lists-row::-webkit-scrollbar,
+  #watchlist-card .wl-sort-row::-webkit-scrollbar { display: none; }
+  #watchlist-card .wl-list-pill {
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    border: 0;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+  #watchlist-card .wl-list-pill:first-child { padding-left: 0; }
+  #watchlist-card .wl-list-pill:hover { border-bottom-color: var(--border-hi); color: var(--text-hi); }
+  #watchlist-card .wl-list-pill.active {
+    border-bottom-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #watchlist-card .wl-list-pill.wl-list-add {
+    border: 0;
+    border-bottom: 1px solid transparent;
+    color: var(--text-mid);
+  }
+
+  #watchlist-card .wl-sort-row {
+    flex-wrap: nowrap;
+    gap: var(--space-4);
+    margin: 0 0 var(--space-3);
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  #watchlist-card .wl-sort-btn {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  #watchlist-card .wl-sort-btn:hover { border-bottom-color: var(--border-hi); color: var(--text-hi); }
+  #watchlist-card .wl-sort-btn.active {
+    border-bottom-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #watchlist-card .wl-sort-btn-filter { margin-left: auto; }
+  #watchlist-card .genre-fold {
+    margin: 0 0 var(--space-5);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border);
+  }
+  #watchlist-card .genre-fold-summary { min-height: 44px; padding: 0; }
+  #watchlist-card .genre-chip {
+    min-height: 36px;
+    border-color: var(--border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-mid);
+  }
+  #watchlist-card .genre-chip.active,
+  #watchlist-card .genre-chip.all-chip.active {
+    border-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+
+  #watchlist-card .watchlist-scroller {
+    max-height: none;
+    overflow: visible;
+    gap: clamp(8px, 2.6vw, 14px);
+    padding-bottom: var(--space-6);
+  }
+  #watchlist-card .watchlist-scroller .wl-card {
+    overflow: hidden;
+    border: 0;
+    border-radius: var(--poster-radius);
+    background: var(--surface2);
+  }
+  #watchlist-card .watchlist-scroller .wl-card-content,
+  #watchlist-card .watchlist-scroller .wl-card-open {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+  }
+  #watchlist-card .watchlist-scroller .wl-card-open { border: 0; }
+  #watchlist-card .watchlist-scroller .wl-poster,
+  #watchlist-card .watchlist-scroller .wl-poster img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--poster-radius);
+  }
+  #watchlist-card .watchlist-scroller .wl-poster { overflow: hidden; }
+  #watchlist-card .watchlist-scroller .wl-poster img { object-fit: cover; }
+  #watchlist-card .watchlist-scroller .wl-actions {
+    top: var(--space-1);
+    right: var(--space-1);
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid rgba(250, 250, 250, 0.14);
+    border-radius: var(--radius-sm);
+    background: rgba(10, 10, 12, 0.78);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  #watchlist-card .watchlist-scroller .wl-btn {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    padding: 0;
+    border-radius: 0;
+    color: #C8C8CC;
+  }
+  #watchlist-card .watchlist-scroller .wl-btn + .wl-btn { border-left: 1px solid rgba(250, 250, 250, 0.12); }
+  #watchlist-card .watchlist-scroller .wl-btn .icon { width: 15px; height: 15px; }
+  #watchlist-card .watchlist-scroller .wl-btn.rate { color: #D4AF37; }
+  #watchlist-card .watchlist-scroller .wl-btn:hover { background: rgba(250, 250, 250, 0.1); color: #FAFAFA; }
+  #watchlist-card .watchlist-scroller .wl-btn.rate:hover { background: rgba(212, 175, 55, 0.14); color: #E0C16A; }
+  #watchlist-card .watchlist-scroller > .empty-state,
+  #watchlist-card .watchlist-scroller > .wl-empty-suggestions { grid-column: 1 / -1; }
+  #watchlist-card .empty-state { padding: clamp(42px, 10vw, 72px) var(--space-4); }
+  #watchlist-card .empty-state-cta {
+    min-height: 44px;
+    border: 1px solid var(--border-hi);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #watchlist-card .wl-empty-sugg-poster { border-radius: var(--poster-radius); }
+  #watchlist-card .wl-empty-sugg-btn {
+    min-height: 36px;
+    border-color: var(--border-hi);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-hi);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    #watchlist-card .watchlist-scroller .wl-card-open {
+      transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+    }
+    #watchlist-card .watchlist-scroller .wl-card-open:hover { transform: scale(.98); }
+  }
+
+  @media (max-width: 380px) {
+    .watchlist-editorial-title { font-size: 2.35rem; }
+    .watchlist-editorial-search.is-open .watchlist-add-btn { flex-basis: 64px; width: 64px; }
+    #watchlist-card .wl-list-pill { padding-inline: var(--space-3); }
+    #watchlist-card .wl-sort-row { gap: var(--space-3); }
+  }
+
+  @media (min-width: 861px) {
+    .watchlist-segmented-wrap { top: 68px; }
+  }
+
+  @media (min-width: 1024px) {
+    .watchlist-editorial-header { min-height: 168px; padding-top: var(--space-6); }
+    .watchlist-editorial-title { font-size: 5.5rem; }
+    .watchlist-collection-header { margin-top: var(--space-5); }
+    #watchlist-card .watchlist-scroller {
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: var(--space-4);
+    }
+  }
+
   /* ══════════════════════════════════════════════════════════════════
      ARCHIVES & EDITORIAL — P1 : UNBOXING
      ══════════════════════════════════════════════════════════════════

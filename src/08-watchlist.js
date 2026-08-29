@@ -215,11 +215,12 @@ async function renderWatchlistEmptySuggestions() {
       <div class="wl-empty-suggestions-row">
         ${items.map(m => `
           <div class="wl-empty-sugg-card">
-            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+            <img class="wl-empty-sugg-poster editorial-image" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
             <div class="wl-empty-sugg-title">${escAttr(m.title)}</div>
             <button type="button" class="wl-empty-sugg-btn" data-movie-id="${m.id}" data-movie-title="${escAttr(m.title)}" data-movie-year="${(m.release_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
           </div>`).join('')}
       </div>`;
+    if (typeof prepareEditorialImages === 'function') prepareEditorialImages(wrap);
   } catch (e) {
     console.warn('Impossible de charger les suggestions', e);
     wrap.innerHTML = '';
@@ -275,7 +276,7 @@ function renderWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
+      ? `<span class="wl-poster"><img class="editorial-image" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
 
     div.innerHTML = `
@@ -306,6 +307,7 @@ function renderWatchlist() {
       if (pd) pd.innerHTML = '';
     }
   });
+  if (typeof prepareEditorialImages === 'function') prepareEditorialImages(container);
   window._justSavedWatchlistTitle = null;
 }
 
@@ -550,8 +552,10 @@ wlInput.addEventListener('input', () => {
 
       if (personMatch) {
         const photoUrl = tmdbImage(personMatch.profile_path, 'w92');
-        const personEl = document.createElement('div');
+        const personEl = document.createElement('button');
+        personEl.type = 'button';
         personEl.className = 'wl-suggest-item';
+        personEl.setAttribute('aria-label', `Voir la filmographie de ${personMatch.name}`);
         personEl.innerHTML = `
           ${photoUrl
             ? `<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(personMatch.name)}" loading="lazy">`
@@ -569,8 +573,10 @@ wlInput.addEventListener('input', () => {
 
       data.results.slice(0, 5).forEach(m => {
         const year = m.release_date?.slice(0, 4) || '';
-        const el = document.createElement('div');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'wl-suggest-item';
+        el.setAttribute('aria-label', `Ajouter ${m.title} à une liste`);
         el.innerHTML = `
           ${m.poster_path
             ? `<img class="wl-suggest-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
@@ -840,11 +846,12 @@ async function renderTvWatchlistEmptySuggestions() {
       <div class="wl-empty-suggestions-row">
         ${items.map(m => `
           <div class="wl-empty-sugg-card">
-            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.name)}" loading="lazy">
+            <img class="wl-empty-sugg-poster editorial-image" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.name)}" loading="lazy">
             <div class="wl-empty-sugg-title">${escAttr(m.name)}</div>
             <button type="button" class="wl-empty-sugg-btn" data-show-id="${m.id}" data-show-name="${escAttr(m.name)}" data-show-year="${(m.first_air_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
           </div>`).join('')}
       </div>`;
+    if (typeof prepareEditorialImages === 'function') prepareEditorialImages(wrap);
   } catch (e) {
     console.warn('Impossible de charger les suggestions séries', e);
     wrap.innerHTML = '';
@@ -898,7 +905,7 @@ function renderTvWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
+      ? `<span class="wl-poster"><img class="editorial-image" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
     div.innerHTML = `
       <div class="wl-card-content">
@@ -914,6 +921,7 @@ function renderTvWatchlist() {
     container.appendChild(div);
     applyPosterAccent(item.poster, div);
   });
+  if (typeof prepareEditorialImages === 'function') prepareEditorialImages(container);
   window._justSavedTvWatchlistTitle = null;
 }
 
@@ -1011,8 +1019,10 @@ wlTvInput?.addEventListener('input', () => {
       wlTvSuggestEl.style.display = 'block';
       data.results.slice(0, 5).forEach(s => {
         const year = s.first_air_date?.slice(0, 4) || '';
-        const el = document.createElement('div');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'wl-suggest-item';
+        el.setAttribute('aria-label', `Ajouter ${s.name} à la liste Séries`);
         el.innerHTML = `
           ${s.poster_path
             ? `<img class="wl-suggest-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="Affiche de ${escAttr(s.name)}" loading="lazy">`
@@ -1052,21 +1062,81 @@ document.getElementById('wl-tv-add-btn')?.addEventListener('click', () => {
   wlTvInput.value = '';
 });
 
+// ── Recherche éditoriale compacte ──────────────────────────────────────────
+// Les champs et leurs comportements d'ajout restent ceux définis ci-dessus.
+// Ce contrôleur ne gère que leur présentation : loupe compacte, focus,
+// Escape et bascule du champ visible avec le switch Films/Séries.
+function setWatchlistSearchOpen(searchEl, open, { restoreFocus = false } = {}) {
+  if (!searchEl) return;
+  const input = searchEl.querySelector('.watchlist-add-input');
+  const addButton = searchEl.querySelector('.watchlist-add-btn');
+  const toggle = searchEl.querySelector('.watchlist-search-toggle');
+  const suggestions = searchEl.querySelector('.wl-suggestions');
+  if (!input || !addButton || !toggle) return;
+
+  searchEl.classList.toggle('is-open', open);
+  input.disabled = !open;
+  addButton.disabled = !open;
+  toggle.setAttribute('aria-expanded', String(open));
+  const mediaLabel = searchEl.dataset.watchlistSearch === 'tv' ? 'Séries' : 'Films';
+  toggle.setAttribute('aria-label', `${open ? 'Fermer' : 'Ouvrir'} la recherche ${mediaLabel}`);
+
+  if (open) {
+    requestAnimationFrame(() => input.focus());
+    return;
+  }
+  clearTimeout(searchEl.dataset.watchlistSearch === 'tv' ? wlTvSearchTimer : wlSearchTimer);
+  input.value = '';
+  if (suggestions) suggestions.style.display = 'none';
+  if (restoreFocus) toggle.focus();
+}
+
+function wireWatchlistEditorialSearch(searchId) {
+  const searchEl = document.getElementById(searchId);
+  const toggle = searchEl?.querySelector('.watchlist-search-toggle');
+  if (!searchEl || !toggle) return;
+  toggle.addEventListener('click', () => {
+    const shouldOpen = !searchEl.classList.contains('is-open');
+    hapticPulse(toggle, 'light');
+    setWatchlistSearchOpen(searchEl, shouldOpen, { restoreFocus: !shouldOpen });
+  });
+  searchEl.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    setWatchlistSearchOpen(searchEl, false, { restoreFocus: true });
+  });
+}
+
+function setWatchlistSearchMedia(mediaType) {
+  document.querySelectorAll('[data-watchlist-search]').forEach(searchEl => {
+    const isCurrent = searchEl.dataset.watchlistSearch === mediaType;
+    if (!isCurrent) setWatchlistSearchOpen(searchEl, false);
+    searchEl.hidden = !isCurrent;
+    searchEl.classList.toggle('is-current', isCurrent);
+  });
+}
+
+wireWatchlistEditorialSearch('watchlist-movie-search');
+wireWatchlistEditorialSearch('watchlist-tv-search');
+
 // ── Toggle Films/Séries ──
 document.getElementById('wl-tab-movie')?.addEventListener('click', () => {
   document.getElementById('wl-tab-movie').classList.add('active');
   document.getElementById('wl-tab-tv').classList.remove('active');
   document.getElementById('wl-movie-section').style.display = '';
   document.getElementById('wl-tv-section').style.display = 'none';
+  setWatchlistSearchMedia('movie');
 });
 document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
   document.getElementById('wl-tab-tv').classList.add('active');
   document.getElementById('wl-tab-movie').classList.remove('active');
   document.getElementById('wl-tv-section').style.display = '';
   document.getElementById('wl-movie-section').style.display = 'none';
+  setWatchlistSearchMedia('tv');
   renderWatchlistTabs('tv');
   renderTvWatchlist();
 });
 
+setWatchlistSearchMedia('movie');
 renderWatchlistTabs('tv');
 renderTvWatchlist();
