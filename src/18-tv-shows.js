@@ -628,7 +628,7 @@ function renderTvHistory() {
       sep.className = 'hist-month-sep';
       const rated = group.items.map(sh => computeShowAverageScore(sh)).filter(v => v != null);
       const avg = rated.length > 0 ? (rated.reduce((a, b) => a + b, 0) / rated.length).toFixed(1) : null;
-      const label = group.key ? escAttr(monthLabelOf(group.key)) : 'S\u00e9ries pas encore not\u00e9es';
+      const label = group.key ? escAttr(monthLabelOf(group.key)) : 'Séries suivies';
       sep.innerHTML = `<span class="hist-month-label">${label}</span><span class="hist-month-recap">${group.items.length} s\u00e9rie${group.items.length > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
       container.appendChild(sep);
     }
@@ -727,6 +727,7 @@ function renderTvShowCard(show, tier) {
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
   const isFeatured = tier !== 'normal';
+  const isUnratedFollowedShow = avg == null && watchedEpisodes > 0;
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les
   // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
@@ -750,7 +751,7 @@ function renderTvShowCard(show, tier) {
       ${isFeatured ? `<div class="hist-grid-featured-badge">${show.liked ? `${ICONS.heart} Coup de cœur` : `★ ${avg.toFixed(1)}`}</div>` : ''}
       ${totalEpisodes > 0 ? `
         <div class="hist-grid-progress" title="${watchedEpisodes}/${totalEpisodes} épisodes vus" aria-hidden="true">
-          <div class="hist-grid-progress-fill" style="width:${progressPct}%"></div>
+          <div class="hist-grid-progress-fill${isUnratedFollowedShow ? ' is-following' : ''}" style="width:${progressPct}%"></div>
         </div>
       ` : ''}
       <div class="hist-actions">

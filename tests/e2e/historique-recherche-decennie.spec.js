@@ -19,6 +19,7 @@ test('chercher "199" dans l\'historique filtre par decennie 1990', async ({ page
   ]));
   await page.goto('/');
   await page.click('#nav-history');
+  await page.click('#history-search-toggle');
   await page.fill('#history-search', '199');
   await page.waitForTimeout(300);
 

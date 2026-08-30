@@ -80,6 +80,29 @@ function renderActiveHistoryView() {
 }
 const historySearchEl = document.getElementById('history-search');
 const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+const historyEditorialSearch = document.getElementById('history-editorial-search');
+const historySearchToggle = document.getElementById('history-search-toggle');
+
+function setHistorySearchOpen(open, { restoreFocus = false } = {}) {
+  if (!historyEditorialSearch || !historySearchEl || !historySearchToggle) return;
+  historyEditorialSearch.classList.toggle('is-open', open);
+  historySearchEl.disabled = !open;
+  historySearchToggle.setAttribute('aria-expanded', String(open));
+  historySearchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Ouvrir la recherche');
+  if (open) {
+    requestAnimationFrame(() => historySearchEl.focus());
+    return;
+  }
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  if (restoreFocus) historySearchToggle.focus();
+}
+
+historySearchToggle?.addEventListener('click', () => {
+  setHistorySearchOpen(!historyEditorialSearch?.classList.contains('is-open'), { restoreFocus: true });
+});
+historyEditorialSearch?.addEventListener('submit', event => event.preventDefault());
+setHistorySearchOpen(false);
 historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
   historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
@@ -90,6 +113,9 @@ historySearchClearBtn.addEventListener('click', () => {
   historySearchEl.value = '';
   historySearchEl.dispatchEvent(new Event('input'));
   historySearchEl.focus();
+});
+historySearchEl.addEventListener('keydown', event => {
+  if (event.key === 'Escape') setHistorySearchOpen(false, { restoreFocus: true });
 });
 
 // ═══════════════════════════════════════════

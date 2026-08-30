@@ -659,30 +659,38 @@
     <div class="right-view" id="view-history">
 
       <div class="card">
-        <h3 class="card-title">
-          Historique
-          <span class="card-title-badge" id="hist-count-badge">0 film</span>
-        </h3>
+        <header class="history-editorial-header">
+          <div class="history-editorial-heading">
+            <div class="history-editorial-kicker">Archives / Visionnages</div>
+            <h2 class="history-editorial-title">Historique</h2>
+          </div>
+          <form class="editorial-search history-editorial-search" id="history-editorial-search" role="search" aria-label="Rechercher dans l’historique">
+            <label class="visually-hidden" for="history-search">Rechercher un titre, un réalisateur ou un acteur</label>
+            <input type="search" class="editorial-search-input" id="history-search" placeholder="Titre, réalisateur, acteur…" autocomplete="off" autocapitalize="words" enterkeyhint="search">
+            <button type="button" class="search-clear-btn history-search-clear-btn" id="history-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
+            <button type="button" class="editorial-search-toggle" id="history-search-toggle" aria-label="Ouvrir la recherche" aria-expanded="false">
+              <span class="editorial-search-icon editorial-search-icon-open" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+              <span class="editorial-search-icon editorial-search-icon-close" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.6)" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
+            </button>
+          </form>
+        </header>
 
-        <div class="mode-tabs" id="hist-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
+        <div class="history-segmented-wrap">
+        <div class="mode-tabs history-seg-tabs" id="hist-media-tabs"><div class="toggle-slider" aria-hidden="true"></div>
           <button type="button" class="mode-tab active" id="hist-tab-movie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" class="icon mode-tab-icon icon-clap"><path d="M2.5 10.5C2.5 6.72876 2.5 4.84315 3.67157 3.67157C4.84315 2.5 6.72876 2.5 10.5 2.5H13.5C17.2712 2.5 19.1569 2.5 20.3284 3.67157C21.5 4.84315 21.5 6.72876 21.5 10.5V13.5C21.5 17.2712 21.5 19.1569 20.3284 20.3284C19.1569 21.5 17.2712 21.5 13.5 21.5H10.5C6.72876 21.5 4.84315 21.5 3.67157 20.3284C2.5 19.1569 2.5 17.2712 2.5 13.5V10.5Z"/><path d="M3 8H22"/><path d="M6 8L11.5 2.5"/><path d="M13 8L18.5 2.5"/><path d="M6.5 17.5H10.5" stroke-linecap="round"/><path d="M6.5 13.5L15.5 13.5" stroke-linecap="round"/></svg> Films</button>
           <button type="button" class="mode-tab" id="hist-tab-tv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 1.5)" stroke-linecap="round" class="icon mode-tab-icon icon-tv"><path d="M2 14C2 10.2288 2 8.34315 3.17157 7.17157C4.34315 6 6.22876 6 10 6H14C17.7712 6 19.6569 6 20.8284 7.17157C22 8.34315 22 10.2288 22 14C22 17.7712 22 19.6569 20.8284 20.8284C19.6569 22 17.7712 22 14 22H10C6.22876 22 4.34315 22 3.17157 20.8284C2 19.6569 2 17.7712 2 14Z"/><path class="antenna" d="M9 3L12 6L16 2" stroke-linejoin="round"/></svg> Séries</button>
         </div>
-
-        <div class="search-wrap" style="margin-bottom: 14px;">
-          <div class="search-input-wrap">
-            <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="var(--icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" class="search-input" id="history-search" placeholder="Rechercher (titre, réal, acteur...)" autocomplete="off">
-            <button type="button" class="search-clear-btn" id="history-search-clear-btn" aria-label="Effacer la recherche" style="display:none;">✕</button>
-          </div>
         </div>
 
+        <div class="history-controls">
+          <div class="history-collection-meta"><span class="history-collection-kicker">Collection personnelle</span><span class="card-title-badge" id="hist-count-badge">0 film</span></div>
         <div class="filter-row" id="filter-row">
           <button class="filter-btn active" data-sort="date">Récents</button>
           <button class="filter-btn" data-sort="score-desc">Mieux notés</button>
           <button class="filter-btn" data-sort="score-asc">Moins bien</button>
           <button class="filter-btn" data-sort="title">A→Z</button>
           <button class="filter-btn filter-btn-liked" id="hist-liked-filter-btn">♥ Coups de cœur</button>
+        </div>
         </div>
 
         <details class="genre-fold" id="genre-fold" style="display:none;">
