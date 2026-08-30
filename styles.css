@@ -3915,6 +3915,393 @@
   }
   #notation-card { margin-top: var(--space-2) !important; }
 
+  /* ══════════════════════════════════════════════════════════════════
+     NOTER — FILM : feuille d'archive, pas formulaire administratif
+     ══════════════════════════════════════════════════════════════════
+     La structure et les contrôles existants sont volontairement conservés :
+     recherche, contexte, curseurs, pondérations, mode rapide et sauvegarde.
+     Ce bloc ne change que leur hiérarchie visuelle. Les mêmes fondations
+     servent ensuite à la notation de saison, sans en modifier le flux. */
+  #col-rating > .card:first-child > .card-title,
+  #notation-card > .card-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(2.1rem, 9vw, 3.4rem);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: .92;
+  }
+  #col-rating > .card:first-child > .card-title::before,
+  #notation-card > .card-title::before {
+    align-self: flex-start;
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: .15em;
+    line-height: 1.35;
+  }
+  #col-rating > .card:first-child > .card-title::before { content: 'ARCHIVES / NOTER'; }
+  #notation-card > .card-title::before { content: 'JUGEMENT'; }
+  #col-rating > .card:first-child > .card-title > span,
+  #notation-card > .card-title { flex-wrap: wrap; }
+  #col-rating > .card:first-child > .card-title > span { flex: 1 1 auto; }
+  #col-rating .btn-new-review {
+    align-self: flex-start;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid var(--text-mid);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-hi);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  #col-rating .btn-new-review:hover { border-color: var(--text-hi); background: transparent; }
+  #col-rating .media-type-tabs {
+    width: min(100%, 420px);
+    margin: 0 auto var(--section-space);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    padding: var(--space-1) 0;
+  }
+  #col-rating .media-type-tabs .toggle-slider {
+    top: var(--space-1);
+    height: calc(100% - var(--space-2));
+    border: 0;
+    border-radius: 2px;
+    box-shadow: none;
+  }
+  #movie-only-fields .search-wrap {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+  #movie-only-fields .search-row { gap: var(--space-2); }
+  #movie-only-fields .search-input-wrap {
+    border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+    background: transparent;
+  }
+  #movie-only-fields .search-input-wrap:focus-within { border-color: var(--text-hi); }
+  #movie-only-fields .date-input,
+  #movie-only-fields .heart-btn {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: transparent;
+  }
+  #movie-only-fields .heart-btn.active { color: var(--gold); border-color: var(--gold); }
+  #movie-only-fields .context-row-label {
+    margin-bottom: var(--space-3);
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: .14em;
+  }
+  #movie-only-fields .context-row { gap: var(--space-2); }
+  #movie-only-fields .ctx-tag {
+    border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-body);
+  }
+  #movie-only-fields .ctx-tag:hover,
+  #movie-only-fields .ctx-tag.active {
+    border-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  /* Série : le suivi garde toutes ses actions, mais devient une table de
+     lecture compacte. Les affiches et les données d'épisode font le rythme. */
+  #tv-only-fields .tv-continue-section {
+    margin-bottom: var(--section-space);
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+  #tv-only-fields .tv-continue-header {
+    padding: 0 0 var(--space-3);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-hi);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  #tv-only-fields .tv-continue-list { gap: 0; margin: 0; }
+  #tv-only-fields .tv-continue-card {
+    min-height: 0;
+    padding: var(--space-4) 52px var(--space-4) 0;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  #tv-only-fields .tv-continue-card.tv-continue-loading { padding-left: 0; }
+  #tv-only-fields .tv-continue-poster { width: 52px; height: 78px; border-radius: var(--poster-radius); }
+  #tv-only-fields .tv-continue-show-title {
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: .08em;
+  }
+  #tv-only-fields .tv-continue-ep-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 600; }
+  #tv-only-fields .tv-continue-meta { font-family: var(--font-mono); font-size: var(--text-xs); }
+  #tv-only-fields .tv-continue-synopsis summary { color: var(--text-mid); font-family: var(--font-mono); font-size: var(--text-xs); }
+  #tv-only-fields .tv-continue-card-actions { top: var(--space-3); right: 0; }
+  #tv-only-fields .tv-continue-pause-btn,
+  #tv-only-fields .tv-continue-remove-btn { border-radius: 0; }
+  #tv-only-fields .tv-continue-check-btn {
+    right: 0;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #tv-only-fields .tv-continue-check-btn:hover { border-color: var(--text-hi); background: var(--text-hi); color: var(--bg); }
+  #tv-only-fields .tv-continue-lock-badge { right: 0; border-radius: 0; background: transparent; }
+  #tv-only-fields .search-wrap {
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+  #tv-only-fields .search-input-wrap {
+    border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+    background: transparent;
+  }
+  #tv-only-fields .search-input-wrap:focus-within { border-color: var(--text-hi); }
+  #tv-only-fields .date-input,
+  #tv-only-fields .heart-btn { border: 1px solid var(--border); border-radius: 2px; background: transparent; }
+  #tv-only-fields .heart-btn.active { border-color: var(--gold); color: var(--gold); }
+  #tv-only-fields .tv-season-picker {
+    margin-block: var(--space-5);
+    padding-block: var(--space-4);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  #tv-season-strip {
+    gap: var(--space-3);
+    margin: var(--space-5) 0 var(--section-space);
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  #tv-season-strip .film-strip-poster { width: 54px; height: 81px; border-radius: var(--poster-radius); }
+  #tv-season-strip .film-strip-title { font-size: clamp(1.25rem, 5vw, 1.65rem); font-weight: 600; }
+  #tv-season-strip .film-strip-genre,
+  #tv-season-strip .tv-show-average { color: var(--text-mid); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: .05em; }
+  #tv-only-fields .tv-season-start-prompt,
+  #tv-only-fields .tv-season-in-progress-msg,
+  #tv-only-fields .tv-season-complete-banner {
+    margin-top: var(--space-4);
+    padding: var(--space-4) 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-hi);
+    font-family: var(--font-body);
+  }
+  #tv-only-fields .tv-season-in-progress-msg { color: var(--text-mid); }
+  #tv-only-fields .tv-season-start-prompt .icon-btn,
+  #tv-only-fields .tv-season-complete-banner .icon-btn {
+    border-radius: 0;
+    background: var(--text-hi);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: .08em;
+  }
+  #col-rating .film-strip.visible {
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+    margin-bottom: var(--section-space);
+    padding: var(--space-3) 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  #col-rating .film-strip-poster { width: 54px; height: 81px; border-radius: var(--poster-radius); }
+  #col-rating .film-strip-title { font-size: clamp(1.25rem, 5vw, 1.65rem); font-weight: 600; }
+  #col-rating .film-strip-genre { color: var(--text-mid); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: .05em; }
+  #col-rating .strip-tmdb-badge { border-radius: 0; background: transparent; color: var(--text); }
+  #col-rating .strip-rating-icon { color: var(--gold); }
+
+  #notation-card { padding-top: var(--section-space) !important; }
+  #notation-card > .card-title { margin-bottom: var(--space-4); }
+  #notation-card .score-result {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-5);
+    margin-bottom: var(--section-space);
+    padding: 0 0 var(--section-space);
+  }
+  #notation-card .score-main { width: 144px; height: 144px; margin: 0; }
+  #notation-card .score-ring-track { stroke: var(--border); }
+  #notation-card .score-big { font-size: 3rem; }
+  #notation-card .stars-display {
+    margin: 0;
+    color: var(--gold);
+    font-size: 1.85rem;
+    letter-spacing: .12em;
+  }
+  #notation-card .mode-tabs-plain {
+    margin-bottom: var(--space-5);
+    padding: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+  }
+  #notation-card .mode-tabs-plain .mode-tab {
+    flex: 0 1 auto;
+    padding: var(--space-3) var(--space-2);
+    border-radius: 0;
+    color: var(--text-mid);
+  }
+  #notation-card .mode-tabs-plain .mode-tab.active {
+    border: 0;
+    border-bottom: 2px solid var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #notation-card .weights-toggle {
+    justify-content: flex-start;
+    margin-bottom: var(--space-3);
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+  }
+  #notation-card .weights-toggle:hover { color: var(--text-hi); }
+  #notation-card .weights-panel {
+    border-top: 1px solid var(--border);
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  #notation-card .weights-panel.open { padding: var(--space-4) 0; }
+  #notation-card .weight-item label { color: var(--text-mid); font-family: var(--font-mono); font-size: var(--text-xs); }
+  #notation-card .weight-item input[type="number"] { border-radius: 0; background: transparent; }
+  #notation-card .weight-item input:focus { border-color: var(--text-hi); }
+  #notation-card .weight-reset { color: var(--text-hi); font-family: var(--font-mono); }
+  #notation-card .focus-mode-toggle {
+    border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+  }
+  #notation-card .focus-mode-toggle:hover,
+  #notation-card .focus-mode-toggle.active {
+    border-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #notation-card .criterion-block { padding: var(--space-4) 0 var(--space-5); }
+  #notation-card .criterion-block + .criterion-block { padding-top: var(--space-5); }
+  #notation-card .criterion-label { color: var(--text-mid); font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: .11em; }
+  #notation-card .criterion-label.affect-label { color: var(--text-mid); }
+  #notation-card .weight-badge { color: var(--text); }
+  #notation-card .criterion-val {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--gold);
+    font-family: var(--font-mono);
+  }
+  #notation-card .criterion-val.affect-val { border: 0; background: transparent; color: var(--gold); }
+  #notation-card .criterion-step-btn,
+  #notation-card .focus-nav button { border-color: var(--border); background: transparent; }
+  #notation-card .criterion-step-btn:hover,
+  #notation-card .focus-nav button:hover:not(:disabled) { border-color: var(--text-hi); color: var(--text-hi); }
+  #notation-card input[type="range"] { background: linear-gradient(to right, var(--gold) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%)); }
+  #notation-card input[type="range"]:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 45%, transparent); }
+  #notation-card input[type="range"]::-webkit-slider-thumb { border-color: var(--gold); }
+  #notation-card input[type="range"]::-moz-range-thumb { border-color: var(--gold); }
+  #notation-card .affect-range { background: linear-gradient(to right, var(--gold) var(--slider-pct, 50%), var(--border) var(--slider-pct, 50%)); }
+  #notation-card .affect-range::-webkit-slider-thumb,
+  #notation-card .affect-range::-moz-range-thumb { border-color: var(--gold); }
+  #notation-card .criterion-desc,
+  #notation-card .affect-block .criterion-desc {
+    border-left-color: var(--gold);
+    border-radius: 0;
+    background: transparent;
+    color: var(--text);
+  }
+  #notation-card .quick-section { border-bottom: 1px solid var(--border); }
+  #notation-card .quick-rating-label { color: var(--text-mid); }
+  #notation-card .quick-rating-label span { color: var(--gold); }
+  #notation-card .review-wrap { margin-top: var(--section-space); }
+  #notation-card .review-wrap label { color: var(--text-mid); font-family: var(--font-mono); }
+  #notation-card .review-textarea {
+    border: 0;
+    border-bottom: 1px solid var(--border-hi);
+    border-radius: 0;
+    background: transparent;
+    min-height: 112px;
+    padding-inline: 0;
+  }
+  #notation-card .review-textarea:focus { border-color: var(--text-hi); box-shadow: none; }
+  #notation-card .btn-row { gap: var(--space-3); }
+  #notation-card .btn {
+    min-height: 48px;
+    border-radius: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: .1em;
+  }
+  #notation-card .btn-copy { border-color: var(--border-hi); background: transparent; }
+  #notation-card .btn-save { background: var(--text-hi); color: var(--bg); }
+  #notation-card .btn-save:hover { background: var(--gold); color: var(--bg); }
+
+  @media (max-width: 520px) {
+    #col-rating > .card:first-child > .card-title,
+    #notation-card > .card-title { font-size: clamp(2rem, 12vw, 2.7rem); }
+    #col-rating > .card:first-child > .card-title::before,
+    #notation-card > .card-title::before { width: 100%; }
+    /* La note doit être immédiatement lisible au-dessus de la navigation
+       flottante : sur petit écran, le repère devient une micro-donnée à
+       droite du titre plutôt qu'une ligne supplémentaire. */
+    #notation-card > .card-title::before {
+      width: auto;
+      margin-left: auto;
+      align-self: flex-end;
+    }
+    #col-rating .btn-new-review { margin-left: auto; }
+    #notation-card .score-result { grid-template-columns: 1fr; justify-items: center; gap: var(--space-2); }
+    #notation-card .score-main { width: 120px; height: 120px; }
+    #notation-card .stars-display { font-size: 1.55rem; }
+  }
+
   #view-profile { gap: 0; }
   #view-profile > .card {
     padding-block: var(--section-space);
