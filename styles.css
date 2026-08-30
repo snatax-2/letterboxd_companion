@@ -4351,6 +4351,14 @@
     #notation-card > .card-title::before { margin-bottom: var(--space-1); }
     #col-rating .media-type-tabs { margin-bottom: var(--space-3); }
   }
+  /* Même échelle de titre que Découvrir et À voir, sans agrandir les actions. */
+  #col-rating #film-card-title { font-size: clamp(2.5rem, 12vw, 4.35rem); }
+  @media (max-width: 380px) {
+    #col-rating #film-card-title { font-size: 2.35rem; }
+  }
+  @media (min-width: 1024px) {
+    #col-rating #film-card-title { font-size: 5.5rem; }
+  }
   .save-confirm-mark {
     display: grid;
     justify-items: center;
