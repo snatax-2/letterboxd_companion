@@ -318,3 +318,42 @@ test.describe('Bandeau de fin de saison', () => {
     expect(bad, JSON.stringify(bad.map(v => v.id))).toHaveLength(0);
   });
 });
+
+for (const action of ['finish', 'pause', 'remove']) {
+  test(`compteur exact après ${action} et rechargement`, async ({ page }) => {
+    await page.addInitScript(() => {
+      if (!localStorage.getItem('counter-seeded')) {
+        localStorage.setItem('counter-seeded', '1');
+        localStorage.setItem('lbx_tv_shows', JSON.stringify([101, 102].map(id => ({
+          tmdbTvId: id, title: `Série ${id}`, seasons: {
+            '1': { seasonName: 'Saison 1', watchedEpisodes: [1], totalEpisodes: 2 },
+          },
+        }))));
+      }
+    });
+    await page.route('**/api/search?tvId=*', route => route.fulfill({ json: {
+      seasons: [{ season_number: 1, episode_count: 2 }],
+    } }));
+    await page.route('**/api/search?tvSeasonShowId=*', route => route.fulfill({ json: {
+      episodes: [1, 2].map(n => ({ episode_number: n, name: `Épisode ${n}`, air_date: '2020-01-01' })),
+    } }));
+    await page.goto('/');
+    await page.click('#nav-rating');
+    await page.click('#tab-media-tv');
+    await expect(page.locator('#tv-continue-count')).toHaveText('(2)');
+    const selector = { finish: '.tv-continue-check-btn', pause: '.tv-continue-pause-btn', remove: '.tv-continue-remove-btn' }[action];
+    await page.locator(selector).first().click();
+    await expect(page.locator('#tv-continue-count')).toHaveText('(1)');
+    await expect(page.locator('#tv-continue-list .tv-continue-card')).toHaveCount(1);
+    await page.reload();
+    await page.click('#nav-rating');
+    await page.click('#tab-media-tv');
+    // Retirer reste une action temporaire, contrairement à la pause.
+    await expect(page.locator('#tv-continue-count')).toHaveText(action === 'remove' ? '(2)' : '(1)');
+    if (action === 'finish') {
+      await page.locator(selector).click();
+      await expect(page.locator('#tv-continue-count')).toHaveText('(0)');
+      await expect(page.locator('#tv-continue-section')).toBeHidden();
+    }
+  });
+}

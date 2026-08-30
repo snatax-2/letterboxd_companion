@@ -11,6 +11,7 @@ document.querySelectorAll('.ctx-tag').forEach(btn => {
       activeContextTags.add(tag);
       btn.classList.add('active');
     }
+    btn.setAttribute('aria-pressed', String(activeContextTags.has(tag)));
     saveDraft();
   });
 });

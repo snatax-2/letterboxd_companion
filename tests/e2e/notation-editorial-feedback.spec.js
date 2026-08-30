@@ -34,3 +34,21 @@ test('confirmation commune, rejouable et sans mouvement si demandé', async ({ p
   }
   await expect(page.locator('.save-confirm-overlay')).toHaveCount(0, { timeout: 2500 });
 });
+
+test('contextes sélectionnés restaurés après rechargement et réinitialisés', async ({ page }) => {
+  const cinema = page.locator('.ctx-tag').filter({ hasText: 'Cinéma' });
+  await expect(cinema).toHaveAttribute('aria-pressed', 'false');
+  const inactive = await cinema.evaluate(el => getComputedStyle(el).backgroundColor);
+  await cinema.click();
+  await expect(cinema).toHaveAttribute('aria-pressed', 'true');
+  expect(await cinema.evaluate(el => getComputedStyle(el).backgroundColor)).not.toBe(inactive);
+  await page.reload();
+  await page.click('#nav-rating');
+  await expect(cinema).toHaveAttribute('aria-pressed', 'true');
+  await cinema.click();
+  await expect(cinema).toHaveAttribute('aria-pressed', 'false');
+  await cinema.click();
+  await page.click('#new-btn');
+  await page.click('#modal-confirm');
+  await expect(cinema).toHaveAttribute('aria-pressed', 'false');
+});

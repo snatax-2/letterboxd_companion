@@ -539,7 +539,10 @@ function resetForm() {
   setTodayDate();
   
   activeContextTags.clear();
-  document.querySelectorAll('.ctx-tag').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ctx-tag').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
 
   CRITERIA.forEach(c => { document.getElementById(c).value = 5; });
   quickRating = 2.5;
@@ -578,6 +581,7 @@ window.loadItem = function(idx) {
   document.querySelectorAll('.ctx-tag').forEach(b => {
     if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
     else b.classList.remove('active');
+    b.setAttribute('aria-pressed', String(activeContextTags.has(b.dataset.tag)));
   });
 
   const strip = document.getElementById('film-strip');

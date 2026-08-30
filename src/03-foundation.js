@@ -230,6 +230,7 @@ function loadDraft() {
   document.querySelectorAll('.ctx-tag').forEach(b => {
     if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
     else b.classList.remove('active');
+    b.setAttribute('aria-pressed', String(activeContextTags.has(b.dataset.tag)));
   });
 
   if (draft.mode) setMode(draft.mode);

@@ -874,6 +874,14 @@ function renderTvStats() {
 // connues localement). Si aucune suite n'existe, la série disparaît
 // simplement du widget.
 
+// Le nombre décrit les cartes résolues, jamais les candidats TMDb.
+function updateTvContinueCount() {
+  const container = document.getElementById('tv-continue-list');
+  const count = container.querySelectorAll('.tv-continue-card:not([data-continue-idx])').length;
+  document.getElementById('tv-continue-count').textContent = `(${count})`;
+  document.getElementById('tv-continue-section').style.display = container.children.length ? 'block' : 'none';
+}
+
 async function renderTvContinueList() {
   const container = document.getElementById('tv-continue-list');
   const sectionEl = document.getElementById('tv-continue-section');
@@ -900,11 +908,12 @@ async function renderTvContinueList() {
   if (candidates.length === 0) {
     sectionEl.style.display = 'none';
     container.innerHTML = '';
+    updateTvContinueCount();
     return;
   }
 
   sectionEl.style.display = 'block';
-  document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
+  document.getElementById('tv-continue-count').textContent = '…';
   container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
 
   // Bug corrigé (signalé par l'utilisateur : notes/coup de cœur qui
@@ -927,12 +936,13 @@ async function renderTvContinueList() {
     if (!placeholder) continue; // le conteneur a pu être reconstruit entre-temps
     if (!resolved) {
       placeholder.remove();
-      if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+      updateTvContinueCount();
       continue;
     }
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderTvContinueCard(resolved);
     placeholder.replaceWith(wrapper.firstElementChild);
+    updateTvContinueCount();
   }
 }
 
@@ -1050,8 +1060,7 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
     // encore (ex : un épisode coché ailleurs).
     const cardEl = removeBtn.closest('.tv-continue-card');
     cardEl.remove();
-    const container = document.getElementById('tv-continue-list');
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    updateTvContinueCount();
     return;
   }
 
@@ -1064,8 +1073,7 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
     });
     const cardEl = pauseBtn.closest('.tv-continue-card');
     cardEl.remove();
-    const container = document.getElementById('tv-continue-list');
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    updateTvContinueCount();
     showToast('Mise en pause — reprends-la depuis sa fiche');
     return;
   }
@@ -1103,14 +1111,14 @@ document.getElementById('tv-continue-list').addEventListener('click', async (e) 
     show: showEntry, seasonKey, seasonEntry,
     needsNextSeasonCheck: seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes,
   });
-  const container = document.getElementById('tv-continue-list');
   if (!resolved) {
     cardEl.remove();
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
+    updateTvContinueCount();
   } else {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = renderTvContinueCard(resolved);
     cardEl.replaceWith(wrapper.firstElementChild);
+    updateTvContinueCount();
   }
 });
 

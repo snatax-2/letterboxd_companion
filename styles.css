@@ -3975,7 +3975,9 @@
     background: transparent;
     padding: var(--space-1) 0;
   }
+  #col-rating .media-type-tabs .mode-tab.active { color: var(--bg); }
   #col-rating .media-type-tabs .toggle-slider {
+    background: var(--text-hi);
     top: var(--space-1);
     height: calc(100% - var(--space-2));
     border: 0;
@@ -4330,6 +4332,25 @@
     padding-inline: var(--space-3);
   }
   #notation-card .focus-mode-toggle.active::after { content: '✓ Activé'; }
+  /* Un état sélectionné perceptible sans dépendre uniquement de la couleur. */
+  #movie-only-fields .ctx-tag::after { content: ''; width: 1em; }
+  #movie-only-fields .ctx-tag[aria-pressed="true"] {
+    background: var(--text-hi);
+    color: var(--bg);
+    border-color: var(--text-hi);
+  }
+  #movie-only-fields .ctx-tag[aria-pressed="true"]::after { content: '✓'; }
+  @media (max-width: 520px) {
+    #col-rating > .card:first-child > .card-title,
+    #notation-card > .card-title {
+      font-size: clamp(1.75rem, 7vw, 2rem);
+      line-height: 1.1;
+      margin-bottom: var(--space-3);
+      gap: var(--space-1);
+    }
+    #notation-card > .card-title::before { margin-bottom: var(--space-1); }
+    #col-rating .media-type-tabs { margin-bottom: var(--space-3); }
+  }
   .save-confirm-mark {
     display: grid;
     justify-items: center;
