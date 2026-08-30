@@ -3755,8 +3755,11 @@
     /* Flou fixe : pas de recalcul du rayon à chaque image de l'animation. */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: opacity var(--watchlist-menu-duration) var(--watchlist-menu-ease), visibility var(--watchlist-menu-duration);
+    /* Visible immédiatement à l'ouverture pour accepter le focus synchrone.
+       À la fermeture, attend la fin du fondu avant de masquer le panneau. */
+    transition: opacity var(--watchlist-menu-duration) var(--watchlist-menu-ease), visibility 0s linear var(--watchlist-menu-duration);
   }
+  #action-sheet.watchlist-card-menu.open { transition-delay: 0s; }
   #action-sheet.watchlist-card-menu .action-sheet-box {
     width: min(calc(100% - 48px), 320px);
     max-width: 320px;

@@ -32,13 +32,40 @@ test('menu discret au survol, clic droit et focus restauré au clavier', async (
   await expect(poster).toBeFocused();
   await poster.press('Shift+F10');
   await expect(page.locator('#action-sheet')).toHaveClass(/open/);
+  await expect(page.locator('#action-sheet .action-sheet-item').first()).toBeFocused();
   await page.locator('#action-sheet-cancel').press('Tab');
   await expect(page.locator('#action-sheet .action-sheet-item').first()).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.locator('#action-sheet-cancel')).toBeFocused();
   await page.keyboard.press('Escape');
   await poster.press('Tab');
   await expect(menu).toBeFocused();
   await menu.press('Enter');
   await expect(page.locator('#action-sheet')).toHaveClass(/open/);
+});
+
+test('le menu prend le focus immédiatement, même pendant une réouverture rapide', async ({ page }) => {
+  const states = await page.locator('.wl-card-open').first().evaluate(poster => {
+    const sheet = document.getElementById('action-sheet');
+    const states = [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      poster.dispatchEvent(new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }));
+      const first = sheet.querySelector('.action-sheet-item');
+      states.push({
+        attempt,
+        focused: document.activeElement === first,
+        visibility: getComputedStyle(first).visibility,
+        inert: sheet.inert,
+      });
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      states[attempt].restored = document.activeElement === poster;
+      states[attempt].closedInert = sheet.inert;
+    }
+    return states;
+  });
+  expect(states).toEqual([0, 1, 2].map(attempt => ({
+    attempt, focused: true, visibility: 'visible', inert: false, restored: true, closedInert: true,
+  })));
 });
 
 for (const media of ['movie', 'tv']) {
