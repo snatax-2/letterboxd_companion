@@ -2609,6 +2609,28 @@
   .tds-status-badge.ongoing .tds-status-dot { background: var(--green); }
   .tds-status-badge.ended .tds-status-dot { background: var(--red); }
 
+  /* Avancement global de la série dans sa fiche. Bleu électrique quand un
+     épisode suivi reste à voir, or lorsque toutes les saisons suivies sont
+     terminées. */
+  .tds-series-progress { margin-top: 12px; }
+  .tds-series-progress-meta {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    margin-bottom: 7px; color: var(--text-mid); font: 700 0.66rem var(--font-mono);
+    letter-spacing: .035em; text-transform: uppercase;
+  }
+  .tds-series-progress-status { color: var(--gold); }
+  .tds-series-progress-status.is-in-progress { color: #36C9FF; }
+  .tds-series-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: var(--border); }
+  .tds-series-progress-fill {
+    height: 100%; border-radius: inherit; background: var(--gold);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--gold) 62%, transparent);
+    transition: width var(--dur-base) var(--ease-out);
+  }
+  .tds-series-progress-fill.is-in-progress {
+    background: #36C9FF;
+    box-shadow: 0 0 8px color-mix(in srgb, #36C9FF 78%, transparent);
+  }
+
   /* "À regarder ensuite" dans la fiche elle-même (voir populateTdsUpNext(),
      19-tv-detail.js) — même esprit que le widget de l'écran Noter, mais
      autonome (une seule série connue, pas une liste). */

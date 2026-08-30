@@ -96,6 +96,19 @@ function buildSeasonProgressionSection(data, localShow) {
   if (tmdbSeasons.length === 0) return '';
 
   const avg = localShow ? computeShowAverageScore(localShow) : null;
+  const trackedSeasons = Object.values(localShow?.seasons || {}).filter(season => Number(season?.totalEpisodes) > 0);
+  const watchedEpisodes = trackedSeasons.reduce((sum, season) => sum + (season.watchedEpisodes || []).length, 0);
+  const totalEpisodes = trackedSeasons.reduce((sum, season) => sum + Number(season.totalEpisodes || 0), 0);
+  const hasInProgressSeason = trackedSeasons.some(season => (season.watchedEpisodes || []).length < Number(season.totalEpisodes || 0));
+  const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
+  const progressHtml = totalEpisodes > 0 ? `
+    <div class="tds-series-progress" aria-label="${watchedEpisodes} épisodes vus sur ${totalEpisodes}">
+      <div class="tds-series-progress-meta">
+        <span>${watchedEpisodes}/${totalEpisodes} épisodes suivis</span>
+        <span class="tds-series-progress-status${hasInProgressSeason ? ' is-in-progress' : ''}">${hasInProgressSeason ? 'En cours' : 'À jour'}</span>
+      </div>
+      <div class="tds-series-progress-track" aria-hidden="true"><div class="tds-series-progress-fill${hasInProgressSeason ? ' is-in-progress' : ''}" style="width:${progressPct}%"></div></div>
+    </div>` : '';
   const avgHtml = avg != null
     ? `<div class="mds-personal-score">${avg.toFixed(1)}/10 <span class="mds-personal-stars">note globale</span></div>`
     : `<div class="mds-row"><span class="mds-label">—</span><span>Pas encore notée</span></div>`;
@@ -122,6 +135,7 @@ function buildSeasonProgressionSection(data, localShow) {
     <div class="mds-section mds-personal" style="animation-delay:.05s">
       <div class="mds-section-title">Progression</div>
       ${avgHtml}
+      ${progressHtml}
     </div>
     <div class="mds-section" style="animation-delay:.08s">
       <div class="mds-section-title">Détail par saison</div>
