@@ -599,19 +599,20 @@ function renderTvHistory() {
   const groups = [];
   if (groupByMonth) {
     const byKey = new Map();
-    let unratedGroup = null;
+    const unratedItems = [];
     shows.forEach(show => {
       const d = mostRecentRatingDate(show);
       if (!d) {
-        if (!unratedGroup) { unratedGroup = { key: null, items: [] }; }
-        unratedGroup.items.push(show);
+        // Une série sans note reste dans le même flux d'affiches que les
+        // autres : aucun sous-ensemble "Séries suivies" visuellement isolé.
+        unratedItems.push(show);
         return;
       }
       const key = monthKeyOf({ date: d });
       if (!byKey.has(key)) { const g = { key, items: [] }; byKey.set(key, g); groups.push(g); }
       byKey.get(key).items.push(show);
     });
-    if (unratedGroup) groups.push(unratedGroup);
+    if (unratedItems.length) groups.push({ key: null, items: unratedItems });
   } else {
     groups.push({ key: null, items: shows });
   }
@@ -623,12 +624,12 @@ function renderTvHistory() {
 
   container.innerHTML = '';
   groups.forEach(group => {
-    if (groupByMonth) {
+    if (groupByMonth && group.key) {
       const sep = document.createElement('div');
       sep.className = 'hist-month-sep';
       const rated = group.items.map(sh => computeShowAverageScore(sh)).filter(v => v != null);
       const avg = rated.length > 0 ? (rated.reduce((a, b) => a + b, 0) / rated.length).toFixed(1) : null;
-      const label = group.key ? escAttr(monthLabelOf(group.key)) : 'Séries suivies';
+      const label = escAttr(monthLabelOf(group.key));
       sep.innerHTML = `<span class="hist-month-label">${label}</span><span class="hist-month-recap">${group.items.length} s\u00e9rie${group.items.length > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
       container.appendChild(sep);
     }
@@ -727,7 +728,10 @@ function renderTvShowCard(show, tier) {
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
   const isFeatured = tier !== 'normal';
-  const isUnratedFollowedShow = avg == null && watchedEpisodes > 0;
+  // Bleu électrique pour une série réellement en cours : peu importe que
+  // des saisons précédentes aient déjà été notées. Or = toutes les saisons
+  // suivies sont terminées, donc série à jour dans le suivi actuel.
+  const isInProgress = seasonsWithProgress.some(([, season]) => season.watchedEpisodes.length < season.totalEpisodes);
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les
   // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
@@ -751,7 +755,7 @@ function renderTvShowCard(show, tier) {
       ${isFeatured ? `<div class="hist-grid-featured-badge">${show.liked ? `${ICONS.heart} Coup de cœur` : `★ ${avg.toFixed(1)}`}</div>` : ''}
       ${totalEpisodes > 0 ? `
         <div class="hist-grid-progress" title="${watchedEpisodes}/${totalEpisodes} épisodes vus" aria-hidden="true">
-          <div class="hist-grid-progress-fill${isUnratedFollowedShow ? ' is-following' : ''}" style="width:${progressPct}%"></div>
+          <div class="hist-grid-progress-fill${isInProgress ? ' is-following' : ''}" style="width:${progressPct}%"></div>
         </div>
       ` : ''}
       <div class="hist-actions">

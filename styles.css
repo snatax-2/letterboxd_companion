@@ -365,6 +365,12 @@
     box-shadow: 0 0 4px color-mix(in srgb, var(--gold) 60%, transparent);
     transition: width var(--dur-base) var(--ease-out);
   }
+  /* Bleu électrique = série en cours, même quand certaines saisons ont déjà
+     une note. L'or reste le signal d'une série terminée ou à jour. */
+  .hist-grid-progress-fill.is-following {
+    background: #36C9FF;
+    box-shadow: 0 0 7px color-mix(in srgb, #36C9FF 78%, transparent);
+  }
   /* Actions modifier/supprimer — coin opposé au badge de note, toujours
      visibles (pas de hover tactile fiable). */
   .hist-grid-card .hist-actions {
@@ -3054,6 +3060,83 @@
     line-height: 0.88;
   }
 
+  /* Historique conserve la mosaïque existante : seules les commandes au
+     dessus deviennent un en-tête éditorial compact, sur le même rythme que
+     Découvrir et À voir. */
+  .history-editorial-header {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    min-height: 118px;
+    margin-bottom: var(--space-3);
+    padding: var(--space-4) 0 var(--space-5);
+    border-bottom: 1px solid var(--border);
+  }
+  .history-editorial-heading { min-width: 0; }
+  .history-editorial-kicker,
+  .history-collection-kicker {
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.61rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .history-editorial-kicker { margin-bottom: var(--space-2); }
+  .history-editorial-title {
+    margin: 0;
+    color: var(--text-hi);
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 12vw, 4.35rem);
+    font-weight: 600;
+    letter-spacing: -0.055em;
+    line-height: 0.88;
+  }
+  .history-editorial-search .history-search-clear-btn {
+    right: 48px;
+    z-index: 2;
+    background: transparent;
+  }
+  .history-editorial-search:not(.is-open) .history-search-clear-btn { display: none !important; }
+  .history-segmented-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    margin-bottom: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 94%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .history-seg-tabs { width: 100%; margin: 0; }
+  .history-controls { margin-bottom: var(--space-3); }
+  .history-collection-meta {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) 0 var(--space-3);
+  }
+  #view-history .filter-row { gap: 5px; margin-bottom: 0; }
+  #view-history .filter-btn {
+    padding: 6px 9px;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--text-mid);
+    font-family: var(--font-mono);
+    font-size: 0.63rem;
+  }
+  #view-history .filter-btn.active {
+    border-color: var(--text-hi);
+    background: transparent;
+    color: var(--text-hi);
+  }
+  #view-history .genre-fold { margin-bottom: var(--space-3); }
+
   /* Loupe 44×44 qui s'ouvre vers la gauche. Le fond opaque pendant
      l'expansion évite que le grand titre reste lisible sous le champ. */
   .editorial-search {
@@ -3395,6 +3478,7 @@
 
   @media (max-width: 380px) {
     .discover-editorial-title { font-size: 2.35rem; }
+    .history-editorial-title { font-size: 2.35rem; }
     .choix-du-jour-card { grid-template-columns: 108px minmax(0, 1fr); gap: var(--space-4); }
     .choix-du-jour-title { font-size: 1.62rem; }
     .discover-search-result { grid-template-columns: 22px 40px minmax(0, 1fr) 16px; gap: var(--space-2); }
@@ -3409,6 +3493,8 @@
   @media (min-width: 1024px) {
     .discover-editorial-header { min-height: 168px; padding-top: var(--space-6); }
     .discover-editorial-title { font-size: 5.5rem; }
+    .history-editorial-header { min-height: 168px; padding-top: var(--space-6); }
+    .history-editorial-title { font-size: 5.5rem; }
     .choix-du-jour-card {
       grid-template-columns: 260px minmax(0, 1fr);
       min-height: 430px;
@@ -4895,5 +4981,3 @@
        règle de base — elle manquait juste de place pour s'exprimer tant
        que .layout restait plafonné à 800px. Rien à ajouter ici. */
   }
-
-.history-editorial-header{position:relative;display:flex;align-items:flex-end;justify-content:space-between;min-height:118px;margin-bottom:var(--space-3);padding:var(--space-4) 0 var(--space-5);border-bottom:1px solid var(--border)}.history-editorial-kicker,.history-collection-kicker{color:var(--text-mid);font-family:var(--font-mono);font-size:.61rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.history-editorial-kicker{margin-bottom:var(--space-2)}.history-editorial-title{margin:0;color:var(--text-hi);font-family:var(--font-heading);font-size:clamp(2.5rem,12vw,4.35rem);font-weight:600;letter-spacing:-.055em;line-height:.88}.history-editorial-search .history-search-clear-btn{right:48px;z-index:2;background:transparent}.history-editorial-search:not(.is-open) .history-search-clear-btn{display:none!important}.history-segmented-wrap{position:sticky;top:0;z-index:5;margin-bottom:var(--space-4);padding:var(--space-3) 0;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(14px)}.history-seg-tabs{width:100%;margin:0}.history-controls{margin-bottom:var(--space-3)}.history-collection-meta{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);padding:var(--space-2) 0 var(--space-3)}#view-history .filter-row{gap:5px;margin-bottom:0}#view-history .filter-btn{padding:6px 9px;border:0;border-bottom:1px solid transparent;border-radius:0;background:transparent;color:var(--text-mid);font-family:var(--font-mono);font-size:.63rem}#view-history .filter-btn.active{border-color:var(--text-hi);background:transparent;color:var(--text-hi)}.hist-grid-progress-fill.is-following{background:var(--blue);box-shadow:0 0 4px color-mix(in srgb,var(--blue) 55%,transparent)}
