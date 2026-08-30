@@ -5,10 +5,10 @@ let watchlistMenuScrollTop = null;
 
 function resetWatchlistMenuPresentation() {
   clearTimeout(watchlistMenuCloseTimer);
-  actionSheetEl.classList.remove('watchlist-card-menu', 'watchlist-menu-anchored');
+  actionSheetEl.classList.remove('watchlist-card-menu', 'watchlist-menu-anchored', 'watchlist-menu-preparing');
   actionSheetEl.querySelector('.watchlist-menu-preview')?.remove();
   const panel = actionSheetEl.querySelector('.action-sheet-box');
-  ['left', 'top', 'width', 'max-height', 'transform-origin'].forEach(key => panel.style.removeProperty(key));
+  ['left', 'top', 'width', 'max-height', 'transform-origin', '--menu-enter-y'].forEach(key => panel.style.removeProperty(key));
   if (watchlistMenuScrollTop !== null) {
     document.documentElement.style.overflow = watchlistMenuScrollTop;
     watchlistMenuScrollTop = null;
@@ -60,6 +60,10 @@ function prepareWatchlistMenuPresentation(anchor) {
   panel.style.left = `${menuLeft}px`;
   panel.style.top = `${menuTop}px`;
   panel.style.transformOrigin = `${clamp(rect.left + rect.width / 2 - menuLeft, 0, width)}px ${above ? '100%' : '0%'}`;
+  // Recouvre légèrement le bord de l'affiche au départ, sans traverser
+  // toute sa hauteur. L'affiche au-dessus du panneau masque ce bord.
+  const slideDistance = previewHeight ? Math.min(72, previewHeight * .4) + 12 : 8;
+  panel.style.setProperty('--menu-enter-y', `${above ? slideDistance : -slideDistance}px`);
 
   if (previewHeight) {
     const preview = document.createElement('div');
@@ -74,8 +78,11 @@ function prepareWatchlistMenuPresentation(anchor) {
     });
     preview.style.setProperty('--preview-start-x', `${rect.left - parseFloat(preview.style.left)}px`);
     preview.style.setProperty('--preview-start-y', `${rect.top - previewTop}px`);
+    // Premier cadre = dimensions exactes de l'affiche sous le doigt, même
+    // si le placement final a dû la réduire pour laisser la place au menu.
+    preview.style.setProperty('--preview-start-scale-x', String(rect.width / previewWidth));
+    preview.style.setProperty('--preview-start-scale-y', String(rect.height / previewHeight));
     actionSheetEl.appendChild(preview);
-    preview.getBoundingClientRect(); // calcule l'état fermé avant le déclenchement de la transition.
   }
   watchlistMenuScrollTop = document.documentElement.style.overflow;
   document.documentElement.style.overflow = 'hidden';
@@ -90,7 +97,7 @@ actionSheetEl.addEventListener('modalclosed', () => {
   // Conserve le style pendant le fondu de fermeture, y compris via Échap/Retour.
   watchlistMenuCloseTimer = setTimeout(() => {
     if (!actionSheetEl.classList.contains('open')) resetWatchlistMenuPresentation();
-  }, 220);
+  }, 320); // laisse finir la transition CSS de 300 ms.
 });
 
 function watchlistDetailActionsHtml(tmdbId, mediaType) {

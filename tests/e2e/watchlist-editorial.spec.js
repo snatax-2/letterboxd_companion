@@ -195,8 +195,11 @@ test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et 
   expect(poster.height / poster.width).toBeCloseTo(1.5, 1);
   const menuButton = page.locator('.wl-card').first().locator('.wl-menu-btn');
   const menuButtonBox = await menuButton.boundingBox();
-  expect(menuButtonBox.width).toBeGreaterThanOrEqual(44);
-  expect(menuButtonBox.height).toBeGreaterThanOrEqual(44);
+  await expect(menuButton).toHaveCSS('width', '44px');
+  await expect(menuButton).toHaveCSS('height', '44px');
+  // Chromium peut renvoyer 43.99994 pour une cible CSS de 44 px.
+  expect(menuButtonBox.width).toBeGreaterThanOrEqual(44 - .01);
+  expect(menuButtonBox.height).toBeGreaterThanOrEqual(44 - .01);
 
   const actions = await page.locator('.wl-card').first().locator('.wl-actions').evaluate(element => {
     const style = getComputedStyle(element);
@@ -206,7 +209,7 @@ test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et 
     };
   });
   expect(actions.background).toBe('rgba(0, 0, 0, 0)');
-  expect(actions.width).toBeLessThanOrEqual(44);
+  expect(actions.width).toBeLessThanOrEqual(44 + .01);
 
   await holdWatchlistPoster(page);
   const sheet = page.locator('#action-sheet');
@@ -259,6 +262,66 @@ test('maintenir une affiche ouvre les actions sans icône ni clic de relâchemen
   await page.reload();
   await page.click('#nav-watchlist');
   await expect(page.locator('#watchlist-gesture-hint')).toBeHidden();
+});
+
+test('aucune surface floutée ne reste sur les affiches mobiles Films et Séries', async ({ page }) => {
+  for (const type of ['movie', 'tv']) {
+    await page.tap(type === 'tv' ? '#wl-tab-tv' : '#wl-tab-movie');
+    const list = page.locator(type === 'tv' ? '#wl-tv-list' : '#watchlist-list');
+    const surface = await list.locator('.wl-actions').first().evaluate(element => {
+      const container = getComputedStyle(element);
+      const button = element.querySelector('.wl-menu-btn');
+      const pseudo = getComputedStyle(button, '::before');
+      return { blur: container.backdropFilter, webkitBlur: container.webkitBackdropFilter || 'none', pseudo: pseudo.content, pseudoBlur: pseudo.backdropFilter };
+    });
+    expect(surface).toEqual({ blur: 'none', webkitBlur: 'none', pseudo: 'none', pseudoBlur: 'none' });
+    await holdWatchlistPoster(page, list.locator('.wl-card-open').first());
+    await page.keyboard.press('Escape');
+    await expect(list.locator('.wl-menu-btn').first()).toHaveCSS('opacity', '0');
+  }
+});
+
+test('le menu glisse depuis l’affiche sans animer le rayon du flou', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  for (const top of [32, 430]) {
+    const state = await page.evaluate(targetTop => {
+      const button = document.querySelector('#watchlist-list .wl-card-open');
+      window.scrollTo({ top: window.scrollY + button.getBoundingClientRect().top - targetTop, behavior: 'instant' });
+      const source = button.querySelector('.wl-poster').getBoundingClientRect();
+      const idx = Number(button.closest('.wl-card').querySelector('.wl-menu-btn').dataset.watchlistIdx);
+      openWatchlistCardMenu('movie', idx, button);
+      const sheet = document.getElementById('action-sheet');
+      const panel = sheet.querySelector('.action-sheet-box');
+      const preview = sheet.querySelector('.watchlist-menu-preview');
+      const animations = sheet.getAnimations({ subtree: true });
+      const slide = panel.getAnimations().find(animation => animation.transitionProperty === 'transform');
+      animations.forEach(animation => { animation.pause(); animation.currentTime = 0; });
+      const startPreview = preview.getBoundingClientRect();
+      const startOffset = new DOMMatrixReadOnly(getComputedStyle(panel).transform).m42;
+      const duration = slide?.effect.getTiming().duration;
+      const properties = animations.map(animation => animation.transitionProperty);
+      animations.forEach(animation => animation.finish());
+      const finalPanel = panel.getBoundingClientRect();
+      const finalPreview = preview.getBoundingClientRect();
+      return {
+        duration, properties, startOffset,
+        above: finalPanel.bottom <= finalPreview.top,
+        panel: { top: finalPanel.top, bottom: finalPanel.bottom },
+        preview: { top: finalPreview.top, bottom: finalPreview.bottom },
+        previewDelta: Math.max(Math.abs(startPreview.x - source.x), Math.abs(startPreview.y - source.y), Math.abs(startPreview.width - source.width), Math.abs(startPreview.height - source.height)),
+        endTransform: getComputedStyle(panel).transform,
+      };
+    }, top);
+    expect(state.duration, JSON.stringify(state)).toBe(300);
+    expect(state.properties).not.toContain('backdrop-filter');
+    expect(state.properties).not.toContain('-webkit-backdrop-filter');
+    expect(state.previewDelta).toBeLessThan(.1);
+    expect(Math.abs(state.startOffset)).toBeGreaterThan(20);
+    expect(state.startOffset > 0, JSON.stringify(state)).toBe(state.above);
+    expect(state.endTransform).toBe('matrix(1, 0, 0, 1, 0, 0)');
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#action-sheet')).not.toHaveClass(/watchlist-card-menu/);
+  }
 });
 
 for (const cancel of ['movement', 'pointercancel', 'multitouch', 'navigation']) {

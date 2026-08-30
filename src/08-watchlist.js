@@ -626,7 +626,7 @@ wlInput.addEventListener('keydown', e => {
 
 function renderWatchlistCardActionSheet(item, actions, anchor = null) {
   resetWatchlistMenuPresentation();
-  actionSheetEl.classList.add('watchlist-card-menu');
+  actionSheetEl.classList.add('watchlist-card-menu', 'watchlist-menu-preparing');
   actionSheetTitleEl.textContent = item.title;
   actionSheetListEl.innerHTML = '';
 
@@ -643,6 +643,10 @@ function renderWatchlistCardActionSheet(item, actions, anchor = null) {
   });
 
   prepareWatchlistMenuPresentation(anchor);
+  // Fige le départ près de l'affiche avant d'activer les transitions : sinon
+  // le navigateur repart de l'ancienne position de la bottom sheet.
+  actionSheetEl.querySelector('.action-sheet-box').getBoundingClientRect();
+  actionSheetEl.classList.remove('watchlist-menu-preparing');
   openModalElement(actionSheetEl, {
     initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
     returnFocus: anchor || document.getElementById('nav-watchlist'),

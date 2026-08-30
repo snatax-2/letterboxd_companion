@@ -3732,14 +3732,31 @@
     background: rgba(10, 10, 12, 0.9);
     transform: scale(1.06);
   }
+  @media (max-width: 860px), (hover: none) and (pointer: coarse) {
+    /* Le conteneur avait son propre flou, encore visible derrière le bouton
+       à opacity:0. Supprime aussi la surface du pseudo-élément sur mobile. */
+    #watchlist-card .watchlist-scroller .wl-actions {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+    #watchlist-card .watchlist-scroller .wl-menu-btn::before {
+      content: none;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+  }
 
   #action-sheet.watchlist-card-menu {
+    --watchlist-menu-duration: 300ms;
+    --watchlist-menu-ease: cubic-bezier(.22, 1, .36, 1);
     background: rgba(0, 0, 0, 0.44);
-    backdrop-filter: blur(0);
-    -webkit-backdrop-filter: blur(0);
-    transition: opacity 200ms var(--ease-out), backdrop-filter 200ms var(--ease-out), visibility 200ms;
+    /* Flou fixe : pas de recalcul du rayon à chaque image de l'animation. */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity var(--watchlist-menu-duration) var(--watchlist-menu-ease), visibility var(--watchlist-menu-duration);
   }
-  #action-sheet.watchlist-card-menu.open { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   #action-sheet.watchlist-card-menu .action-sheet-box {
     width: min(calc(100% - 48px), 320px);
     max-width: 320px;
@@ -3747,7 +3764,9 @@
     padding: var(--space-5);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     transform: translateY(8px) scale(.96);
-    transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+    /* Prioritaire sur la transition de thème globale des .modal-box : elle
+       remplaçait transform/opacity et faisait sauter le menu directement. */
+    transition: transform var(--watchlist-menu-duration) var(--watchlist-menu-ease), opacity var(--watchlist-menu-duration) var(--watchlist-menu-ease) !important;
   }
   #action-sheet.watchlist-card-menu.open .action-sheet-box { transform: translateY(0) scale(1); }
   #action-sheet.watchlist-menu-anchored .action-sheet-box {
@@ -3755,18 +3774,27 @@
     margin: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    z-index: 1;
+    will-change: transform, opacity;
   }
   #action-sheet.watchlist-card-menu.watchlist-menu-anchored {
     padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  #action-sheet.watchlist-card-menu.watchlist-menu-anchored:not(.open) .action-sheet-box {
+    /* Le bord proche du menu commence sous l'affiche et en émerge. */
+    transform: translateY(var(--menu-enter-y, 8px)) scale(.98);
   }
   .watchlist-menu-preview {
     position: fixed;
     pointer-events: none;
     overflow: hidden;
     border-radius: var(--poster-radius);
+    z-index: 2;
     opacity: 0;
-    transform: translate(var(--preview-start-x, 0px), var(--preview-start-y, 0px)) scale(.98);
-    transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+    transform-origin: top left;
+    transform: translate(var(--preview-start-x, 0px), var(--preview-start-y, 0px)) scale(var(--preview-start-scale-x, 1), var(--preview-start-scale-y, 1));
+    will-change: transform, opacity;
+    transition: opacity var(--watchlist-menu-duration) var(--watchlist-menu-ease), transform var(--watchlist-menu-duration) var(--watchlist-menu-ease);
   }
   .watchlist-menu-preview .wl-poster,
   .watchlist-menu-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -3774,11 +3802,16 @@
   #action-sheet.open .watchlist-menu-preview { opacity: 1; transform: scale(1); }
   #action-sheet.watchlist-card-menu .action-sheet-item.danger { color: #e57373; }
   [data-theme="light"] #action-sheet.watchlist-card-menu .action-sheet-item.danger { color: #8C352F; }
+  #action-sheet.watchlist-card-menu.watchlist-menu-preparing,
+  #action-sheet.watchlist-card-menu.watchlist-menu-preparing .action-sheet-box,
+  #action-sheet.watchlist-card-menu.watchlist-menu-preparing .watchlist-menu-preview {
+    transition: none !important;
+  }
   @media (prefers-reduced-motion: reduce) {
     #watchlist-card .watchlist-scroller .wl-card-open,
     #action-sheet.watchlist-card-menu,
     #action-sheet.watchlist-card-menu .action-sheet-box,
-    .watchlist-menu-preview { transition: none !important; transform: none !important; }
+    .watchlist-menu-preview { transition: none !important; transform: none !important; will-change: auto; }
     #watchlist-card .watchlist-scroller .wl-card-open.watchlist-holding { transform: none; }
   }
   #action-sheet.watchlist-card-menu .modal-title {

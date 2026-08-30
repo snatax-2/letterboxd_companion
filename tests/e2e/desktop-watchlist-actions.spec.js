@@ -20,6 +20,12 @@ test('menu discret au survol, clic droit et focus restauré au clavier', async (
   await expect(menu).toHaveCSS('opacity', '0');
   await poster.hover();
   await expect(menu).toHaveCSS('opacity', '1');
+  const desktopSurface = await menu.evaluate(element => ({
+    content: getComputedStyle(element, '::before').content,
+    blur: getComputedStyle(element, '::before').backdropFilter,
+  }));
+  expect(desktopSurface.content).not.toBe('none');
+  expect(desktopSurface.blur).toBe('blur(8px)');
   await poster.click({ button: 'right' });
   await expect(page.locator('#action-sheet')).toHaveClass(/open/);
   await page.keyboard.press('Escape');
