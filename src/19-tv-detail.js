@@ -145,10 +145,10 @@ function buildSeasonTabHtml(seasonMeta, localSeason, fallbackPosterPath) {
   const total = Number(localSeason?.totalEpisodes || seasonMeta.episode_count || 0);
   const watched = (localSeason?.watchedEpisodes || []).length;
   const pct = total > 0 ? Math.round((watched / total) * 100) : 0;
-  const state = localSeason ? (watched < total ? ' is-in-progress' : ' is-up-to-date') : '';
+  const state = localSeason ? (watched < total ? ' is-in-progress' : ' is-up-to-date') : ' is-untracked';
   return `<button type="button" class="tds-season-tab${state}" data-season-number="${seasonMeta.season_number}" data-episode-count="${seasonMeta.episode_count}" data-season-name="${escAttr(seasonMeta.name)}" data-season-poster="${escAttr(seasonMeta.poster_path || fallbackPosterPath || '')}" aria-label="${escAttr(seasonMeta.name)} : ${watched} épisodes vus sur ${total}">
     <span class="tds-season-tab-label">S${seasonMeta.season_number}</span>
-    <span class="tds-season-tab-count">${localSeason ? `${watched}/${total}` : '—'}</span>
+    <span class="tds-season-tab-count">${watched}/${total}</span>
     <span class="tds-season-tab-track" aria-hidden="true"><span class="tds-season-tab-fill" style="width:${pct}%"></span></span>
   </button>`;
 }
@@ -430,13 +430,20 @@ function wireSeasonTabs() {
   if (!tabsEl) return;
   tabsEl.addEventListener('click', (e) => {
     const tab = e.target.closest('.tds-season-tab');
-    if (!tab || tab.classList.contains('active')) return;
+    if (!tab) return;
+    const statusRowEl = document.getElementById('tds-season-status-row');
+    const episodesEl = document.getElementById('tds-season-episodes');
+    if (tab.classList.contains('active')) {
+      tab.classList.remove('active');
+      if (statusRowEl) statusRowEl.textContent = 'Choisis une saison pour afficher ses épisodes.';
+      if (episodesEl) { episodesEl.innerHTML = ''; episodesEl.dataset.loadedSeason = ''; }
+      return;
+    }
     tabsEl.querySelectorAll('.tds-season-tab').forEach(t => t.classList.toggle('active', t === tab));
 
     const localShow = loadTvShows().find(s => String(s.tmdbTvId) === String(tdsCurrentData?.id));
     const key = tab.dataset.seasonNumber;
     const seasonMeta = { season_number: Number(key), name: tab.dataset.seasonName, episode_count: Number(tab.dataset.episodeCount) };
-    const statusRowEl = document.getElementById('tds-season-status-row');
     if (statusRowEl) statusRowEl.innerHTML = buildSeasonStatusRow(localShow, seasonMeta, localShow?.seasons?.[key]);
 
     loadAndRenderSeasonEpisodes(tab.dataset.seasonNumber, tab.dataset.seasonName);
