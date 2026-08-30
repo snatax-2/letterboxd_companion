@@ -132,7 +132,10 @@ function renderRecentRatings(type = statsMediaFilter) {
     const score = isTv ? entry.season.rating.score : entry.score;
     const sub = isTv ? entry.season.seasonName : entry.year || '';
     const id = isTv ? entry.show.tmdbTvId : entry.tmdbId;
-    const image = tmdbImage(poster, 'w185');
+    // Les films historiques stockent une URL TMDb complète, alors que les
+    // séries gardent le chemin brut. Accepter les deux formats évite que les
+    // affiches de films retombent systématiquement sur le placeholder.
+    const image = safePosterSrc(poster) || tmdbImage(poster, 'w185');
     return `<button type="button" class="profile-recent-item" data-profile-media="${isTv ? 'tv' : 'movie'}" data-profile-id="${escAttr(id || '')}">
       ${image ? `<img src="${image}" alt="" loading="lazy">` : '<span class="profile-recent-poster-placeholder">✦</span>'}
       <span class="profile-recent-copy"><strong>${escAttr(title)}</strong><small>${escAttr(sub)}</small><b>${Number(score).toFixed(1)}</b></span>
@@ -167,10 +170,20 @@ function refreshProfileWatchTime(history) {
   const filmMinutes = history.reduce((sum, h) => sum + (parseInt(h.runtime, 10) || 0), 0);
   const target = document.getElementById('profile-hero-watch-time');
   const detail = document.getElementById('profile-watch-time');
+  const label = document.getElementById('profile-hero-watch-label');
+  const total = document.getElementById('profile-hero-watch-total');
   const setValue = (episodeMinutes, pending = false) => {
-    const value = formatWatchTime(filmMinutes + episodeMinutes);
+    const isTv = statsMediaFilter === 'tv';
+    const contextualMinutes = isTv ? episodeMinutes : filmMinutes;
+    const cumulativeMinutes = filmMinutes + episodeMinutes;
+    const value = formatWatchTime(contextualMinutes);
+    const cumulative = formatWatchTime(cumulativeMinutes);
+    if (label) label.textContent = `Temps visionné · ${isTv ? 'Séries' : 'Films'}`;
     if (target) target.textContent = value;
-    if (detail) detail.textContent = pending ? `${value} · épisodes en cours de calcul` : value;
+    if (total) total.textContent = pending
+      ? `Cumul · ${cumulative} · épisodes en cours de calcul`
+      : `Cumul · ${cumulative}`;
+    if (detail) detail.textContent = pending ? `${cumulative} · épisodes en cours de calcul` : cumulative;
   };
   setValue(0, true);
   getWatchedEpisodeMinutes(loadTvShows()).then(minutes => setValue(minutes)).catch(() => setValue(0));

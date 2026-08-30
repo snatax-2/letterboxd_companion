@@ -815,6 +815,9 @@ function switchStatsMediaFilter(type) {
 
 function renderTvStats() {
   const shows = loadTvShows();
+  // Le hero conserve toujours le cumul, mais sa valeur principale devient le
+  // temps des épisodes vus lorsque l'utilisateur consulte les séries.
+  if (typeof refreshProfileWatchTime === 'function') refreshProfileWatchTime(loadHistory());
   animateCountUp(document.getElementById('kpi-total'), shows.length);
 
   const showAverages = shows.map(computeShowAverageScore).filter(a => a != null);
