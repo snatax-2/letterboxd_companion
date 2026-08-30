@@ -195,7 +195,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
 
   let personalHtml = '';
   if (localMatch) {
-    const critBreakdown = buildCriteriaBreakdown(localMatch);
+    const critBreakdown = buildCriteriaBreakdown(localMatch, { embedded: true });
     // Ludex 2.0 : le bloc "Ta note" devient lui-même le bouton "Modifier"
     // (voir Ludex_Audit_Fiches_Suggestions.pdf — "fusionner l'affichage et
     // l'action") plutôt qu'un bouton séparé dans .mds-actions. Étoiles
@@ -213,16 +213,22 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         <div class="mds-score-compare-legend"><span>Toi</span><span>TMDb ${tmdbScore.toFixed(1)}</span></div>
       </div>` : '';
     personalHtml = `
-      <div class="mds-section mds-personal" style="animation-delay:.05s">
-        <div class="mds-section-title">Ta note</div>
-        <button type="button" class="mds-personal-score-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note" aria-label="Modifier ma note pour ${escAttr(data.title)}">
+      <details class="mds-section mds-personal-report" style="animation-delay:.05s">
+        <summary class="mds-personal-summary" aria-label="Afficher ton rapport personnel pour ${escAttr(data.title)}">
+          <span class="mds-section-title">Ta note</span>
           <span class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</span>
-          <span class="mds-personal-edit-hint">${ICONS.edit}</span>
-        </button>
-        ${comparHtml}
-        ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
-      </div>
-      ${critBreakdown}
+          <span class="mds-personal-disclosure" aria-hidden="true">Détails <span>⌄</span></span>
+        </summary>
+        <div class="mds-personal-report-body">
+          <button type="button" class="mds-personal-score-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note" aria-label="Modifier ma note pour ${escAttr(data.title)}">
+            <span>Modifier ma note</span>
+            <span class="mds-personal-edit-hint">${ICONS.edit}</span>
+          </button>
+          ${comparHtml}
+          ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
+          ${critBreakdown}
+        </div>
+      </details>
     `;
   }
 
@@ -257,7 +263,7 @@ const MDS_CRITERIA_LABELS = {
   scenario: 'Scénario', realisation: 'Réalisation', photo: 'Photo',
   acteurs: 'Acteurs', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect',
 };
-function buildCriteriaBreakdown(localMatch) {
+function buildCriteriaBreakdown(localMatch, { embedded = false } = {}) {
   if (localMatch.mode !== 'detail' || !localMatch.values) return '';
 
   const rows = CRITERIA.map((key, i) => {
@@ -273,7 +279,7 @@ function buildCriteriaBreakdown(localMatch) {
   }).join('');
 
   return `
-    <div class="mds-section mds-crit-breakdown" style="animation-delay:.08s">
+    <div class="${embedded ? '' : 'mds-section '}mds-crit-breakdown"${embedded ? '' : ' style="animation-delay:.08s"'}>
       <div class="mds-section-title">Détail par critère</div>
       ${rows}
     </div>

@@ -2537,6 +2537,31 @@
     background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 12px;
     border-left: 3px solid var(--orange);
   }
+  /* Rapport personnel replié par défaut : la note reste immédiatement
+     lisible, tandis que l'avis, la comparaison TMDb et les critères ne
+     prennent de place que si l'on souhaite les consulter. */
+  .mds-personal-report {
+    background: var(--surface2); border-left: 3px solid var(--gold);
+    border-radius: var(--radius-sm); padding: 0;
+  }
+  .mds-personal-summary {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+    gap: 8px 12px; padding: 12px; cursor: pointer; list-style: none;
+  }
+  .mds-personal-summary::-webkit-details-marker { display: none; }
+  .mds-personal-summary .mds-section-title { margin: 0; }
+  .mds-personal-summary .mds-personal-score { justify-self: end; }
+  .mds-personal-disclosure {
+    grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 5px;
+    color: var(--text-mid); font: 700 0.66rem var(--font-mono); letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .mds-personal-disclosure span { display: inline-block; transition: transform var(--dur-fast) var(--ease-out); }
+  .mds-personal-report[open] .mds-personal-disclosure span { transform: rotate(180deg); }
+  .mds-personal-report[open] .mds-personal-disclosure { color: var(--gold); }
+  .mds-personal-report-body { padding: 0 12px 12px; border-top: 1px solid var(--border); }
+  .mds-personal-report-body .mds-personal-score-btn { margin-top: 10px; color: var(--text-mid); font: 700 0.72rem var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
+  .mds-personal-report-body .mds-crit-breakdown { margin-top: 18px; }
   .mds-personal-score { font-family: var(--font-heading); font-weight: 800; font-size: 1.05rem; color: var(--text-hi); }
   .mds-personal-stars { color: var(--star-color); font-size: 0.9rem; }
   .mds-personal-review { font-size: 0.84rem; color: var(--text); font-style: italic; margin-top: 6px; line-height: 1.4; }
