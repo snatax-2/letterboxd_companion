@@ -87,7 +87,7 @@ for (const theme of ['dark', 'light']) {
       expect(bad, formatViolations(bad)).toHaveLength(0);
     });
 
-    test(`Profil avec duels et badges (${theme})`, async ({ page }) => {
+    test(`Profil avec trophées (${theme})`, async ({ page }) => {
       await page.goto('/');
       await page.click('#nav-profile');
       await page.waitForTimeout(400);
@@ -122,43 +122,6 @@ test('Fiche film ouverte', async ({ page }) => {
   await page.evaluate(() => window.openMovieDetailSheet('500'));
   await page.waitForSelector('#movie-detail-sheet.open .mds-title');
   await waitForStableUi(page);
-  const results = await new AxeBuilder({ page }).analyze();
-  const bad = seriousOrCritical(results);
-  expect(bad, formatViolations(bad)).toHaveLength(0);
-});
-
-test('Modale de confirmation ouverte', async ({ page }) => {
-  await seedRichState(page);
-  await page.goto('/');
-  await page.click('#settings-btn');
-  await page.waitForSelector('#reset-duels-btn');
-  await page.click('#reset-duels-btn');
-  await page.waitForSelector('#modal.open');
-  await waitForStableUi(page);
-  // Attend la FIN du fondu d'ouverture avant de mesurer. #modal.open devient
-  // "visible" dès que la boîte a une aire non nulle, mais l'overlay ET la
-  // boîte sont encore en transition d'opacité (voir styles.css).
-  // axe-core mesurait donc le contraste sur une couleur MÉLANGÉE avec le
-  // fond, et rapportait 4.32:1 (Carnet) et 4.49:1 (Technicolor) là où la
-  // palette réelle donne 4.70 et 4.66 — au-dessus du seuil de 4.5. Deux
-  // faux positifs, uniquement sur le CI (assez lent pour que le scan tombe
-  // en plein fondu) et jamais en local : c'est le test qui mesurait trop
-  // tôt, pas les couleurs qui étaient fautives.
-  await page.waitForFunction(
-    () => {
-      const overlay = document.querySelector('#modal');
-      const boite = document.querySelector('#modal .modal-box');
-      // Les DEUX doivent être à pleine opacité : l'overlay a sa propre
-      // transition (--dur-base) et composite tout son contenu, donc une
-      // boîte déjà opaque reste mélangée avec le fond tant que l'overlay
-      // ne l'est pas. Mesuré : axe voyait #cc2836 au lieu de #DF2935.
-      return overlay && boite
-        && getComputedStyle(overlay).opacity === '1'
-        && getComputedStyle(boite).opacity === '1';
-    },
-    undefined,
-    { timeout: 5000 },
-  );
   const results = await new AxeBuilder({ page }).analyze();
   const bad = seriousOrCritical(results);
   expect(bad, formatViolations(bad)).toHaveLength(0);

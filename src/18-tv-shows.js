@@ -837,6 +837,7 @@ function renderTvStats() {
   if (heroYearSubEl) heroYearSubEl.textContent = `+${yearShowsCount} en ${currentYear}`;
 
   const allRatings = getAllTvSeasonRatings();
+  if (typeof renderRecentRatings === 'function') renderRecentRatings('tv');
 
   if (allRatings.length === 0) {
     document.getElementById('radar-chart-container').innerHTML = '';

@@ -14,7 +14,7 @@
 // fonctionnalité qui survit, déplacée vers Profil.
 
 const FEATURES_KEY = 'lbx_features';
-const FEATURE_DEFAULTS = { duels: true };
+const FEATURE_DEFAULTS = {};
 
 function loadFeatureFlags() {
   try {
@@ -32,24 +32,16 @@ function saveFeatureFlags(flags) {
 // Applique l'état actuel des bascules à l'interface : masque/affiche chaque
 // section concernée. Appelé au chargement ET à chaque changement dans
 // Réglages — jamais besoin de recharger la page pour qu'un changement prenne effet.
-function applyFeatureFlags() {
-  const flags = loadFeatureFlags();
-  const duelsCard = document.getElementById('duels-card');
-  if (duelsCard) duelsCard.style.display = flags.duels ? '' : 'none';
-}
+function applyFeatureFlags() {}
 
 // Recharge le contenu d'UNE fonctionnalité qu'on vient de réactiver depuis
 // Réglages — action explicite déclenchée par le changement de bascule
 // uniquement, jamais au chargement de page.
-function reloadReenabledFeature(key) {
-  if (key === 'duels' && typeof renderDuelsSection === 'function') renderDuelsSection();
-}
+function reloadReenabledFeature() {}
 
 // Réglages : lit l'état actuel à l'ouverture, sauvegarde à chaque bascule.
 function initFeatureToggleUI() {
-  const map = {
-    'setting-feature-duels': 'duels',
-  };
+  const map = {};
   const flags = loadFeatureFlags();
   for (const [id, key] of Object.entries(map)) {
     const input = document.getElementById(id);

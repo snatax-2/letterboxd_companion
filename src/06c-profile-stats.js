@@ -106,6 +106,76 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
   observer.observe(container);
 })();
 
+const PROFILE_EPISODE_RUNTIME_CACHE_KEY = 'lbx_profile_episode_runtime_v1';
+
+function renderRecentRatings(type = statsMediaFilter) {
+  const grid = document.getElementById('profile-recent-grid');
+  const link = document.getElementById('profile-history-link');
+  if (!grid) return;
+  const isTv = type === 'tv';
+  const entries = isTv
+    ? loadTvShows().flatMap(show => Object.entries(show.seasons || {})
+      .filter(([, season]) => season.rating?.score != null)
+      .map(([key, season]) => ({ show, season, key, date: season.rating.savedAt || season.rating.date || '' })))
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .filter((entry, index, list) => list.findIndex(other => String(other.show.tmdbTvId) === String(entry.show.tmdbTvId)) === index)
+      .slice(0, 4)
+    : loadHistory().slice().sort((a, b) => String(b.savedAt || b.date || '').localeCompare(String(a.savedAt || a.date || ''))).slice(0, 4);
+  if (link) link.textContent = isTv ? 'Tout voir les séries' : 'Tout voir les films';
+  if (!entries.length) {
+    grid.innerHTML = `<div class="profile-recent-empty">${isTv ? 'Note une saison pour créer tes premiers repères.' : 'Note un film pour créer tes premiers repères.'}</div>`;
+    return;
+  }
+  grid.innerHTML = entries.map(entry => {
+    const title = isTv ? entry.show.title : entry.title;
+    const poster = isTv ? entry.show.poster_path : entry.poster;
+    const score = isTv ? entry.season.rating.score : entry.score;
+    const sub = isTv ? entry.season.seasonName : entry.year || '';
+    const id = isTv ? entry.show.tmdbTvId : entry.tmdbId;
+    const image = tmdbImage(poster, 'w185');
+    return `<button type="button" class="profile-recent-item" data-profile-media="${isTv ? 'tv' : 'movie'}" data-profile-id="${escAttr(id || '')}">
+      ${image ? `<img src="${image}" alt="" loading="lazy">` : '<span class="profile-recent-poster-placeholder">✦</span>'}
+      <span class="profile-recent-copy"><strong>${escAttr(title)}</strong><small>${escAttr(sub)}</small><b>${Number(score).toFixed(1)}</b></span>
+    </button>`;
+  }).join('');
+}
+
+async function getWatchedEpisodeMinutes(shows) {
+  const cached = readJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, {}, isStorageObject) || {};
+  const now = Date.now();
+  let total = 0;
+  let changed = false;
+  for (const show of shows) for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
+    const watched = new Set((season.watchedEpisodes || []).map(Number));
+    if (!watched.size) continue;
+    const key = `${show.tmdbTvId}:${seasonKey}`;
+    let episodes = cached[key]?.episodes;
+    if (!episodes || now - (cached[key]?.at || 0) > 7 * 86400000) {
+      try {
+        const data = await fetch(`/api/search?tvSeasonShowId=${encodeURIComponent(show.tmdbTvId)}&tvSeasonNumber=${encodeURIComponent(seasonKey)}`).then(readApiJson);
+        episodes = (data.episodes || []).map(ep => ({ number: Number(ep.episode_number), runtime: Number(ep.runtime) || 0 }));
+        cached[key] = { at: now, episodes }; changed = true;
+      } catch { episodes = []; }
+    }
+    total += episodes.filter(ep => watched.has(ep.number)).reduce((sum, ep) => sum + ep.runtime, 0);
+  }
+  if (changed) writeJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, cached);
+  return total;
+}
+
+function refreshProfileWatchTime(history) {
+  const filmMinutes = history.reduce((sum, h) => sum + (parseInt(h.runtime, 10) || 0), 0);
+  const target = document.getElementById('profile-hero-watch-time');
+  const detail = document.getElementById('profile-watch-time');
+  const setValue = (episodeMinutes, pending = false) => {
+    const value = formatWatchTime(filmMinutes + episodeMinutes);
+    if (target) target.textContent = value;
+    if (detail) detail.textContent = pending ? `${value} · épisodes en cours de calcul` : value;
+  };
+  setValue(0, true);
+  getWatchedEpisodeMinutes(loadTvShows()).then(minutes => setValue(minutes)).catch(() => setValue(0));
+}
+
 function renderStats() {
   const history = loadHistory();
   animateCountUp(document.getElementById('kpi-total'), history.length);
@@ -160,6 +230,7 @@ function renderStats() {
   // quelque chose de plus vivant que le classement des réalisateurs.
   renderMonthlyActivityChart(history, typeof loadTvShows === 'function' ? loadTvShows() : []);
   renderProfileExtras(history);
+  renderRecentRatings('movie');
   renderProfileDiscoveryCards();
 }
 
@@ -232,13 +303,13 @@ function resetProfileExtras() {
   document.getElementById('profile-member-since').textContent = '—';
   document.getElementById('profile-watch-time').textContent = '—';
   const heroSubEl = document.getElementById('profile-hero-sub');
-  if (heroSubEl) heroSubEl.textContent = 'Cinéphile · Membre depuis —';
+  if (heroSubEl) heroSubEl.textContent = 'Premières notes en —';
   const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
   if (heroWatchTimeEl) heroWatchTimeEl.textContent = '—';
   const heroYearSubEl = document.getElementById('profile-hero-year-sub');
   if (heroYearSubEl) heroYearSubEl.textContent = '';
   document.getElementById('profile-fav-actor').textContent = '—';
-  document.getElementById('profile-streak').textContent = 'Pas de série en cours';
+  document.getElementById('profile-streak').textContent = '—';
   renderBadges(computeBadges([], {}));
   drawProfileShareCard(null);
   // Rien à télécharger tant que la carte est verrouillée — désactivé plutôt
@@ -249,6 +320,8 @@ function resetProfileExtras() {
   // ne s'affiche que s'il y a au moins un film à raconter.
   const wrappedCard = document.getElementById('wrapped-entry-card');
   if (wrappedCard) wrappedCard.style.display = 'none';
+  const recentGrid = document.getElementById('profile-recent-grid');
+  if (recentGrid) recentGrid.innerHTML = '<div class="profile-recent-empty">Note une œuvre pour créer tes premiers repères.</div>';
 }
 
 function renderProfileExtras(history) {
@@ -279,18 +352,13 @@ function renderProfileExtras(history) {
   }
   document.getElementById('profile-member-since').textContent = memberSinceStr;
   const heroSubEl = document.getElementById('profile-hero-sub');
-  if (heroSubEl) heroSubEl.textContent = `Cinéphile · Membre depuis ${memberSinceStr}`;
+  if (heroSubEl) heroSubEl.textContent = `Premières notes en ${memberSinceStr}`;
 
   // Temps total visionné : somme des durées (le champ runtime est stocké en
   // texte libre, ex: "142 min" — parseInt s'arrête au premier caractère non
   // numérique, donc ça fonctionne aussi bien avec juste "142").
-  const totalMinutes = history.reduce((sum, h) => {
-    const mins = parseInt(h.runtime, 10);
-    return sum + (isNaN(mins) ? 0 : mins);
-  }, 0);
-  document.getElementById('profile-watch-time').textContent = formatWatchTime(totalMinutes);
-  const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
-  if (heroWatchTimeEl) heroWatchTimeEl.textContent = formatWatchTime(totalMinutes);
+  const totalMinutes = history.reduce((sum, h) => sum + (parseInt(h.runtime, 10) || 0), 0);
+  refreshProfileWatchTime(history);
 
   // Acteur favori : même principe que le top réalisateurs (compte + note
   // moyenne), mais un seul nom affiché ici.
@@ -313,7 +381,7 @@ function renderProfileExtras(history) {
   // Série en cours (streak) : semaines ISO consécutives avec au moins un film.
   const streak = computeWeekStreak(history);
   document.getElementById('profile-streak').textContent =
-    streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : 'Pas de série en cours';
+    streak > 0 ? `${streak} semaine${streak > 1 ? 's' : ''} de suite` : '—';
 
   // Ludex 2.0 : streak JOURNALIER séparé pour le succès Fidélité (voir
   // Ludex_Gamification_Succes.pdf — "jours consécutifs", pas semaines).
@@ -488,3 +556,13 @@ function renderProfileDiscoveryCards() {
   const history = loadHistory();
   renderHeatmap(history);
 }
+
+document.getElementById('profile-recent-grid')?.addEventListener('click', (event) => {
+  const item = event.target.closest('.profile-recent-item');
+  if (!item) return;
+  if (item.dataset.profileMedia === 'tv') openTvDetailSheet(item.dataset.profileId);
+  else openMovieDetailSheet(item.dataset.profileId);
+});
+document.getElementById('profile-history-link')?.addEventListener('click', () => {
+  if (typeof switchRightTab === 'function') switchRightTab('history');
+});

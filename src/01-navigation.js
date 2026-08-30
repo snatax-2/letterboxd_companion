@@ -38,12 +38,6 @@ function switchRightTab(tabName) {
     discoverLoaded = true;
     if (typeof loadDiscoverTab === 'function') loadDiscoverTab();
   }
-  // Duels vit désormais dans Profil (arène + classement) — rendu à chaque
-  // affichage pour que la paire proposée reste à jour avec les derniers
-  // films notés, comme avant son déplacement depuis Découvrir.
-  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
-    renderDuelsSection();
-  }
   if (tabName === 'profile') {
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
     // Ludex 2.0 : renderCuratedListsCard() retiré — "Classiques à explorer"
