@@ -138,7 +138,7 @@ function freshDom() {
 
   const doc = window.document;
   const radarOk = doc.getElementById('radar-chart-container').innerHTML.includes('svg');
-  const iconsOk = !!doc.querySelector('.hist-action-btn svg') && !!doc.querySelector('.wl-btn.rate svg');
+  const iconsOk = !!doc.querySelector('.hist-action-btn svg') && !!doc.querySelector('.wl-menu-btn svg');
   if (!radarOk || !iconsOk) {
     console.error('❌ Rendu incomplet avec des données réelles (radar ou icônes manquants).');
     hasFailure = true;

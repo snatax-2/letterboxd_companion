@@ -171,7 +171,7 @@ test('le switch conserve sa pastille et révèle la recherche Séries fonctionne
   await expect.poll(async () => page.evaluate(() => window.loadWatchlist(null, 'tv').some(item => item.title === 'Severance'))).toBe(true);
 });
 
-test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et des actions tactiles', async ({ page }) => {
+test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et un menu tactile discret', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   const wrapBox = await page.locator('.watchlist-segmented-wrap').boundingBox();
   const switchBox = await page.locator('.watchlist-seg-tabs').boundingBox();
@@ -192,29 +192,43 @@ test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et 
 
   const poster = await page.locator('.wl-poster').first().boundingBox();
   expect(poster.height / poster.width).toBeCloseTo(1.5, 1);
-  for (const action of await page.locator('.wl-card').first().locator('.wl-btn').all()) {
-    const box = await action.boundingBox();
-    expect(box.width).toBeGreaterThanOrEqual(44);
-    expect(box.height).toBeGreaterThanOrEqual(44);
-  }
+  const menuButton = page.locator('.wl-card').first().locator('.wl-menu-btn');
+  const menuButtonBox = await menuButton.boundingBox();
+  expect(menuButtonBox.width).toBeGreaterThanOrEqual(44);
+  expect(menuButtonBox.height).toBeGreaterThanOrEqual(44);
 
   const actions = await page.locator('.wl-card').first().locator('.wl-actions').evaluate(element => {
     const style = getComputedStyle(element);
     return {
-      direction: style.flexDirection,
       background: style.backgroundColor,
       width: element.getBoundingClientRect().width,
     };
   });
-  expect(actions.direction).toBe('column');
   expect(actions.background).toBe('rgba(0, 0, 0, 0)');
   expect(actions.width).toBeLessThanOrEqual(44);
+
+  await menuButton.tap();
+  const sheet = page.locator('#action-sheet');
+  await expect(sheet).toHaveClass(/watchlist-card-menu/);
+  await expect(sheet).toHaveClass(/open/);
+  await expect(sheet.locator('.action-sheet-item')).toHaveText([
+    'Ouvrir la fiche',
+    'Noter',
+    'Supprimer',
+  ]);
+  const sheetStyle = await sheet.evaluate(element => ({
+    blur: getComputedStyle(element).backdropFilter,
+    panelWidth: element.querySelector('.action-sheet-box').getBoundingClientRect().width,
+  }));
+  expect(sheetStyle.blur).toContain('blur');
+  expect(sheetStyle.panelWidth).toBeLessThanOrEqual(320);
+  await page.locator('#action-sheet-cancel').tap();
 });
 
 test('la loupe À voir reste centrée dans sa cible tactile', async ({ page }) => {
   const alignment = await page.locator('#watchlist-search-toggle').evaluate(toggle => {
     const button = toggle.getBoundingClientRect();
-    const icon = toggle.querySelector('.watchlist-search-icon-open').getBoundingClientRect();
+    const icon = toggle.querySelector('.editorial-search-icon-open').getBoundingClientRect();
     return {
       horizontal: Math.abs((button.left + button.width / 2) - (icon.left + icon.width / 2)),
       vertical: Math.abs((button.top + button.height / 2) - (icon.top + icon.height / 2)),
@@ -222,6 +236,7 @@ test('la loupe À voir reste centrée dans sa cible tactile', async ({ page }) =
   });
   expect(alignment.horizontal).toBeLessThanOrEqual(1);
   expect(alignment.vertical).toBeLessThanOrEqual(1);
+  await expect(page.locator('#watchlist-search-toggle')).toHaveClass(/editorial-search-toggle/);
 });
 
 test('À voir ne déborde pas sur 360, 390, 430 ni desktop', async ({ page }) => {
