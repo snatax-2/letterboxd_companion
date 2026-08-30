@@ -23,13 +23,13 @@ test('Profil présente les dernières notes par média et compte les épisodes v
   await expect(page.locator('.profile-recent-item')).toHaveCount(2);
   await expect(page.locator('.profile-recent-item img').first()).toHaveAttribute('src', /film\.jpg$/);
   await expect(page.locator('#profile-hero-watch-time')).toHaveText('3 h');
-  await expect(page.locator('#profile-hero-watch-label')).toHaveText('Temps visionné · Films');
-  await expect(page.locator('#profile-hero-watch-total')).toContainText('Cumul · 4 h');
+  await expect(page.locator('#profile-hero-watch-label')).toHaveText('Temps films');
+  await expect(page.locator('#profile-hero-watch-total')).toHaveText('4 h');
   await page.click('#stats-tab-tv');
   await expect(page.locator('.profile-recent-item')).toHaveCount(1);
   await expect(page.locator('.profile-recent-item')).toContainText('Une série');
   await expect(page.locator('#profile-hero-watch-time')).toHaveText('0 h');
-  await expect(page.locator('#profile-hero-watch-label')).toHaveText('Temps visionné · Séries');
+  await expect(page.locator('#profile-hero-watch-label')).toHaveText('Temps séries');
   await expect(page.locator('#duels-card')).toHaveCount(0);
   await expect(page.locator('#setting-feature-duels')).toHaveCount(0);
 });

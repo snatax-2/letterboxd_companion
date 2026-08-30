@@ -178,11 +178,9 @@ function refreshProfileWatchTime(history) {
     const cumulativeMinutes = filmMinutes + episodeMinutes;
     const value = formatWatchTime(contextualMinutes);
     const cumulative = formatWatchTime(cumulativeMinutes);
-    if (label) label.textContent = `Temps visionné · ${isTv ? 'Séries' : 'Films'}`;
+    if (label) label.textContent = `Temps ${isTv ? 'séries' : 'films'}`;
     if (target) target.textContent = value;
-    if (total) total.textContent = pending
-      ? `Cumul · ${cumulative} · épisodes en cours de calcul`
-      : `Cumul · ${cumulative}`;
+    if (total) total.textContent = cumulative;
     if (detail) detail.textContent = pending ? `${cumulative} · épisodes en cours de calcul` : cumulative;
   };
   setValue(0, true);
@@ -319,6 +317,10 @@ function resetProfileExtras() {
   if (heroSubEl) heroSubEl.textContent = 'Premières notes en —';
   const heroWatchTimeEl = document.getElementById('profile-hero-watch-time');
   if (heroWatchTimeEl) heroWatchTimeEl.textContent = '—';
+  const heroWatchTotalEl = document.getElementById('profile-hero-watch-total');
+  if (heroWatchTotalEl) heroWatchTotalEl.textContent = '—';
+  const heroWatchLabelEl = document.getElementById('profile-hero-watch-label');
+  if (heroWatchLabelEl) heroWatchLabelEl.textContent = `Temps ${statsMediaFilter === 'tv' ? 'séries' : 'films'}`;
   const heroYearSubEl = document.getElementById('profile-hero-year-sub');
   if (heroYearSubEl) heroYearSubEl.textContent = '';
   document.getElementById('profile-fav-actor').textContent = '—';
