@@ -70,6 +70,7 @@ function closeModal(modalEl, options = {}) {
 
   modalEl.classList.remove('open');
   setModalAccessibilityState(modalEl, false);
+  modalEl.dispatchEvent(new Event('modalclosed'));
   if (modalEl.id === 'modal') pendingAction = null;
 
   if (wasTop) {

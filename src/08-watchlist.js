@@ -281,7 +281,7 @@ function renderWatchlist() {
 
     div.innerHTML = `
       <div class="wl-card-content">
-        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}" aria-keyshortcuts="Shift+F10">
           ${posterHtml}
           <span class="wl-body">
             <span class="wl-title">${escAttr(item.title)}</span>
@@ -515,6 +515,7 @@ window.watchlistToForm = function(idx) {
   const list = loadWatchlist();
   const item = list[idx];
   if (!item) return;
+  setMediaType('movie');
   searchEl.value = item.title;
   searchEl.dispatchEvent(new Event('input'));
   list.splice(idx, 1);
@@ -522,7 +523,7 @@ window.watchlistToForm = function(idx) {
   recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   
-  if (window.innerWidth <= 860) switchMobileNav('rating');
+  switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   showToast(`Recherche lancée pour "${item.title}"`);
 };
@@ -623,7 +624,8 @@ wlInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { wlSuggestEl.style.display = 'none'; }
 });
 
-function renderWatchlistCardActionSheet(item, actions) {
+function renderWatchlistCardActionSheet(item, actions, anchor = null) {
+  resetWatchlistMenuPresentation();
   actionSheetEl.classList.add('watchlist-card-menu');
   actionSheetTitleEl.textContent = item.title;
   actionSheetListEl.innerHTML = '';
@@ -640,17 +642,31 @@ function renderWatchlistCardActionSheet(item, actions) {
     actionSheetListEl.appendChild(btn);
   });
 
+  prepareWatchlistMenuPresentation(anchor);
   openModalElement(actionSheetEl, {
     initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
+    returnFocus: anchor || document.getElementById('nav-watchlist'),
   });
 }
 
-function openWatchlistCardMenu(mediaType, idx) {
+function openWatchlistCardMenu(mediaType, idx, anchor = null) {
   const isTv = mediaType === 'tv';
   const list = isTv ? loadTvWatchlist() : loadWatchlist();
   const item = list[idx];
   if (!item) return;
 
+  const listId = getActiveWatchlistId(mediaType);
+  const keyForItem = isTv ? tvWatchlistItemKey : watchlistItemKey;
+  const itemKey = keyForItem(item);
+  function onCurrentItem(action) {
+    const current = loadWatchlist(null, mediaType);
+    const currentIdx = current.findIndex(candidate => keyForItem(candidate) === itemKey);
+    if (getActiveWatchlistId(mediaType) !== listId || currentIdx < 0) {
+      showToast('Cette liste a changé. Rouvre les actions de l’affiche.');
+      return;
+    }
+    action(currentIdx);
+  }
   const actions = [];
   if (item.tmdbId) {
     actions.push({
@@ -662,16 +678,16 @@ function openWatchlistCardMenu(mediaType, idx) {
   actions.push({
     label: 'Noter',
     icon: ICONS.star,
-    onClick: () => isTv ? tvWatchlistToForm(idx) : watchlistToForm(idx),
+    onClick: () => onCurrentItem(isTv ? tvWatchlistToForm : watchlistToForm),
   });
   actions.push({
     label: 'Supprimer',
     icon: ICONS.trash,
     danger: true,
-    onClick: () => isTv ? removeTvWatchlistItem(idx) : removeWatchlist(idx),
+    onClick: () => onCurrentItem(isTv ? removeTvWatchlistItem : removeWatchlist),
   });
 
-  renderWatchlistCardActionSheet(item, actions);
+  renderWatchlistCardActionSheet(item, actions, anchor);
 }
 
 // Tap sur un film de la watchlist (hors menu) : ouvre sa fiche détaillée.
@@ -680,7 +696,7 @@ document.getElementById('watchlist-list').addEventListener('click', e => {
   if (menuButton) {
     const idx = Number(menuButton.dataset.watchlistIdx);
     if (!Number.isInteger(idx) || idx < 0) return;
-    openWatchlistCardMenu('movie', idx);
+    openWatchlistCardMenu('movie', idx, menuButton.closest('.wl-card').querySelector('.wl-card-open'));
     return;
   }
   if (e.target.closest('#empty-state-watchlist-cta')) {
@@ -716,7 +732,7 @@ function openWlListManageMenu(id, mediaType = 'movie') {
   const entry = meta.find(l => l.id === id);
   if (!entry) return;
 
-  actionSheetEl.classList.remove('watchlist-card-menu');
+  resetWatchlistMenuPresentation();
   actionSheetTitleEl.textContent = entry.name;
   const actions = [
     { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id, mediaType) },
@@ -959,7 +975,7 @@ function renderTvWatchlist() {
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
     div.innerHTML = `
       <div class="wl-card-content">
-        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}" aria-keyshortcuts="Shift+F10">
           ${posterHtml}
         </button>
         <div class="wl-actions">
@@ -1002,7 +1018,7 @@ function tvWatchlistToForm(idx) {
     tvSearchEl.value = item.title;
     tvSearchEl.dispatchEvent(new Event('input'));
   }
-  if (window.innerWidth <= 860) switchMobileNav('rating');
+  switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   showToast(`Recherche lancée pour "${item.title}"`);
 }
@@ -1012,7 +1028,7 @@ document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
   if (!btn) return;
   const idx = Number(btn.dataset.tvIdx);
   if (!Number.isInteger(idx) || idx < 0) return;
-  openWatchlistCardMenu('tv', idx);
+  openWatchlistCardMenu('tv', idx, btn.closest('.wl-card').querySelector('.wl-card-open'));
 });
 
 // Les erreurs d'affiche sont gérées par délégation, sans JavaScript inline :

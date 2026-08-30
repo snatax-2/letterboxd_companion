@@ -87,7 +87,7 @@ function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) 
     </div>`;
 }
 
-function mdsActionsHtml(localMatch) {
+function mdsActionsHtml(localMatch, tmdbId) {
   // Avec une note locale, le bloc « Ta note » (cliquable) remplace ces deux
   // boutons — voir personalHtml dans buildMdsContent.
   return `
@@ -97,6 +97,7 @@ function mdsActionsHtml(localMatch) {
         : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
            <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
       }
+      ${watchlistDetailActionsHtml(tmdbId, 'movie')}
     </div>`;
 }
 
@@ -230,7 +231,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   // fallait compter les accolades pour savoir quelle section on lisait.
   return [
     mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }),
-    mdsActionsHtml(localMatch),
+    mdsActionsHtml(localMatch, data.id),
     // Plateformes de streaming : remontées juste sous les CTA (voir
     // Ludex_Specifications_Fiches.pdf — « où le voir ? C'est la donnée la
     // plus recherchée »), chargées en arrière-plan comme les notes externes.

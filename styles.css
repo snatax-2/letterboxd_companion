@@ -3647,6 +3647,24 @@
     background: transparent;
   }
   #watchlist-card .watchlist-scroller .wl-card-open { gap: 0; border: 0; }
+  #watchlist-card .watchlist-scroller .wl-card-open {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: pan-x pan-y pinch-zoom;
+    transition: transform 160ms var(--ease-out);
+  }
+  #watchlist-card .wl-card-open img { -webkit-touch-callout: none; -webkit-user-drag: none; }
+  #watchlist-card .watchlist-scroller .wl-card-open.watchlist-holding { transform: scale(.98); }
+  .watchlist-gesture-hint {
+    display: none;
+    margin: 12px 0 0;
+    color: var(--text-mid);
+    font-size: .8rem;
+  }
+  @media (any-pointer: coarse) {
+    .watchlist-gesture-hint:not([hidden]) { display: block; }
+  }
   #watchlist-card .watchlist-scroller .wl-body { display: none; }
   #watchlist-card .watchlist-scroller .wl-poster,
   #watchlist-card .watchlist-scroller .wl-poster img {
@@ -3677,6 +3695,20 @@
     color: #C8C8CC;
     cursor: pointer;
     isolation: isolate;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms var(--ease-out);
+  }
+  /* Accessible au clavier et aux lecteurs d'écran, sans icône permanente. */
+  #watchlist-card .wl-card:focus-within .wl-menu-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    #watchlist-card .wl-card:hover .wl-menu-btn { opacity: 1; pointer-events: auto; }
+  }
+  @media (hover: none) {
+    #watchlist-card .wl-card:focus-within .wl-menu-btn:not(:focus-visible) { opacity: 0; pointer-events: none; }
   }
   #watchlist-card .watchlist-scroller .wl-menu-btn::before {
     position: absolute;
@@ -3703,15 +3735,51 @@
 
   #action-sheet.watchlist-card-menu {
     background: rgba(0, 0, 0, 0.44);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+    transition: opacity 200ms var(--ease-out), backdrop-filter 200ms var(--ease-out), visibility 200ms;
   }
+  #action-sheet.watchlist-card-menu.open { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   #action-sheet.watchlist-card-menu .action-sheet-box {
     width: min(calc(100% - 48px), 320px);
     max-width: 320px;
     border-radius: var(--radius);
     padding: var(--space-5);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
+    transform: translateY(8px) scale(.96);
+    transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+  }
+  #action-sheet.watchlist-card-menu.open .action-sheet-box { transform: translateY(0) scale(1); }
+  #action-sheet.watchlist-menu-anchored .action-sheet-box {
+    position: fixed;
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  #action-sheet.watchlist-card-menu.watchlist-menu-anchored {
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .watchlist-menu-preview {
+    position: fixed;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: var(--poster-radius);
+    opacity: 0;
+    transform: translate(var(--preview-start-x, 0px), var(--preview-start-y, 0px)) scale(.98);
+    transition: opacity 200ms var(--ease-out), transform 200ms var(--ease-out);
+  }
+  .watchlist-menu-preview .wl-poster,
+  .watchlist-menu-preview img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .watchlist-menu-preview img { filter: none; opacity: 1; animation: none; }
+  #action-sheet.open .watchlist-menu-preview { opacity: 1; transform: scale(1); }
+  #action-sheet.watchlist-card-menu .action-sheet-item.danger { color: #e57373; }
+  [data-theme="light"] #action-sheet.watchlist-card-menu .action-sheet-item.danger { color: #8C352F; }
+  @media (prefers-reduced-motion: reduce) {
+    #watchlist-card .watchlist-scroller .wl-card-open,
+    #action-sheet.watchlist-card-menu,
+    #action-sheet.watchlist-card-menu .action-sheet-box,
+    .watchlist-menu-preview { transition: none !important; transform: none !important; }
+    #watchlist-card .watchlist-scroller .wl-card-open.watchlist-holding { transform: none; }
   }
   #action-sheet.watchlist-card-menu .modal-title {
     overflow: hidden;

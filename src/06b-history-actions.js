@@ -146,7 +146,7 @@ function openActionSheetForItem(idx) {
   const item = history[idx];
   if (!item) return;
 
-  actionSheetEl.classList.remove('watchlist-card-menu');
+  resetWatchlistMenuPresentation();
   actionSheetTitleEl.textContent = item.title;
 
   const actions = [
@@ -196,7 +196,6 @@ function openActionSheetForItem(idx) {
 
 function closeActionSheet() {
   closeModal(actionSheetEl);
-  actionSheetEl.classList.remove('watchlist-card-menu');
 }
 
 actionSheetCancelBtn.addEventListener('click', closeActionSheet);

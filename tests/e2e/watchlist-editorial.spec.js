@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const { holdWatchlistPoster } = require('./helpers/watchlist-hold');
 
 const MOVIES = Array.from({ length: 8 }, (_, index) => ({
   title: `Film archive ${index + 1}`,
@@ -207,7 +208,7 @@ test('la bibliothèque aligne switch et filets, garde trois colonnes mobiles et 
   expect(actions.background).toBe('rgba(0, 0, 0, 0)');
   expect(actions.width).toBeLessThanOrEqual(44);
 
-  await menuButton.tap();
+  await holdWatchlistPoster(page);
   const sheet = page.locator('#action-sheet');
   await expect(sheet).toHaveClass(/watchlist-card-menu/);
   await expect(sheet).toHaveClass(/open/);
@@ -237,6 +238,105 @@ test('la loupe À voir reste centrée dans sa cible tactile', async ({ page }) =
   expect(alignment.horizontal).toBeLessThanOrEqual(1);
   expect(alignment.vertical).toBeLessThanOrEqual(1);
   await expect(page.locator('#watchlist-search-toggle')).toHaveClass(/editorial-search-toggle/);
+});
+
+test('maintenir une affiche ouvre les actions sans icône ni clic de relâchement', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  const poster = page.locator('.wl-card-open').first();
+  await expect(page.locator('.wl-menu-btn').first()).toHaveCSS('opacity', '0');
+  await expect(page.locator('#watchlist-gesture-hint')).toBeVisible();
+  const start = Date.now();
+  await holdWatchlistPoster(page, poster);
+  expect(Date.now() - start).toBeGreaterThanOrEqual(450);
+  await expect(page.locator('#movie-detail-sheet')).not.toHaveClass(/open/);
+  expect(await page.evaluate(() => loadWatchlist().length)).toBe(MOVIES.length);
+  await expect(page.locator('.watchlist-menu-preview')).toBeVisible();
+  await expect(page.locator('#watchlist-gesture-hint')).toBeHidden();
+  await page.keyboard.press('Escape');
+  await expect(poster).toBeFocused();
+  await expect(page.locator('#action-sheet')).toHaveAttribute('inert', '');
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe('');
+  await page.reload();
+  await page.click('#nav-watchlist');
+  await expect(page.locator('#watchlist-gesture-hint')).toBeHidden();
+});
+
+for (const cancel of ['movement', 'pointercancel', 'multitouch', 'navigation']) {
+  test(`le maintien est annulé : ${cancel}`, async ({ page }) => {
+    const poster = page.locator('.wl-card-open').first();
+    await poster.scrollIntoViewIfNeeded();
+    const box = await poster.boundingBox();
+    const session = await page.context().newCDPSession(page);
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await expect(poster).toHaveClass(/watchlist-holding/);
+    if (cancel === 'movement') {
+      await session.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: point.x, y: point.y - 60 }] });
+    } else if (cancel === 'pointercancel') {
+      await session.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    } else if (cancel === 'multitouch') {
+      await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point, { x: point.x + 25, y: point.y + 25 }] });
+    } else {
+      await page.evaluate(() => switchMobileNav('discover'));
+    }
+    await page.waitForTimeout(650); // dépasse volontairement le seuil de 500 ms.
+    await expect(page.locator('#action-sheet')).not.toHaveClass(/open/);
+    await expect(page.locator('#movie-detail-sheet')).not.toHaveClass(/open/);
+    expect(await page.evaluate(() => loadWatchlist().length)).toBe(MOVIES.length);
+    if (cancel !== 'pointercancel') await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await session.detach();
+  });
+}
+
+test('le tap court conserve la fiche et un accès visible aux actions', async ({ page }) => {
+  await page.locator('.wl-card-open').first().tap();
+  await expect(page.locator('#movie-detail-sheet')).toHaveClass(/open/);
+  await page.getByRole('button', { name: 'Actions À voir', exact: true }).tap();
+  await expect(page.locator('#action-sheet')).toHaveClass(/open/);
+  await expect(page.locator('#movie-detail-sheet')).not.toHaveClass(/open/);
+  await page.locator('#action-sheet').getByRole('button', { name: 'Noter', exact: true }).tap();
+  await expect(page.locator('#nav-rating')).toHaveClass(/active/);
+  await expect(page.locator('#movie-search')).toBeVisible();
+});
+
+test('le menu Séries fonctionne au maintien puis ouvre Noter en mode Séries', async ({ page }) => {
+  await page.tap('#wl-tab-tv');
+  await holdWatchlistPoster(page, page.locator('#wl-tv-list .wl-card-open').first());
+  await page.locator('#action-sheet').getByRole('button', { name: 'Noter', exact: true }).tap();
+  await expect(page.locator('#nav-rating')).toHaveClass(/active/);
+  await expect(page.locator('#tv-search')).toBeVisible();
+  await expect(page.locator('#tv-search')).toHaveValue(SHOWS[0].title);
+});
+
+test('menu et affiche restent dans le viewport, sans chevauchement', async ({ page }, testInfo) => {
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 740 });
+    await holdWatchlistPoster(page, page.locator('#watchlist-list .wl-card-open').last());
+    await expect(page.locator('.watchlist-menu-preview')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+    await expect(page.locator('#action-sheet .action-sheet-box')).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+    const panel = await page.locator('#action-sheet .action-sheet-box').boundingBox();
+    const preview = await page.locator('.watchlist-menu-preview').boundingBox();
+    expect(panel.x).toBeGreaterThanOrEqual(15);
+    expect(panel.x + panel.width).toBeLessThanOrEqual(width - 15);
+    expect(panel.y).toBeGreaterThanOrEqual(15);
+    expect(panel.y + panel.height).toBeLessThanOrEqual(740);
+    expect(preview.y + preview.height <= panel.y || panel.y + panel.height <= preview.y).toBe(true);
+    if (width === 390) await page.screenshot({ path: testInfo.outputPath('watchlist-hold-390.png') });
+    await page.locator('#action-sheet-cancel').tap();
+  }
+});
+
+test('le menu respecte reduced motion et les contrastes dark/light', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  for (const theme of ['dark', 'light']) {
+    await page.evaluate(t => { document.documentElement.dataset.theme = t; }, theme);
+    await holdWatchlistPoster(page);
+    await expect(page.locator('#action-sheet .action-sheet-box')).toHaveCSS('transition-duration', '0s');
+    await expect(page.locator('.watchlist-menu-preview')).toHaveCSS('transform', 'none');
+    const scan = await new AxeBuilder({ page }).include('#action-sheet').analyze();
+    expect(scan.violations.filter(v => ['serious', 'critical'].includes(v.impact))).toEqual([]);
+    await page.keyboard.press('Escape');
+  }
 });
 
 test('À voir ne déborde pas sur 360, 390, 430 ni desktop', async ({ page }) => {

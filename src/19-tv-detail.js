@@ -165,6 +165,7 @@ function buildSeasonStatusRow(localShow, seasonMeta, localSeason) {
 }
 
 function buildTdsContent(data, localShow) {
+  const watchlistActions = watchlistDetailActionsHtml(data.id, 'tv');
   const posterUrl = tmdbImage(data.poster_path, 'w342');
   const year = data.first_air_date ? data.first_air_date.slice(0, 4) : '';
   const genres = (data.genres || []).map(g => g.name).join(', ');
@@ -212,11 +213,10 @@ function buildTdsContent(data, localShow) {
            Reste par SÉRIE entière (confirmé), juste déplacé d'endroit. -->
     </div>
 
-    ${!localShow ? `
-    <div class="mds-actions" style="animation-delay:.02s">
-      <button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>
-    </div>
-    ` : ''}
+    ${!localShow || watchlistActions ? `<div class="mds-actions" style="animation-delay:.02s">
+      ${!localShow ? `<button type="button" class="mds-action-btn primary" id="tds-start-btn" title="Commencer cette série">${ICONS.play} Commencer la série</button>` : ''}
+      ${watchlistActions}
+    </div>` : ''}
 
     <div class="mds-providers" id="tds-providers" style="display:none;"></div>
 
