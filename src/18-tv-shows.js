@@ -557,6 +557,37 @@ function renderTvHistoryHero(shows) {
     </div>`;
 }
 
+const tvHistoryTotalFetches = new Set();
+
+function getTvCatalogEpisodeTotal(show) {
+  return Number(show?.catalogEpisodeTotal || 0);
+}
+
+// L'historique ne possède localement que les saisons que l'on a ouvertes.
+// On enrichit donc discrètement chaque série avec son total TMDb pour que la
+// barre sur l'affiche exprime la progression de la série entière.
+function enrichTvHistoryEpisodeTotals(shows) {
+  shows.filter(show => show?.tmdbTvId && getTvCatalogEpisodeTotal(show) === 0 && !tvHistoryTotalFetches.has(String(show.tmdbTvId)))
+    .forEach(show => {
+      const id = String(show.tmdbTvId);
+      tvHistoryTotalFetches.add(id);
+      fetch(`/api/search?tvId=${encodeURIComponent(id)}`)
+        .then(readApiJson)
+        .then(data => {
+          const total = (data.seasons || [])
+            .filter(season => season.season_number > 0)
+            .reduce((sum, season) => sum + Number(season.episode_count || 0), 0);
+          if (total <= 0) return;
+          return mutateTvShows(currentShows => {
+            const current = currentShows.find(entry => String(entry.tmdbTvId) === id);
+            if (current) current.catalogEpisodeTotal = total;
+          }).then(() => renderTvHistory());
+        })
+        .catch(() => {})
+        .finally(() => tvHistoryTotalFetches.delete(id));
+    });
+}
+
 function renderTvHistory() {
   const allShows = loadTvShows();
   const shows = getSortedTvShows();
@@ -581,6 +612,7 @@ function renderTvHistory() {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
     return;
   }
+  enrichTvHistoryEpisodeTotals(allShows);
   if (shows.length === 0) {
     container.innerHTML = `<div class="empty-state">Aucun résultat pour ce filtre.</div>`;
     return;
@@ -723,15 +755,15 @@ function renderTvShowCard(show, tier) {
   const avg = computeShowAverageScore(show);
   const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
   const seasonsWithProgress = seasons.filter(([, s]) => s.totalEpisodes > 0);
-  const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
+  const followedEpisodeTotal = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
+  const totalEpisodes = getTvCatalogEpisodeTotal(show) || followedEpisodeTotal;
   const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
   const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
   const isFeatured = tier !== 'normal';
-  // Bleu électrique pour une série réellement en cours : peu importe que
-  // des saisons précédentes aient déjà été notées. Or = toutes les saisons
-  // suivies sont terminées, donc série à jour dans le suivi actuel.
-  const isInProgress = seasonsWithProgress.some(([, season]) => season.watchedEpisodes.length < season.totalEpisodes);
+  // Bleu électrique tant que le total de la série n'est pas atteint ; or
+  // une fois tous les épisodes de son catalogue vus.
+  const isInProgress = watchedEpisodes < totalEpisodes;
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les
   // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
