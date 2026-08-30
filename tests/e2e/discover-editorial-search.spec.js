@@ -97,8 +97,12 @@ test('la loupe devient un champ, reste tactile et se referme proprement au clavi
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
   await expect(input).toBeFocused();
   await expect(input).toBeEnabled();
-  const openBox = await search.boundingBox();
-  expect(openBox.width).toBeGreaterThan(compactBox.width * 4);
+  // La largeur est animée sur 360 ms. Attendre sa valeur finale évite de
+  // valider une frame intermédiaire plus ou moins avancée selon la charge CI.
+  await expect.poll(async () => {
+    const openBox = await search.boundingBox();
+    return openBox?.width || 0;
+  }).toBeGreaterThan(compactBox.width * 4);
 
   await input.fill('Michael Mann');
   await expect(page.locator('.discover-search-result')).toHaveCount(3);
