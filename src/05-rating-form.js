@@ -434,24 +434,22 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 // enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
 // sans bloquer l'interface (pointer-events: none, se retire toute seule).
 function playSaveConfirmation() {
+  document.querySelector('.save-confirm-overlay')?.remove();
   const overlay = document.createElement('div');
   overlay.className = 'save-confirm-overlay';
   overlay.setAttribute('aria-hidden', 'true');
   overlay.innerHTML = `
-    <div class="save-confirm-ticket">
-      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>
-      <div class="save-confirm-ticket-perf"></div>
-      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>
+    <div class="save-confirm-mark">
+      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path pathLength="1" d="M14 33L27 46L51 18"/></svg>
+      <span>${currentMediaType === 'tv' ? 'Saison enregistrée' : 'Film enregistré'}</span>
     </div>
   `;
   document.body.appendChild(overlay);
   if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
-  setTimeout(() => overlay.remove(), 850);
+  setTimeout(() => overlay.remove(), 1500);
 }
 
 document.getElementById('save-btn').addEventListener('click', () => {
-  if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-  hapticPulse(document.getElementById('save-btn'), 'strong');
 
   if (currentMediaType === 'tv') {
     saveTvSeasonRating();
@@ -465,17 +463,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
   const score    = calculateScore();
 
-  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
-  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
-  // la validation — retire puis réapplique la classe (avec un reflow forcé
-  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
-  // suivante dans la même session, pas juste la toute première.
-  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
-  if (scoreMainEl) {
-    scoreMainEl.classList.remove('stamp-pulse');
-    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
-    scoreMainEl.classList.add('stamp-pulse');
-  }
 
   const movie = {
     title,
@@ -527,12 +514,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
     renderAll();
     showToast(`"${title}" enregistré`);
     playSaveConfirmation();
-    const saveBtn = document.getElementById('save-btn');
-    const origSave = saveBtn.innerHTML;
-    saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
-    saveBtn.style.background = 'var(--green)';
-    saveBtn.style.color = '#0d1117';
-    setTimeout(() => { saveBtn.innerHTML = origSave; saveBtn.style.background = ''; saveBtn.style.color = ''; }, 1800);
   }
 });
 
@@ -736,4 +717,3 @@ focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
 })();
 
 applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
-

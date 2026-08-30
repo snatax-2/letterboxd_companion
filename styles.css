@@ -4302,6 +4302,67 @@
     #notation-card .stars-display { font-size: 1.55rem; }
   }
 
+  /* Titres alignés sur la même colonne éditoriale que Découvrir / À voir. */
+  #col-rating > .card:first-child > .card-title {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    text-align: left;
+  }
+  #col-rating > .card:first-child > .card-title::before {
+    grid-column: 1 / -1;
+    width: auto;
+  }
+  #col-rating #film-card-title { justify-self: start; }
+  #notation-card > .card-title { display: block; text-align: left; }
+  #notation-card > .card-title::before {
+    display: block;
+    width: auto;
+    margin: 0 0 var(--space-3);
+  }
+  #notation-card .focus-mode-toggle::after {
+    content: 'Désactivé';
+    margin-left: var(--space-2);
+    font-size: .75rem;
+  }
+  #notation-card .focus-mode-toggle.active {
+    background: var(--text-hi);
+    color: var(--bg);
+    padding-inline: var(--space-3);
+  }
+  #notation-card .focus-mode-toggle.active::after { content: '✓ Activé'; }
+  .save-confirm-mark {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 24px 32px;
+    background: var(--bg);
+    color: var(--text-hi);
+    border-block: 1px solid var(--border-hi);
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    animation: archiveConfirm 1.5s ease both;
+  }
+  .save-confirm-mark svg { width: 64px; height: 64px; }
+  .save-confirm-mark path {
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    animation: archiveCheck .45s cubic-bezier(.22, 1, .36, 1) .12s both;
+  }
+  @keyframes archiveCheck { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes archiveConfirm {
+    0% { opacity: 0; transform: translateY(6px); }
+    15%, 80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-3px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .save-confirm-mark, .save-confirm-mark path { animation: none; }
+  }
+
   #view-profile { gap: 0; }
   #view-profile > .card {
     padding-block: var(--section-space);
