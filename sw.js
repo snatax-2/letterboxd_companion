@@ -8,7 +8,7 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-b3145d6cd2';
+const CACHE_NAME = 'ludex-shell-fdd4267827';
 
 const APP_SHELL = [
   '/',
@@ -16,10 +16,13 @@ const APP_SHELL = [
   '/bootstrap.js',
   '/styles.min.css',
   '/app.js',
-  '/favicon.png',
+  '/favicon.png?v=ludex-l1',
+  '/apple-touch-icon.png?v=ludex-l1',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/icon-192.png?v=ludex-l1',
+  '/icon-512.png?v=ludex-l1',
+  '/icon-maskable-192.png?v=ludex-l1',
+  '/icon-maskable-512.png?v=ludex-l1'
 ];
 
 self.addEventListener('install', (event) => {
