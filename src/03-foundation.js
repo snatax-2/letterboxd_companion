@@ -81,6 +81,24 @@ function tmdbImage(path, size = 'w185') {
   return `https://image.tmdb.org/t/p/${size}${path}`;
 }
 
+// L'écran peut choisir la bonne source selon la taille réelle de l'affiche et
+// sa densité (Retina), plutôt que d'agrandir systématiquement une miniature.
+const TMDB_POSTER_WIDTHS = [92, 154, 185, 342, 500, 780];
+function tmdbPosterAttrs(path, fallback = 'w342', sizes = '100px') {
+  const src = tmdbImage(path, fallback);
+  if (!src) return '';
+  const srcset = TMDB_POSTER_WIDTHS.map(width => `${tmdbImage(path, `w${width}`)} ${width}w`).join(', ');
+  return `src="${src}" srcset="${srcset}" sizes="${sizes}"`;
+}
+
+function savedPosterAttrs(url, fallback = 'w342', sizes = '100px') {
+  const raw = String(url ?? '');
+  const match = raw.match(/^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)(\/[A-Za-z0-9._-]+)$/);
+  if (match) return tmdbPosterAttrs(match[1], fallback, sizes);
+  const src = safePosterSrc(raw);
+  return src ? `src="${src}"` : '';
+}
+
 // Prépare une URL d'affiche STOCKÉE pour une insertion dans un attribut src="".
 //
 // Pourquoi une fonction dédiée plutôt qu'un escAttr() à chaque site d'appel :

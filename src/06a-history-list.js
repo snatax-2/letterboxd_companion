@@ -50,9 +50,9 @@ function renderHistoryHero(sorted) {
   // On teste l'URL ASSAINIE, pas l'URL brute : une affiche rejetée par
   // safePosterSrc() doit retomber sur l'espace réservé, pas produire un
   // <img src=""> (que le navigateur interprète comme un rechargement de la page).
-  const heroPoster = safePosterSrc(item.poster);
+  const heroPoster = savedPosterAttrs(item.poster, 'w342', '96px');
   const imgHtml = heroPoster
-    ? `<img class="hero-entry-poster" src="${heroPoster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+    ? `<img class="hero-entry-poster" ${heroPoster} alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
     : `<div class="hero-entry-poster"></div>`;
   hero.innerHTML = `
     <div class="hero-entry">
@@ -356,9 +356,9 @@ function renderHistory() {
 
       const targetSize = POSTER_SIZE_BY_TIER[tier];
       const rawPoster = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
-      const posterSrc = safePosterSrc(rawPoster);
-      const imgHtml = posterSrc
-        ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
+      const posterAttrs = savedPosterAttrs(rawPoster, targetSize, tier === 'banner' ? '(min-width: 861px) 500px, 100vw' : '(min-width: 861px) 342px, 50vw');
+      const imgHtml = posterAttrs
+        ? `<img class="hist-grid-poster" ${posterAttrs} alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
         : `<span class="hist-grid-poster-ph">${ICONS.clapper}</span>`;
 
       div.innerHTML = `

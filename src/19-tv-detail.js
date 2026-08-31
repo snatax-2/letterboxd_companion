@@ -175,7 +175,7 @@ function buildTdsContent(data, localShow) {
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl
-            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.name)}" loading="lazy">`
+            ? `<img class="mds-poster" ${savedPosterAttrs(posterUrl, 'w342', '100px')} alt="Affiche de ${escAttr(data.name)}" loading="lazy" decoding="async">`
             : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
           ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
         </div>
