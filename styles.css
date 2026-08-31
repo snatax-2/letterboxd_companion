@@ -135,6 +135,7 @@
   line-height: .88;
 }
 #view-profile .profile-hero-sub { margin: 0; text-align: right; }
+#view-profile .profile-media-tabs { margin: var(--space-4) 0 0; }
 #view-profile .profile-hero-header { margin-top: var(--space-5); }
 #view-profile .profile-recent-card { padding-block: var(--space-5); }
 .profile-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); }
