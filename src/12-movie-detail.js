@@ -916,7 +916,9 @@ function applyPosterCellHeights(grid) {
   modal?.addEventListener('transitionend', maybeCleanup);
 }
 
+let posterPickerRequest = 0;
 async function openPosterPicker(tmdbId, mediaType = 'movie') {
+  const request = ++posterPickerRequest;
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
@@ -931,6 +933,7 @@ async function openPosterPicker(tmdbId, mediaType = 'movie') {
     // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
     // simple manque de variantes pour ce film precis.
     const data = await readApiJson(res);
+    if (request !== posterPickerRequest) return;
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
       grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
@@ -945,6 +948,7 @@ async function openPosterPicker(tmdbId, mediaType = 'movie') {
     grid.dataset.mediaType = mediaType;
     applyPosterCellHeights(grid);
   } catch (err) {
+    if (request !== posterPickerRequest) return;
     grid.innerHTML = `
       <div class="error-state">
         <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
@@ -960,7 +964,7 @@ document.getElementById('movie-detail-sheet')?.addEventListener('click', (e) => 
   if (btn) openPosterPicker(btn.dataset.posterPicker);
 });
 
-document.getElementById('poster-picker-modal')?.addEventListener('click', (e) => {
+document.getElementById('poster-picker-modal')?.addEventListener('click', async (e) => {
   const modal = document.getElementById('poster-picker-modal');
   if (e.target === modal) { closeModal(modal); return; }
   if (e.target.closest('#poster-picker-close')) { closeModal(modal); return; }
@@ -976,17 +980,11 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   closeModal(modal);
 
   if (mediaType === 'tv') {
-    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
-    // URL complète comme les films) — on garde ce même format plutôt que
-    // d'introduire une seconde représentation.
-    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
-    if (navigator.vibrate) navigator.vibrate(15);
-    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
-    if (sheetPoster && sheetPoster.tagName === 'IMG') {
-      sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
-    }
-    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
-    showToast('Affiche mise à jour');
+    try {
+      const touched = await applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+      if (touched && navigator.vibrate) navigator.vibrate(15);
+      showToast(touched ? 'Affiche mise à jour' : 'Cette série a été retirée.');
+    } catch (error) { showToast(error.message); }
     return;
   }
 

@@ -36,6 +36,7 @@ function backupLegacyTvState() {
 
 function persistTvState(shows, state = readTvState()) {
   const normalized = normalizeTvShows(shows);
+  const before = normalizeTvShows(readTvState().shows);
   if (!backupLegacyTvState()) return false;
   const next = { schemaVersion: 2, shows: normalized, showTombstones: state.showTombstones, seasonTombstones: state.seasonTombstones };
   // setItem est atomique : une erreur laisse l'état précédent intact, avec
@@ -44,6 +45,12 @@ function persistTvState(shows, state = readTvState()) {
   writeRegisteredStorage('tvShows', normalized);
   writeJsonStorage('lbx_tv_show_tombstones', next.showTombstones);
   writeJsonStorage('lbx_tv_season_tombstones', next.seasonTombstones);
+  if (tvStableJson(before) !== tvStableJson(normalized)) {
+    const ids = new Set([...before, ...normalized].map(show => String(show.tmdbTvId)));
+    const changed = [...ids].filter(id => tvStableJson(before.find(s => String(s.tmdbTvId) === id))
+      !== tvStableJson(normalized.find(s => String(s.tmdbTvId) === id)));
+    notifyTvViewsChanged(changed);
+  }
   return true;
 }
 

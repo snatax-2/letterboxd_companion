@@ -67,7 +67,13 @@ function createRadarSVG(averages, mediaType = 'movie') {
 // finale, avec un ralentissement en fin de course (ease-out) pour un rendu
 // plus "premium" qu'un simple changement instantané. Respecte la préférence
 // système "réduire les animations" : dans ce cas, affiche direct la valeur finale.
+function stopCountUp(el) {
+  if (el) el.ludexCountToken = {};
+}
+
 function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
+  stopCountUp(el);
+  const token = el.ludexCountToken;
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const format = (v) => decimals > 0 ? v.toFixed(decimals) : Math.round(v).toString();
 
@@ -80,6 +86,7 @@ function animateCountUp(el, endValue, { duration = 700, decimals = 0 } = {}) {
   const startTime = performance.now();
 
   function step(now) {
+    if (el.ludexCountToken !== token) return;
     const progress = Math.min((now - startTime) / duration, 1);
     const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
     el.textContent = format(startValue + (endValue - startValue) * eased);
@@ -143,10 +150,11 @@ function renderRecentRatings(type = statsMediaFilter) {
   }).join('');
 }
 
-async function getWatchedEpisodeMinutes(shows) {
+async function getWatchedEpisodeMinutes(shows, { details = false } = {}) {
   const cached = readJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, {}, isStorageObject) || {};
   const now = Date.now();
   let total = 0;
+  let unknownEpisodes = 0, stale = false;
   let changed = false;
   for (const show of shows) for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
     const watched = new Set((season.watchedEpisodes || []).map(Number));
@@ -155,39 +163,79 @@ async function getWatchedEpisodeMinutes(shows) {
     let episodes = cached[key]?.episodes;
     if (!episodes || now - (cached[key]?.at || 0) > 7 * 86400000) {
       try {
-        const data = await fetch(`/api/search?tvSeasonShowId=${encodeURIComponent(show.tmdbTvId)}&tvSeasonNumber=${encodeURIComponent(seasonKey)}`).then(readApiJson);
-        episodes = (data.episodes || []).map(ep => ({ number: Number(ep.episode_number), runtime: Number(ep.runtime) || 0 }));
-        cached[key] = { at: now, episodes }; changed = true;
-      } catch { episodes = []; }
+        const result = await fetchTvCataloguePart(show.tmdbTvId, seasonKey);
+        const previous = episodes || [];
+        let seasonStale = result.stale;
+        episodes = result.data.episodes.map(ep => {
+          const known = Number(ep.runtime) > 0 ? Number(ep.runtime) : previous.find(old => old.number === Number(ep.episode_number))?.runtime || 0;
+          if (!(Number(ep.runtime) > 0) && known) seasonStale = true;
+          return { number: Number(ep.episode_number), runtime: known };
+        });
+        previous.forEach(old => {
+          if (!episodes.some(ep => ep.number === old.number)) { episodes.push(old); seasonStale = true; }
+        });
+        stale ||= seasonStale;
+        cached[key] = { at: seasonStale ? cached[key]?.at || 0 : now, episodes }; changed = true;
+      } catch { stale = true; }
     }
-    total += episodes.filter(ep => watched.has(ep.number)).reduce((sum, ep) => sum + ep.runtime, 0);
+    for (const number of watched) {
+      const runtime = (episodes || []).find(ep => ep.number === number)?.runtime;
+      if (Number.isFinite(runtime) && runtime > 0) total += runtime;
+      else unknownEpisodes++;
+    }
   }
-  if (changed) writeJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, cached);
-  return total;
+  if (changed) {
+    const latest = readJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, {}, isStorageObject) || {};
+    Object.entries(latest).forEach(([key, entry]) => { if ((entry.at || 0) > (cached[key]?.at || 0)) cached[key] = entry; });
+    writeJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, cached);
+  }
+  return details ? { minutes: total, unknownEpisodes, stale } : total;
 }
 
+let profileWatchTimeVersion = 0;
+function cachedTvWatchTime(shows) {
+  const cached = readJsonStorage(PROFILE_EPISODE_RUNTIME_CACHE_KEY, {}, isStorageObject) || {};
+  let minutes = 0, unknownEpisodes = 0;
+  shows.forEach(show => Object.entries(show.seasons || {}).forEach(([key, season]) => {
+    const episodes = readTvCatalogueEntry(show.tmdbTvId).seasons[key]?.data?.episodes || [];
+    (season.watchedEpisodes || []).forEach(n => {
+      const runtime = episodes.find(ep => ep.episode_number === n)?.runtime || cached[`${show.tmdbTvId}:${key}`]?.episodes?.find(ep => ep.number === n)?.runtime;
+      if (Number.isFinite(Number(runtime)) && Number(runtime) > 0) minutes += Number(runtime);
+      else unknownEpisodes++;
+    });
+  }));
+  return { minutes, unknownEpisodes };
+}
 function refreshProfileWatchTime(history) {
+  const version = ++profileWatchTimeVersion;
   const filmMinutes = history.reduce((sum, h) => sum + (parseInt(h.runtime, 10) || 0), 0);
   const target = document.getElementById('profile-hero-watch-time');
   const detail = document.getElementById('profile-watch-time');
   const label = document.getElementById('profile-hero-watch-label');
   const total = document.getElementById('profile-hero-watch-total');
-  const setValue = (episodeMinutes, pending = false) => {
+  const setValue = (result, pending = false) => {
+    if (version !== profileWatchTimeVersion) return;
+    const episodeMinutes = typeof result === 'number' ? result : result.minutes;
+    const partial = result.unknownEpisodes > 0;
     const isTv = statsMediaFilter === 'tv';
     const contextualMinutes = isTv ? episodeMinutes : filmMinutes;
     const cumulativeMinutes = filmMinutes + episodeMinutes;
     const value = formatWatchTime(contextualMinutes);
     const cumulative = formatWatchTime(cumulativeMinutes);
     if (label) label.textContent = `Temps ${isTv ? 'séries' : 'films'}`;
-    if (target) target.textContent = value;
-    if (total) total.textContent = cumulative;
-    if (detail) detail.textContent = pending ? `${cumulative} · épisodes en cours de calcul` : cumulative;
+    if (target) target.textContent = isTv && partial ? (episodeMinutes ? `≥ ${value}` : 'À vérifier') : value;
+    if (total) total.textContent = partial ? (cumulativeMinutes ? `≥ ${cumulative}` : 'À vérifier') : cumulative;
+    if (detail) detail.textContent = pending ? `${cumulative} · épisodes en cours de calcul`
+      : `${cumulative}${partial ? ` · ${result.unknownEpisodes} épisode(s) sans durée` : ''}${result.stale ? ' · durées à vérifier' : ''}`;
   };
-  setValue(0, true);
-  getWatchedEpisodeMinutes(loadTvShows()).then(minutes => setValue(minutes)).catch(() => setValue(0));
+  const shows = loadTvShows();
+  const known = cachedTvWatchTime(shows);
+  setValue(known, true);
+  getWatchedEpisodeMinutes(shows, { details: true }).then(result => setValue(result)).catch(() => setValue({ ...known, stale: true }));
 }
 
 function renderStats() {
+  stopCountUp(document.getElementById('kpi-avg'));
   const history = loadHistory();
   animateCountUp(document.getElementById('kpi-total'), history.length);
 

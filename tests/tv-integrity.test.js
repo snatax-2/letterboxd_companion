@@ -223,6 +223,7 @@ test('notation : les poids sont restaurés et un simple changement de date conse
   w.document.getElementById('w-scenario').value = '3';
   await w.saveTvSeasonRating();
   const saved = copy(w.loadTvShows()[0].seasons[1].rating);
+  w.setMediaType('movie'); // modifier les poids du film ne doit plus contaminer la saison
   w.document.getElementById('w-scenario').value = '1';
   w.reopenTvSeason(1, '1');
   assert.equal(w.document.getElementById('w-scenario').value, '3');
@@ -282,6 +283,7 @@ test('fiche : le premier épisode coché crée réellement la série et sa saiso
   const w = app(t);
   const panel = await untrackedChecklist(w);
   await w.onTdsEpisodeCheckClick(2, '1', 'Saison 1', 2, 1, panel);
+  w.flushTvViewsRefresh(); // Les projections sont désormais regroupées après commit.
   const show = w.loadTvShows().find(item => Number(item.tmdbTvId) === 2);
   assert.equal(show.title, 'B');
   assert.deepEqual(copy(show.seasons[1].watchedEpisodes), [1]);

@@ -228,8 +228,12 @@ function mergePersonalCollections(remotePayload) {
   }
 
   const localDraftRaw = readTextStorage('lbx_draft');
-  const draft = localDraftRaw === null ? (remotePayload?.draft || null) : readRegisteredStorage('draft', null);
-  if (localDraftRaw === null && draft) writeRegisteredStorage('draft', draft);
+  importTvRatingDrafts(remotePayload?.draft?.tvDrafts);
+  if (localDraftRaw === null && remotePayload?.draft) {
+    const { tvDrafts: _tvDrafts, ...movieDraft } = remotePayload.draft;
+    if (Object.keys(movieDraft).length) writeRegisteredStorage('draft', movieDraft);
+  }
+  const draft = ratingDraftSnapshot();
 
   const preferences = {};
   const preferenceKeys = {
@@ -250,6 +254,7 @@ function mergePersonalCollections(remotePayload) {
 // Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être
 // ré-uploadé si besoin (c'est ce que fait pushToCloud).
 async function mergeWithRemote(remotePayload) {
+  validateTvImport(remotePayload?.tvShows || []);
   const localHistory = loadHistory();
   const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
   const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
@@ -291,8 +296,6 @@ async function mergeWithRemote(remotePayload) {
   if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs('tv');
   renderWatchlist();
   if (typeof renderTvWatchlist === 'function') renderTvWatchlist();
-  if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
-  if (typeof statsDirty !== 'undefined') statsDirty = true;
 
   return {
     schemaVersion: 3,
@@ -359,7 +362,7 @@ function currentLocalSnapshot({ includeExportDate = false } = {}) {
     ownedProviders: readRegisteredStorage('ownedProviders', []),
     analyses: typeof loadAnalyses === 'function' ? loadAnalyses() : readJsonStorage('lbx_analyses', []),
     duels: readRegisteredStorage('duels', null),
-    draft: readRegisteredStorage('draft', null),
+    draft: ratingDraftSnapshot(),
     preferences: {
       focusMode: localStorage.getItem('lbx_focus_mode'),
       tvContinueCollapsed: localStorage.getItem('lbx_tv_continue_collapsed'),

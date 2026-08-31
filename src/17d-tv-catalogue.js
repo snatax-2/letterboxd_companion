@@ -57,6 +57,7 @@ async function fetchTvCataloguePart(id, seasonKey, { force = false } = {}) {
   }
   const request = (async () => {
     const previous = part?.data;
+    const wasStale = previous && Date.now() - part.fetchedAt >= TV_CATALOGUE_TTL;
     const slot = part || {};
     if (seasonKey == null) entry.detail = slot; else entry.seasons[seasonKey] = slot;
     try {
@@ -77,6 +78,7 @@ async function fetchTvCataloguePart(id, seasonKey, { force = false } = {}) {
       slot.fetchedAt = Date.now();
       slot.retryAt = 0;
       saveTvCatalogueCache(id);
+      if (wasStale || tvStableJson(previous) !== tvStableJson(data)) notifyTvViewsChanged([id], 'catalogue');
       return { data, stale: false };
     } catch (error) {
       slot.retryAt = Date.now() + TV_CATALOGUE_RETRY;
@@ -178,5 +180,5 @@ async function setTvEpisodesWatched(showId, seasonKey, numbers, watched, metadat
       if (!watched) season.watchedEpisodes = season.watchedEpisodes.filter(n => n !== number);
     }
     return show;
-  });
+  }, { recordWatching: true });
 }

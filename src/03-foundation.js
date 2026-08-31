@@ -154,7 +154,8 @@ function saveHistory(history) {
 }
 
 function saveDraft() {
-  if (isFetchingMovie) return;
+  if (isFetchingMovie || ratingDraftRestoreDepth) return;
+  if (currentMediaType === 'tv') return saveTvRatingDraft();
   const draft = {
     title: document.getElementById('movie-title').value,
     year: document.getElementById('movie-year').value,
@@ -170,6 +171,7 @@ function saveDraft() {
     liked: isLiked,
     mode: currentMode,
     quickRating: quickRating,
+    weights: getWeights(),
     values: CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {}),
     review: document.getElementById('review-text').value,
     tags: Array.from(activeContextTags)
@@ -178,11 +180,11 @@ function saveDraft() {
 }
 
 function loadDraft() {
+  return withRatingDraftRestore(loadMovieDraft);
+}
+function loadMovieDraft() {
   const draft = readRegisteredStorage('draft', null);
-  if (!draft) {
-    setTodayDate();
-    return;
-  }
+  if (!draft) { resetForm(); return; }
 
   if (draft.title) {
     document.getElementById('movie-title').value = draft.title;
@@ -220,7 +222,9 @@ function loadDraft() {
     setTodayDate();
   }
 
-  if (draft.review) document.getElementById('review-text').value = draft.review;
+  document.getElementById('review-text').value = draft.review || '';
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = draft.weights?.[c] ?? 1; });
+  updateWeightBadges();
 
   isLiked = draft.liked || false;
   document.getElementById('heart-btn').classList.toggle('active', isLiked);
@@ -233,8 +237,8 @@ function loadDraft() {
     b.setAttribute('aria-pressed', String(activeContextTags.has(b.dataset.tag)));
   });
 
-  if (draft.mode) setMode(draft.mode);
-  if (draft.quickRating) {
+  setMode(draft.mode || 'detail');
+  if (draft.quickRating != null) {
     quickRating = parseFloat(draft.quickRating);
     const radioId = 's' + (quickRating * 2);
     const radioEl = document.getElementById(radioId);
@@ -242,7 +246,7 @@ function loadDraft() {
   }
   if (draft.values) {
     CRITERIA.forEach(c => {
-      if (draft.values[c]) document.getElementById(c).value = draft.values[c];
+      document.getElementById(c).value = draft.values[c] ?? 5;
     });
   }
   calculateScore();
@@ -316,7 +320,7 @@ function fadeSwitchDisplay(hideEl, showEl) {
 // soit l'ordre des fichiers.
 setTimeout(() => {
   renderAll();
-  loadDraft();
+  if (currentMediaType === 'movie') loadDraft();
 }, 0);
 
 

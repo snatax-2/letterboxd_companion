@@ -24,6 +24,7 @@ document.getElementById('import-trigger').addEventListener('click', () => {
 
 function importLudexJson(text) {
   const data = JSON.parse(text);
+  if (data && typeof data === 'object' && 'tvShows' in data) validateTvImport(data.tvShows);
   if (data && typeof data === 'object' && Number(data.schemaVersion) >= 2) {
     const counts = describeSnapshotContents(data);
     if (counts.total === 0) { showToast('Sauvegarde vide, rien à importer.'); return; }
@@ -81,7 +82,7 @@ function importLudexJson(text) {
           tvShows.forEach(importedShow => {
             let localShow = existingShows.find(s => String(s.tmdbTvId) === String(importedShow.tmdbTvId));
             if (!localShow) {
-              localShow = { tmdbTvId: importedShow.tmdbTvId, title: importedShow.title, poster_path: importedShow.poster_path, genre: importedShow.genre, seasons: {} };
+              localShow = { ...JSON.parse(JSON.stringify(importedShow)), seasons: {} };
               existingShows.push(localShow);
               localAddedShows++;
             }
@@ -103,8 +104,6 @@ function importLudexJson(text) {
       }
 
       renderAll();
-      if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
-      if (typeof statsDirty !== 'undefined') statsDirty = true;
 
       const resultParts = [];
       if (addedFilms) resultParts.push(`${addedFilms} film${addedFilms > 1 ? 's' : ''}`);

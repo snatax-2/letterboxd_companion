@@ -120,6 +120,7 @@ function resetWeights() {
   updateWeightBadges();
   calculateScore();
   document.getElementById('genre-weight-suggest').style.display = 'none';
+  saveDraft();
 }
 
 document.getElementById('tab-detail').addEventListener('click', () => setMode('detail'));
@@ -140,6 +141,7 @@ CRITERIA.forEach(c => {
     updateWeightBadges();
     calculateScore();
     document.getElementById('genre-weight-suggest').style.display = 'none'; // l'utilisateur personnalise -> on n'insiste plus
+    saveDraft();
   });
 });
 
@@ -387,7 +389,8 @@ document.querySelectorAll('.criterion-step-btn').forEach(btn => {
 // ═══════════════════════════════════════════
 document.getElementById('new-btn').addEventListener('click', () => {
   openModal('Nouvelle critique', 'Voulez-vous effacer le formulaire actuel pour commencer une nouvelle critique ?', () => {
-    localStorage.removeItem('lbx_draft');
+    if (currentMediaType === 'tv' && selectedShow && selectedSeasonNumber != null) clearTvRatingDraft(tvDraftKey(selectedShow.id, selectedSeasonNumber));
+    else localStorage.removeItem('lbx_draft');
     resetForm();
     showToast('Formulaire réinitialisé');
   });
@@ -397,22 +400,24 @@ document.getElementById('new-btn').addEventListener('click', () => {
 //  COPY TEXT
 // ═══════════════════════════════════════════
 document.getElementById('copy-btn').addEventListener('click', () => {
-  const title    = document.getElementById('movie-title').value.trim() || searchEl.value.trim() || 'Film sans titre';
-  const year     = document.getElementById('movie-year').value;
-  const director = document.getElementById('movie-director').value;
-  const actors   = document.getElementById('movie-actors').value;
-  const dateVal  = document.getElementById('view-date').value;
+  const tv = currentMediaType === 'tv';
+  if (tv && (!selectedShow || selectedSeasonNumber == null)) { showToast('Choisis une saison avant de copier.'); return; }
+  const title    = tv ? `${selectedShow.name} — ${selectedSeasonName}` : document.getElementById('movie-title').value.trim() || searchEl.value.trim() || 'Film sans titre';
+  const year     = tv ? '' : document.getElementById('movie-year').value;
+  const director = tv ? '' : document.getElementById('movie-director').value;
+  const actors   = tv ? '' : document.getElementById('movie-actors').value;
+  const dateVal  = document.getElementById(tv ? 'tv-view-date' : 'view-date').value;
   const dateStr  = dateVal ? new Date(dateVal + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
   const review   = document.getElementById('review-text').value.trim();
   const score    = calculateScore(); 
   const stars    = document.getElementById('stars-display').textContent;
-  const heartStr = isLiked ? ' ❤️' : '';
+  const heartStr = (tv ? loadTvShows().find(s => String(s.tmdbTvId) === String(selectedShow.id))?.liked : isLiked) ? ' ❤️' : '';
 
   let text = `📽 ${title} ${year ? '('+year+') ' : ''}${heartStr}\n`;
   if (director) text += `🎬 Un film de ${director}\n`;
   if (actors) text += `🎭 Avec ${actors}\n`;
   if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
-  if (activeContextTags.size > 0) text += `🏷 ${Array.from(activeContextTags).join(' · ')}\n`;
+  if (!tv && activeContextTags.size > 0) text += `🏷 ${Array.from(activeContextTags).join(' · ')}\n`;
   
   text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
 
@@ -421,7 +426,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
       acc[c] = parseFloat(document.getElementById(c).value).toFixed(1);
       return acc;
     }, {});
-    text += `\nScénario ${vals.scenario} · Réal ${vals.realisation} · Photo ${vals.photo} · Acteurs ${vals.acteurs} · Son ${vals.ambiance} · Affect ${vals.affect}\n`;
+    text += `\nScénario ${vals.scenario} · Réal ${vals.realisation} · ${tv ? 'Final' : 'Photo'} ${vals.photo} · Acteurs ${vals.acteurs} · Son ${vals.ambiance} · ${tv ? 'Rythme & cohérence' : 'Rythme'} ${vals.rythme} · Affect ${vals.affect}\n`;
   }
 
   if (review) text += `\n${review}`;
@@ -432,7 +437,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
     btn.classList.add('copied');
     setTimeout(() => { btn.innerHTML = `${ICONS.copy} Texte`; btn.classList.remove('copied'); }, 2000);
     showToast('Critique copiée dans le presse-papier');
-  });
+  }).catch(() => showToast('Copie impossible : presse-papier indisponible.'));
 });
 
 // ═══════════════════════════════════════════
@@ -526,7 +531,11 @@ document.getElementById('save-btn').addEventListener('click', () => {
 });
 
 function resetForm() {
-  if (currentMediaType === 'tv') resetTvRatingTarget();
+  if (currentMediaType === 'tv') {
+    resetTvRatingTarget();
+    document.getElementById('review-text').value = '';
+    return;
+  }
   searchEl.value = '';
   setTodayDate(); // remet la date à aujourd'hui — sinon elle restait bloquée sur la dernière date utilisée
   document.getElementById('movie-title').value     = '';
@@ -554,6 +563,8 @@ function resetForm() {
   });
 
   CRITERIA.forEach(c => { document.getElementById(c).value = 5; });
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = 1; });
+  updateWeightBadges();
   quickRating = 2.5;
   const defaultRadio = document.getElementById('s5'); 
   if(defaultRadio) defaultRadio.checked = true;
@@ -568,6 +579,7 @@ function resetForm() {
 //  LOAD MOVIE
 // ═══════════════════════════════════════════
 window.loadItem = function(idx) {
+  setMediaType('movie');
   const history = loadHistory(); const item = history[idx]; if (!item) return;
   document.getElementById('movie-title').value  = item.title;
   document.getElementById('movie-year').value   = item.year || '';

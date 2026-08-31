@@ -140,6 +140,7 @@ test('supprimer la derniere saison retire toute la serie, avec message adapte', 
   await page.waitForSelector('#tv-detail-sheet.open');
   await page.waitForTimeout(400);
 
+  await page.click('.tds-season-tab[data-season-number="1"]');
   await page.click('.tds-season-delete-btn');
   await page.waitForSelector('#modal.open', { state: 'visible' });
   await expect(page.locator('#modal-body')).toContainText('retire toute la série');
@@ -176,6 +177,7 @@ for (const theme of ['dark', 'light']) {
     await page.click('.tv-show-card-open-btn');
     await page.waitForSelector('#tv-detail-sheet.open');
     await page.waitForTimeout(400);
+    await page.click('.tds-season-tab[data-season-number="1"]');
     await page.click('.tds-season-delete-btn >> nth=0');
     await page.waitForSelector('#modal.open', { state: 'visible' });
     // Attend la FIN du fondu d'ouverture avant de mesurer. #modal.open devient

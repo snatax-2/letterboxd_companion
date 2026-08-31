@@ -1008,14 +1008,8 @@ function tvWatchlistToForm(idx) {
   const list = loadTvWatchlist();
   const item = list[idx];
   if (!item) return;
-  // "Commencer à suivre" : même principe que watchlistToForm() côté films —
-  // relance la recherche (ici sur le champ séries), retire l'item de la
-  // watchlist, bascule vers Noter en mode Séries.
-  list.splice(idx, 1);
-  saveTvWatchlist(list);
-  recordTombstone(watchlistTombstonesKey(getActiveWatchlistId('tv'), 'tv'), tvWatchlistItemKey(item));
-  renderTvWatchlist();
-
+  // Ouvrir la fiche n'est pas commencer le suivi. La liste reste intacte
+  // jusqu'au retrait explicite depuis ses actions, même si le parcours échoue.
   if (typeof setMediaType === 'function') setMediaType('tv');
   const tvSearchEl = document.getElementById('tv-search');
   if (tvSearchEl) {
@@ -1023,8 +1017,9 @@ function tvWatchlistToForm(idx) {
     tvSearchEl.dispatchEvent(new Event('input'));
   }
   switchMobileNav('rating');
+  if (item.tmdbId) openTvDetailSheet(item.tmdbId);
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  showToast(`Recherche lancée pour "${item.title}"`);
+  showToast(`"${item.title}" reste dans À voir jusqu’à ton retrait.`);
 }
 
 document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {

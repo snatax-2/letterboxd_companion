@@ -181,8 +181,8 @@ function tvShowItemKey(show) {
 
 // ─── Modèle séries v2 : champs indépendants et événements vu/non vu ────────
 // Les tableaux watchedEpisodes restent la projection utilisée par les écrans.
-// _sync conserve les décochements et les dates TECHNIQUES, jamais la date de
-// visionnage. Une migration ne prétend pas connaître la chronologie ancienne.
+// updatedAt arbitre les conflits ; watchedAt est la date MÉTIER facultative
+// de la coche. Une migration ne prétend pas connaître la chronologie ancienne.
 function tvStableJson(value) {
   if (Array.isArray(value)) return '[' + value.map(tvStableJson).join(',') + ']';
   if (value && typeof value === 'object') {
@@ -198,7 +198,7 @@ function tvSyncMeta(entity, episodes = false) {
   const validClock = value => typeof value === 'string' && (!value || (Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value));
   if (!validClock(meta.createdAt) || !Object.values(meta.fields).every(validClock)) throw new Error('Horodatage de suivi invalide : données originales conservées.');
   if (episodes) meta.episodes = { ...entity?._sync?.episodes };
-  if (episodes && !Object.entries(meta.episodes).every(([n, event]) => Number.isInteger(Number(n)) && Number(n) > 0 && event && typeof event.watched === 'boolean' && validClock(event.updatedAt))) {
+  if (episodes && !Object.entries(meta.episodes).every(([n, event]) => Number.isInteger(Number(n)) && Number(n) > 0 && event && typeof event.watched === 'boolean' && validClock(event.updatedAt) && (event.watchedAt === undefined || validClock(event.watchedAt)))) {
     throw new Error('État d’épisode invalide : données originales conservées.');
   }
   return meta;
@@ -225,6 +225,7 @@ function normalizeTvShows(shows) {
       throw new Error('Série ou saisons invalides : données originales conservées.');
     }
     show._sync = tvSyncMeta(show);
+    if (show.posterOverride) show.poster_path = show.posterOverride;
     show.liked = !!show.liked;
     show.likedAt = show.likedAt || '';
     for (const season of Object.values(show.seasons)) {
@@ -254,7 +255,7 @@ function tvStampFields(before, after, at, excluded) {
   }
 }
 
-function stampTvChanges(before, after, at) {
+function stampTvChanges(before, after, at, watchedAt = '') {
   const normalized = normalizeTvShows(after);
   const oldById = new Map(normalizeTvShows(before).map(show => [String(show.tmdbTvId), show]));
   normalized.forEach((show, index) => {
@@ -277,7 +278,10 @@ function stampTvChanges(before, after, at) {
       const previously = new Set(tvEpisodeNumbers(prev?.watchedEpisodes));
       for (const n of new Set([...watched, ...previously])) {
         if (watched.has(n) !== previously.has(n)) {
-          season._sync.episodes[n] = { watched: watched.has(n), updatedAt: at };
+          const imported = season._sync.episodes[n];
+          const date = watchedAt || (imported?.watched ? imported.watchedAt : '') || '';
+          season._sync.episodes[n] = { watched: watched.has(n), updatedAt: at,
+            ...(watched.has(n) && date ? { watchedAt: date } : {}) };
         }
       }
       season.watchedEpisodes = [...watched].sort((a, b) => a - b);
@@ -349,14 +353,38 @@ function mergeTvShows(local, remote, showTombstones = [], seasonTombstones = [])
       for (const [n, event] of Object.entries(season._sync.episodes)) {
         const prev = merged._sync.episodes[n];
         // Même milliseconde, actions opposées : non vu gagne, dans les deux sens.
-        if (!prev || event.updatedAt > prev.updatedAt || (event.updatedAt === prev.updatedAt && !event.watched)) merged._sync.episodes[n] = event;
+        if (!prev || event.updatedAt > prev.updatedAt || (event.updatedAt === prev.updatedAt
+            && ((!event.watched && prev.watched) || (event.watched === prev.watched && (event.watchedAt || '') > (prev.watchedAt || ''))))) merged._sync.episodes[n] = event;
       }
       merged.watchedEpisodes = tvEpisodeNumbers(Object.keys(merged._sync.episodes).filter(n => merged._sync.episodes[n].watched));
       target.seasons[seasonKey] = merged;
     }
     byId.set(key, target);
   }
-  return [...byId.values()].filter(show => Object.keys(show.seasons).length).sort((a, b) => String(a.tmdbTvId).localeCompare(String(b.tmdbTvId)));
+  return normalizeTvShows([...byId.values()].filter(show => Object.keys(show.seasons).length)).sort((a, b) => String(a.tmdbTvId).localeCompare(String(b.tmdbTvId)));
+}
+
+// Préflight des imports/cloud avant toute écriture, sans recalcul de note
+// ni remplacement des anciens poids inconnus. Les champs inconnus restent.
+function validateTvImport(shows) {
+  const normalized = normalizeTvShows(shows);
+  const ids = new Set();
+  for (const show of normalized) {
+    if (!Number.isSafeInteger(Number(show.tmdbTvId)) || Number(show.tmdbTvId) <= 0 || ids.has(String(show.tmdbTvId))) throw new Error('Identifiant de série invalide ou dupliqué.');
+    ids.add(String(show.tmdbTvId));
+    for (const [key, season] of Object.entries(show.seasons)) {
+      if (!/^\d+$/.test(key) || String(Number(key)) !== key || (season.totalEpisodes != null && (!Number.isSafeInteger(Number(season.totalEpisodes)) || Number(season.totalEpisodes) < 0))) throw new Error('Saison invalide : import annulé.');
+      const raw = shows.find(s => String(s.tmdbTvId) === String(show.tmdbTvId)).seasons[key];
+      if ((raw.watchedEpisodes || []).some(n => !Number.isSafeInteger(Number(n)) || Number(n) <= 0)) throw new Error('Épisode invalide : import annulé.');
+      const rating = season.rating;
+      if (rating != null && (typeof rating !== 'object' || Array.isArray(rating)
+          || (rating.score != null && (!Number.isFinite(Number(rating.score)) || Number(rating.score) < 0 || Number(rating.score) > 10)))) throw new Error('Note de saison invalide : import annulé.');
+      for (const [field, max] of [['values', 10], ['weights', Infinity]]) {
+        if (rating?.[field] != null && (typeof rating[field] !== 'object' || Array.isArray(rating[field]) || Object.values(rating[field]).some(v => !Number.isFinite(Number(v)) || Number(v) < 0 || Number(v) > max))) throw new Error('Critères de saison invalides : import annulé.');
+      }
+    }
+  }
+  return normalized;
 }
 
 // ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
