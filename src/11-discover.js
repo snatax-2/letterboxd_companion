@@ -462,6 +462,17 @@ async function fetchInternational() {
   return merged.slice(0, 15).map(normalizeItem);
 }
 
+let top100MoviesPromise = null;
+async function fetchTop100Movies() {
+  if (!top100MoviesPromise) {
+    top100MoviesPromise = fetch('/api/search?topRated=true')
+      .then(res => { if (!res.ok) throw new Error('top rated unavailable'); return res.json(); })
+      .then(data => (data.results || []).filter(m => m.poster_path)
+        .map(m => ({ ...normalizeItem(m), media_type: 'movie', topRank: m.ludex_top_rank })));
+  }
+  return top100MoviesPromise;
+}
+
 async function fetchTopRated() {
   // Ludex 2.0 : "Top 100 films TMDb" — classement éditorial officiel de
   // TMDb, aucun lien avec l'historique ou la watchlist de l'utilisateur
@@ -469,16 +480,24 @@ async function fetchTopRated() {
   // basait sur l'Historique — repositionné ici en tant que pure vitrine à
   // parcourir). TOUJOURS des films, quel que soit le bascule Films/Séries
   // actif — TMDb n'a pas d'équivalent "top séries" via ce même endpoint.
-  const res = await fetch('/api/search?topRated=true');
-  const data = await res.json();
-  const pool = (data.results || []).filter(m => m.poster_path);
+  const pool = [...await fetchTop100Movies()];
   // Fisher-Yates : chaque ouverture donne une vraie sélection, sans biais
   // vers les premières positions du classement.
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return pool.slice(0, 15).map(m => ({ ...normalizeItem(m), media_type: 'movie', topRank: m.ludex_top_rank }));
+  return pool.slice(0, 15);
+}
+
+async function fetchChefsDoeuvreDuMois() {
+  const month = new Date().toISOString().slice(0, 7);
+  const response = await fetch(`/api/monthly-selection?month=${month}`);
+  if (!response.ok) throw new Error('monthly selection unavailable');
+  const data = await response.json();
+  const films = (data.films || []).map(film => ({ ...normalizeItem(film), media_type: 'movie', country: film.country }));
+  films.editorialIntro = data.editorial?.intro || '';
+  return films;
 }
 
 async function fetchHistorique() {
@@ -527,6 +546,7 @@ async function fetchHistorique() {
 }
 
 const CAROUSEL_SOURCES = {
+  chefsDoeuvre: fetchChefsDoeuvreDuMois,
   nouveautes: fetchNouveautes,
   classiques: fetchClassiques,
   international: fetchInternational,
@@ -541,7 +561,7 @@ const CAROUSEL_SOURCES = {
 // films ouverts comme des séries). Masqué plutôt que vidé en mode Séries —
 // une vitrine "Top films" mélangée à des carrousels séries serait
 // incohérente visuellement.
-const CAROUSEL_FIXED_MEDIA_TYPE = { topRated: 'movie' };
+const CAROUSEL_FIXED_MEDIA_TYPE = { topRated: 'movie', chefsDoeuvre: 'movie' };
 
 async function loadCarousel(key) {
   const rowEl = document.getElementById(`carousel-${key}`);
@@ -555,6 +575,10 @@ async function loadCarousel(key) {
   try {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
+    if (key === 'chefsDoeuvre') {
+      const intro = document.getElementById('carousel-intro-chefsDoeuvre');
+      if (intro) intro.textContent = items.editorialIntro || '';
+    }
     rowEl.innerHTML = items.map(item => `
       <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}"${item.topRank ? ` data-top-rank="${item.topRank}"` : ''} aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path

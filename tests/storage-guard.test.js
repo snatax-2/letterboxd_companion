@@ -21,8 +21,8 @@ describe('garde-fous localStorage', () => {
     const window = loadAppInJsdom(t);
     window.localStorage.setItem('lbx_analyses', '{invalide');
 
-    window.loadAnalyses();
-    window.loadAnalyses();
+    window.readJsonStorage('lbx_analyses', []);
+    window.readJsonStorage('lbx_analyses', []);
 
     assert.equal(window.collectStorageRecovery().length, 1);
   });

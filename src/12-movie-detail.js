@@ -251,7 +251,6 @@ function buildMdsContent(data, localMatch, localMatchIdx, topRank = null) {
     mdsCastHtml(data),
     mdsSagaHtml(data),
     `<div class="mds-section" style="animation-delay:.35s">
-      ${typeof buildAnalysisSectionHtml === 'function' ? buildAnalysisSectionHtml(data.id, data.title) : ''}
     </div>`,
   ].join('\n');
 }
@@ -521,7 +520,6 @@ async function openMovieDetailSheet(tmdbId, { topRank = null } = {}) {
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
     fetchAndRenderProviders(data.id, 'mds-providers', 'movie');
-    if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
   } catch {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le

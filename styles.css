@@ -419,6 +419,7 @@
   .hero-entry-body {
     display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0;
   }
+  .carousel-editorial-intro { margin: -2px 0 10px; max-width: 40rem; color: var(--text-mid); font-family: var(--font-heading); font-size: .8rem; font-style: italic; line-height: 1.4; }
   .hero-entry-eyebrow {
     font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.1em;
     text-transform: uppercase; color: var(--text-mid);

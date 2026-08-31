@@ -197,7 +197,7 @@ function mergeWatchlistCollection(remotePayload, mediaType = 'movie') {
 }
 
 function mergePersonalCollections(remotePayload) {
-  const localAnalyses = typeof loadAnalyses === 'function' ? loadAnalyses() : readJsonStorage('lbx_analyses', []);
+  const localAnalyses = readJsonStorage('lbx_analyses', []);
   const remoteAnalyses = Array.isArray(remotePayload?.analyses) ? remotePayload.analyses : [];
   const analysesById = new Map();
   [...remoteAnalyses, ...localAnalyses].forEach(item => {
@@ -206,8 +206,7 @@ function mergePersonalCollections(remotePayload) {
     analysesById.set(key, item);
   });
   const analyses = [...analysesById.values()].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
-  if (typeof saveAnalyses === 'function') saveAnalyses(analyses);
-  else writeRegisteredStorage('analyses', analyses);
+  writeRegisteredStorage('analyses', analyses);
 
   const localDuels = readRegisteredStorage('duels', null);
   const remoteDuels = remotePayload?.duels && typeof remotePayload.duels === 'object' ? remotePayload.duels : null;
@@ -360,7 +359,7 @@ function currentLocalSnapshot({ includeExportDate = false } = {}) {
     tvWatchlistListTombstones: loadTombstones(TV_WATCHLIST_LIST_TOMBSTONES_KEY),
     settings: readRegisteredStorage('settings', null),
     ownedProviders: readRegisteredStorage('ownedProviders', []),
-    analyses: typeof loadAnalyses === 'function' ? loadAnalyses() : readJsonStorage('lbx_analyses', []),
+    analyses: readJsonStorage('lbx_analyses', []),
     duels: readRegisteredStorage('duels', null),
     draft: ratingDraftSnapshot(),
     preferences: {
