@@ -41,11 +41,11 @@ describe('api/monthly-selection.js — curation Gemini', () => {
       const address = String(url);
       if (address.includes('generativelanguage.googleapis.com')) {
         const foreign = countryCodes.filter(code => code !== 'US');
-        return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: JSON.stringify({
+        return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: `\`\`\`json\n${JSON.stringify({
           title: 'Voyages intérieurs', intro: 'Quatre récits où le déplacement révèle une fracture intime.',
           filmIds: ['US-1', `${foreign[2]}-3`, `${foreign[1]}-2`, `${foreign[0]}-1`],
           reasons: { 'US-1': 'Point de départ.', [`${foreign[2]}-3`]: 'Écho sensible.' },
-        }) }] } }] }) };
+        })}\n\`\`\`` }] } }] }) };
       }
       const code = new URL(address).searchParams.get('with_origin_country');
       countryCodes.push(code);

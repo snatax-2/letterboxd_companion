@@ -36,6 +36,14 @@ const FALLBACK_EDITORIAL = {
 const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash'];
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+function parseGeminiJson(raw) {
+  const text = typeof raw === 'string' ? raw.trim() : '';
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace < 0 || lastBrace <= firstBrace) throw new SyntaxError('Objet JSON Gemini absent');
+  return JSON.parse(text.slice(firstBrace, lastBrace + 1));
+}
+
 function validGeminiSelection(choice, candidates) {
   const selectedIds = Array.isArray(choice?.filmIds) ? choice.filmIds.map(String) : [];
   if (selectedIds.length !== 4 || new Set(selectedIds).size !== 4) return null;
@@ -81,7 +89,7 @@ async function selectWithGemini(candidates, geminiKey) {
           break;
         }
         const raw = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsed = JSON.parse(raw || '{}');
+        const parsed = parseGeminiJson(raw);
         const selection = validGeminiSelection(parsed, candidates);
         if (!selection) console.warn('[monthly-selection] Réponse Gemini rejetée : format ou contraintes de sélection invalides.');
         return selection;
