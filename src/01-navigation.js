@@ -1,4 +1,375 @@
-Y™Áäx-ÆÈ‹j◊ù¢Îi∫⁄+äßj[hëÈ‹¢ÈÌÎ~8NãZñã≠¶Îeäw¨‘ººÉäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäV@(ººÄÅMQ%=8ÅLÅ=91QLÄ°ïÕ≠—Ω¿ÄòÅ5Ωâ•±î§(ººÉäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäVCäV@)çΩπÕ–Å—Öâ!•Õ—	—∏ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ù—Öàµ…•ù°–µ°•Õ—Ω…‰ú§Ï)çΩπÕ–Å—Öâ]±	—∏ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ù—Öàµ…•ù°–µ›Ö—ç°±•Õ–ú§Ï)çΩπÕ–Å—Öâ•ÕçΩŸï…	—∏ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ù—Öàµ…•ù°–µë•ÕçΩŸï»ú§Ï)çΩπÕ–Å—ÖâA…Ωô•±ï	—∏ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ù—Öàµ…•ù°–µ¡…Ωô•±îú§Ï)çΩπÕ–ÅŸ•ï›!•Õ–ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ùŸ•ï‹µ°•Õ—Ω…‰ú§Ï)çΩπÕ–ÅŸ•ï›]∞ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ùŸ•ï‹µ›Ö—ç°±•Õ–ú§Ï)çΩπÕ–ÅŸ•ï›•ÕçΩŸï»ÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ùŸ•ï‹µë•ÕçΩŸï»ú§Ï)çΩπÕ–ÅŸ•ï›A…Ωô•±îÄÙÅëΩç’µïπ–πùï—±ïµïπ—	Â%ê†ùŸ•ï‹µ¡…Ωô•±îú§Ï((ººÅY•–Å•ç§Ä°¡ÖÃÅëÖπÃÄƒƒµë•ÕçΩŸï»π©Ã§ÅçÖ»ÅÀ•õ•…ïπè•îÅì°ÃÅ±îÅ¡…ïµ•ï»ÅÖ¡¡ï∞Åëî(ººÅÕ›•—ç°I•ù°—QÖà†§ÅÖ‘Åì•µÖ……ÖùîÉäPÄ¿ƒµπÖŸ•ùÖ—•Ω∏π©ÃÅÃùï„•ç’—îÅY9P(ººÄƒƒµë•ÕçΩŸï»π©ÃÅëÖπÃÅ±ÑÅçΩπçÖ”•πÖ—•Ω∏Ä°ŸΩ•»ÅÕç…•¡—ÃΩâ’•±êµÖ¡¿µ©Ãπ©Ã§∞ÅëΩπå(ººÅ’πîÅì•ç±Ö…Ö—•Ω∏ÅÅ±ï—ÄÅ≥ÄµâÖÃÅÕï…Ö•–ÅïπçΩ…îÅëÖπÃÅÕÑÅÈΩπîÅµΩ…—îÅ—ïµ¡Ω…ï±±î(ººÉÄÅçîÅµΩµïπ–Å¡À•ç•ÃÄËÅIïôï…ïπçï……Ω»Å≈’§Åâ±Ω≈’îÅ—Ω’–Å±îÅÕç…•¡–∞Å©ÖµÖ•Ã(ººÅ…ïπçΩπ—À§ÅÖŸÖπ–Å≈’îÅ•çΩ’Ÿ…•»ÅëïŸ•ïππîÅ∞ùΩπù±ï–ÅΩ’Ÿï…–ÅÖ‘Åì•µÖ……Öùî∏)±ï–Åë•ÕçΩŸï…1ΩÖëïêÄÙÅôÖ±ÕîÏ()ô’πç—•Ω∏ÅÕ›•—ç°I•ù°—QÖà°—Öâ9Öµî§ÅÏ(ÄÅçΩπÕ–Å—ÖâÃÄÙÅÏ(ÄÄÄÅ°•Õ—Ω…‰ËÄÄÅÏÅâ—∏ËÅ—Öâ!•Õ—	—∏∞ÄÄÄÄÅŸ•ï‹ËÅŸ•ï›!•Õ–ÅÙ∞(ÄÄÄÅ›Ö—ç°±•Õ–ËÅÏÅâ—∏ËÅ—Öâ]±	—∏∞ÄÄÄÄÄÄÅŸ•ï‹ËÅŸ•ï›]∞ÅÙ∞(ÄÄÄÅë•ÕçΩŸï»ËÄÅÏÅâ—∏ËÅ—Öâ•ÕçΩŸïÀù¯‚⁄$z{-ÆÈ‹j◊ùsur
+// ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+//  GESTION DES ONGLETS (Desktop & Mobile)
+// ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+const tabHistBtn = document.getElementById('tab-right-history');
+const tabWlBtn = document.getElementById('tab-right-watchlist');
+const tabDiscoverBtn = document.getElementById('tab-right-discover');
+const tabProfileBtn = document.getElementById('tab-right-profile');
+const viewHist = document.getElementById('view-history');
+const viewWl = document.getElementById('view-watchlist');
+const viewDiscover = document.getElementById('view-discover');
+const viewProfile = document.getElementById('view-profile');
+
+// Vit ici (pas dans 11-discover.js) car r√©f√©renc√©e d√®s le premier appel de
+// switchRightTab() au d√©marrage ‚Äî 01-navigation.js s'ex√©cute AVANT
+// 11-discover.js dans la concat√©nation (voir scripts/build-app-js.js), donc
+// une d√©claration `let` l√†-bas serait encore dans sa zone morte temporelle
+// √† ce moment pr√©cis : ReferenceError qui bloque tout le script, jamais
+// rencontr√© avant que D√©couvrir devienne l'onglet ouvert au d√©marrage.
+let discoverLoaded = false;
+
+function switchRightTab(tabName) {
+  const tabs = {
+    history:   { btn: tabHistBtn,     view: viewHist },
+    watchlist: { btn: tabWlBtn,       view: viewWl },
+    discover:  { btn: tabDiscoverBtn, view: viewDiscover },
+    profile:   { btn: tabProfileBtn,  view: viewProfile },
+  };
+  for (const [name, { btn, view }] of Object.entries(tabs)) {
+    const isActive = name === tabName;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+    view.classList.toggle('active', isActive);
+  }
+  // Ludex 2.0 : D√©couvrir enti√®rement repens√© (voir 11-discover.js) ‚Äî un
+  // seul point d'entr√©e, charg√© une fois au premier affichage (pas de
+  // re-fetch √† chaque fois qu'on revient sur l'onglet).
+  if (tabName === 'discover' && !discoverLoaded) {
+    discoverLoaded = true;
+    if (typeof loadDiscoverTab === 'function') loadDiscoverTab();
+  }
+  if (tabName === 'profile') {
+    if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
+    // Ludex 2.0 : renderCuratedListsCard() retir√© ‚Äî "Classiques √† explorer"
+    // a quitt√© Profil (voir Ludex_Specifications_Profil), remplac√© par le
+    // carrousel "Top 100 films TMDb" dans D√©couvrir (voir fetchTopRated(),
+    // 11-discover.js), purement √©ditorial et sans lien avec l'historique.
+  }
+  // Rattrape un renderStats() saut√© pendant que Profil √©tait masqu√© (rendu
+  // cibl√© : pas de recalcul du radar/heatmap/badges √† chaque sauvegarde si
+  // personne ne regardait cet onglet ‚Äî voir renderAll() dans 06-history.js).
+  if (tabName === 'profile' && typeof renderProfileIfDirty === 'function') {
+    renderProfileIfDirty();
+  }
+  // Ludex 2.0 : l'aper√ßu de swipe n'a plus lieu d'√™tre ‚Äî l'Historique est
+  // pass√© en grille, il n'y a plus de geste cach√© √† r√©v√©ler (voir
+  // 06b-history-actions.js). maybePlaySwipeHint() reste d√©finie
+  // (06a-history-list.js) mais n'est plus appel√©e nulle part.
+}
+
+tabHistBtn.addEventListener('click', () => switchRightTab('history'));
+tabWlBtn.addEventListener('click', () => switchRightTab('watchlist'));
+tabDiscoverBtn.addEventListener('click', () => switchRightTab('discover'));
+tabProfileBtn.addEventListener('click', () => switchRightTab('profile'));
+
+const navRating = document.getElementById('nav-rating');
+const navHistory = document.getElementById('nav-history');
+const navWatchlist = document.getElementById('nav-watchlist');
+const navDiscover = document.getElementById('nav-discover');
+const navProfile = document.getElementById('nav-profile');
+const colRating = document.getElementById('col-rating');
+const colRightViews = document.getElementById('col-right-views');
+
+// Red√©marre l'animation d'entr√©e (mobileViewIn) sur un √©l√©ment : on retire la
+// classe, on force un reflow (lecture d'une propri√©t√© layout), puis on la
+// rajoute ‚Äî sinon le navigateur ne rejoue pas l'animation si la classe √©tait
+// d√©j√† pr√©sente.
+function playMobileViewAnim(el) {
+  el.classList.remove('mobile-view-anim');
+  requestAnimationFrame(() => el.classList.add('mobile-view-anim'));
+}
+
+// Le nom de l'onglet actif s'√©crit bri√®vement, comme sur un terminal. Le
+// contenu source est m√©moris√© dans data-label : les bascules rapides ne
+// tronquent donc jamais le texte et chaque animation pr√©c√©dente est annul√©e.
+let navLabelTypingTimer = null;
+let navLabelTypingToken = 0;
+
+function animateActiveNavLabel(navButton) {
+  const label = navButton?.querySelector('.nav-btn-label');
+  if (!label) return;
+
+  document.querySelectorAll('.mobile-nav .nav-btn-label').forEach(otherLabel => {
+    if (otherLabel === label) return;
+    const otherFullText = otherLabel.dataset.label || otherLabel.textContent.trim();
+    otherLabel.dataset.label = otherFullText;
+    otherLabel.textContent = otherFullText;
+    otherLabel.classList.remove('is-typing');
+  });
+
+  const fullText = label.dataset.label || label.textContent.trim();
+  label.dataset.label = fullText;
+  const isMobile = window.matchMedia?.('(max-width: 860px)').matches;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  if (navLabelTypingTimer) clearTimeout(navLabelTypingTimer);
+  navLabelTypingToken += 1;
+  const token = navLabelTypingToken;
+  label.classList.remove('is-typing');
+
+  if (!isMobile || reduceMotion) {
+    label.textContent = fullText;
+    return;
+  }
+
+  label.textContent = '';
+  label.classList.add('is-typing');
+  let characterIndex = 0;
+  const typeNextCharacter = () => {
+    if (token !== navLabelTypingToken) return;
+    characterIndex += 1;
+    label.textContent = fullText.slice(0, characterIndex);
+    if (characterIndex < fullText.length) {
+      navLabelTypingTimer = setTimeout(typeNextCharacter, 65);
+    } else {
+      navLabelTypingTimer = null;
+      label.classList.remove('is-typing');
+    }
+  };
+  navLabelTypingTimer = setTimeout(typeNextCharacter, 65);
+}
+
+function switchMobileNav(view) {
+  navRating.classList.remove('active');
+  navHistory.classList.remove('active');
+  navWatchlist.classList.remove('active');
+  navDiscover.classList.remove('active');
+  navProfile.classList.remove('active');
+  navRating.removeAttribute('aria-current');
+  navHistory.removeAttribute('aria-current');
+  navWatchlist.removeAttribute('aria-current');
+  navDiscover.removeAttribute('aria-current');
+  navProfile.removeAttribute('aria-current');
+
+  colRating.style.display = 'none';
+  colRightViews.style.display = 'none';
+
+  if (view === 'rating') {
+    navRating.classList.add('active');
+    navRating.setAttribute('aria-current', 'page');
+    colRating.style.display = 'block'; 
+    playMobileViewAnim(colRating);
+  } else if (view === 'history') {
+    navHistory.classList.add('active');
+    navHistory.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('history');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'watchlist') {
+    navWatchlist.classList.add('active');
+    navWatchlist.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('watchlist');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'discover') {
+    navDiscover.classList.add('active');
+    navDiscover.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('discover');
+    playMobileViewAnim(colRightViews);
+  } else if (view === 'profile') {
+    navProfile.classList.add('active');
+    navProfile.setAttribute('aria-current', 'page');
+    colRightViews.style.display = 'flex';
+    switchRightTab('profile');
+    playMobileViewAnim(colRightViews);
+  }
+
+  animateActiveNavLabel(document.querySelector('.mobile-nav .nav-btn.active'));
+
+  // Refl√®te l'onglet courant dans l'URL (#discover, #history...) ‚Äî deux
+  // b√©n√©fices concrets : un lien copi√©/mis en favori rouvre sur le bon
+  // onglet, et un rechargement de page n'atterrit plus syst√©matiquement sur
+  // D√©couvrir. replaceState (pas pushState) : ceci ne doit PAS cr√©er
+  // d'entr√©e d'historique √† chaque clic d'onglet, seulement tenir l'URL √†
+  // jour sur l'entr√©e courante. Le bouton Retour reste g√©r√© par
+  // 20-back-navigation.js (une seule entr√©e sentinelle, quel que soit le
+  // nombre d'onglets visit√©s) ‚Äî passer `history.state` inchang√© pr√©serve
+  // cette sentinelle si elle est d√©j√† pos√©e sur l'entr√©e courante.
+  if (location.hash !== `#${view}`) {
+    history.replaceState(history.state, '', `#${view}`);
+  }
+}
+
+navRating.addEventListener('click', () => switchMobileNav('rating'));
+navHistory.addEventListener('click', () => switchMobileNav('history'));
+navWatchlist.addEventListener('click', () => switchMobileNav('watchlist'));
+navDiscover.addEventListener('click', () => switchMobileNav('discover'));
+navProfile.addEventListener('click', () => switchMobileNav('profile'));
+
+// Un seul syst√®me de bascule de vue √† toutes les tailles d'√©cran d√©sormais
+// (voir styles.css : la grille √† deux colonnes est remplac√©e par des onglets
+// uniques, positionn√©s en haut sur PC et en bas sur mobile) ‚Äî plus besoin de
+// r√©agir diff√©remment au redimensionnement selon la largeur.
+// D√©couvrir est l'onglet ouvert au d√©marrage par d√©faut (coh√©rent avec son
+// ordre en t√™te de la barre de navigation) ‚Äî sauf si l'URL d√©signe d√©j√† un
+// autre onglet (lien partag√©, favori, ou simple rechargement de page : voir
+// le replaceState en fin de switchMobileNav ci-dessus).
+const ONGLETS_VALIDES = ['discover', 'watchlist', 'rating', 'history', 'profile'];
+const ongletInitial = ONGLETS_VALIDES.includes(location.hash.slice(1))
+  ? location.hash.slice(1)
+  : 'discover';
+// Diff√©r√© au tick suivant (setTimeout 0) : app.js est la concat√©nation de
+// ~28 fichiers ex√©cut√©s dans l'ordre, et 01-navigation.js est t√¥t dans cet
+// ordre ‚Äî un appel imm√©diat √† switchMobileNav(...) atteint le code de
+// 11-discover.js (discoverMediaType, CAROUSEL_SOURCES...), pas encore
+// ex√©cut√© √† ce stade. M√™me classe de bug "Cannot access ... before
+// initialization" que celle d√©j√† document√©e dans 03-foundation.js, jamais
+// rencontr√©e avant que D√©couvrir devienne l'onglet ouvert au d√©marrage
+// (l'ancien 'rating' ne d√©clenchait aucun appel √† ce code).
+setTimeout(() => switchMobileNav(ongletInitial), 0);
+
+// ‚îÄ‚îÄ‚îÄ Swipe pour naviguer entre les onglets mobiles ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ‚îÄ
+// Glisser vers la gauche = onglet suivant, vers la droite = onglet pr√©c√©dent,
+// dans l'ordre affich√© en bas de l'√©cran : Noter ‚Üí Historique ‚Üí √Ä voir ‚Üí D√©couvrir.
+// Compl√®te les boutons de la barre de navigation, ne les remplace pas.
+// Zones o√π un glissement (horizontal ou vertical) a d√©j√† un sens propre
+// (scroller un carrousel, d√©placer un curseur, swiper une carte "D√©couvrir"...)
+// : ni le changement d'onglet, ni le tirer-pour-rafra√Æchir ne doivent s'y
+// d√©clencher. Fonction partag√©e (pas enferm√©e dans une IIFE) expr√®s ‚Äî elle
+// sert √† plusieurs m√©canismes de geste distincts dans ce fichier.
+function isExcludedTarget(target) {
+  return !!target.closest(
+    '#carousel-container, .carousel-row, .choix-du-jour-card, .wl-card, .hist-item, .wl-lists-row, .heatmap-scroll, #quick-stars-container, input[type="range"], input[type="text"], textarea, .modal-overlay.open'
+  );
+}
+
+(function initMobileSwipeNav() {
+  // Ordre align√© sur la disposition visuelle de la barre (gauche √† droite) :
+  // D√©couvrir, √Ä voir, Noter, Historique, Profil ‚Äî un swipe suit d√©sormais
+  // le m√™me sens que ce qu'on voit √† l'√©cran.
+  const TAB_ORDER = ['discover', 'watchlist', 'rating', 'history', 'profile'];
+  const SWIPE_MIN_DISTANCE = 60; // px : en dessous, on consid√®re que ce n'est pas volontaire
+  const SWIPE_ANGLE_RATIO = 1.5; // le geste doit √™tre nettement plus horizontal que vertical
+
+  let startX = 0;
+  let startY = 0;
+  let tracking = false;
+
+  function currentView() {
+    if (navHistory.classList.contains('active')) return 'history';
+    if (navWatchlist.classList.contains('active')) return 'watchlist';
+    if (navDiscover.classList.contains('active')) return 'discover';
+    if (navProfile.classList.contains('active')) return 'profile';
+    return 'rating';
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (window.innerWidth > 860) { tracking = false; return; }
+    if (e.touches.length !== 1 || isExcludedTarget(e.target)) { tracking = false; return; }
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE) return;
+    if (Math.abs(dx) < Math.abs(dy) * SWIPE_ANGLE_RATIO) return; // trop vertical, probablement un scroll
+
+    const idx = TAB_ORDER.indexOf(currentView());
+    if (dx < 0 && idx < TAB_ORDER.length - 1) {
+      switchMobileNav(TAB_ORDER[idx + 1]); // glissement vers la gauche -> onglet suivant
+      if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
+    } else if (dx > 0 && idx > 0) {
+      switchMobileNav(TAB_ORDER[idx - 1]); // glissement vers la droite -> onglet pr√©c√©dent
+      if (navigator.vibrate) navigator.vibrate(15);
+      hapticPulse(document.getElementById('mobile-nav'), 'light');
+    }
+  }, { passive: true });
+})();
+
+// ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+//  TIRER VERS LE BAS POUR RAFRA√éCHIR
+// ‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê
+// Uniquement quand la page est d√©j√† tout en haut (rien √† scroller au-dessus) ‚Äî
+// sinon on interf√©rerait avec un simple scroll vers le bas de contenu. Exclut
+// les m√™mes zones que le swipe d'onglet (cartes, listes, carrousels...) qui
+// g√®rent d√©j√† leurs propres gestes tactiles.
+(function initPullToRefresh() {
+  const indicator = document.getElementById('ptr-indicator');
+  if (!indicator) return;
+
+  const THRESHOLD = 70;
+  const MAX_PULL = 100;
+  let startY = 0;
+  let pulling = false;
+  let refreshing = false;
+
+  document.addEventListener('touchstart', (e) => {
+    if (refreshing) return;
+    if (window.scrollY > 5) return;
+    if (isExcludedTarget(e.target)) return;
+    startY = e.touches[0].clientY;
+    pulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (e) => {
+    if (!pulling || refreshing) return;
+    const deltaY = e.touches[0].clientY - startY;
+    if (deltaY <= 0 || window.scrollY > 5) { pulling = false; indicator.style.opacity = '0'; return; }
+    const capped = Math.min(deltaY, MAX_PULL);
+    indicator.style.transform = `translateX(-50%) translateY(${capped}px) rotate(${capped * 2.4}deg)`;
+    indicator.style.opacity = String(Math.min(capped / THRESHOLD, 1));
+    indicator.classList.toggle('ptr-ready', capped >= THRESHOLD);
+  }, { passive: true });
+
+  document.addEventListener('touchend', async () => {
+    if (!pulling || refreshing) { pulling = false; return; }
+    pulling = false;
+    const wasReady = indicator.classList.contains('ptr-ready');
+
+    if (!wasReady) {
+      indicator.style.opacity = '0';
+      return;
+    }
+
+    refreshing = true;
+    indicator.classList.add('ptr-spinning');
+    indicator.style.transform = `translateX(-50%) translateY(${THRESHOLD}px)`;
+    try {
+      if (getSyncCode()) {
+        await pullFromCloud(); // affiche d√©j√† son propre toast de confirmation
+      } else {
+        renderAll();
+        showToast('Actualis√©.');
+      }
+    } catch {
+      showToast("Impossible d'actualiser pour l'instant.");
+    } finally {
+      refreshing = false;
+      indicator.classList.remove('ptr-spinning', 'ptr-ready');
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'translateX(-50%) translateY(0)';
+    }
+  });
+})();
+
+// L'√©couteur keydown global qui rattrapait Entr√©e/Espace sur les
+// <div role="button" tabindex="0"> a √©t√© RETIR√â : ces cartes cliquables sont
+// d√©sormais de vrais <button>, que le navigateur active nativement au
+// clavier. Le palliatif n'avait plus rien √† rattraper.
+
+// Ludex 2.0 : animations au tap sur la navigation et les 5 bascules
+// Films/S√©ries (voir Ludex_Explication_Switch + Ludex_Animations_
+// Interactives ‚Äî documents de sp√©cification). Un seul √©couteur d√©l√©gu√©
+// sur tout le document plut√¥t qu'un par bouton (ils vivent dans des zones
+// diff√©rentes : barre de navigation fixe, + 5 endroits diss√©min√©s dans
+// Noter/Historique/Watchlist/D√©couvrir/Profil).
+//
+// Noter (#nav-rating) reste sur l'ancien "pop" g√©n√©rique appliqu√© √†
+// l'ic√¥ne elle-m√™me (voir .tap-pop, styles.css) ‚Äî inchang√© √† la demande
+// explicite de l'utilisateur. Les 4 autres onglets de nav et les 5
+// switches ont chacun leur propre animation cibl√©e sur une sous-partie du
+// SVG (aiguille, signet, barres, t√™te/corps, clap, antenne) ‚Äî la classe
+// "animate" se pose donc sur le BOUTON (.nav-btn / .mode-tab), pas sur
 // l'ic√¥ne, pour que les s√©lecteurs CSS descendants (ex: .nav-btn.animate
 // .icon-compass .needle) puissent cibler la bonne sous-partie.
 //
