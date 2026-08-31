@@ -31,7 +31,9 @@ const FALLBACK_EDITORIAL = {
   title: 'Regards croisés',
   intro: 'Un film américain et trois regards venus d’ailleurs, réunis ce mois-ci par leur exigence de cinéma.',
 };
-const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest'];
+// Gemini 3.5 Flash est le modèle Flash courant ; 2.5 reste un repli pour les
+// projets dont l'accès au modèle le plus récent n'est pas encore activé.
+const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash'];
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function validGeminiSelection(choice, candidates) {
@@ -71,7 +73,7 @@ async function selectWithGemini(candidates, geminiKey) {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
           method: 'POST', headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 650 } }),
-          signal: AbortSignal.timeout(12_000),
+          signal: AbortSignal.timeout(10_000),
         });
         if (!response.ok) {
           console.warn(`[monthly-selection] Gemini ${model} a refusé la sélection (HTTP ${response.status}).`);
