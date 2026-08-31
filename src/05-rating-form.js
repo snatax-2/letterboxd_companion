@@ -284,6 +284,13 @@ function calculateScore() {
     score = computeWeightedScore(criteriaValues, w);
   }
 
+  // Une ancienne note peut avoir des pondérations inconnues : tant que les
+  // curseurs ne changent pas, son score enregistré reste la référence.
+  if (currentMediaType === 'tv') {
+    const preserved = unchangedTvRating();
+    if (preserved && Number.isFinite(Number(preserved.score))) score = Number(preserved.score);
+  }
+
   const scoreEl = document.getElementById('score-big');
   const denomEl = document.querySelector('.score-denom');
   const ringFillEl = document.getElementById('score-ring-fill');
@@ -453,7 +460,7 @@ function playSaveConfirmation() {
 document.getElementById('save-btn').addEventListener('click', () => {
 
   if (currentMediaType === 'tv') {
-    saveTvSeasonRating();
+    saveTvSeasonRating().catch(error => showToast(error.message));
     return;
   }
 
@@ -519,6 +526,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
 });
 
 function resetForm() {
+  if (currentMediaType === 'tv') resetTvRatingTarget();
   searchEl.value = '';
   setTodayDate(); // remet la date à aujourd'hui — sinon elle restait bloquée sur la dernière date utilisée
   document.getElementById('movie-title').value     = '';

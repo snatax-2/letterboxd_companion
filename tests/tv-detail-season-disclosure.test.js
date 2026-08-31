@@ -71,11 +71,11 @@ test('revenir à la saison précédente pendant un chargement affiche la bonne l
   await tick();
   tab(2).click();
   tab(1).click();
-  assert.equal(requests.length, 3);
-  requests[2].resolve(response('Retour saison un'));
+  assert.equal(requests.length, 2); // La saison 1 déjà reçue est réutilisée.
   requests[1].resolve(response('Réponse saison deux'));
   await tick();
-  assert.match(panel.textContent, /Retour saison un/);
+  assert.match(panel.textContent, /Première visite/);
+  assert.doesNotMatch(panel.textContent, /Réponse saison deux/);
   assert.equal(panel.dataset.loadedSeason, '1');
 });
 

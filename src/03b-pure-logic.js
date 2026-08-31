@@ -179,89 +179,184 @@ function tvShowItemKey(show) {
   return String(show.tmdbTvId);
 }
 
-// ─── Fusion cloud : séries suivies ───────────────────────────────────────────
-// Contrairement aux films/watchlist (listes plates), une série contient des
-// saisons imbriquées — la fusion se fait donc à deux niveaux : d'abord les
-// séries elles-mêmes, puis pour chaque série ses saisons une par une. Deux
-// listes de tombstones séparées (série entière / saison individuelle, clé
-// composée tmdbTvId:numéroSaison) — chaque suppression, quel que soit son
-// niveau, doit rester respectée après une synchronisation.
-function mergeTvShows(local, remote, showTombstones, seasonTombstones) {
-  const byId = new Map();
-  for (const show of [...local, ...remote]) {
-    const key = tvShowItemKey(show);
-    if (!key || key === 'undefined') continue;
-    if (!byId.has(key)) {
-      // Bug corrigé : `liked` (coup de cœur, voir Ludex_Specifications_Noter)
-      // était totalement absent de cet objet reconstruit — silencieusement
-      // perdu à CHAQUE synchro, peu importe sa valeur des deux côtés. Ce
-      // champ n'existait pas encore quand cette fonction de fusion a été
-      // écrite, jamais mis à jour depuis. `!!` normalise undefined/absent
-      // en false plutôt que de laisser passer une valeur bizarre.
-      byId.set(key, { tmdbTvId: show.tmdbTvId, title: show.title, poster_path: show.poster_path, genre: show.genre, liked: !!show.liked, likedAt: show.likedAt || '', seasons: {} });
-    }
-    const target = byId.get(key);
-    if (show.title) target.title = show.title;
-    if (show.poster_path) target.poster_path = show.poster_path;
-    if (show.genre) target.genre = show.genre;
-    // Bug corrigé (signalé par l'utilisateur : un coup de cœur décoché
-    // revenait tout seul après quelques instants) : "un true de n'importe
-    // quel côté l'emporte" ressuscitait un ancien liked=true depuis une
-    // copie cloud pas encore synchronisée, à chaque fois que l'auto-sync
-    // (toutes les 45s) tombait juste après un décochage. show.likedAt
-    // (voir tv-heart-btn, 18-tv-shows.js) permet maintenant de trancher
-    // par la date du changement le plus RÉCENT quand les deux côtés en
-    // ont une. Si aucun des deux n'en a (donnée antérieure à l'ajout de
-    // ce champ), repli sur l'ancien comportement "true gagne" — pour ne
-    // pas faire perdre un coup de cœur déjà posé avant ce correctif.
-    if (show.likedAt || target.likedAt) {
-      if ((show.likedAt || '') > (target.likedAt || '')) {
-        target.liked = !!show.liked;
-        target.likedAt = show.likedAt || '';
-      }
-    } else if (show.liked) {
-      target.liked = true;
-    }
+// ─── Modèle séries v2 : champs indépendants et événements vu/non vu ────────
+// Les tableaux watchedEpisodes restent la projection utilisée par les écrans.
+// _sync conserve les décochements et les dates TECHNIQUES, jamais la date de
+// visionnage. Une migration ne prétend pas connaître la chronologie ancienne.
+function tvStableJson(value) {
+  if (Array.isArray(value)) return '[' + value.map(tvStableJson).join(',') + ']';
+  if (value && typeof value === 'object') {
+    return '{' + Object.keys(value).sort().map(key => JSON.stringify(key) + ':' + tvStableJson(value[key])).join(',') + '}';
+  }
+  return JSON.stringify(value) ?? 'null';
+}
 
-    for (const [seasonKey, season] of Object.entries(show.seasons || {})) {
-      const existing = target.seasons[seasonKey];
-      if (!existing) { target.seasons[seasonKey] = season; continue; }
-      // Deux versions de la même saison : pas de vrai horodatage de dernière
-      // modification au niveau saison pour trancher finement — priorité à
-      // celle qui a une note (plus "aboutie"), puis à la date de note la
-      // plus récente, puis au nombre d'épisodes vus le plus élevé.
-      const existingRated = !!existing.rating;
-      const seasonRated = !!season.rating;
-      if (seasonRated && !existingRated) {
-        target.seasons[seasonKey] = season;
-      } else if (seasonRated && existingRated) {
-        if (new Date(season.rating.date || 0) > new Date(existing.rating.date || 0)) target.seasons[seasonKey] = season;
-      } else if (!seasonRated && !existingRated) {
-        if ((season.watchedEpisodes || []).length > (existing.watchedEpisodes || []).length) target.seasons[seasonKey] = season;
+function tvSyncMeta(entity, episodes = false) {
+  if (entity?._sync?.version > 2) throw new Error('Version des données séries plus récente : mets Ludex à jour.');
+  const legacyDate = episodes ? entity?.rating?.date : Object.values(entity?.seasons || {}).map(s => s.rating?.date || '').sort().at(-1);
+  const meta = { version: 2, createdAt: entity?._sync?.createdAt || '', legacyDate: entity?._sync?.legacyDate ?? legacyDate ?? '', fields: { ...entity?._sync?.fields } };
+  const validClock = value => typeof value === 'string' && (!value || (Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value));
+  if (!validClock(meta.createdAt) || !Object.values(meta.fields).every(validClock)) throw new Error('Horodatage de suivi invalide : données originales conservées.');
+  if (episodes) meta.episodes = { ...entity?._sync?.episodes };
+  if (episodes && !Object.entries(meta.episodes).every(([n, event]) => Number.isInteger(Number(n)) && Number(n) > 0 && event && typeof event.watched === 'boolean' && validClock(event.updatedAt))) {
+    throw new Error('État d’épisode invalide : données originales conservées.');
+  }
+  return meta;
+}
+
+function tvEpisodeNumbers(numbers) {
+  return [...new Set((numbers || []).map(Number).filter(n => Number.isInteger(n) && n > 0))].sort((a, b) => a - b);
+}
+
+function validateTvDataKeys(value) {
+  if (!value || typeof value !== 'object') return;
+  for (const key of Object.keys(value)) {
+    if (['__proto__', 'constructor', 'prototype'].includes(key)) throw new Error('Clé invalide dans les données séries.');
+    validateTvDataKeys(value[key]);
+  }
+}
+
+function normalizeTvShows(shows) {
+  if (!Array.isArray(shows)) throw new Error('Données séries invalides.');
+  validateTvDataKeys(shows);
+  // Copie profonde : aucune fusion/migration ne doit modifier ses entrées.
+  return JSON.parse(JSON.stringify(shows)).map(show => {
+    if (!show || show.tmdbTvId == null || !show.seasons || typeof show.seasons !== 'object' || Array.isArray(show.seasons)) {
+      throw new Error('Série ou saisons invalides : données originales conservées.');
+    }
+    show._sync = tvSyncMeta(show);
+    show.liked = !!show.liked;
+    show.likedAt = show.likedAt || '';
+    for (const season of Object.values(show.seasons)) {
+      if (!season || typeof season !== 'object' || Array.isArray(season) || (season.watchedEpisodes != null && !Array.isArray(season.watchedEpisodes))) {
+        throw new Error('Saison invalide : données originales conservées.');
       }
+      season._sync = tvSyncMeta(season, true);
+      // Un état explicite (notamment false) prime une ancienne projection.
+      for (const n of tvEpisodeNumbers(season.watchedEpisodes)) {
+        if (!season._sync.episodes[n]) season._sync.episodes[n] = { watched: true, updatedAt: '' };
+      }
+      season.watchedEpisodes = tvEpisodeNumbers(Object.keys(season._sync.episodes).filter(n => season._sync.episodes[n].watched));
+    }
+    return show;
+  });
+}
+
+function tvStampFields(before, after, at, excluded) {
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after)]);
+  for (const key of keys) {
+    if (excluded.includes(key)) continue;
+    if (tvStableJson(before?.[key]) !== tvStableJson(after[key])) {
+      after._sync.fields[key] = at;
+      // null est une suppression de champ transmissible, contrairement à undefined.
+      if (after[key] === undefined) after[key] = null;
     }
   }
+}
 
-  for (const show of byId.values()) {
-    for (const seasonKey of Object.keys(show.seasons)) {
-      const tomb = seasonTombstones.find(t => t.key === `${show.tmdbTvId}:${seasonKey}`);
-      if (!tomb) continue;
-      const seasonTime = new Date(show.seasons[seasonKey].rating?.date || 0).getTime();
-      if (new Date(tomb.deletedAt).getTime() >= seasonTime) delete show.seasons[seasonKey];
+function stampTvChanges(before, after, at) {
+  const normalized = normalizeTvShows(after);
+  const oldById = new Map(normalizeTvShows(before).map(show => [String(show.tmdbTvId), show]));
+  normalized.forEach((show, index) => {
+    const old = oldById.get(String(show.tmdbTvId));
+    if (!old) show._sync.createdAt = at;
+    else {
+      show._sync.createdAt = old._sync.createdAt;
+      show._sync.legacyDate = old._sync.legacyDate;
     }
-  }
+    tvStampFields(old, show, at, ['_sync', 'seasons', 'tmdbTvId']);
+    for (const [key, season] of Object.entries(show.seasons)) {
+      const prev = old?.seasons?.[key];
+      if (!prev) season._sync.createdAt = at;
+      else {
+        season._sync.createdAt = prev._sync.createdAt;
+        season._sync.legacyDate = prev._sync.legacyDate;
+      }
+      tvStampFields(prev, season, at, ['_sync', 'watchedEpisodes']);
+      const watched = new Set(tvEpisodeNumbers(after[index].seasons[key].watchedEpisodes));
+      const previously = new Set(tvEpisodeNumbers(prev?.watchedEpisodes));
+      for (const n of new Set([...watched, ...previously])) {
+        if (watched.has(n) !== previously.has(n)) {
+          season._sync.episodes[n] = { watched: watched.has(n), updatedAt: at };
+        }
+      }
+      season.watchedEpisodes = [...watched].sort((a, b) => a - b);
+    }
+  });
+  return normalized;
+}
 
-  const result = [];
-  for (const show of byId.values()) {
-    const tomb = showTombstones.find(t => t.key === tvShowItemKey(show));
-    if (tomb) {
-      const latestSeasonTime = Math.max(0, ...Object.values(show.seasons).map(s => new Date(s.rating?.date || 0).getTime()));
-      if (new Date(tomb.deletedAt).getTime() >= latestSeasonTime) continue;
-    }
-    if (Object.keys(show.seasons).length === 0) continue;
-    result.push(show);
+function tvFieldClock(entity, key) {
+  return entity?._sync?.fields?.[key] || (key === 'liked' ? entity?.likedAt : '') || '';
+}
+
+function tvMergeFields(a, b, excluded) {
+  const result = { _sync: tvSyncMeta(a) };
+  result._sync.createdAt = [a._sync.createdAt, b._sync.createdAt].sort().at(-1);
+  result._sync.legacyDate = [a._sync.legacyDate, b._sync.legacyDate].sort().at(-1);
+  for (const key of [...new Set([...Object.keys(a), ...Object.keys(b), ...Object.keys(a._sync.fields), ...Object.keys(b._sync.fields)])].sort()) {
+    if (excluded.includes(key)) continue;
+    const ac = tvFieldClock(a, key), bc = tvFieldClock(b, key);
+    let winner;
+    if (ac !== bc) winner = ac > bc ? a : b;
+    else if (!ac && key === 'rating') {
+      // Seulement pour les deux anciennes copies sans horodatage technique.
+      const ad = a.rating?.date || '', bd = b.rating?.date || '';
+      winner = ad === bd ? (tvStableJson(a[key]) >= tvStableJson(b[key]) ? a : b) : (ad > bd ? a : b);
+    } else if (!ac && key === 'liked') winner = a.liked ? a : b;
+    else if (a[key] === undefined) winner = b;
+    else if (b[key] === undefined) winner = a;
+    else winner = tvStableJson(a[key]) >= tvStableJson(b[key]) ? a : b;
+    if (winner[key] !== undefined) result[key] = winner[key];
+    if (ac || bc) result._sync.fields[key] = ac > bc ? ac : bc;
   }
   return result;
+}
+
+function tvSurvivesDeletion(entity, tomb, legacyDate) {
+  if (!tomb) return true;
+  // Une vraie reprise crée une nouvelle génération. Modifier une note sur une
+  // copie hors ligne d'une saison supprimée ne doit pas ressusciter celle-ci.
+  const birth = entity._sync.createdAt || entity._sync.legacyDate || legacyDate || '';
+  return birth > tomb.deletedAt;
+}
+
+function mergeTvShows(local, remote, showTombstones = [], seasonTombstones = []) {
+  const latestTombs = list => {
+    const map = new Map();
+    for (const tomb of list) if ((map.get(tomb.key)?.deletedAt || '') < tomb.deletedAt) map.set(tomb.key, tomb);
+    return map;
+  };
+  const showTombs = latestTombs(showTombstones), seasonTombs = latestTombs(seasonTombstones);
+  const byId = new Map();
+  for (const show of normalizeTvShows([...local, ...remote])) {
+    const key = String(show.tmdbTvId);
+    const latestRating = Object.values(show.seasons).map(s => s.rating?.date || '').sort().at(-1);
+    if (!tvSurvivesDeletion(show, showTombs.get(key), latestRating)) continue;
+    for (const seasonKey of Object.keys(show.seasons)) {
+      const season = show.seasons[seasonKey];
+      if (!tvSurvivesDeletion(season, seasonTombs.get(key + ':' + seasonKey), season.rating?.date)) delete show.seasons[seasonKey];
+    }
+    const existing = byId.get(key);
+    if (!existing) { byId.set(key, show); continue; }
+    const target = tvMergeFields(existing, show, ['_sync', 'seasons']);
+    target.seasons = { ...existing.seasons };
+    for (const [seasonKey, season] of Object.entries(show.seasons)) {
+      const prior = target.seasons[seasonKey];
+      if (!prior) { target.seasons[seasonKey] = season; continue; }
+      const merged = tvMergeFields(prior, season, ['_sync', 'watchedEpisodes']);
+      merged._sync.episodes = { ...prior._sync.episodes };
+      for (const [n, event] of Object.entries(season._sync.episodes)) {
+        const prev = merged._sync.episodes[n];
+        // Même milliseconde, actions opposées : non vu gagne, dans les deux sens.
+        if (!prev || event.updatedAt > prev.updatedAt || (event.updatedAt === prev.updatedAt && !event.watched)) merged._sync.episodes[n] = event;
+      }
+      merged.watchedEpisodes = tvEpisodeNumbers(Object.keys(merged._sync.episodes).filter(n => merged._sync.episodes[n].watched));
+      target.seasons[seasonKey] = merged;
+    }
+    byId.set(key, target);
+  }
+  return [...byId.values()].filter(show => Object.keys(show.seasons).length).sort((a, b) => String(a.tmdbTvId).localeCompare(String(b.tmdbTvId)));
 }
 
 // ─── Fusion cloud : tombstones (traces de suppression) ──────────────────────
@@ -969,6 +1064,8 @@ if (typeof module !== 'undefined' && module.exports) {
     mergeHistory,
     mergeWatchlist,
     mergeTvShows,
+    normalizeTvShows,
+    stampTvChanges,
     TOMBSTONE_MAX_AGE_MS,
     getDesc,
     DESCS,

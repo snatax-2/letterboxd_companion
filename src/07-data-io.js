@@ -30,8 +30,8 @@ function importLudexJson(text) {
     openModal(
       'Importer la sauvegarde complète',
       `Importer ${counts.label} ? Les historiques et listes seront fusionnés ; tes préférences locales actuelles seront conservées.`,
-      () => {
-        mergeWithRemote(data);
+      async () => {
+        await mergeWithRemote(data);
         showToast(`Sauvegarde complète importée · ${counts.label}`);
       },
     );

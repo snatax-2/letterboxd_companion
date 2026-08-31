@@ -97,9 +97,12 @@ function openModal(title, body, onConfirm, danger = false) {
   });
 }
 
-document.getElementById('modal-confirm').addEventListener('click', () => {
-  if (pendingAction) { pendingAction(); pendingAction = null; }
+document.getElementById('modal-confirm').addEventListener('click', async () => {
+  const action = pendingAction;
+  pendingAction = null;
   closeModal(document.getElementById('modal'));
+  try { if (action) await action(); }
+  catch (error) { showToast(error.message || 'Action non enregistrée. Réessaie.'); }
 });
 document.getElementById('modal-cancel').addEventListener('click', () => {
   closeModal(document.getElementById('modal'));

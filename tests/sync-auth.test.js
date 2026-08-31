@@ -44,7 +44,7 @@ function installFakeSupabase(rows) {
       const key = match ? decodeURIComponent(match[1]) : '';
       return { ok: true, json: async () => (rows[key] ? [rows[key]] : []) };
     }
-    return { ok: true, json: async () => ({}), text: async () => '' };
+    return { ok: true, json: async () => [{ updated_at: JSON.parse(options.body || '{}').updated_at }], text: async () => '' };
   };
   return calls;
 }
@@ -58,6 +58,60 @@ function withEnv(fn) {
     try { await fn(); } finally { process.env = saved; global.fetch = savedFetch; }
   };
 }
+
+test('suivi v2 : un ancien client ne peut pas rétrograder une sauvegarde migrée', withEnv(async () => {
+  const handler = await loadHandler();
+  const code = 'TVVersionGuardTest123';
+  const calls = installFakeSupabase({ [sha256(code)]: { payload: { schemaVersion: 3 }, updated_at: '2026-08-31T10:00:00.000Z' } });
+  const res = makeRes();
+  await handler({ method: 'POST', headers: { 'x-sync-code': code }, body: { schemaVersion: 2, tvShows: [] } }, res);
+  assert.equal(res.statusCode, 426);
+  assert.equal(calls.some(call => call.method !== 'GET'), false);
+}));
+
+test('suivi v2 : une mise à jour exige la révision lue', withEnv(async () => {
+  const handler = await loadHandler();
+  const code = 'TVRevisionGuardTest123';
+  const calls = installFakeSupabase({ [sha256(code)]: { payload: { schemaVersion: 3 }, updated_at: '2026-08-31T10:00:00.000Z' } });
+  const res = makeRes();
+  await handler({ method: 'POST', headers: { 'x-sync-code': code }, body: { schemaVersion: 3, tvShows: [] } }, res);
+  assert.equal(res.statusCode, 428);
+  assert.equal(calls.some(call => call.method !== 'GET'), false);
+}));
+
+test('suivi v2 : deux créations concurrentes produisent un conflit et jamais un upsert destructeur', withEnv(async () => {
+  const handler = await loadHandler();
+  const code = 'TVCreateRaceTest123';
+  const rows = {};
+  const calls = installFakeSupabase(rows);
+  const originalFetch = global.fetch;
+  global.fetch = async (url, options) => {
+    const result = await originalFetch(url, options);
+    if (options?.method === 'POST') {
+      assert.doesNotMatch(options.headers.Prefer, /merge-duplicates/);
+      rows[sha256(code)] = { payload: { schemaVersion: 3, tvShows: [] }, updated_at: 'winner-revision' };
+      return { ok: false, status: 409 };
+    }
+    return result;
+  };
+  const res = makeRes();
+  await handler({ method: 'POST', headers: { 'x-sync-code': code, 'if-none-match': '*' }, body: { schemaVersion: 3, tvShows: [] } }, res);
+  assert.equal(res.statusCode, 409);
+  assert.equal(res.body.revision, 'winner-revision');
+  assert.equal(calls.filter(call => call.method === 'POST').length, 1);
+}));
+
+test('suivi v2 : la révision augmente même si l’horloge serveur est en retard', withEnv(async () => {
+  const handler = await loadHandler();
+  const code = 'TVMonotonicRevision123';
+  const revision = '2099-01-01T10:00:00.000Z';
+  const calls = installFakeSupabase({ [sha256(code)]: { payload: { schemaVersion: 3 }, updated_at: revision } });
+  const res = makeRes();
+  await handler({ method: 'POST', headers: { 'x-sync-code': code, 'if-match': revision }, body: { schemaVersion: 3, tvShows: [] } }, res);
+  assert.equal(res.statusCode, 200);
+  assert.ok(res.body.revision > revision);
+  assert.equal(calls.find(call => call.method === 'PATCH').headers.Prefer, 'return=representation');
+}));
 
 describe('api/sync.js — authentification', () => {
   test('la lecture interroge d\'abord la forme hachée', withEnv(async () => {

@@ -17,13 +17,13 @@ function daysAgo(n) {
 }
 
 describe('mergeWithRemote (orchestration)', () => {
-  test('historique local et distant distincts -> union persistée dans localStorage', (t) => {
+  test('historique local et distant distincts -> union persistée dans localStorage', async (t) => {
     const window = freshWindow(t);
     window.localStorage.setItem('lbx_v2', JSON.stringify([
       { title: 'Dune', savedAt: daysAgo(5), updatedAt: daysAgo(5) },
     ]));
 
-    const result = window.mergeWithRemote({
+    const result = await window.mergeWithRemote({
       history: [{ title: 'Oppenheimer', savedAt: daysAgo(3), updatedAt: daysAgo(3) }],
     });
 
@@ -40,13 +40,13 @@ describe('mergeWithRemote (orchestration)', () => {
     assert.equal(stored.map(m => m.title).sort().join(','), 'Dune,Oppenheimer');
   });
 
-  test('meme film modifie des deux cotes -> la version la plus recente (updatedAt) est celle persistee', (t) => {
+  test('meme film modifie des deux cotes -> la version la plus recente (updatedAt) est celle persistee', async (t) => {
     const window = freshWindow(t);
     window.localStorage.setItem('lbx_v2', JSON.stringify([
       { title: 'Dune', score: '7.0', savedAt: daysAgo(5), updatedAt: daysAgo(5) },
     ]));
 
-    window.mergeWithRemote({
+    await window.mergeWithRemote({
       history: [{ title: 'Dune', score: '9.0', savedAt: daysAgo(5), updatedAt: daysAgo(1) }],
     });
 
@@ -55,7 +55,7 @@ describe('mergeWithRemote (orchestration)', () => {
     assert.equal(stored[0].score, '9.0');
   });
 
-  test('un film supprime localement (tombstone) ne revient pas via le distant', (t) => {
+  test('un film supprime localement (tombstone) ne revient pas via le distant', async (t) => {
     const window = freshWindow(t);
     // Local : plus aucun film, mais une trace de suppression pour "Dune".
     window.localStorage.setItem('lbx_v2', JSON.stringify([]));
@@ -63,7 +63,7 @@ describe('mergeWithRemote (orchestration)', () => {
       { key: 'dune', deletedAt: daysAgo(1) },
     ]));
 
-    const result = window.mergeWithRemote({
+    const result = await window.mergeWithRemote({
       // Le distant "ressuscite" Dune avec une version plus ancienne que la suppression.
       history: [{ title: 'Dune', savedAt: daysAgo(10), updatedAt: daysAgo(10) }],
     });
@@ -73,25 +73,25 @@ describe('mergeWithRemote (orchestration)', () => {
     assert.equal(stored.find(m => m.title === 'Dune'), undefined);
   });
 
-  test('payload distant vide ou absent ne fait rien perdre localement', (t) => {
+  test('payload distant vide ou absent ne fait rien perdre localement', async (t) => {
     const window = freshWindow(t);
     window.localStorage.setItem('lbx_v2', JSON.stringify([
       { title: 'Parasite', savedAt: daysAgo(2), updatedAt: daysAgo(2) },
     ]));
 
-    const result = window.mergeWithRemote({});
+    const result = await window.mergeWithRemote({});
 
     assert.equal(result.history.length, 1);
     assert.equal(result.history[0].title, 'Parasite');
   });
 
-  test('watchlist par defaut : union locale/distante persistee sous la bonne cle', (t) => {
+  test('watchlist par defaut : union locale/distante persistee sous la bonne cle', async (t) => {
     const window = freshWindow(t);
     window.localStorage.setItem('lbx_watchlist_default', JSON.stringify([
       { title: 'Dune', addedAt: daysAgo(5), updatedAt: daysAgo(5) },
     ]));
 
-    window.mergeWithRemote({
+    await window.mergeWithRemote({
       watchlists: { default: [{ title: 'Oppenheimer', addedAt: daysAgo(3), updatedAt: daysAgo(3) }] },
     });
 
@@ -99,13 +99,13 @@ describe('mergeWithRemote (orchestration)', () => {
     assert.equal(stored.map(m => m.title).sort().join(','), 'Dune,Oppenheimer');
   });
 
-  test('watchlist séries : union et persistance symétriques aux films', (t) => {
+  test('watchlist séries : union et persistance symétriques aux films', async (t) => {
     const window = freshWindow(t);
     window.localStorage.setItem('lbx_tv_watchlist_default', JSON.stringify([
       { title: 'Severance', tmdbId: 95396, addedAt: daysAgo(5) },
     ]));
 
-    const result = window.mergeWithRemote({
+    const result = await window.mergeWithRemote({
       tvWatchlists: { default: [{ title: 'The Bear', tmdbId: 136315, addedAt: daysAgo(3) }] },
     });
 
@@ -114,9 +114,9 @@ describe('mergeWithRemote (orchestration)', () => {
     assert.equal(result.tvWatchlists.default.length, 2);
   });
 
-  test('analyses et plateformes absentes localement sont restaurées', (t) => {
+  test('analyses et plateformes absentes localement sont restaurées', async (t) => {
     const window = freshWindow(t);
-    const result = window.mergeWithRemote({
+    const result = await window.mergeWithRemote({
       analyses: [{ id: 'a1', filmId: 949, date: daysAgo(1), retour: { synthese: 'Précis' } }],
       ownedProviders: ['MUBI'],
     });

@@ -1663,9 +1663,12 @@
      Un masque SVG remplit toute sa boîte bord à bord : le clip-path tombe
      alors TOUJOURS exactement au centre visuel, quelle que soit la forme —
      ce qui permet aussi de varier la forme par thème sans reproduire ce bug. */
-  .rating-stars label.left-half { overflow: visible; }
+  /* Le texte ★ transparent ne doit pas avoir une zone de clic débordante ;
+     le masque ci-dessous reste seul responsable du dessin visible. */
+  .rating-stars label.left-half { overflow: visible; text-indent: -9999px; }
   .rating-stars label.left-half::before,
   .rating-stars label.left-half::after {
+      pointer-events: none; /* le dessin déborde ; seule la demi-étoile ciblée reçoit le clic */
       content: ''; position: absolute; top: 0; left: 0; width: 1em; height: 1em;
       -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");
       mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M12%202l2.9%206.3%206.9.6-5.2%204.6%201.6%206.8L12%2016.9%205.8%2020.3l1.6-6.8L2.2%208.9l6.9-.6z%22/%3E%3C/svg%3E");

@@ -33,7 +33,7 @@ test('export inclut les series, pas seulement les films', async ({ page }) => {
   const data = JSON.parse(content);
 
   console.log('structure exportee:', JSON.stringify(Object.keys(data)));
-  expect(data.schemaVersion).toBe(2);
+  expect(data.schemaVersion).toBe(3);
   expect(data.history).toHaveLength(1);
   expect(data.tvShows).toHaveLength(1);
   expect(data.tvShows[0].title).toBe('True Detective');

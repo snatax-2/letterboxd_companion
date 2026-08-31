@@ -14,7 +14,7 @@ function isStorageObject(value) {
 
 const LUDEX_STORAGE_REGISTRY = Object.freeze({
   history: Object.freeze({ key: 'lbx_v2', version: 2, validate: Array.isArray, exportField: 'history', synchronized: true, label: 'historique' }),
-  tvShows: Object.freeze({ key: 'lbx_tv_shows', version: 1, validate: Array.isArray, exportField: 'tvShows', synchronized: true, label: 'séries' }),
+  tvShows: Object.freeze({ key: 'lbx_tv_shows', version: 2, validate: Array.isArray, exportField: 'tvShows', synchronized: true, label: 'séries' }),
   analyses: Object.freeze({ key: 'lbx_analyses', version: 1, validate: Array.isArray, exportField: 'analyses', synchronized: true, label: 'analyses' }),
   duels: Object.freeze({ key: 'lbx_duels', version: 1, validate: isStorageObject, exportField: 'duels', synchronized: true, label: 'duels' }),
   settings: Object.freeze({ key: 'lbx_settings', version: 1, validate: isStorageObject, exportField: 'settings', synchronized: true, label: 'réglages' }),
@@ -26,6 +26,7 @@ const LUDEX_STORAGE_REGISTRY = Object.freeze({
 });
 
 function storageLabel(key) {
+  if (key === 'lbx_tv_state_v2') return 'séries';
   const fixed = Object.values(LUDEX_STORAGE_REGISTRY).find(entry => entry.key === key);
   if (fixed) return fixed.label;
   if (key.startsWith(LUDEX_STORAGE_REGISTRY.tvWatchlists.keyPrefix)) return LUDEX_STORAGE_REGISTRY.tvWatchlists.label;

@@ -230,6 +230,14 @@ export default async function handler(req, res) {
       const hashed = storageKey(code);
       const expectedRevision = readRevisionHeader(req, 'if-match');
       const createOnly = readRevisionHeader(req, 'if-none-match') === '*';
+      // Un ancien onglet/PWA ne sait pas conserver les événements v2 des
+      // séries. Il doit se mettre à jour, pas réécrire une sauvegarde migrée.
+      if (Number(existing.row?.payload?.schemaVersion) >= 3 && Number(body.schemaVersion || 0) < Number(existing.row.payload.schemaVersion)) {
+        return res.status(426).json({ error: 'Mets Ludex à jour sur cet appareil avant de synchroniser : cette sauvegarde utilise le nouveau suivi des séries.' });
+      }
+      if (existing.row && !existing.legacy && !expectedRevision && !createOnly) {
+        return res.status(428).json({ error: 'Relis la sauvegarde cloud avant de la modifier.' });
+      }
       if (existing.row && (createOnly || (expectedRevision && expectedRevision !== existing.row.updated_at))) {
         res.setHeader('Cache-Control', 'no-store');
         return res.status(409).json({
@@ -239,7 +247,8 @@ export default async function handler(req, res) {
         });
       }
 
-      const updatedAt = new Date().toISOString();
+      // Deux écritures dans la même milliseconde doivent changer la révision.
+      const updatedAt = new Date(Math.max(Date.now(), (Date.parse(existing.row?.updated_at) || 0) + 1)).toISOString();
       const useAtomicUpdate = !!(existing.row && !existing.legacy && expectedRevision);
       const targetUrl = useAtomicUpdate
         ? `${SUPABASE_URL}/rest/v1/${TABLE}?sync_code=eq.${encodeURIComponent(hashed)}&updated_at=eq.${encodeURIComponent(expectedRevision)}&select=updated_at`
@@ -250,7 +259,7 @@ export default async function handler(req, res) {
           method: useAtomicUpdate ? 'PATCH' : 'POST',
           headers: {
             ...headers,
-            Prefer: useAtomicUpdate ? 'return=representation' : 'resolution=merge-duplicates,return=representation',
+            Prefer: 'return=representation',
           },
           body: JSON.stringify(useAtomicUpdate
             ? { payload: body, updated_at: updatedAt }
@@ -261,12 +270,21 @@ export default async function handler(req, res) {
       }
 
       if (!sbRes.ok) {
+        // Deux créations simultanées : l'insert perdant relit/fusionne au
+        // prochain essai. Un upsert aurait écrasé le gagnant silencieusement.
+        if (sbRes.status === 409) {
+          const latest = await fetchRow(code);
+          return res.status(409).json({ error: 'La sauvegarde cloud a changé sur un autre appareil.', payload: latest.row?.payload || null, revision: latest.row?.updated_at || null });
+        }
         const errText = await sbRes.text();
         console.error('Supabase upsert error:', errText);
         return res.status(502).json({ error: "Erreur d'écriture cloud." });
       }
       let writtenRows = null;
-      try { writtenRows = await sbRes.json(); } catch { /* certains anciens mocks/clients ne renvoient aucun corps */ }
+      try { writtenRows = await sbRes.json(); } catch { /* traité comme une absence de confirmation ci-dessous */ }
+      if (!Array.isArray(writtenRows)) {
+        return res.status(502).json({ error: 'Écriture cloud non confirmée. Réessaie pour vérifier la sauvegarde.' });
+      }
       if (useAtomicUpdate && Array.isArray(writtenRows) && writtenRows.length === 0) {
         const latest = await fetchRow(code);
         res.setHeader('Cache-Control', 'no-store');

@@ -121,6 +121,8 @@ function formatDateTime(iso) {
 // ─── Tombstones (traces de suppression) ─────────────────────────────────────
 
 function loadTombstones(storageKey) {
+  if (storageKey === 'lbx_tv_show_tombstones') return readTvState().showTombstones;
+  if (storageKey === 'lbx_tv_season_tombstones') return readTvState().seasonTombstones;
   return readJsonStorage(storageKey, [], Array.isArray);
 }
 
@@ -247,7 +249,7 @@ function mergePersonalCollections(remotePayload) {
 // ─── Cœur de la synchro : fusionne l'état local avec un payload cloud ───────
 // Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être
 // ré-uploadé si besoin (c'est ce que fait pushToCloud).
-function mergeWithRemote(remotePayload) {
+async function mergeWithRemote(remotePayload) {
   const localHistory = loadHistory();
   const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
   const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
@@ -257,29 +259,16 @@ function mergeWithRemote(remotePayload) {
   saveHistory(mergedHistory);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
 
-  // ─── Séries suivies ────────────────────────────────────────────────────
-  const localTvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  // Fusion calculée DANS la file, sur l'état frais, puis persistée avant le rendu.
   const remoteTvShows = Array.isArray(remotePayload?.tvShows) ? remotePayload.tvShows : [];
-  const localShowTomb = loadTombstones(TV_SHOW_TOMBSTONES_KEY);
-  const remoteShowTomb = Array.isArray(remotePayload?.tvShowTombstones) ? remotePayload.tvShowTombstones : [];
-  const mergedShowTomb = mergeTombstoneLists(localShowTomb, remoteShowTomb);
-  const localSeasonTomb = loadTombstones(TV_SEASON_TOMBSTONES_KEY);
-  const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
-  const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
-  const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
-  // Ludex 2.0 : passe par la file d'écriture séquentielle (mutateTvShows(),
-  // 18-tv-shows.js) plutôt qu'un saveTvShows() direct — une synchro qui
-  // tombe pile pendant qu'une note ou un coup de cœur est en cours d'écriture
-  // ailleurs écraserait sinon ce changement avec cette copie fusionnée, déjà
-  // périmée au moment où elle s'écrit. mergedTvShows est déjà entièrement
-  // calculé à ce stade (toute la logique de fusion tourne juste au-dessus,
-  // de façon synchrone) — le mutateur se contente de le renvoyer tel quel
-  // comme tableau de remplacement, sans awaiter ici (cette fonction reste
-  // synchrone comme avant ; la vraie écriture est simplement mise en file).
-  if (typeof mutateTvShows === 'function') mutateTvShows(() => mergedTvShows);
-  else if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows); // repli si 18-tv-shows.js n'est pas chargé
-  saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
-  saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
+  let mergedShowTomb, mergedSeasonTomb;
+  const mergedTvShows = await mutateTvShows((localTvShows, state) => {
+    mergedShowTomb = mergeTvTombstones(state.showTombstones, remotePayload?.tvShowTombstones || []);
+    mergedSeasonTomb = mergeTvTombstones(state.seasonTombstones, remotePayload?.tvSeasonTombstones || []);
+    state.showTombstones = mergedShowTomb;
+    state.seasonTombstones = mergedSeasonTomb;
+    return mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
+  }, { remote: true });
 
   // Même moteur pour les listes films et séries : les deux supports sont
   // désormais sauvegardés, restaurés et synchronisés de façon symétrique.
@@ -306,7 +295,7 @@ function mergeWithRemote(remotePayload) {
   if (typeof statsDirty !== 'undefined') statsDirty = true;
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     history: mergedHistory,
     historyTombstones: mergedHistTomb,
     tvShows: mergedTvShows,
@@ -352,7 +341,7 @@ function currentLocalSnapshot({ includeExportDate = false } = {}) {
   const movies = readWatchlistSnapshot('movie');
   const tv = readWatchlistSnapshot('tv');
   const snapshot = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     history: loadHistory(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
     tvShows: typeof loadTvShows === 'function' ? loadTvShows() : [],
@@ -423,8 +412,15 @@ function describeSyncFailure(err) {
 
 // Sauvegarde : récupère le cloud, fusionne avec le local, sauvegarde le résultat
 // localement, puis pousse la version fusionnée vers le cloud.
-async function pushToCloud(silent = false) {
+let _cloudWriteQueue = Promise.resolve();
+function pushToCloud(silent = false) {
   const code = getSyncCode();
+  const pending = _cloudWriteQueue.then(() => performCloudPush(silent, code));
+  _cloudWriteQueue = pending.catch(() => {});
+  return pending;
+}
+
+async function performCloudPush(silent, code) {
   if (!code) {
     if (!silent) setSyncStatus('Renseigne un code de synchronisation avant de sauvegarder.', true);
     return false;
@@ -432,8 +428,11 @@ async function pushToCloud(silent = false) {
   if (!silent) setSyncStatus('Synchronisation en cours…');
   try {
     let cloud = await fetchCloudState(code);
+    let sentHash;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const merged = mergeWithRemote(cloud.payload);
+      if (getSyncCode() !== code) throw new Error('Code de synchronisation modifié : opération interrompue.');
+      const merged = await mergeWithRemote(cloud.payload);
+      sentHash = hashPayload(merged);
       const revisionHeaders = cloud.revision ? { 'If-Match': cloud.revision } : { 'If-None-Match': '*' };
       const res = await fetch('/api/sync', {
         method: 'POST',
@@ -461,7 +460,10 @@ async function pushToCloud(silent = false) {
     }
 
     const now = new Date().toISOString();
-    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    // Accuse réception du contenu réellement envoyé, pas des modifications
+    // faites pendant la requête : celles-ci restent à envoyer au prochain tick.
+    if (getSyncCode() !== code) return false;
+    localStorage.setItem(SYNC_LAST_HASH_KEY, sentHash);
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     if (!silent) setSyncStatus(`Synchronisé ✓ (${formatDateTime(now)})`);
     return true;
@@ -487,9 +489,11 @@ async function pullFromCloud() {
       setSyncStatus('Aucune sauvegarde trouvée pour ce code.', true);
       return;
     }
-    mergeWithRemote(remotePayload);
+    if (getSyncCode() !== code) return;
+    await mergeWithRemote(remotePayload);
     const now = new Date().toISOString();
-    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    // Une restauration n'a PAS envoyé les modifications locales au cloud.
+    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(remotePayload));
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     setSyncStatus(`Synchronisé depuis le cloud ✓ (${formatDateTime(now)})`);
     showToast('Données synchronisées depuis le cloud.');
