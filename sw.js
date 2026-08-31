@@ -8,7 +8,7 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-666d688578';
+const CACHE_NAME = 'ludex-shell-f89909545b';
 
 const APP_SHELL = [
   '/',
