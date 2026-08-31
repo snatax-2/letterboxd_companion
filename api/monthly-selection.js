@@ -54,7 +54,10 @@ function validGeminiSelection(choice, candidates) {
 }
 
 async function selectWithGemini(candidates, geminiKey) {
-  if (!geminiKey) return null;
+  if (!geminiKey) {
+    console.warn('[monthly-selection] Gemini indisponible : clé non configurée pour cet environnement.');
+    return null;
+  }
   const catalogue = candidates.map(film => JSON.stringify({
     id: film.id, pays: film.country, titre: film.title, annee: film.release_date?.slice(0, 4) || null,
     noteTMDb: film.vote_average, synopsis: (film.overview || 'Synopsis indisponible').slice(0, 360),
@@ -66,11 +69,19 @@ async function selectWithGemini(candidates, geminiKey) {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 650 } }),
       signal: AbortSignal.timeout(12_000),
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`[monthly-selection] Gemini a refusé la sélection (HTTP ${response.status}).`);
+      return null;
+    }
     const raw = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = JSON.parse(raw || '{}');
-    return validGeminiSelection(parsed, candidates);
-  } catch { return null; }
+    const selection = validGeminiSelection(parsed, candidates);
+    if (!selection) console.warn('[monthly-selection] Réponse Gemini rejetée : format ou contraintes de sélection invalides.');
+    return selection;
+  } catch (error) {
+    console.warn(`[monthly-selection] Gemini indisponible : ${error?.name || 'erreur inattendue'}.`);
+    return null;
+  }
 }
 
 export default async function handler(req, res) {
