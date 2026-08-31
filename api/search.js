@@ -195,9 +195,15 @@ export default async function handler(req, res) {
       // explorer" qui vivait dans Profil et se basait sur l'Historique de
       // l'utilisateur. Celui-ci est purement éditorial : aucun lien avec
       // les données de l'utilisateur, une simple vitrine à parcourir.
-      const topRatedData = await fetchJson(
-        `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=fr-FR&page=1`
-      );
+      const pages = await Promise.all(Array.from({ length: 5 }, (_, index) => fetchJson(
+        `https://api.themoviedb.org/3/movie/top_rated?api_key=${TMDB_KEY}&language=fr-FR&page=${index + 1}`
+      )));
+      const topRatedData = {
+        results: pages.flatMap((page, pageIndex) => (page.results || []).map((movie, index) => ({
+          ...movie,
+          ludex_top_rank: pageIndex * 20 + index + 1,
+        }))).slice(0, 100),
+      };
       setCache(86400, 172800); // 24h : un classement "tous temps" ne bouge pas d'un jour à l'autre
       return res.status(200).json(topRatedData);
 

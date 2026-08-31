@@ -471,7 +471,14 @@ async function fetchTopRated() {
   // actif — TMDb n'a pas d'équivalent "top séries" via ce même endpoint.
   const res = await fetch('/api/search?topRated=true');
   const data = await res.json();
-  return (data.results || []).filter(m => m.poster_path).slice(0, 15).map(m => ({ ...normalizeItem(m), media_type: 'movie' }));
+  const pool = (data.results || []).filter(m => m.poster_path);
+  // Fisher-Yates : chaque ouverture donne une vraie sélection, sans biais
+  // vers les premières positions du classement.
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 15).map(m => ({ ...normalizeItem(m), media_type: 'movie', topRank: m.ludex_top_rank }));
 }
 
 async function fetchHistorique() {
@@ -549,7 +556,7 @@ async function loadCarousel(key) {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
     rowEl.innerHTML = items.map(item => `
-      <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}" aria-label="Voir la fiche de ${escAttr(item.title)}">
+      <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}"${item.topRank ? ` data-top-rank="${item.topRank}"` : ''} aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path
           ? `<img class="editorial-image" src="${tmdbImage(item.poster_path, 'w200')}" alt="Affiche de ${escAttr(item.title)}" loading="lazy">`
           : ''}
@@ -567,7 +574,7 @@ document.getElementById('view-discover')?.addEventListener('click', (e) => {
   const poster = e.target.closest('.poster-min[data-item-id]');
   if (!poster) return;
   if (poster.dataset.mediaType === 'tv') openTvDetailSheet(poster.dataset.itemId);
-  else openMovieDetailSheet(poster.dataset.itemId);
+  else openMovieDetailSheet(poster.dataset.itemId, { topRank: Number(poster.dataset.topRank) || null });
 });
 // Aucun gestionnaire clavier n'est nécessaire : .poster-min est un vrai
 // <button>, activé nativement à Entrée et Espace.

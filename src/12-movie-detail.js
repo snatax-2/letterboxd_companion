@@ -66,7 +66,7 @@ function findSavedPosterUrl(tmdbId, localMatch) {
 // peut en modifier une sans relire les autres. Aucun changement de rendu —
 // les chaînes produites sont identiques, la régression visuelle le vérifie.
 
-function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) {
+function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj, topRank = null }) {
   return `
     <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
@@ -80,7 +80,7 @@ function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) 
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
-        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-meta">${[year, runtime, genres, topRank ? `Top 100 TMDb · #${topRank}` : ''].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
         <div class="mds-external-ratings" id="mds-external-ratings"></div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
@@ -166,7 +166,7 @@ function mdsSagaHtml(data) {
       </div>`;
 }
 
-function buildMdsContent(data, localMatch, localMatchIdx) {
+function buildMdsContent(data, localMatch, localMatchIdx, topRank = null) {
   // Une affiche choisie à la main (voir applyChosenPoster) est enregistrée
   // sur l'item local (historique/watchlist) — elle doit toujours l'emporter
   // sur l'affiche par défaut de TMDb, sinon rouvrir la fiche plus tard
@@ -236,7 +236,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   // rend. Avant, tout tenait dans un seul gabarit de ~90 lignes où il
   // fallait compter les accolades pour savoir quelle section on lisait.
   return [
-    mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }),
+    mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj, topRank }),
     mdsActionsHtml(localMatch, data.id),
     // Plateformes de streaming : remontées juste sous les CTA (voir
     // Ludex_Specifications_Fiches.pdf — « où le voir ? C'est la donnée la
@@ -490,7 +490,7 @@ function pickBestTrailer(videos) {
 
 let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
 
-async function openMovieDetailSheet(tmdbId) {
+async function openMovieDetailSheet(tmdbId, { topRank = null } = {}) {
   if (!tmdbId) {
     showToast("Ce film n'a pas de fiche TMDb liée (ajouté en saisie manuelle).");
     return;
@@ -511,7 +511,7 @@ async function openMovieDetailSheet(tmdbId) {
     const localMatch = history.find(h => String(h.tmdbId) === String(tmdbId));
     const localMatchIdx = history.findIndex(h => String(h.tmdbId) === String(tmdbId));
 
-    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
+    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx, topRank);
     mdsCurrentData = data;
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
