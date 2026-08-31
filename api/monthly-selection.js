@@ -31,6 +31,8 @@ const FALLBACK_EDITORIAL = {
   title: 'Regards croisés',
   intro: 'Un film américain et trois regards venus d’ailleurs, réunis ce mois-ci par leur exigence de cinéma.',
 };
+const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest'];
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function validGeminiSelection(choice, candidates) {
   const selectedIds = Array.isArray(choice?.filmIds) ? choice.filmIds.map(String) : [];
@@ -63,25 +65,31 @@ async function selectWithGemini(candidates, geminiKey) {
     noteTMDb: film.vote_average, synopsis: (film.overview || 'Synopsis indisponible').slice(0, 360),
   })).join('\n');
   const prompt = `Tu es l’éditeur cinéphile de LUDEX. Choisis exactement quatre films dans le vivier ci-dessous pour former une sélection mensuelle cohérente, fondée sur un lien thématique réellement défendable. Contraintes absolues : exactement un film des États-Unis ; exactement trois films étrangers, chacun issu d’un pays différent ; utilise seulement les identifiants du vivier ; n’invente aucun fait. Réponds uniquement par ce JSON valide : {"title":"2 à 7 mots","intro":"une phrase de 180 caractères maximum","filmIds":[123,456,789,101],"reasons":{"123":"justification courte"}}. Les quatre identifiants doivent être différents et chaque film doit avoir une justification courte.\n\nVIVIER :\n${catalogue}`;
-  try {
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent', {
-      method: 'POST', headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 650 } }),
-      signal: AbortSignal.timeout(12_000),
-    });
-    if (!response.ok) {
-      console.warn(`[monthly-selection] Gemini a refusé la sélection (HTTP ${response.status}).`);
-      return null;
+  for (const model of GEMINI_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+          method: 'POST', headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 650 } }),
+          signal: AbortSignal.timeout(12_000),
+        });
+        if (!response.ok) {
+          console.warn(`[monthly-selection] Gemini ${model} a refusé la sélection (HTTP ${response.status}).`);
+          if (response.status >= 500 && attempt === 0) { await delay(350); continue; }
+          break;
+        }
+        const raw = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsed = JSON.parse(raw || '{}');
+        const selection = validGeminiSelection(parsed, candidates);
+        if (!selection) console.warn('[monthly-selection] Réponse Gemini rejetée : format ou contraintes de sélection invalides.');
+        return selection;
+      } catch (error) {
+        console.warn(`[monthly-selection] Gemini ${model} indisponible : ${error?.name || 'erreur inattendue'}.`);
+        if (attempt === 0) { await delay(350); continue; }
+      }
     }
-    const raw = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
-    const parsed = JSON.parse(raw || '{}');
-    const selection = validGeminiSelection(parsed, candidates);
-    if (!selection) console.warn('[monthly-selection] Réponse Gemini rejetée : format ou contraintes de sélection invalides.');
-    return selection;
-  } catch (error) {
-    console.warn(`[monthly-selection] Gemini indisponible : ${error?.name || 'erreur inattendue'}.`);
-    return null;
   }
+  return null;
 }
 
 export default async function handler(req, res) {
