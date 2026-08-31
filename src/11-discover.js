@@ -496,6 +496,7 @@ async function fetchChefsDoeuvreDuMois() {
   if (!response.ok) throw new Error('monthly selection unavailable');
   const data = await response.json();
   const films = (data.films || []).map(film => ({ ...normalizeItem(film), media_type: 'movie', country: film.country }));
+  films.editorialTitle = data.editorial?.title || '';
   films.editorialIntro = data.editorial?.intro || '';
   return films;
 }
@@ -576,7 +577,9 @@ async function loadCarousel(key) {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
     if (key === 'chefsDoeuvre') {
+      const title = document.getElementById('carousel-theme-chefsDoeuvre');
       const intro = document.getElementById('carousel-intro-chefsDoeuvre');
+      if (title) title.textContent = items.editorialTitle || '';
       if (intro) intro.textContent = items.editorialIntro || '';
     }
     rowEl.innerHTML = items.map(item => `

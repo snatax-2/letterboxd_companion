@@ -27,23 +27,50 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function editorialCopy(films, geminiKey) {
-  const fallback = { title: 'Regards croisés', intro: 'Un film américain et trois regards venus d’ailleurs, réunis ce mois-ci par leur exigence de cinéma.' };
-  if (!geminiKey) return fallback;
-  const catalogue = films.map(f => `- ${f.title} (${f.country}, ${f.release_date?.slice(0, 4) || 'année inconnue'}) : ${f.overview || 'synopsis indisponible'}`).join('\n');
-  const prompt = `Tu es l’éditeur cinéphile de LUDEX. À partir de ces quatre films (un américain et trois étrangers), trouve un lien thématique réellement défendable. Réponds uniquement par JSON : {"title":"2 à 7 mots","intro":"une phrase de 180 caractères maximum"}. N’invente aucun fait.\n\n${catalogue}`;
+const FALLBACK_EDITORIAL = {
+  title: 'Regards croisés',
+  intro: 'Un film américain et trois regards venus d’ailleurs, réunis ce mois-ci par leur exigence de cinéma.',
+};
+
+function validGeminiSelection(choice, candidates) {
+  const selectedIds = Array.isArray(choice?.filmIds) ? choice.filmIds.map(String) : [];
+  if (selectedIds.length !== 4 || new Set(selectedIds).size !== 4) return null;
+  const byId = new Map(candidates.map(film => [String(film.id), film]));
+  const films = selectedIds.map(id => byId.get(id));
+  if (films.some(film => !film)) return null;
+  const usaCount = films.filter(film => film.countryCode === USA[0]).length;
+  const foreignCountries = films.filter(film => film.countryCode !== USA[0]).map(film => film.countryCode);
+  if (usaCount !== 1 || foreignCountries.length !== 3 || new Set(foreignCountries).size !== 3) return null;
+  if (typeof choice.title !== 'string' || typeof choice.intro !== 'string') return null;
+  const reasons = choice.reasons && typeof choice.reasons === 'object' ? choice.reasons : {};
+  return {
+    films,
+    editorial: {
+      title: choice.title.trim().slice(0, 80),
+      intro: choice.intro.trim().slice(0, 180),
+      reasons: Object.fromEntries(films.map(film => [String(film.id), typeof reasons[String(film.id)] === 'string' ? reasons[String(film.id)].trim().slice(0, 180) : ''])),
+    },
+  };
+}
+
+async function selectWithGemini(candidates, geminiKey) {
+  if (!geminiKey) return null;
+  const catalogue = candidates.map(film => JSON.stringify({
+    id: film.id, pays: film.country, titre: film.title, annee: film.release_date?.slice(0, 4) || null,
+    noteTMDb: film.vote_average, synopsis: (film.overview || 'Synopsis indisponible').slice(0, 360),
+  })).join('\n');
+  const prompt = `Tu es l’éditeur cinéphile de LUDEX. Choisis exactement quatre films dans le vivier ci-dessous pour former une sélection mensuelle cohérente, fondée sur un lien thématique réellement défendable. Contraintes absolues : exactement un film des États-Unis ; exactement trois films étrangers, chacun issu d’un pays différent ; utilise seulement les identifiants du vivier ; n’invente aucun fait. Réponds uniquement par ce JSON valide : {"title":"2 à 7 mots","intro":"une phrase de 180 caractères maximum","filmIds":[123,456,789,101],"reasons":{"123":"justification courte"}}. Les quatre identifiants doivent être différents et chaque film doit avoir une justification courte.\n\nVIVIER :\n${catalogue}`;
   try {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent', {
       method: 'POST', headers: { 'x-goog-api-key': geminiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0, maxOutputTokens: 120 } }),
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: 'application/json', temperature: 0.2, maxOutputTokens: 650 } }),
       signal: AbortSignal.timeout(12_000),
     });
-    if (!response.ok) return fallback;
+    if (!response.ok) return null;
     const raw = (await response.json()).candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = JSON.parse(raw || '{}');
-    if (typeof parsed.title !== 'string' || typeof parsed.intro !== 'string') return fallback;
-    return { title: parsed.title.trim().slice(0, 80), intro: parsed.intro.trim().slice(0, 180) };
-  } catch { return fallback; }
+    return validGeminiSelection(parsed, candidates);
+  } catch { return null; }
 }
 
 export default async function handler(req, res) {
@@ -56,12 +83,16 @@ export default async function handler(req, res) {
   const responses = await Promise.allSettled(chosenCountries.map(async ([code, country]) => {
     const data = await fetchJson(`https://api.themoviedb.org/3/discover/movie?api_key=${tmdbKey}&language=fr-FR&sort_by=vote_average.desc&vote_average.gte=7&vote_count.gte=250&with_origin_country=${code}&page=1`);
     const candidates = (data.results || []).filter(film => film.poster_path && film.vote_average >= 7);
-    const film = seededShuffle(candidates, seedForMonth(`${month}-${code}`))[0];
-    return film ? { ...film, country } : null;
+    return seededShuffle(candidates, seedForMonth(`${month}-${code}`)).slice(0, 8)
+      .map(film => ({ ...film, country, countryCode: code }));
   }));
-  const films = responses.map(result => result.status === 'fulfilled' ? result.value : null).filter(Boolean);
-  if (films.length < 4) return res.status(502).json({ error: 'Sélection mensuelle indisponible.' });
-  const editorial = await editorialCopy(films, process.env.GEMINI_API_KEY);
-  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
-  return res.status(200).json({ month, editorial, films });
+  const pools = responses.map(result => result.status === 'fulfilled' ? result.value : []).filter(pool => pool.length > 0);
+  if (pools.length !== 4) return res.status(502).json({ error: 'Sélection mensuelle indisponible.' });
+  const fallbackFilms = pools.map(pool => pool[0]);
+  const chosen = await selectWithGemini(pools.flat(), process.env.GEMINI_API_KEY);
+  const selection = chosen || { films: fallbackFilms, editorial: FALLBACK_EDITORIAL };
+  const films = selection.films.map(film => ({ ...film, editorialReason: selection.editorial.reasons?.[String(film.id)] || '' }));
+  // Une même URL de mois conserve le choix éditorial ; le cache évite les appels Gemini répétitifs.
+  res.setHeader('Cache-Control', 's-maxage=2592000, stale-while-revalidate=604800');
+  return res.status(200).json({ month, editorial: selection.editorial, films });
 }
