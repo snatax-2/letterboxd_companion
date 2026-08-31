@@ -14,7 +14,7 @@ function withThemeTransition(applyFn) {
   setTimeout(() => root.classList.remove('theme-transitioning'), 350);
 }
 
-const DEFAULT_APP_NAME = 'Ludex Rating Companion';
+const DEFAULT_APP_NAME = 'Ludex';
 const APP_NAME_MAX_LENGTH = 80;
 
 // Les anciennes versions stockaient volontairement <em> autour du premier
@@ -28,16 +28,29 @@ function normalizeAppName(value) {
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, APP_NAME_MAX_LENGTH);
+  // Remplace seulement l'ancien nom par défaut, pas les noms personnalisés.
+  if (/^ludex(?: rating companion)?$/i.test(plain)) return DEFAULT_APP_NAME;
   return plain || DEFAULT_APP_NAME;
 }
 
 function renderAppTitle(value) {
   const titleEl = document.getElementById('main-app-title');
-  const words = normalizeAppName(value).split(' ');
-  const first = document.createElement('em');
-  first.textContent = words.shift();
-  titleEl.replaceChildren(first);
-  if (words.length) titleEl.append(document.createTextNode(` ${words.join(' ')}`));
+  const name = normalizeAppName(value);
+  const branded = name === DEFAULT_APP_NAME;
+  titleEl.classList.toggle('app-wordmark', branded);
+  titleEl.removeAttribute('aria-label');
+  if (!branded) {
+    titleEl.textContent = name;
+    return;
+  }
+  titleEl.setAttribute('aria-label', 'Ludex');
+  const wordmark = document.createElement('span');
+  wordmark.setAttribute('aria-hidden', 'true');
+  const signature = document.createElement('span');
+  signature.className = 'app-wordmark-e';
+  signature.textContent = 'e';
+  wordmark.append('LUD', signature, 'X');
+  titleEl.replaceChildren(wordmark);
 }
 
 const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');

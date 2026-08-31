@@ -706,6 +706,7 @@
     justify-content: space-between;
     gap: 12px;
     position: relative;
+    min-height: 44px;
   }
   
   .app-header::after {
@@ -720,6 +721,9 @@
   }
 
   .app-title {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-family: var(--font-heading);
     font-size: 1.4rem;
     font-weight: 700;
@@ -728,8 +732,26 @@
     font-style: var(--title-style, normal);
     letter-spacing: var(--title-spacing, 0.02em);
   }
-  .app-title em { color: var(--orange); font-style: normal; }
-  .header-actions { display: flex; gap: 8px; }
+  .app-title.app-wordmark {
+    font-family: var(--font-body);
+    font-size: clamp(1.45rem, 3vw, 1.75rem);
+    font-weight: 600;
+    font-style: normal;
+    line-height: 1.2;
+    letter-spacing: .18em;
+    text-transform: none;
+    white-space: nowrap;
+  }
+  .app-wordmark-e {
+    font-family: var(--font-heading);
+    font-size: 1.24em;
+    font-weight: 500;
+    font-style: italic;
+    letter-spacing: .02em;
+    margin-left: -.03em;
+    margin-right: .03em;
+  }
+  .header-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
   .data-management-row { display: flex; gap: 8px; flex-wrap: wrap; }
   .icon-btn {
     background: var(--surface); border: 1px solid var(--border);
@@ -743,8 +765,7 @@
   /* #settings-btn est un icon-btn sans texte (juste l'icône) — zone tactile
      étendue ciblée sur lui seul, pas sur la classe .icon-btn partagée avec
      d'autres boutons texte+icône déjà assez grands. */
-  #settings-btn { position: relative; }
-  #settings-btn::after { content: ''; position: absolute; inset: -7px; }
+  #settings-btn { position: relative; width: 44px; height: 44px; padding: 0; justify-content: center; }
   /* #reset-duels-btn est un .icon-btn parmi d'autres (export/import/copie du
      journal), tous déjà assez grands — ciblé seul plutôt que d'élargir toute
      la classe .icon-btn, action destructrice mesurée à 34px avant correction
@@ -4791,13 +4812,13 @@
     
     .app-header { 
       margin-bottom: 20px; 
-      flex-direction: column; 
-      align-items: stretch; 
-      text-align: center;
-      gap: 14px;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 16px;
     }
     .app-header::after { bottom: -10px; }
-    .header-actions { justify-content: center; flex-wrap: wrap; }
+    .header-actions { justify-content: flex-end; flex-wrap: nowrap; }
     
     /* Correction de la barre de recherche en grille pour éviter tout chevauchement */
     .search-row { 
