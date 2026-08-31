@@ -37,11 +37,18 @@
      choisi — comme pour un écran de démarrage natif, un rendu par défaut fixe
      est la norme (l'app applique le vrai thème dès que le JS a tourné). -->
 <style>
-  #app-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0A0A0C;transition:opacity .4s ease,visibility .4s ease;}
+  #app-splash{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;background:#0A0A0C;color:#FAFAFA;transition:opacity .42s ease,visibility .42s ease;}
   #app-splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
-  #app-splash img{width:88px;height:88px;border-radius:20px;animation:splashPulse 1.4s ease-in-out infinite;}
-  #app-splash .app-splash-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;letter-spacing:.15em;color:#FAFAFA;}
-  @keyframes splashPulse{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.05);opacity:.85;}}
+  #app-splash::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 44%,rgba(255,255,255,.065),transparent 48%),linear-gradient(115deg,rgba(255,255,255,.025),transparent 28%,rgba(255,255,255,.018) 72%,transparent);opacity:.8;}
+  #app-splash .app-splash-mark{position:relative;width:116px;height:116px;padding:8px;border:1px solid rgba(250,250,250,.19);border-radius:4px;box-shadow:0 18px 44px rgba(0,0,0,.33);animation:splashReveal .58s cubic-bezier(.16,1,.3,1) both;}
+  #app-splash img{display:block;width:100%;height:100%;border-radius:0;}
+  #app-splash .app-splash-rule{position:relative;width:38px;height:1px;margin:23px 0 17px;background:#D4AF37;transform-origin:center;animation:splashRule .46s .22s cubic-bezier(.16,1,.3,1) both;}
+  #app-splash .app-splash-title{position:relative;font-family:'Playfair Display',Georgia,serif;font-size:1.55rem;font-weight:700;line-height:1;letter-spacing:.13em;color:#FAFAFA;animation:splashReveal .46s .12s cubic-bezier(.16,1,.3,1) both;}
+  #app-splash .app-splash-title em{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-style:italic;letter-spacing:.03em;}
+  #app-splash .app-splash-caption{position:relative;margin-top:13px;font-family:Arial,sans-serif;font-size:.57rem;font-weight:600;letter-spacing:.22em;color:#888;text-transform:uppercase;animation:splashReveal .46s .2s cubic-bezier(.16,1,.3,1) both;}
+  @keyframes splashReveal{from{opacity:0;transform:translateY(10px) scale(.975)}to{opacity:1;transform:translateY(0) scale(1)}}
+  @keyframes splashRule{from{transform:scaleX(0);opacity:0}to{transform:scaleX(1);opacity:1}}
+  @media (prefers-reduced-motion:reduce){#app-splash .app-splash-mark,#app-splash .app-splash-rule,#app-splash .app-splash-title,#app-splash .app-splash-caption{animation:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,8 +57,10 @@
 <body>
 <a href="#contenu" class="skip-link">Aller au contenu</a>
 <div id="app-splash" aria-hidden="true">
-  <img src="icon-192.png?v=ludex-l1" width="192" height="192" alt="">
-  <div class="app-splash-title">LUDEX</div>
+  <div class="app-splash-mark"><img src="icon-192.png?v=ludex-l1" width="192" height="192" alt=""></div>
+  <div class="app-splash-rule"></div>
+  <div class="app-splash-title">LUD<em>e</em>X</div>
+  <div class="app-splash-caption">Journal de cinéma personnel</div>
 </div>
 <script src="bootstrap.js"></script>
 

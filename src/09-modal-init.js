@@ -142,7 +142,9 @@ renderCriteriaAverageMarkers();
 (function hideSplash() {
   const splash = document.getElementById('app-splash');
   if (!splash) return;
-  const MIN_DISPLAY_MS = 150;
+  // Suffisamment long pour que le carton d'ouverture soit perceptible, sans
+  // retarder inutilement l'accès à l'application une fois initialisée.
+  const MIN_DISPLAY_MS = 620;
   const elapsed = performance.now();
   const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
   setTimeout(() => {
