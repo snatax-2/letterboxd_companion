@@ -334,38 +334,13 @@ function renderTdsCastCarousel(castArray) {
   // qu'il a parcouru l'équivalent d'une copie complète — même technique que
   // la fiche film (voir renderCastCarousel).
   outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
-  const track = outer.querySelector('.mds-cast-track');
 
   outer.addEventListener('click', (e) => {
     const item = e.target.closest('.mds-cast-item');
     if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
   });
 
-  const AUTO_SCROLL_SPEED = 0.3;
-  const RESUME_DELAY_MS = 3000;
-  let autoScrollPaused = false;
-  let resumeTimer = null;
-
-  function pauseThenScheduleResume() {
-    autoScrollPaused = true;
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
-  }
-
-  function tick() {
-    if (!autoScrollPaused && tdsEl.classList.contains('open')) {
-      outer.scrollLeft += AUTO_SCROLL_SPEED;
-      const halfWidth = track.scrollWidth / 2;
-      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
-    }
-    if (tdsEl.classList.contains('open')) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+  setupDetailCastMotion(outer, tdsEl);
 }
 
 // Sauvegarde l'affiche choisie sur la série suivie localement — même geste

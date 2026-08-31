@@ -634,6 +634,7 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
+      animation-delay: 0s !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
       scroll-behavior: auto !important;
@@ -1268,6 +1269,7 @@
     min-width: 68px; min-height: 44px; flex-shrink: 0; scroll-snap-align: start; padding: 8px 10px 11px; border-radius: 10px;
     background: var(--surface2); border: 1px solid var(--border); color: var(--text-mid); cursor: pointer;
     font-family: var(--font-heading); font-weight: 700; font-size: 0.76rem;
+    transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   }
   .tds-season-tab:hover, .tds-season-tab.active { border-color: var(--border-hi); color: var(--text-hi); }
   .tds-season-tab.active { background: color-mix(in srgb, var(--surface2) 82%, var(--gold)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 48%, transparent); }
@@ -1283,6 +1285,9 @@
   .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
   .tds-season-episodes { padding: 4px 4px 14px; }
   .tds-season-episodes:empty { padding: 0; }
+  /* Une seule entrée douce pour la liste, pas une cascade par épisode. */
+  .tds-season-episodes > .tds-episode-list { animation: seasonEpisodesIn var(--dur-fast) var(--ease-out) both; }
+  @keyframes seasonEpisodesIn { from { opacity: 0; } to { opacity: 1; } }
   .tds-season-feedback { padding: 12px 0; color: var(--text-mid); font-size: .8rem; line-height: 1.5; }
   .tds-season-tab:focus-visible,
   .tds-season-delete-btn:focus-visible,

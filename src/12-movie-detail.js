@@ -291,6 +291,75 @@ function buildCriteriaBreakdown(localMatch, { embedded = false } = {}) {
 // une animation CSS qui bloquerait le glissement manuel natif), à vitesse
 // volontairement plus lente ici (plus de monde à voir défiler, moins de
 // pression pour choisir/lire rapidement).
+const detailCastMotion = new WeakMap();
+
+// Même rythme pour les deux fiches. Le mouvement s'arrête pour lire,
+// naviguer au clavier, consulter une autre modale ou réduire les animations.
+function setupDetailCastMotion(outer, sheet) {
+  detailCastMotion.get(sheet)?.();
+  const track = outer.querySelector('.mds-cast-track');
+  const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  let frame = null;
+  let previousTime = null;
+  let pausedUntil = 0;
+  let hovered = false;
+  let focused = false;
+  let lastAutoScroll = outer.scrollLeft;
+  const listeners = [];
+  function listen(target, event, handler, options) {
+    target.addEventListener(event, handler, options);
+    listeners.push(() => target.removeEventListener(event, handler, options));
+  }
+  function pause() { pausedUntil = performance.now() + 3000; }
+  function touch(e) { e.stopPropagation(); pause(); }
+  function stopFrame() {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
+    previousTime = null;
+  }
+  function cleanup() {
+    stopFrame();
+    listeners.forEach(remove => remove());
+    motionQuery?.removeEventListener?.('change', syncMotion);
+    detailCastMotion.delete(sheet);
+  }
+  function tick(now) {
+    frame = null;
+    if (!outer.isConnected || !track?.isConnected || !sheet.classList.contains('open')) { cleanup(); return; }
+    if (motionQuery?.matches) return;
+    const elapsed = previousTime === null ? 0 : Math.min(now - previousTime, 50);
+    previousTime = now;
+    if (!hovered && !focused && now >= pausedUntil && !document.hidden && sheet.getAttribute('aria-hidden') !== 'true') {
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && track.scrollWidth > outer.clientWidth) {
+        outer.scrollLeft += elapsed * 0.018; // 0,3 px/image à 60 Hz, aussi stable à 120 Hz.
+        if (outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+        lastAutoScroll = outer.scrollLeft;
+      }
+    }
+    frame = requestAnimationFrame(tick);
+  }
+  function syncMotion() {
+    stopFrame();
+    if (!motionQuery?.matches && sheet.classList.contains('open')) frame = requestAnimationFrame(tick);
+  }
+  listen(outer, 'mouseenter', () => { hovered = true; });
+  listen(outer, 'mouseleave', () => { hovered = false; pause(); });
+  listen(outer, 'focusin', () => { focused = true; });
+  listen(outer, 'focusout', e => { focused = outer.contains(e.relatedTarget); pause(); });
+  listen(outer, 'touchstart', touch, { passive: true });
+  listen(outer, 'touchmove', touch, { passive: true });
+  listen(outer, 'wheel', pause, { passive: true });
+  listen(outer, 'scroll', () => {
+    // Le scroll produit par notre propre animation ne doit pas se mettre en pause.
+    if (Math.abs(outer.scrollLeft - lastAutoScroll) > 1) pause();
+  }, { passive: true });
+  listen(sheet, 'modalclosed', cleanup, { once: true });
+  motionQuery?.addEventListener?.('change', syncMotion);
+  detailCastMotion.set(sheet, cleanup);
+  syncMotion();
+}
+
 function renderCastCarousel(castArray) {
   const outer = document.getElementById('mds-cast-carousel');
   if (!outer) return;
@@ -312,40 +381,13 @@ function renderCastCarousel(castArray) {
   // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
   // qu'il a parcouru l'équivalent d'une copie complète.
   outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
-  const track = outer.querySelector('.mds-cast-track');
 
   outer.addEventListener('click', (e) => {
     const item = e.target.closest('.mds-cast-item');
     if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
   });
 
-  const AUTO_SCROLL_SPEED = 0.3; // plus lent que le carrousel tendances (0.5) : plus de monde à voir défiler
-  const RESUME_DELAY_MS = 3000;
-  let autoScrollPaused = false;
-  let resumeTimer = null;
-
-  function pauseThenScheduleResume() {
-    autoScrollPaused = true;
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
-  }
-
-  function tick() {
-    if (!autoScrollPaused && mdsEl.classList.contains('open')) {
-      outer.scrollLeft += AUTO_SCROLL_SPEED;
-      const halfWidth = track.scrollWidth / 2;
-      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
-    }
-    // Arrête la boucle si la fiche a été fermée (évite de faire tourner un
-    // requestAnimationFrame indéfiniment pour un carrousel qu'on ne voit plus).
-    if (mdsEl.classList.contains('open')) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+  setupDetailCastMotion(outer, mdsEl);
 }
 
 // Bande des autres films de la saga (belongs_to_collection), en bas de la

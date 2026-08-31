@@ -235,6 +235,8 @@ document.getElementById('genre-weight-suggest').addEventListener('click', () => 
 // une nouvelle valeur arrive avant la fin — indispensable ici car un
 // glissement de slider déclenche beaucoup de mises à jour rapprochées.
 function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
+  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
+  el._scoreAnimId = null;
   const startValue = parseFloat(el.textContent) || 0;
   if (Math.abs(endValue - startValue) < 0.01) {
     el.textContent = endValue.toFixed(decimals);
@@ -245,7 +247,6 @@ function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
     el.textContent = endValue.toFixed(decimals);
     return;
   }
-  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
   const startTime = performance.now();
   function step(now) {
     const progress = Math.min((now - startTime) / duration, 1);
@@ -430,7 +431,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
 // ═══════════════════════════════════════════
 //  SAVE
 // ═══════════════════════════════════════════
-// Animation de validation façon "clap de cinéma" à chaque critique
+// Coche éditoriale de validation à chaque critique
 // enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
 // sans bloquer l'interface (pointer-events: none, se retire toute seule).
 function playSaveConfirmation() {
