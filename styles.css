@@ -815,7 +815,7 @@
     -webkit-backdrop-filter: blur(20px) saturate(120%);
     border: 1px solid var(--nav-border); border-radius: var(--radius-pill);
     box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
-    padding: 3px 4px;
+    padding: 4px;
   }
   .nav-btn {
     flex: 1; min-width: 0; padding: 10px 2px; background: transparent; border: none;
@@ -830,7 +830,7 @@
        repère visuel constant. Hauteur fixe + justify-content:center :
        l'icône reste centrée verticalement dans le bouton, que le libellé
        soit affiché ou non, plutôt que de se décaler d'un onglet à l'autre. */
-    min-height: 46px;
+    min-height: 47px;
   }
   /* Ludex 2.0 : la capsule pleine inversée (fond coloré, texte inversé)
      s'est avérée trop appuyée à l'usage — remplacée par une simple teinte
