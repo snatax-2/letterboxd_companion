@@ -1,92 +1,25 @@
-// Service worker Ludex Rating Companion
-// StratÃ©gie : "network-first" pour les fichiers de l'app (toujours la derniÃ¨re version
-// si le rÃ©seau rÃ©pond, sinon on retombe sur la derniÃ¨re copie en cache pour marcher hors-ligne).
-// Les appels /api/* ne sont JAMAIS interceptÃ©s ici : le cache CDN de Vercel s'en occupe dÃ©jÃ 
-// (voir Cache-Control dans api/search.js), et les donnÃ©es doivent rester Ã  jour.
+YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×n:N‹Z–‹­¦ëeŠw¬Ô¼¼M•ÉÙ¥”İ½É­•È1Õ‘•àI…Ñ¥¹œ½µÁ…¹¥½¸(¼¼MÑÉ…Ó¥¥”€è€‰¹•Ñİ½É¬µ™¥ÉÍĞˆÁ½ÕÈ±•Ì™¥¡¥•ÉÌ‘”°…ÁÀ€¡Ñ½Õ©½ÕÉÌ±„‘•É¹§¡É”Ù•ÉÍ¥½¸(¼¼Í¤±”Ë¥Í•…ÔË¥Á½¹°Í¥¹½¸½¸É•Ñ½µ‰”ÍÕÈ±„‘•É¹§¡É”½Á¥”•¸…¡”Á½ÕÈµ…É¡•È¡½ÉÌµ±¥¹”¤¸(¼¼1•Ì…ÁÁ•±Ì€½…Á¤¼¨¹”Í½¹Ğ)5%L¥¹Ñ•É•ÁÓ¥Ì¥¤€è±”…¡”8‘”Y•É•°Ì•¸½ÕÁ”“¥«€(¼¼€¡Ù½¥È…¡”µ½¹ÑÉ½°‘…¹Ì…Á¤½Í•…É ¹©Ì¤°•Ğ±•Ì‘½¹»¥•Ì‘½¥Ù•¹ĞÉ•ÍÑ•Èƒ€©½ÕÈ¸((¼¼1„Ù…±•ÕÈ‘”!}95•ÍĞË§¥É¥Ñ”…ÕÑ½µ…Ñ¥ÅÕ•µ•¹Ğƒ€¡…ÅÕ”“¥Á±½¥•µ•¹ĞÁ…È(¼¼ÍÉ¥ÁÑÌ½•¹•É…Ñ”µÍÜµ…¡”¹©Ì€¡Ù½¥ÈÁ…­…”¹©Í½¸€ø€‰‰Õ¥±ˆ¤°ƒ€Á…ÉÑ¥ÈÕ¸¡…Í (¼¼‘Ô½¹Ñ•¹ÔË¥•°‘”°…ÁÀ€¡¥¹‘•à¹¡Ñµ°°ÍÑå±•Ì¹µ¥¸¹ÍÌ°…ÁÀ¹©Ì°µ…¹¥™•ÍĞ¹©Í½¸°¥Ñ¹•Ì¤¸(¼¼±±”¡…¹”‘½¹ŒÍ•Õ±•µ•¹ĞÅÕ…¹•Ì™¥¡¥•ÉÌ¡…¹•¹ĞÙÉ…¥µ•¹ĞƒŠPÉ¥•¸ƒ€™…¥É”µ…¹Õ•±±•µ•¹Ğ¸)½¹ÍĞ!}95€ô€±Õ‘•àµÍ¡•±°´Ìá™•„Ñ‰•œì()½¹ÍĞAA}M!10€ôl(€€œ¼œ°(€€œ½¥¹‘•à¹¡Ñµ°œ°(€€œ½‰½½ÑÍÑÉ…À¹©Ìœ°(€€œ½ÍÑå±•Ì¹µ¥¸¹ÍÌœ°(€€œ½…ÁÀ¹©Ìœ°(€€œ½™…Ù¥½¸¹Á¹œıØõ±Õ‘•àµ°Äœ°(€€œ½…ÁÁ±”µÑ½Õ µ¥½¸¹Á¹œıØõ±Õ‘•àµ°Äœ°(€€œ½µ…¹¥™•ÍĞ¹©Í½¸œ°(€€œ½¥½¸´ÄäÈ¹Á¹œıØõ±Õ‘•àµ°Äœ°(€€œ½¥½¸´ÔÄÈ¹Á¹œıØõ±Õ‘•àµ°Äœ°(€€œ½¥½¸µµ…Í­…‰±”´ÄäÈ¹Á¹œıØõ±Õ‘•àµ°Äœ°(€€œ½¥½¸µµ…Í­…‰±”´ÔÄÈ¹Á¹œıØõ±Õ‘•àµ°Äœ)tì()Í•±˜¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È ¥¹ÍÑ…±°œ°€¡•Ù•¹Ğ¤€ôøì(€•Ù•¹Ğ¹İ…¥ÑU¹Ñ¥° (€€€…¡•Ì¹½Á•¸¡!}95¤(€€€€€€¹Ñ¡•¸ ¡…¡”¤€ôø…¡”¹…‘‘±°¡AA}M!10¤¤(€€€€€€¹Ñ¡•¸  ¤€ôøÍ•±˜¹Í­¥Á]…¥Ñ¥¹œ ¤¤(€€¤ì)ô¤ì()Í•±˜¹…‘‘Ù•¹Ñ1¥ÍÑ•¹•È …Ñ¥Ù…Ñ”œ°€¡•Ù•¹Ğ¤€ôøì(€•Ù•¹Ğ¹İ…¥ÑU¹Ñ¥° (€€€…¡•Ì¹­•åÌ ¤¹Ñ¡•¸ ¡­•åÌ¤€ôø(€€€€€AÉ½µ¥Í”¹…±° (€€€€€€€­•åÌ¹™¥±Ñ•È ¡­•ä¤€ôø­•ä€„ôô!}95¤¹·n:¶‰ËkºwµçYË\Ü˜Ø]IÙ[BˆËÈ\İ°êY[[Y[8 %İ]\È\ÈY™šXÚ\È\Ü\˜Z\ÜØZY[]™XÈ[‚ˆËÈ”™Y\ÙYÈÛÛ›™XİˆÚ[[İ\ˆÙ]HYÛ™K‚ˆËÈ‹ˆÙ\È°ê\ÛœÙ\ÈÛÛÜ\]Y\Èˆ\ÈY]™H[ˆØXÚH˜Z\ØZ]Ü›ÜÜÚ\ˆBˆËÈØXÚHØ[œÈ[Z]KØ[œÈ]IÛÛˆZ\ÜÙH˜[XZ\È°ê\šYšY\ˆ]\ˆ˜[Y]0êK‚ˆËÈZ\ÜğêY\È]H˜]šYØ]]\‹[\ÈİZ]™[]\ˆØXÚH›Ü›X[
+\È[XYÙ\ÂˆËÈQˆÛÛÙ\šY\È[ˆ[[]]X›XÉÙ\İ0êZ°èÜ[X[
+K‚ˆYˆ
+™]ÈT“
+™\]Y\İ\›
+K›ÜšYÚ[ˆOOHÙ[‹›ØØ][Û‹›ÜšYÚ[ŠH™]\›Â‚ˆÛÛœİ\Ó˜]šYØ][ÛˆH™\]Y\İ›[ÙHOOH	Û˜]šYØ]IÎÂˆ]™[œ™\ÜÛ™Ú]
+ˆ™]Ú
+™\]Y\İ
+Bˆ[Š
+™\ÜÛœÙJHOˆÂˆËÈ™HY][ˆØXÚH]YH\È°ê\ÛœÙ\ÈY™™Xİ]™[Y[˜[Y\ËˆØ[œÈÙBˆËÈÛÛ°íK[™H
+šXÚY\ˆ™[›Û[pêK0ê\ÚY[Y[[ˆÛİ\œÊHİH[™BˆËÈL\ÜØYğê™H0ê]Z]Z\ÙH[ˆØXÚH]™\ÜÙ\šYH[™0êYš[š[Y[ÜœÂˆËÈYÛ™K\Ü]IØ]H›ØÚZ[ˆÚ[™Ù[Y[HĞPÒWÓSQK‚ˆYˆ
+™\ÜÛœÙK›ÚÊHÂˆÛÛœİ™\ÜÛœÙPÛÛ™HH™\ÜÛœÙK˜ÛÛ™J
+NÂˆØXÚ\Ë›Ü[ŠĞPÒWÓSQJK[Š
+ØXÚJHOˆØXÚKœ]
+™\]Y\İ™\ÜÛœÙPÛÛ™JJNÂˆBˆ™]\›ˆ™\ÜÛœÙNÂˆJBˆ˜Ø]Ú
+\Ş[˜È
 
-// La valeur de CACHE_NAME est rÃ©Ã©crite automatiquement Ã  chaque dÃ©ploiement par
-// scripts/generate-sw-cache.js (voir package.json > "build"), Ã  partir d'un hash
-// du contenu rÃ©el de l'app (index.html, styles.min.css, app.js, manifest.json, icÃ´nes).
-// Elle change donc seulement quand ces fichiers changent vraiment â€” rien Ã  faire manuellement.
-const CACHE_NAME = 'ludex-shell-9df97647a0';
-
-const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/bootstrap.js',
-  '/styles.min.css',
-  '/app.js',
-  '/favicon.png?v=ludex-l1',
-  '/apple-touch-icon.png?v=ludex-l1',
-  '/manifest.json',
-  '/icon-192.png?v=ludex-l1',
-  '/icon-512.png?v=ludex-l1',
-  '/icon-maskable-192.png?v=ludex-l1',
-  '/icon-maskable-512.png?v=ludex-l1'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-
-  // Ne jamais intercepter les appels API : ils doivent toujours passer par le rÃ©seau
-  // (le cache HTTP de Vercel gÃ¨re dÃ©jÃ  leur fraÃ®cheur cÃ´tÃ© serveur).
-  if (request.url.includes('/api/')) return;
-
-  // Seules les requÃªtes GET sont mises en cache.
-  if (request.method !== 'GET') return;
-
-  // Ne jamais intercepter une requÃªte vers un AUTRE domaine (affiches TMDb,
-  // vignettes YouTube, polices Google). Deux raisons :
-  //  1. RÃ©-Ã©mettre la requÃªte depuis le service worker la transforme en
-  //     `connect-src` du point de vue de la CSP, au lieu du `img-src` qu'elle
-  //     est rÃ©ellement â€” toutes les affiches disparaissaient avec un
-  //     "Refused to connect" pointant sur cette ligne.
-  //  2. Ces rÃ©ponses sont opaques : les mettre en cache faisait grossir le
-  //     cache sans limite, sans qu'on puisse jamais vÃ©rifier leur validitÃ©.
-  // LaissÃ©es au navigateur, elles suivent leur cache HTTP normal (les images
-  // TMDb sont servies en `immutable`, c'est dÃ©jÃ  optimal).
-  if (new URL(request.url).origin !== self.location.origin) return;
-
-  const isNavigation = request.mode === 'navigate';
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Ne met en cache que les rÃ©ponses effectivement valides. Sans ce
-        // contrÃ´le, une 404 (fichier renommÃ©, dÃ©ploiement en cours) ou une
-        // 500 passagÃ¨re Ã©tait mise en cache et resservie indÃ©finiment hors
-        // ligne, jusqu'au prochain changement de CACHE_NAME.
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-        }
-        return response;
-      })
-      .catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        if (isNavigation) return caches.match('/index.html');
-        return new Response('Ressource indisponible hors ligne.', {
-          status: 503,
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-        });
-      })
-  );
-});
+HOˆÂˆÛÛœİØXÚYH]ØZ]ØXÚ\Ë›X]Ú
+™\]Y\İ
+NÂˆYˆ
+ØXÚY
+H™]\›ˆØXÚYÂˆYˆ
+\Ó˜]šYØ][ÛŠH™]\›ˆØXÚ\Ë›X]Ú
+	ËÚ[™^š[	ÊNÂˆ™]\›ˆ™]È™\ÜÛœÙJ	Ô™\ÜÛİ\˜ÙH[™\ÜÛšX›HÜœÈYÛ™K‰ËÂˆİ]\ÎˆLËˆXY\œÎˆÈ	ĞÛÛ[U\IÎˆ	İ^ÜZ[ÈÚ\œÙ]]]‹N	ÈKˆJNÂˆJBˆ
+NÂŸJNÂ
