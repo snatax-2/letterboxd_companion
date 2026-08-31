@@ -120,7 +120,7 @@ function buildSeasonProgressionSection(data, localShow) {
       <div class="mds-section-title">Détail par saison</div>
       <div class="tds-season-tabs" id="tds-season-tabs">${tabsHtml}</div>
       <div class="tds-season-status-row" id="tds-season-status-row">Choisis une saison pour afficher ses épisodes.</div>
-      <div class="tds-season-episodes" id="tds-season-episodes" data-loaded-season=""></div>
+      <div class="tds-season-episodes" id="tds-season-episodes" data-loaded-season="" aria-busy="false"></div>
     </div>
   `;
 }
@@ -146,7 +146,7 @@ function buildSeasonTabHtml(seasonMeta, localSeason, fallbackPosterPath) {
   const watched = (localSeason?.watchedEpisodes || []).length;
   const pct = total > 0 ? Math.round((watched / total) * 100) : 0;
   const state = localSeason ? (watched < total ? ' is-in-progress' : ' is-up-to-date') : ' is-untracked';
-  return `<button type="button" class="tds-season-tab${state}" data-season-number="${seasonMeta.season_number}" data-episode-count="${seasonMeta.episode_count}" data-season-name="${escAttr(seasonMeta.name)}" data-season-poster="${escAttr(seasonMeta.poster_path || fallbackPosterPath || '')}" aria-label="${escAttr(seasonMeta.name)} : ${watched} épisodes vus sur ${total}">
+  return `<button type="button" class="tds-season-tab${state}" data-season-number="${seasonMeta.season_number}" data-episode-count="${seasonMeta.episode_count}" data-season-name="${escAttr(seasonMeta.name)}" data-season-poster="${escAttr(seasonMeta.poster_path || fallbackPosterPath || '')}" aria-expanded="false" aria-controls="tds-season-episodes" aria-label="${escAttr(seasonMeta.name)} : ${watched} épisodes vus sur ${total}">
     <span class="tds-season-tab-label">S${seasonMeta.season_number}</span>
     <span class="tds-season-tab-count">${watched}/${total}</span>
     <span class="tds-season-tab-track" aria-hidden="true"><span class="tds-season-tab-fill" style="width:${pct}%"></span></span>
@@ -425,6 +425,10 @@ async function openTvDetailSheet(tmdbTvId) {
 // temps à l'ouverture de la fiche) — même mécanique de coche/rattrapage que
 // ce qui existait avant dans Noter, juste déplacée ici.
 
+// Chaque panneau ne peut recevoir que la réponse de sa dernière demande.
+// Replier ou changer de saison invalide aussi une requête encore en vol.
+const tdsSeasonRequests = new WeakMap();
+
 function wireSeasonTabs() {
   const tabsEl = document.getElementById('tds-season-tabs');
   if (!tabsEl) return;
@@ -435,11 +439,20 @@ function wireSeasonTabs() {
     const episodesEl = document.getElementById('tds-season-episodes');
     if (tab.classList.contains('active')) {
       tab.classList.remove('active');
+      tab.setAttribute('aria-expanded', 'false');
       if (statusRowEl) statusRowEl.textContent = 'Choisis une saison pour afficher ses épisodes.';
-      if (episodesEl) { episodesEl.innerHTML = ''; episodesEl.dataset.loadedSeason = ''; }
+      if (episodesEl) {
+        tdsSeasonRequests.delete(episodesEl);
+        episodesEl.innerHTML = '';
+        episodesEl.dataset.loadedSeason = '';
+        episodesEl.setAttribute('aria-busy', 'false');
+      }
       return;
     }
-    tabsEl.querySelectorAll('.tds-season-tab').forEach(t => t.classList.toggle('active', t === tab));
+    tabsEl.querySelectorAll('.tds-season-tab').forEach(t => {
+      t.classList.toggle('active', t === tab);
+      t.setAttribute('aria-expanded', String(t === tab));
+    });
 
     const localShow = loadTvShows().find(s => String(s.tmdbTvId) === String(tdsCurrentData?.id));
     const key = tab.dataset.seasonNumber;
@@ -455,18 +468,28 @@ async function loadAndRenderSeasonEpisodes(seasonNumber, seasonName) {
   if (!container || !tdsCurrentData) return;
   if (container.dataset.loadedSeason === String(seasonNumber)) return; // déjà affichée, pas de re-fetch
   const showId = tdsCurrentData.id;
-  container.innerHTML = '<div class="search-status" style="display:block;">Chargement des épisodes…</div>';
+  const request = {};
+  tdsSeasonRequests.set(container, request);
+  const isCurrent = () => container.isConnected && tdsSeasonRequests.get(container) === request;
+  container.dataset.loadedSeason = '';
+  container.setAttribute('aria-busy', 'true');
+  container.innerHTML = '<div class="tds-season-feedback" role="status">Chargement des épisodes…</div>';
   try {
     const data = await fetch(`/api/search?tvSeasonShowId=${showId}&tvSeasonNumber=${seasonNumber}`).then(readApiJson);
+    if (!isCurrent()) return;
     const episodes = data.episodes || [];
     if (episodes.length === 0) {
-      container.innerHTML = '<div class="search-status" style="display:block;">Aucun épisode trouvé pour cette saison.</div>';
+      container.innerHTML = '<div class="tds-season-feedback" role="status">Les épisodes de cette saison ne sont pas encore disponibles.</div>';
       return;
     }
     renderTdsEpisodeChecklist(container, showId, String(seasonNumber), seasonName, episodes);
     container.dataset.loadedSeason = String(seasonNumber);
   } catch (err) {
-    container.innerHTML = `<div class="search-status" style="display:block;">${escAttr(describeApiFailure(err))}</div>`;
+    if (!isCurrent()) return;
+    container.innerHTML = `<div class="tds-season-feedback" role="status">${escAttr(describeApiFailure(err))}</div>
+      <button type="button" class="error-retry-btn" data-retry-season="${escAttr(String(seasonNumber))}" data-season-name="${escAttr(seasonName)}">Réessayer</button>`;
+  } finally {
+    if (isCurrent()) container.setAttribute('aria-busy', 'false');
   }
 }
 
@@ -618,7 +641,11 @@ function refreshTdsSeasonProgress(showEntry, changedSeasonKey) {
     };
     const wasActive = changedTab.classList.contains('active');
     changedTab.outerHTML = buildSeasonTabHtml(meta, showEntry.seasons?.[changedSeasonKey], tdsCurrentData?.poster_path);
-    if (wasActive) document.getElementById('tds-season-tabs')?.querySelector(`.tds-season-tab[data-season-number="${changedSeasonKey}"]`)?.classList.add('active');
+    if (wasActive) {
+      const refreshedTab = tabsEl.querySelector(`.tds-season-tab[data-season-number="${changedSeasonKey}"]`);
+      refreshedTab.classList.add('active');
+      refreshedTab.setAttribute('aria-expanded', 'true');
+    }
   }
   const oldProgress = tdsContentEl.querySelector('.tds-series-progress');
   const allSeasons = (tdsCurrentData?.seasons || []).filter(season => season.season_number > 0 && season.episode_count > 0);
@@ -642,6 +669,12 @@ tdsEl.addEventListener('click', async (e) => {
 
   const retryBtn = e.target.closest('[data-retry-tv-id]');
   if (retryBtn) { openTvDetailSheet(retryBtn.dataset.retryTvId); return; }
+
+  const retrySeasonBtn = e.target.closest('[data-retry-season]');
+  if (retrySeasonBtn) {
+    loadAndRenderSeasonEpisodes(retrySeasonBtn.dataset.retrySeason, retrySeasonBtn.dataset.seasonName);
+    return;
+  }
 
   // Bug corrigé (signalé par l'utilisateur : "impossible de déplier le
   // synopsis") : le bouton existait et s'affichait correctement quand le

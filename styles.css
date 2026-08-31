@@ -1248,7 +1248,7 @@
   .tds-season-progress-right { display: flex; align-items: center; gap: 6px; }
   .tds-season-delete-btn, .tds-season-reopen-btn {
     display: flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 50%; color: var(--text-mid);
+    width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; color: var(--text-mid);
     background: transparent; border: none;
   }
   .tds-season-delete-btn:hover, .tds-season-delete-btn:active { color: var(--red); background: var(--surface); }
@@ -1265,7 +1265,7 @@
   }
   .tds-season-tab {
     position: relative; display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 6px;
-    min-width: 68px; flex-shrink: 0; scroll-snap-align: start; padding: 8px 10px 11px; border-radius: 10px;
+    min-width: 68px; min-height: 44px; flex-shrink: 0; scroll-snap-align: start; padding: 8px 10px 11px; border-radius: 10px;
     background: var(--surface2); border: 1px solid var(--border); color: var(--text-mid); cursor: pointer;
     font-family: var(--font-heading); font-weight: 700; font-size: 0.76rem;
   }
@@ -1282,6 +1282,12 @@
   .tds-season-status.tds-season-rated { color: var(--text-hi); font-weight: 700; }
   .tds-season-status.tds-season-untracked { font-style: italic; opacity: 0.7; }
   .tds-season-episodes { padding: 4px 4px 14px; }
+  .tds-season-episodes:empty { padding: 0; }
+  .tds-season-feedback { padding: 12px 0; color: var(--text-mid); font-size: .8rem; line-height: 1.5; }
+  .tds-season-tab:focus-visible,
+  .tds-season-delete-btn:focus-visible,
+  .tds-season-reopen-btn:focus-visible,
+  .mds-close:focus-visible { outline: 2px solid var(--text-hi); outline-offset: 2px; }
   .tds-episode-list { display: flex; flex-direction: column; gap: 2px; }
   .tds-rate-now-btn { display: none; width: 100%; margin-top: 10px; }
 
@@ -2311,7 +2317,7 @@
   /* ── FICHE FILM DÉTAILLÉE ── */
   .mds-box { max-width: 440px; position: relative; padding-top: 0; }
   .mds-close {
-    position: sticky; top: 12px; margin: 12px 12px -26px auto; width: 26px; height: 26px;
+    position: sticky; top: 12px; margin: 12px 12px -44px auto; width: 44px; height: 44px;
     border-radius: 50%; border: 1px solid var(--border-hi); background: var(--surface2);
     color: var(--text-hi); display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out); z-index: 6;
@@ -2373,8 +2379,8 @@
     width: 100px; height: 148px; display: flex; align-items: center; justify-content: center;
     background: var(--surface2); font-size: 2rem; color: var(--text-mid);
   }
-  .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; padding-right: 30px; }
-  .mds-header.compact .mds-header-info { padding-right: 26px; }
+  .mds-header-info { flex: 1; min-width: 0; padding-top: 2px; padding-right: 40px; overflow-wrap: anywhere; }
+  .mds-header.compact .mds-header-info { padding-right: 40px; }
   .mds-title {
     font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700;
     color: var(--text-hi); line-height: 1.25; transition: font-size var(--dur-base) var(--ease-out);
