@@ -495,10 +495,7 @@ async function fetchChefsDoeuvreDuMois() {
   const response = await fetch(`/api/monthly-selection?month=${month}`);
   if (!response.ok) throw new Error('monthly selection unavailable');
   const data = await response.json();
-  const films = (data.films || []).map(film => ({ ...normalizeItem(film), media_type: 'movie', country: film.country }));
-  films.editorialTitle = data.editorial?.title || '';
-  films.editorialIntro = data.editorial?.intro || '';
-  return films;
+  return (data.films || []).map(film => ({ ...normalizeItem(film), media_type: 'movie', country: film.country }));
 }
 
 async function fetchHistorique() {
@@ -576,18 +573,6 @@ async function loadCarousel(key) {
   try {
     const items = await CAROUSEL_SOURCES[key]();
     if (items.length === 0) { blockEl.style.display = 'none'; return; }
-    if (key === 'chefsDoeuvre') {
-      const title = document.getElementById('carousel-theme-chefsDoeuvre');
-      const intro = document.getElementById('carousel-intro-chefsDoeuvre');
-      if (title) {
-        title.textContent = items.editorialTitle || '';
-        title.style.display = items.editorialTitle ? '' : 'none';
-      }
-      if (intro) {
-        intro.textContent = items.editorialIntro || '';
-        intro.style.display = items.editorialIntro ? '' : 'none';
-      }
-    }
     rowEl.innerHTML = items.map(item => `
       <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}"${item.topRank ? ` data-top-rank="${item.topRank}"` : ''} aria-label="Voir la fiche de ${escAttr(item.title)}">
         ${item.poster_path
