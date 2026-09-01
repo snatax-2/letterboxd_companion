@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { computeTvProgress, computeTvSeasonProgress, tvEpisodeAvailability, isTvPaused } = require('../src/17c-tv-progress.js');
+const { computeTvProgress, computeTvSeasonProgress, tvEpisodeAvailability, tvEpisodeUnlockAt, isTvPaused } = require('../src/17c-tv-progress.js');
 const today = '2026-08-31';
 const ep = (n, date = '2020-01-01') => ({ episode_number: n, air_date: date, name: `Épisode ${n}` });
 const local = (watched = [1]) => ({ tmdbTvId: 42, seasons: { 1: { totalEpisodes: 2, watchedEpisodes: watched, rating: { score: '8.0' } } } });
@@ -59,6 +59,16 @@ test('une date manquante/invalide reste inconnue, pas à jour ni cochable', () =
   const p = computeTvProgress(local([1, 2]), catalogue([ep(1, null), ep(2, null)]), today);
   assert.equal(p.state, 'unknown');
   assert.equal(p.inContinue, true);
+});
+test('une diffusion américaine est protégée jusqu’au lendemain matin local', () => {
+  const episode = ep(1, '2026-08-31');
+  assert.equal(tvEpisodeAvailability(episode, new Date('2026-08-31T23:00:00'), ['US']), 'future');
+  assert.equal(tvEpisodeAvailability(episode, new Date('2026-09-01T05:59:59'), ['US']), 'future');
+  assert.equal(tvEpisodeAvailability(episode, new Date('2026-09-01T06:00:00'), ['US']), 'available');
+  assert.equal(tvEpisodeUnlockAt('2026-08-31', ['US']).getHours(), 6);
+});
+test('une diffusion non américaine reste disponible dès son jour local', () => {
+  assert.equal(tvEpisodeAvailability(ep(1, '2026-08-31'), new Date('2026-08-31T00:00:00'), ['FR']), 'available');
 });
 test('un catalogue absent/incomplet ne signifie pas que la série est terminée', () => {
   const p = computeTvProgress(local([1, 2]), null, today);

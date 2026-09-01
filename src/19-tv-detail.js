@@ -47,8 +47,8 @@ async function populateTdsUpNext(localShow) {
   let html;
   if (!episode) {
     html = '<div class="tds-upnext tds-upnext-locked"><div class="tds-upnext-label">À vérifier</div><div class="tds-upnext-meta">Catalogue indisponible — progression conservée</div></div>';
-  } else if (tvEpisodeAvailability(episode) !== 'available') {
-    const countdown = tvEpisodeAvailability(episode) === 'future' ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+  } else if (tvEpisodeAvailabilityForShow(localShow.tmdbTvId, episode) !== 'available') {
+    const countdown = tvEpisodeAvailabilityForShow(localShow.tmdbTvId, episode) === 'future' ? formatAirCountdown(episode.air_date, tvCatalogueView(localShow.tmdbTvId)?.origin_country || []) : 'Date de diffusion inconnue';
     html = `<div class="tds-upnext tds-upnext-locked"><div class="tds-upnext-label">À venir</div><div class="tds-upnext-title"><span class="tds-upnext-masked">Épisode à venir</span></div><div class="tds-upnext-meta">${escAttr(countdown)}</div></div>`;
   } else {
     html = `<div class="tds-upnext"><div><div class="tds-upnext-label">À regarder</div><div class="tds-upnext-title">S${String(seasonKey).padStart(2,'0')}E${String(episode.episode_number).padStart(2,'0')} — ${escAttr(episode.name || 'Sans titre')}</div></div>
@@ -451,7 +451,7 @@ function renderTdsEpisodeChecklist(container, showId, seasonKey, seasonName, epi
 
   const rowsHtml = episodes.map(ep => {
     const isWatched = watched.includes(ep.episode_number);
-    const locked = !isWatched && tvEpisodeAvailability(ep) !== 'available';
+    const locked = !isWatched && tvEpisodeAvailabilityForShow(showId, ep) !== 'available';
     const meta = [
       ep.air_date ? new Date(ep.air_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '',
       ep.runtime ? `${ep.runtime} min` : '',
@@ -497,10 +497,10 @@ async function onTdsEpisodeCheckClick(showId, seasonKey, seasonName, totalEpisod
   if (!already) {
     const data = (await fetchTvCataloguePart(showId, seasonKey)).data;
     const target = data.episodes.find(ep => ep.episode_number === episodeNumber);
-    if (tvEpisodeAvailability(target) !== 'available') throw new Error('Épisode non disponible : attends sa diffusion.');
+    if (tvEpisodeAvailabilityForShow(showId, target) !== 'available') throw new Error('Épisode non disponible : attends sa diffusion.');
     const maxWatched = season?.watchedEpisodes.length ? Math.max(...season.watchedEpisodes) : 0;
     if (episodeNumber > maxWatched + 1 && confirm(`Marquer aussi les épisodes ${maxWatched + 1} à ${episodeNumber - 1} comme vus ?`)) {
-      toMark = data.episodes.filter(ep => ep.episode_number > maxWatched && ep.episode_number <= episodeNumber && tvEpisodeAvailability(ep) === 'available').map(ep => ep.episode_number);
+      toMark = data.episodes.filter(ep => ep.episode_number > maxWatched && ep.episode_number <= episodeNumber && tvEpisodeAvailabilityForShow(showId, ep) === 'available').map(ep => ep.episode_number);
     }
   }
   await setTvEpisodesWatched(showId, seasonKey, toMark, !already, metadata);
@@ -537,7 +537,7 @@ function refreshOpenTvDetail() {
       }
       panel.querySelectorAll('.tv-episode-check').forEach(btn => {
         const seen = watched.includes(Number(btn.dataset.episode));
-        const locked = !seen && tvEpisodeAvailability(episodes.find(ep => ep.episode_number === Number(btn.dataset.episode))) !== 'available';
+        const locked = !seen && tvEpisodeAvailabilityForShow(showId, episodes.find(ep => ep.episode_number === Number(btn.dataset.episode))) !== 'available';
         btn.classList.toggle('watched', seen);
         btn.setAttribute('aria-pressed', String(seen));
         btn.setAttribute('aria-label', locked ? 'Épisode pas encore disponible' : `Marquer l'épisode ${btn.dataset.episode} comme ${seen ? 'non vu' : 'vu'}`);

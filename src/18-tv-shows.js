@@ -1030,11 +1030,14 @@ function updateTvContinueCard(card, resolved) {
 // Texte engageant selon la proximité de diffusion — "Demain", "J-3", ou la
 // date complète au-delà d'une semaine (pas la peine d'un compte à rebours
 // pour un épisode encore loin).
-function formatAirCountdown(airDateStr) {
-  const airDate = new Date(airDateStr + 'T00:00:00');
+function formatAirCountdown(airDateStr, originCountries = []) {
+  const airDate = tvEpisodeUnlockAt(airDateStr, originCountries);
+  if (!airDate) return 'Date de diffusion inconnue';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((airDate - today) / 86400000);
+  const releaseDay = new Date(airDate);
+  releaseDay.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((releaseDay - today) / 86400000);
   if (diffDays <= 0) return 'Diffusion imminente';
   if (diffDays === 1) return 'Demain';
   if (diffDays <= 13) return `J-${diffDays}`;
@@ -1053,10 +1056,11 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   // équivalent en pratique à next_episode_to_air pour cet usage précis :
   // le prochain épisode non vu ET pas encore diffusé est justement celui
   // que next_episode_to_air désignerait.
-  const isLocked = tvEpisodeAvailability(episode) !== 'available';
+  const originCountries = tvCatalogueView(show.tmdbTvId)?.origin_country || [];
+  const isLocked = tvEpisodeAvailability(episode, new Date(), originCountries) !== 'available';
 
   if (isLocked) {
-    const countdown = tvEpisodeAvailability(episode) === 'future' ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+    const countdown = tvEpisodeAvailability(episode, new Date(), originCountries) === 'future' ? formatAirCountdown(episode.air_date, originCountries) : 'Date de diffusion inconnue';
     return `
       <div class="tv-continue-card tv-continue-locked">
         ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}

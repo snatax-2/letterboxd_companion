@@ -40,6 +40,10 @@ function tvCatalogueView(id, detailOverride) {
   })) };
 }
 
+function tvEpisodeAvailabilityForShow(showId, episode, reference) {
+  return tvEpisodeAvailability(episode, reference, tvCatalogueView(showId)?.origin_country || []);
+}
+
 function saveTvCatalogueCache(id) {
   try { localStorage.setItem('lbx_tv_catalogue_v1_' + id, JSON.stringify(readTvCatalogueEntry(id))); }
   catch { /* Le cache reste en mémoire si le quota est atteint. */ }
@@ -157,7 +161,7 @@ async function setTvEpisodesWatched(showId, seasonKey, numbers, watched, metadat
     seasonData = (await fetchTvCataloguePart(showId, String(seasonKey))).data;
     for (const number of numbers) {
       const episode = seasonData.episodes.find(ep => ep.episode_number === number);
-      if (!episode || tvEpisodeAvailability(episode) !== 'available') throw new Error('Épisode non disponible : validation impossible avant sa diffusion.');
+      if (!episode || tvEpisodeAvailabilityForShow(showId, episode) !== 'available') throw new Error('Épisode non disponible : validation impossible avant sa diffusion.');
     }
   }
   return mutateTvShows(shows => {
