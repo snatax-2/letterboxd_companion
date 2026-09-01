@@ -2720,8 +2720,11 @@
     min-width: 0;
   }
   .mds-cast-carousel::-webkit-scrollbar { display: none; }
-  .mds-cast-track { display: flex; gap: 12px; width: max-content; }
-  .mds-cast-item { flex-shrink: 0; width: 72px; cursor: pointer; text-align: center; }
+  /* Les cartes ne doivent jamais s'aligner par leur dernière ligne : un
+     personnage ou un nom long faisait remonter son portrait. Le repère
+     visuel est la rangée de visages, donc toutes les cartes partent du haut. */
+  .mds-cast-track { display: flex; align-items: flex-start; gap: 12px; width: max-content; }
+  .mds-cast-item { flex: 0 0 72px; width: 72px; cursor: pointer; text-align: center; }
   .mds-cast-photo { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto; background: var(--surface2); border: 2px solid var(--border); transition: border-color var(--dur-fast); }
   .mds-cast-item:hover .mds-cast-photo { border-color: var(--orange); }
   .mds-cast-photo-ph { display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--text-mid); }
