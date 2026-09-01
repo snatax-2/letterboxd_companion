@@ -1401,6 +1401,16 @@
     display: flex; align-items: center; justify-content: center; gap: 6px;
     position: relative; z-index: 1;
   }
+  /* Les bascules Films / Séries reprennent la mono des intertitres : elles
+     restent des commandes, mais portent la même voix éditoriale que les
+     repères « Collection active » et les numéros de section. Les onglets
+     Détaillé / Rapide conservent leur typographie propre. */
+  .mode-tabs:has(.toggle-slider) .mode-tab {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 650;
+    letter-spacing: .08em;
+  }
   .mode-tab.active { background: transparent; color: var(--toggle-active-text); border: 1px solid transparent; font-weight: 750; }
   .mode-tabs:not(.mode-tabs-plain) .mode-tab { min-height: 44px; }
   /* Bug corrigé : la règle ci-dessus rend le bouton actif TRANSPARENT et lui
