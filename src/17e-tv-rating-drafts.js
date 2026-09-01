@@ -59,6 +59,15 @@ function restoreTvRatingDraft() {
 function resumeLastTvDraft() {
   const key = localStorage.getItem('lbx_tv_rating_last');
   if (!/^\d+:\d+$/.test(key || '')) return;
+  // Cette clé est un pointeur de brouillon, pas un historique de navigation.
+  // Après une note enregistrée, clearTvRatingDraft() laisse volontairement
+  // une marque { cleared: true } pour la synchro ; il ne faut surtout pas
+  // rouvrir la dernière série notée au prochain lancement de l'app.
+  const draft = readJsonStorage(TV_DRAFT_PREFIX + key, null, isValidTvDraft);
+  if (!draft?.form) {
+    localStorage.removeItem('lbx_tv_rating_last');
+    return;
+  }
   const [id, season] = key.split(':');
   reopenTvSeason(id, season);
 }

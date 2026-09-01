@@ -39,6 +39,16 @@ test('brouillons film et saisons isolés, y compris date et pondérations', asyn
   await tick();
 });
 
+test('la dernière saison notée ne se rouvre pas sans brouillon à reprendre', t => {
+  const w = app(t);
+  w.localStorage.setItem('lbx_tv_rating_last', '1:1');
+  w.localStorage.setItem('lbx_tv_rating_draft_1:1', JSON.stringify({ cleared: true }));
+  w.setMediaType('tv');
+  assert.equal(w.document.getElementById('notation-card').style.display, 'none');
+  assert.equal(w.document.getElementById('tv-search').value, '');
+  assert.equal(w.localStorage.getItem('lbx_tv_rating_last'), null);
+});
+
 test('rouvrir pour noter ferme la fiche et restaure la date par le même chemin', async t => {
   const w = app(t);
   w.document.getElementById('tv-detail-sheet').classList.add('open');
