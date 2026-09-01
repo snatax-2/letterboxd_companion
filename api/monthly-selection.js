@@ -27,10 +27,6 @@ async function fetchJson(url) {
   return response.json();
 }
 
-const FALLBACK_EDITORIAL = {
-  title: 'Regards croisés',
-  intro: 'Un film américain et trois regards venus d’ailleurs, réunis ce mois-ci par leur exigence de cinéma.',
-};
 // Gemini 3.5 Flash est le modèle Flash courant ; 2.5 reste un repli pour les
 // projets dont l'accès au modèle le plus récent n'est pas encore activé.
 const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-2.5-flash'];
@@ -119,8 +115,9 @@ export default async function handler(req, res) {
   if (pools.length !== 4) return res.status(502).json({ error: 'Sélection mensuelle indisponible.' });
   const fallbackFilms = pools.map(pool => pool[0]);
   const chosen = await selectWithGemini(pools.flat(), process.env.GEMINI_API_KEY);
-  const selection = chosen || { films: fallbackFilms, editorial: FALLBACK_EDITORIAL };
-  const films = selection.films.map(film => ({ ...film, editorialReason: selection.editorial.reasons?.[String(film.id)] || '' }));
+  // Le repli conserve les quatre films, mais jamais un faux commentaire éditorial.
+  const selection = chosen || { films: fallbackFilms, editorial: null };
+  const films = selection.films.map(film => ({ ...film, editorialReason: selection.editorial?.reasons?.[String(film.id)] || '' }));
   // Une même URL de mois conserve le choix éditorial ; le cache évite les appels Gemini répétitifs.
   res.setHeader('Cache-Control', 's-maxage=2592000, stale-while-revalidate=604800');
   return res.status(200).json({ month, editorial: selection.editorial, films });

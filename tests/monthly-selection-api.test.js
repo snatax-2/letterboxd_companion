@@ -79,7 +79,7 @@ describe('api/monthly-selection.js — curation Gemini', () => {
     const res = makeRes();
     await handler(request(82), res);
     assert.equal(res.statusCode, 200);
-    assert.equal(res.body.editorial.title, 'Regards croisés');
+    assert.equal(res.body.editorial, null);
     assert.equal(res.body.films.filter(film => film.countryCode === 'US').length, 1);
     assert.equal(new Set(res.body.films.filter(film => film.countryCode !== 'US').map(film => film.countryCode)).size, 3);
   }));

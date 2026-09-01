@@ -579,8 +579,14 @@ async function loadCarousel(key) {
     if (key === 'chefsDoeuvre') {
       const title = document.getElementById('carousel-theme-chefsDoeuvre');
       const intro = document.getElementById('carousel-intro-chefsDoeuvre');
-      if (title) title.textContent = items.editorialTitle || '';
-      if (intro) intro.textContent = items.editorialIntro || '';
+      if (title) {
+        title.textContent = items.editorialTitle || '';
+        title.style.display = items.editorialTitle ? '' : 'none';
+      }
+      if (intro) {
+        intro.textContent = items.editorialIntro || '';
+        intro.style.display = items.editorialIntro ? '' : 'none';
+      }
     }
     rowEl.innerHTML = items.map(item => `
       <button type="button" class="poster-min" data-item-id="${item.id}" data-media-type="${effectiveMediaType}"${item.topRank ? ` data-top-rank="${item.topRank}"` : ''} aria-label="Voir la fiche de ${escAttr(item.title)}">
