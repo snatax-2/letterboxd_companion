@@ -13,6 +13,8 @@ function streamingProviderKey(name) {
     primevideo: 'primevideo',
     appletv: 'appletv',
     appletvplus: 'appletv',
+    disney: 'disneyplus',
+    disneyplus: 'disneyplus',
     max: 'max',
     hbomax: 'max',
     canalplus: 'canalplus',

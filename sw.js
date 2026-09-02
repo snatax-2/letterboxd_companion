@@ -8,7 +8,7 @@
 // scripts/generate-sw-cache.js (voir package.json > "build"), à partir d'un hash
 // du contenu réel de l'app (index.html, styles.min.css, app.js, manifest.json, icônes).
 // Elle change donc seulement quand ces fichiers changent vraiment — rien à faire manuellement.
-const CACHE_NAME = 'ludex-shell-842541a3af';
+const CACHE_NAME = 'ludex-shell-4d46d6b698';
 
 const APP_SHELL = [
   '/',
@@ -45,34 +45,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-
-  // Ne jamais intercepter les appels API : ils doivent toujours passer par le réseau
-  // (le cache HTTP de Vercel gère déjà leur fraîcheur côté serveur).
   if (request.url.includes('/api/')) return;
-
-  // Seules les requêtes GET sont mises en cache.
   if (request.method !== 'GET') return;
-
-  // Ne jamais intercepter une requête vers un AUTRE domaine (affiches TMDb,
-  // vignettes YouTube, polices Google). Deux raisons :
-  //  1. Ré-émettre la requête depuis le service worker la transforme en
-  //     `connect-src` du point de vue de la CSP, au lieu du `img-src` qu'elle
-  //     est réellement — toutes les affiches disparaissaient avec un
-  //     "Refused to connect" pointant sur cette ligne.
-  //  2. Ces réponses sont opaques : les mettre en cache faisait grossir le
-  //     cache sans limite, sans qu'on puisse jamais vérifier leur validité.
-  // Laissées au navigateur, elles suivent leur cache HTTP normal (les images
-  // TMDb sont servies en `immutable`, c'est déjà optimal).
   if (new URL(request.url).origin !== self.location.origin) return;
-
   const isNavigation = request.mode === 'navigate';
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Ne met en cache que les réponses effectivement valides. Sans ce
-        // contrôle, une 404 (fichier renommé, déploiement en cours) ou une
-        // 500 passagère était mise en cache et resservie indéfiniment hors
-        // ligne, jusqu'au prochain changement de CACHE_NAME.
         if (response.ok) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
