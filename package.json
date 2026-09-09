@@ -20,7 +20,7 @@
     "node": ">=18"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.12.1",
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "1.56.0",
     "clean-css": "^5.3.3",
