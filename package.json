@@ -30,6 +30,6 @@
     "terser": "^5.50.0"
   },
   "dependencies": {
-    "@upstash/redis": "1.38.3"
+    "@upstash/redis": "1.38.4"
   }
 }
