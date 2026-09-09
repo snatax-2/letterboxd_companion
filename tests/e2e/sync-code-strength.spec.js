@@ -35,6 +35,33 @@ test('le bouton genere un code long et aleatoire', async ({ page }) => {
   expect(second).not.toBe(premier);
 });
 
+test('le code reste masque par defaut et sa revelation est accessible', async ({ page }) => {
+  const CODE = 'Kx7mQp2rVn9tLb4wZc6dHy';
+  await page.addInitScript((code) => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_sync_code', code);
+  }, CODE);
+  await openSettings(page);
+
+  const input = page.locator('#setting-sync-code');
+  const toggle = page.locator('#sync-reveal-btn');
+  await expect(input).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(toggle).toContainText('Afficher');
+
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(input).toHaveAttribute('type', 'text');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(toggle).toContainText('Masquer');
+
+  // Fermer puis rouvrir les réglages remet toujours le secret à l'abri.
+  await page.click('#settings-cancel');
+  await page.click('#settings-btn');
+  await expect(input).toHaveAttribute('type', 'password');
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('un code faible declenche un avertissement visible', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');

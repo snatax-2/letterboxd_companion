@@ -41,11 +41,19 @@ function formatViolations(violations) {
   return violations.map(v => `[${v.impact}] ${v.id}: ${v.help} (${v.nodes.length} élément(s))`).join('\n');
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+async function waitForStableUi(page) {
+  // Axe ne doit pas mesurer le splash décoratif pendant son fondu : son
+  // opacité intermédiaire mélange volontairement ses couleurs avec la vue
+  // située derrière et produit un faux contraste. Le produit utile est prêt
+  // une fois ce nœud retiré du DOM.
+  await page.locator('#app-splash').waitFor({ state: 'detached' });
+}
+
+for (const theme of ['dark', 'light']) {
   test.describe(`Accessibilité — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await seedRichState(page);
-      if (theme !== 'default') {
+      if (theme !== 'dark') {
         await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       }
     });
@@ -53,6 +61,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -62,6 +71,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#nav-history');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -71,15 +81,17 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#nav-watchlist');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
     });
 
-    test(`Profil avec duels et badges (${theme})`, async ({ page }) => {
+    test(`Profil avec trophées (${theme})`, async ({ page }) => {
       await page.goto('/');
       await page.click('#nav-profile');
       await page.waitForTimeout(400);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -89,6 +101,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
       await page.goto('/');
       await page.click('#settings-btn');
       await page.waitForTimeout(300);
+      await waitForStableUi(page);
       const results = await new AxeBuilder({ page }).analyze();
       const bad = seriousOrCritical(results);
       expect(bad, formatViolations(bad)).toHaveLength(0);
@@ -108,43 +121,29 @@ test('Fiche film ouverte', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => window.openMovieDetailSheet('500'));
   await page.waitForSelector('#movie-detail-sheet.open .mds-title');
+  await waitForStableUi(page);
   const results = await new AxeBuilder({ page }).analyze();
   const bad = seriousOrCritical(results);
   expect(bad, formatViolations(bad)).toHaveLength(0);
 });
 
-test('Modale de confirmation ouverte', async ({ page }) => {
-  await seedRichState(page);
+test('le groupe de thèmes utilise un roving tabindex et les flèches', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
   await page.goto('/');
   await page.click('#settings-btn');
-  await page.waitForSelector('#reset-duels-btn');
-  await page.click('#reset-duels-btn');
-  await page.waitForSelector('#modal.open');
-  // Attend la FIN du fondu d'ouverture avant de mesurer. #modal.open devient
-  // "visible" dès que la boîte a une aire non nulle, mais l'overlay ET la
-  // boîte sont encore en transition d'opacité (voir styles.css).
-  // axe-core mesurait donc le contraste sur une couleur MÉLANGÉE avec le
-  // fond, et rapportait 4.32:1 (Carnet) et 4.49:1 (Technicolor) là où la
-  // palette réelle donne 4.70 et 4.66 — au-dessus du seuil de 4.5. Deux
-  // faux positifs, uniquement sur le CI (assez lent pour que le scan tombe
-  // en plein fondu) et jamais en local : c'est le test qui mesurait trop
-  // tôt, pas les couleurs qui étaient fautives.
-  await page.waitForFunction(
-    () => {
-      const overlay = document.querySelector('#modal');
-      const boite = document.querySelector('#modal .modal-box');
-      // Les DEUX doivent être à pleine opacité : l'overlay a sa propre
-      // transition (--dur-base) et composite tout son contenu, donc une
-      // boîte déjà opaque reste mélangée avec le fond tant que l'overlay
-      // ne l'est pas. Mesuré : axe voyait #cc2836 au lieu de #DF2935.
-      return overlay && boite
-        && getComputedStyle(overlay).opacity === '1'
-        && getComputedStyle(boite).opacity === '1';
-    },
-    undefined,
-    { timeout: 5000 },
-  );
-  const results = await new AxeBuilder({ page }).analyze();
-  const bad = seriousOrCritical(results);
-  expect(bad, formatViolations(bad)).toHaveLength(0);
+
+  const selected = page.locator('.theme-card[aria-checked="true"]');
+  await expect(selected).toHaveAttribute('tabindex', '0');
+  await expect(page.locator('.theme-card[tabindex="0"]')).toHaveCount(1);
+
+  await selected.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.theme-card[data-theme="light"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('.theme-card[data-theme="light"]')).toBeFocused();
+  await expect(page.locator('.theme-card[tabindex="0"]')).toHaveCount(1);
+
+  await page.keyboard.press('End');
+  await expect(page.locator('.theme-card[data-theme="system"]')).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('.theme-card[data-theme="dark"]')).toHaveAttribute('aria-checked', 'true');
 });

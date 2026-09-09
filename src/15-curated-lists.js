@@ -27,10 +27,8 @@ const clsCloseBtn = document.getElementById('cls-close-btn');
 // de films différente. Réutilise la même feuille plutôt que d'en construire
 // une nouvelle, à l'image de la fiche réalisateur.
 async function openSagaSheet(collectionId, collectionName) {
-  lastFocusedBeforeModal = document.activeElement;
   clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
-  clsEl.classList.add('open');
-  clsCloseBtn.focus();
+  openModalElement(clsEl, { initialFocus: clsCloseBtn });
 
   try {
     const res = await fetch(`/api/search?collectionId=${collectionId}`);
@@ -168,10 +166,8 @@ function renderThemeChips() {
 // (esprit "suggestion", pas "collection à cocher"). L'ajout à la watchlist
 // se fait film par film en ouvrant sa fiche, comme partout ailleurs.
 async function openThemeSheet(themeId, themeName) {
-  lastFocusedBeforeModal = document.activeElement;
   clsContentEl.innerHTML = `<div class="mds-header"><div class="mds-title">Chargement…</div></div>`;
-  clsEl.classList.add('open');
-  clsCloseBtn.focus();
+  openModalElement(clsEl, { initialFocus: clsCloseBtn });
 
   const films = await fetchThemeList(themeId);
   clsContentEl.innerHTML = `

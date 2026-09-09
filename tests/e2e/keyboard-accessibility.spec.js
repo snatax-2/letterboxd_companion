@@ -74,3 +74,31 @@ test('le focus reste piégé dans la fiche ouverte (Tab ne sort pas vers le cont
   });
   expect(stillInSheet).toBe(true);
 });
+
+test('les modales fermées sont retirées de l arbre interactif', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('lbx_onboarding_seen', '1'));
+  await page.goto('/');
+  const states = await page.locator('.modal-overlay:not(.open)').evaluateAll(modals => modals.map(modal => ({
+    id: modal.id,
+    inert: modal.inert,
+    hidden: modal.getAttribute('aria-hidden'),
+  })));
+  expect(states.length).toBeGreaterThan(5);
+  expect(states.every(state => state.inert && state.hidden === 'true')).toBe(true);
+});
+
+test('la section des poids est activable au clavier et annonce son état', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('lbx_onboarding_seen', '1');
+    localStorage.setItem('lbx_focus_mode', 'false');
+  });
+  await page.goto('/');
+  await page.click('#nav-rating');
+  const toggle = page.locator('#weights-toggle');
+  await toggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#weights-panel')).toHaveClass(/open/);
+  await page.keyboard.press('Space');
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+});

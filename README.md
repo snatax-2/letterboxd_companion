@@ -1,6 +1,8 @@
 # Ludex Rating Companion
 
-App de notation de films (recherche TMDb, fiche film, watchlist, providers de streaming BE) — front-end statique + une fonction serverless Vercel qui fait office de proxy vers l'API TMDb.
+Application personnelle de notation et de suivi de films et séries : historique détaillé, watchlists multiples, progression par saison, profil, analyses et synchronisation facultative entre appareils. Le navigateur conserve les données localement ; des fonctions Vercel servent de proxy vers TMDb/Gemini et de passerelle vers Supabase.
+
+Application en ligne : [https://ludex-three.vercel.app/](https://ludex-three.vercel.app/)
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
 
@@ -9,6 +11,7 @@ Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique des versions.
 ```
 ludex/
 ├── index.html            → structure de la page
+├── bootstrap.js          → thème initial, polices à la demande et métriques Vercel
 ├── styles.css             → tous les styles et thèmes
 ├── app.js                  → ⚠️ FICHIER GÉNÉRÉ, ne pas éditer directement (voir src/)
 ├── src/                    → code source réel de app.js, découpé par thème
@@ -29,7 +32,12 @@ ludex/
 │   ├── 08-watchlist.js        → watchlist
 │   ├── 09-modal-init.js       → modale de confirmation & initialisation
 │   ├── 10-cloud-sync.js       → synchronisation cloud (sauvegarde/restauration)
-│   └── 11-discover.js         → onglet "Découvrir" façon Tinder (swipe pour ajouter/passer)
+│   ├── 11-discover.js         → onglet "Découvrir"
+│   ├── 12-movie-detail.js     → fiche film
+│   ├── 13-duels.js            → classement personnel par duels ELO
+│   ├── 17-film-analysis.js    → analyses personnelles et retour Gemini optionnel
+│   ├── 18-tv-shows.js         → suivi des séries et saisons
+│   └── 19-tv-detail.js        → fiche série
 ├── tests/                  → tests automatisés (node:test), voir section dédiée plus bas
 ├── scripts/
 │   ├── build-app-js.js      → concatène src/*.js dans l'ordre pour produire app.js
@@ -41,12 +49,13 @@ ludex/
 │   ├── package.json       → marque ce dossier en module ES (pour Node/tests uniquement)
 │   ├── _rateLimit.js       → limiteur de requêtes partagé (pas une route, préfixe _)
 │   ├── search.js           → fonction serverless Vercel (proxy TMDb + cache)
+│   ├── analyse-film.js     → mentor filmique Gemini, optionnel
 │   └── sync.js             → fonction serverless Vercel (synchro cloud Supabase)
 ├── .github/workflows/ci.yml → vérifications automatiques (build, tests, syntaxe) à chaque push
 ├── package.json
 ├── vercel.json
 ├── .gitignore
-└── .env.example           → variables d'environnement nécessaires (TMDB_KEY, SUPABASE_*)
+└── .env.example           → variables d'environnement documentées
 ```
 
 ### Pourquoi `app.js` est généré
@@ -84,7 +93,7 @@ Vercel construit `app.js` à chaque déploiement (`npm run build`, voir `vercel.
 
 ## Synchronisation cloud (Supabase)
 
-Permet de sauvegarder historique + watchlist + réglages en ligne (pour ne jamais les perdre) et de les retrouver sur un autre appareil via un "code de synchronisation" que tu choisis toi-même.
+Permet de sauvegarder l'état personnel complet (films, séries, listes films/séries, analyses, duels et réglages) et de le retrouver sur un autre appareil via un code secret. L'export JSON manuel utilise le même schéma versionné et reste recommandé comme sauvegarde indépendante.
 
 **Fusion, pas écrasement** : si tu notes un film sur ton PC et un autre sur ton téléphone avant de synchroniser, les deux sont conservés — rien n'est perdu. Si tu notes le *même* film des deux côtés, c'est la version la plus récente qui est gardée. Les suppressions sont respectées elles aussi (via un petit mécanisme de traces horodatées), donc un film supprimé sur un appareil ne réapparaît pas après une synchro depuis un autre appareil qui l'avait encore.
 
@@ -120,8 +129,13 @@ Trois garde-fous sont en place :
 - **Un nouveau code doit faire au moins 16 caractères.** Le bouton *Générer un code sûr* en produit un de 26 caractères tirés au hasard (`crypto.getRandomValues`, jamais `Math.random`). Un code court et mémorisable — `dario`, `films`, `test` — se devine en quelques secondes ; c'est précisément ce que le minimum empêche.
 - **Le code n'est jamais stocké en clair.** La ligne Supabase est indexée par `sha256(code)`. Si la base fuite, aucun code utilisable n'en sort. *Aucune migration SQL n'est nécessaire* : la colonne `sync_code` contient simplement un hash désormais.
 - **Le code voyage dans un en-tête** (`X-Sync-Code`), plus dans l'URL — une query string finit dans les journaux d'accès et les caches. Le `?code=` reste accepté en repli le temps que les service workers servant une ancienne version de `app.js` soient remplacés.
+- **Le champ est masqué par défaut** dans les réglages. Le bouton *Afficher* ne le révèle que pour l'ouverture en cours ; fermer puis rouvrir les réglages le masque à nouveau.
 
 **Si tu utilisais déjà un code court**, il continue de fonctionner : tes données restent accessibles, et la ligne migre automatiquement vers sa forme hachée à la première sauvegarde (l'ancienne ligne en clair est alors supprimée). Mais **tant que tu gardes ce code court, il reste devinable** — l'app affiche un avertissement dans les réglages. Pour le remplacer : *Générer un code sûr*, puis *Sauvegarder maintenant*, puis recopie le nouveau code sur tes autres appareils. Note l'ancien quelque part d'abord si tu as un doute.
+
+### Limitation de débit partagée
+
+Les endpoints publics utilisent Upstash Redis pour partager leurs compteurs entre les fonctions Vercel. Installe une ressource Redis depuis le Vercel Marketplace et connecte-la au projet ; les variables `UPSTASH_REDIS_REST_URL` et `UPSTASH_REDIS_REST_TOKEN` seront alors disponibles au runtime. Les anciens noms `KV_REST_API_URL` et `KV_REST_API_TOKEN` restent acceptés pour les stores Vercel KV déjà migrés. Sans Redis, l'application reste fonctionnelle mais le compteur se replie sur la mémoire de chaque instance et protège moins efficacement les quotas.
 
 ## Tests automatisés
 
@@ -129,7 +143,15 @@ La logique la plus critique de l'app (calcul du score, fusion de la synchro clou
 
 ```bash
 npm test
+npm run quality:budgets
 ```
+
+`quality:budgets` vérifie sans modifier les fichiers que le cœur minifié reste
+sous 150 KiB gzip et que le HTML initial reste sous 1 200 nœuds. Le test E2E
+`performance-guardrails.spec.js` contrôle aussi le DOM après démarrage et
+confirme que `renderAll`/les statistiques exposent des mesures locales via
+`getLudexPerformanceSummary()`. Ces durées restent dans le navigateur : aucune
+télémétrie personnelle n'est envoyée.
 
 Ce que ça couvre :
 - **`tests/score.test.js`** — calcul du score en mode rapide et en mode détaillé (moyenne pondérée), conversion en étoiles.
@@ -336,23 +358,26 @@ git config core.hooksPath .githooks
 
 1. Va sur https://vercel.com/new et importe le dépôt GitHub que tu viens de créer.
 2. Vercel détecte automatiquement :
-   - les fichiers statiques à la racine (`index.html`, `styles.css`, `app.js`) ;
+   - les fichiers statiques à la racine (`index.html`, `styles.min.css`, `app.js`) ;
    - `api/search.js` comme fonction serverless (Node.js).
-3. **Avant de déployer**, ajoute la variable d'environnement dans l'écran de configuration du projet (ou après, dans `Settings > Environment Variables`) :
-   - Nom : `TMDB_KEY`
-   - Valeur : ta clé TMDb
-   - Environnements : Production, Preview, Development
+3. **Avant de déployer**, reporte dans `Settings > Environment Variables` les
+   variables utiles listées dans `.env.example` (`TMDB_KEY`, puis selon les
+   fonctions activées : OMDb, Gemini, Supabase et Upstash Redis). Ne commit
+   jamais leurs valeurs.
 4. Clique sur **Deploy**.
 
 Chaque nouveau `git push` sur `main` redéploiera automatiquement en production ; chaque push sur une autre branche/PR génère un déploiement de preview isolé.
 
 ### Minification au déploiement
 
-`vercel.json` exécute `npm run build && node scripts/minify-for-deploy.js`. La seconde étape minifie `app.js` et `styles.css` (Terser + clean-css) **uniquement dans l'environnement de build Vercel** — mesuré : ~95 Ko → ~48 Ko gzippé pour le JS, ~45 Ko → ~29 Ko pour le CSS, soit environ moitié moins de données à charger sur le premier accès (avant que le service worker ne mette tout en cache).
-
-Le fichier `app.js` commité dans Git reste volontairement lisible (utile pour les diffs et les revues) : cette étape ne touche jamais aux fichiers du dépôt, seulement à la copie éphémère que Vercel sert aux utilisateurs. La CI (`npm run build:js`, sans la minification) continue de comparer contre cette version lisible.
+`vercel.json` exécute `npm run build`. Cette commande assemble `app.js` depuis
+`src/`, lance le lint, minifie le JavaScript, génère `styles.min.css`, puis met
+à jour le hash du service worker. `app.js` et `styles.min.css` sont des
+artefacts générés et ne doivent jamais être édités directement.
 
 ## Points à vérifier
 
-- Le endpoint `/api/search` gère 5 cas via des query params (`query`, `id`, `providers`, `img`, `recommendations`), avec mise en cache CDN adaptée à chaque type de donnée.
+- Le endpoint `/api/search` route plusieurs opérations TMDb/OMDb via des query
+  params ; toute nouvelle branche doit ajouter son contrat dans
+  `tests/search-api.test.js` et définir explicitement validation, timeout et cache.
 - `app.js` est généré depuis `src/` à chaque build — voir la section "Structure du projet" plus haut si tu ajoutes du code.

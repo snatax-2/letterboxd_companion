@@ -152,7 +152,7 @@ test('note globale de série : moyenne des saisons notées, exclut les non noté
   await expect(page.locator('#tv-show-average')).toContainText('8.0/10');
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite : zero violation apres notation - ${theme}`, async ({ page }) => {
     // axe analyse ici un DOM lourd (formulaire complet + liste dépliée) après
     // un parcours de notation entier. Sous les 30s par défaut de Playwright,

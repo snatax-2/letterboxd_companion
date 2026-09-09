@@ -11,6 +11,7 @@ document.querySelectorAll('.ctx-tag').forEach(btn => {
       activeContextTags.add(tag);
       btn.classList.add('active');
     }
+    btn.setAttribute('aria-pressed', String(activeContextTags.has(tag)));
     saveDraft();
   });
 });
@@ -203,7 +204,7 @@ async function selectMovie(m, year) {
     document.getElementById('movie-director').value = director;
     document.getElementById('movie-actors').value = actors; 
 
-    const settings = JSON.parse(localStorage.getItem('lbx_settings') || '{}');
+    const settings = readRegisteredStorage('settings', {});
     if (settings.genreWeightsEnabled !== false) {
       suggestGenreWeights(genreNames);
     }
@@ -243,4 +244,3 @@ async function selectMovie(m, year) {
 document.addEventListener('click', e => {
   if (e.target !== searchEl) suggestEl.style.display = 'none';
 });
-

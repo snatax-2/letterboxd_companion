@@ -52,7 +52,7 @@ function escAttr(str) {
 }
 
 // Construit une URL d'affiche/photo TMDb à partir d'un chemin brut — évite
-// de répéter "https://image.tmdb.org/t/p/..." à la main à chaque appelant
+// de répéter "https://image.tmdb.org/t/p/..." à la main à la main à chaque appelant
 // (un audit en a compté ~33 occurrences dispersées). Retourne une chaîne
 // vide si path est absent, pour que les appelants gardent leur `? :` habituel
 // sans avoir à vérifier deux fois.
@@ -79,6 +79,24 @@ const TMDB_PATH_RE = /^\/[A-Za-z0-9._-]+$/;
 function tmdbImage(path, size = 'w185') {
   if (!path || !TMDB_PATH_RE.test(String(path))) return '';
   return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+// L'écran peut choisir la bonne source selon la taille réelle de l'affiche et
+// sa densité (Retina), plutôt que d'agrandir systématiquement une miniature.
+const TMDB_POSTER_WIDTHS = [92, 154, 185, 342, 500, 780];
+function tmdbPosterAttrs(path, fallback = 'w342', sizes = '100px') {
+  const src = tmdbImage(path, fallback);
+  if (!src) return '';
+  const srcset = TMDB_POSTER_WIDTHS.map(width => `${tmdbImage(path, `w${width}`)} ${width}w`).join(', ');
+  return `src="${src}" srcset="${srcset}" sizes="${sizes}"`;
+}
+
+function savedPosterAttrs(url, fallback = 'w342', sizes = '100px') {
+  const raw = String(url ?? '');
+  const match = raw.match(/^https:\/\/image\.tmdb\.org\/t\/p\/(?:w\d+|original)(\/[A-Za-z0-9._-]+)$/);
+  if (match) return tmdbPosterAttrs(match[1], fallback, sizes);
+  const src = safePosterSrc(raw);
+  return src ? `src="${src}"` : '';
 }
 
 // Prépare une URL d'affiche STOCKÉE pour une insertion dans un attribut src="".
@@ -145,17 +163,17 @@ let activeLikedFilter = false;
 //  STORAGE & DRAFT
 // ═══════════════════════════════════════════
 function loadHistory() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
+  return readRegisteredStorage('history', []);
 }
 function saveHistory(history) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(history));
-    if (window.storage) window.storage.set(STORE_KEY, JSON.stringify(history));
-  } catch(e) { console.warn('Storage full', e); }
+  if (!writeRegisteredStorage('history', history)) return false;
+  if (window.storage) window.storage.set(STORE_KEY, JSON.stringify(history));
+  return true;
 }
 
 function saveDraft() {
-  if (isFetchingMovie) return;
+  if (isFetchingMovie || ratingDraftRestoreDepth) return;
+  if (currentMediaType === 'tv') return saveTvRatingDraft();
   const draft = {
     title: document.getElementById('movie-title').value,
     year: document.getElementById('movie-year').value,
@@ -171,87 +189,87 @@ function saveDraft() {
     liked: isLiked,
     mode: currentMode,
     quickRating: quickRating,
+    weights: getWeights(),
     values: CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {}),
     review: document.getElementById('review-text').value,
     tags: Array.from(activeContextTags)
   };
-  localStorage.setItem('lbx_draft', JSON.stringify(draft));
+  writeRegisteredStorage('draft', draft);
 }
 
 function loadDraft() {
-  try {
-    const draftStr = localStorage.getItem('lbx_draft');
-    if (!draftStr) {
-      setTodayDate();
-      return;
-    }
-    const draft = JSON.parse(draftStr);
-    
-    if (draft.title) {
-      document.getElementById('movie-title').value = draft.title;
-      document.getElementById('movie-year').value = draft.year || '';
-      document.getElementById('movie-poster').value = draft.poster || '';
-      document.getElementById('movie-genre').value = draft.genre || '';
-      document.getElementById('movie-runtime').value = draft.runtime || '';
-      document.getElementById('movie-director').value = draft.director || '';
-      document.getElementById('movie-actors').value = draft.actors || '';
-      document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
-      document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
-      document.getElementById('movie-search').value = draft.searchValue || '';
-      
-      const strip = document.getElementById('film-strip');
-      strip.classList.add('visible');
-      document.getElementById('strip-title').textContent = draft.title;
-      document.getElementById('strip-genre').innerHTML = buildStripMeta({
-        genre: draft.genre, runtime: draft.runtime, year: draft.year,
-        director: draft.director, actors: draft.actors
-      });
-      if (draft.poster) {
-        document.getElementById('strip-poster').src = draft.poster;
-        document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
-        document.getElementById('strip-poster').style.display = 'block';
-      }
-      if (draft.tmdbScore) {
-        document.getElementById('strip-tmdb-score').textContent = draft.tmdbScore + '/10';
-        document.getElementById('strip-ratings').style.display = 'flex';
-      }
-    }
+  return withRatingDraftRestore(loadMovieDraft);
+}
+function loadMovieDraft() {
+  const draft = readRegisteredStorage('draft', null);
+  if (!draft) { resetForm(); return; }
 
-    if (draft.date) {
-      document.getElementById('view-date').value = draft.date;
-    } else {
-      setTodayDate();
-    }
+  if (draft.title) {
+    document.getElementById('movie-title').value = draft.title;
+    document.getElementById('movie-year').value = draft.year || '';
+    document.getElementById('movie-poster').value = draft.poster || '';
+    document.getElementById('movie-genre').value = draft.genre || '';
+    document.getElementById('movie-runtime').value = draft.runtime || '';
+    document.getElementById('movie-director').value = draft.director || '';
+    document.getElementById('movie-actors').value = draft.actors || '';
+    document.getElementById('movie-tmdb-score').value = draft.tmdbScore || '';
+    document.getElementById('movie-tmdb-id').value = draft.tmdbId || '';
+    document.getElementById('movie-search').value = draft.searchValue || '';
 
-    if (draft.review) document.getElementById('review-text').value = draft.review;
-    
-    isLiked = draft.liked || false;
-    document.getElementById('heart-btn').classList.toggle('active', isLiked);
+    const strip = document.getElementById('film-strip');
+    strip.classList.add('visible');
+    document.getElementById('strip-title').textContent = draft.title;
+    document.getElementById('strip-genre').innerHTML = buildStripMeta({
+      genre: draft.genre, runtime: draft.runtime, year: draft.year,
+      director: draft.director, actors: draft.actors
+    });
+    if (draft.poster) {
+      document.getElementById('strip-poster').src = draft.poster;
+      document.getElementById('strip-poster').alt = draft.title ? `Affiche de ${escAttr(draft.title)}` : '';
+      document.getElementById('strip-poster').style.display = 'block';
+    }
+    if (draft.tmdbScore) {
+      document.getElementById('strip-tmdb-score').textContent = draft.tmdbScore + '/10';
+      document.getElementById('strip-ratings').style.display = 'flex';
+    }
+  }
+
+  if (draft.date) {
+    document.getElementById('view-date').value = draft.date;
+  } else {
+    setTodayDate();
+  }
+
+  document.getElementById('review-text').value = draft.review || '';
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = draft.weights?.[c] ?? 1; });
+  updateWeightBadges();
+
+  isLiked = draft.liked || false;
+  document.getElementById('heart-btn').classList.toggle('active', isLiked);
   document.getElementById('heart-btn').setAttribute('aria-pressed', String(isLiked));
 
-    activeContextTags = new Set(draft.tags || []);
-    document.querySelectorAll('.ctx-tag').forEach(b => {
-      if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
-      else b.classList.remove('active');
+  activeContextTags = new Set(draft.tags || []);
+  document.querySelectorAll('.ctx-tag').forEach(b => {
+    if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
+    else b.classList.remove('active');
+    b.setAttribute('aria-pressed', String(activeContextTags.has(b.dataset.tag)));
+  });
+
+  setMode(draft.mode || 'detail');
+  if (draft.quickRating != null) {
+    quickRating = parseFloat(draft.quickRating);
+    const radioId = 's' + (quickRating * 2);
+    const radioEl = document.getElementById(radioId);
+    if(radioEl) radioEl.checked = true;
+  }
+  if (draft.values) {
+    CRITERIA.forEach(c => {
+      document.getElementById(c).value = draft.values[c] ?? 5;
     });
-
-    if (draft.mode) setMode(draft.mode);
-    if (draft.quickRating) {
-      quickRating = parseFloat(draft.quickRating);
-      const radioId = 's' + (quickRating * 2);
-      const radioEl = document.getElementById(radioId);
-      if(radioEl) radioEl.checked = true;
-    }
-    if (draft.values) {
-      CRITERIA.forEach(c => {
-        if (draft.values[c]) document.getElementById(c).value = draft.values[c];
-      });
-    }
-    calculateScore();
-    updateAllSliders();
-    renderCriteriaAverageMarkers();
-
-  } catch(e) { console.error("Erreur de chargement du brouillon", e); }
+  }
+  calculateScore();
+  updateAllSliders();
+  renderCriteriaAverageMarkers();
 }
 
 // ═══════════════════════════════════════════
@@ -320,7 +338,7 @@ function fadeSwitchDisplay(hideEl, showEl) {
 // soit l'ordre des fichiers.
 setTimeout(() => {
   renderAll();
-  loadDraft();
+  if (currentMediaType === 'movie') loadDraft();
 }, 0);
 
 
@@ -362,8 +380,16 @@ async function fetchAndRenderProviders(tmdbId, targetElId, mediaType = 'movie') 
   const el = document.getElementById(targetElId);
   if (!el || !tmdbId) return;
   try {
-    const res = await fetch(`/api/search?id=${tmdbId}&providers=BE&mediaType=${mediaType}`);
+    const [providersResult, linksResult] = await Promise.allSettled([
+      fetch(`/api/search?id=${tmdbId}&providers=BE&mediaType=${mediaType}`),
+      fetch(`/api/streaming-links?id=${tmdbId}&mediaType=${mediaType}&region=BE`),
+    ]);
+    if (providersResult.status !== 'fulfilled') throw providersResult.reason;
+    const res = providersResult.value;
     const data = await res.json();
+    const directLinks = linksResult.status === 'fulfilled' && linksResult.value.ok
+      ? (await linksResult.value.json()).links || []
+      : [];
 
     const providerRoot = data['watch/providers']?.results?.BE
                       || data.providers?.results?.BE
@@ -387,12 +413,28 @@ async function fetchAndRenderProviders(tmdbId, targetElId, mediaType = 'movie') 
     const flat = filterOwned(allFlat);
     const rentOnly = filterOwned(allRent).filter(r => !flat.find(f => f.provider_id === r.provider_id));
 
+    const providerLink = provider => {
+      const normalized = normalizeProviderName(provider.provider_name);
+      const direct = directLinks.find(link => {
+        const candidate = normalizeProviderName(link.name);
+        return candidate && (candidate.includes(normalized) || normalized.includes(candidate));
+      });
+      return direct?.url || '';
+    };
+    const renderProvider = (provider, kind, suffix = '') => {
+      const url = providerLink(provider);
+      const content = `<img class="mds-provider-logo" src="${tmdbImage(provider.logo_path, 'original')}" alt="" loading="lazy">${escAttr(provider.provider_name)}${suffix}`;
+      return url
+        ? `<a class="mds-provider-pill ${kind}" style="text-decoration:none;cursor:pointer" href="${escAttr(url)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir ${escAttr(provider.provider_name)}">${content}</a>`
+        : `<span class="mds-provider-pill ${kind}">${content}</span>`;
+    };
+
     let html = '';
     flat.slice(0, 5).forEach(p => {
-      html += `<span class="mds-provider-pill flatrate"><img class="mds-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" alt="" loading="lazy">${escAttr(p.provider_name)}</span>`;
+      html += renderProvider(p, 'flatrate');
     });
     rentOnly.slice(0, 3).forEach(p => {
-      html += `<span class="mds-provider-pill rent"><img class="mds-provider-logo" src="${tmdbImage(p.logo_path, 'original')}" alt="" loading="lazy">${escAttr(p.provider_name)} (location)</span>`;
+      html += renderProvider(p, 'rent', ' (location)');
     });
 
     if (!html) {

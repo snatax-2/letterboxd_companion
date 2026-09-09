@@ -26,10 +26,10 @@ const LEGACY_WATCHLIST_KEY = 'lbx_watchlist'; // ancienne clé (liste unique, fi
 const LEGACY_TV_WATCHLIST_KEY = 'lbx_tv_watchlist'; // ancienne clé (liste unique, séries — voir migration plus bas)
 
 function loadWatchlistsMeta(mediaType = 'movie') {
-  try { return JSON.parse(localStorage.getItem(watchlistsMetaKey(mediaType))) || []; } catch { return []; }
+  return readJsonStorage(watchlistsMetaKey(mediaType), [], Array.isArray);
 }
 function saveWatchlistsMeta(meta, mediaType = 'movie') {
-  localStorage.setItem(watchlistsMetaKey(mediaType), JSON.stringify(meta));
+  return writeJsonStorage(watchlistsMetaKey(mediaType), meta);
 }
 function watchlistStorageKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_${id}` : `lbx_watchlist_${id}`; }
 function watchlistTombstonesKey(id, mediaType = 'movie') { return mediaType === 'tv' ? `lbx_tv_watchlist_tombstones_${id}` : `lbx_watchlist_tombstones_${id}`; }
@@ -46,39 +46,38 @@ function migrateLegacyWatchlist(mediaType = 'movie') {
   if (loadWatchlistsMeta(mediaType).length > 0) return; // déjà migré
   const legacyKey = mediaType === 'tv' ? LEGACY_TV_WATCHLIST_KEY : LEGACY_WATCHLIST_KEY;
   let legacyItems = [];
-  try { legacyItems = JSON.parse(localStorage.getItem(legacyKey)) || []; } catch {}
+  legacyItems = readJsonStorage(legacyKey, [], Array.isArray);
   let legacyTombstones = [];
   if (mediaType === 'movie') {
-    try { legacyTombstones = JSON.parse(localStorage.getItem(LEGACY_WATCHLIST_TOMBSTONES_KEY)) || []; } catch {}
+    legacyTombstones = readJsonStorage(LEGACY_WATCHLIST_TOMBSTONES_KEY, [], Array.isArray);
   }
   const defaultId = 'default';
   saveWatchlistsMeta([{ id: defaultId, name: 'À voir' }], mediaType);
-  localStorage.setItem(watchlistStorageKey(defaultId, mediaType), JSON.stringify(legacyItems));
-  localStorage.setItem(watchlistTombstonesKey(defaultId, mediaType), JSON.stringify(legacyTombstones));
-  localStorage.setItem(activeWatchlistKey(mediaType), defaultId);
+  writeJsonStorage(watchlistStorageKey(defaultId, mediaType), legacyItems);
+  writeJsonStorage(watchlistTombstonesKey(defaultId, mediaType), legacyTombstones);
+  writeTextStorage(activeWatchlistKey(mediaType), defaultId);
 }
 migrateLegacyWatchlist('movie');
 migrateLegacyWatchlist('tv');
 
 function getActiveWatchlistId(mediaType = 'movie') {
-  let id = localStorage.getItem(activeWatchlistKey(mediaType));
+  let id = readTextStorage(activeWatchlistKey(mediaType));
   const meta = loadWatchlistsMeta(mediaType);
   if (!id || !meta.find(l => l.id === id)) {
     id = meta[0]?.id || 'default';
-    localStorage.setItem(activeWatchlistKey(mediaType), id);
+    writeTextStorage(activeWatchlistKey(mediaType), id);
   }
   return id;
 }
 function setActiveWatchlistId(id, mediaType = 'movie') {
-  localStorage.setItem(activeWatchlistKey(mediaType), id);
+  return writeTextStorage(activeWatchlistKey(mediaType), id);
 }
 
 function createWatchlistList(name, mediaType = 'movie') {
   const meta = loadWatchlistsMeta(mediaType);
   const id = 'wl_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   meta.push({ id, name: name.trim() || 'Nouvelle liste' });
-  saveWatchlistsMeta(meta, mediaType);
-  localStorage.setItem(watchlistStorageKey(id, mediaType), JSON.stringify([]));
+  if (!writeJsonStorage(watchlistStorageKey(id, mediaType), []) || !saveWatchlistsMeta(meta, mediaType)) return null;
   return id;
 }
 function renameWatchlistList(id, newName, mediaType = 'movie') {
@@ -99,10 +98,10 @@ function deleteWatchlistList(id, mediaType = 'movie') {
 }
 
 function loadWatchlist(listId, mediaType = 'movie') {
-  try { return JSON.parse(localStorage.getItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType))) || []; } catch { return []; }
+  return readJsonStorage(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), [], Array.isArray);
 }
 function saveWatchlist(list, listId, mediaType = 'movie') {
-  localStorage.setItem(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), JSON.stringify(list));
+  return writeJsonStorage(watchlistStorageKey(listId || getActiveWatchlistId(mediaType), mediaType), list);
 }
 
 // ── Ludex 2.0 : tri et filtre (voir Ludex_Specifications_Watchlist) ──
@@ -216,11 +215,12 @@ async function renderWatchlistEmptySuggestions() {
       <div class="wl-empty-suggestions-row">
         ${items.map(m => `
           <div class="wl-empty-sugg-card">
-            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
+            <img class="wl-empty-sugg-poster editorial-image" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">
             <div class="wl-empty-sugg-title">${escAttr(m.title)}</div>
             <button type="button" class="wl-empty-sugg-btn" data-movie-id="${m.id}" data-movie-title="${escAttr(m.title)}" data-movie-year="${(m.release_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
           </div>`).join('')}
       </div>`;
+    if (typeof prepareEditorialImages === 'function') prepareEditorialImages(wrap);
   } catch (e) {
     console.warn('Impossible de charger les suggestions', e);
     wrap.innerHTML = '';
@@ -263,7 +263,7 @@ function renderWatchlist() {
 
   container.innerHTML = '';
   visible.forEach((item) => {
-    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent (voir attributs onclick plus bas), pas la position affichée après tri/filtre.
+    const i = list.indexOf(item); // index RÉEL dans la liste non triée — c'est lui que removeWatchlist()/watchlistToForm() attendent, pas la position affichée après tri/filtre.
     const div = document.createElement('div');
     div.className = 'wl-card';
     div.id = `wl-item-${i}`;
@@ -276,12 +276,12 @@ function renderWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      ? `<span class="wl-poster"><img class="editorial-image" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
 
     div.innerHTML = `
       <div class="wl-card-content">
-        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}" aria-keyshortcuts="Shift+F10">
           ${posterHtml}
           <span class="wl-body">
             <span class="wl-title">${escAttr(item.title)}</span>
@@ -292,8 +292,7 @@ function renderWatchlist() {
           </span>
         </button>
         <div class="wl-actions">
-          <button class="wl-btn rate" onclick="watchlistToForm(${i})" title="Je l'ai vu, noter" aria-label="Noter ${escAttr(item.title)}, vu">${ICONS.star}</button>
-          <button class="wl-btn del" onclick="removeWatchlist(${i})" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+          <button type="button" class="wl-menu-btn" data-watchlist-menu="movie" data-watchlist-idx="${i}" aria-label="Actions pour ${escAttr(item.title)}" aria-haspopup="dialog" aria-controls="action-sheet">${ICONS.moreVertical}</button>
         </div>
       </div>`;
 
@@ -307,6 +306,7 @@ function renderWatchlist() {
       if (pd) pd.innerHTML = '';
     }
   });
+  if (typeof prepareEditorialImages === 'function') prepareEditorialImages(container);
   window._justSavedWatchlistTitle = null;
 }
 
@@ -468,14 +468,15 @@ function openWatchlistPicker(movie, year) {
     const name = newInput.value.trim();
     if (!name) { newInput.focus(); return; }
     const id = createWatchlistList(name);
+    if (!id) return;
     pickList(id);
   };
   newInput.onkeydown = (e) => { if (e.key === 'Enter') newConfirm.click(); };
   cancelBtn.onclick = () => closeModal(modal);
 
-  lastFocusedBeforeModal = document.activeElement;
-  modal.classList.add('open');
-  (meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn)?.focus();
+  openModalElement(modal, {
+    initialFocus: meta.length > 0 ? listEl.querySelector('.wl-picker-item') : newBtn,
+  });
 }
 
 let deletedWlItemCache = null;
@@ -501,10 +502,9 @@ window.undoWatchlistDelete = function() {
   // Réinsère dans la liste d'ORIGINE (pas forcément celle active maintenant,
   // si l'utilisateur a changé de liste pendant la fenêtre d'annulation).
   const key = watchlistStorageKey(deletedWlListId);
-  let list = [];
-  try { list = JSON.parse(localStorage.getItem(key)) || []; } catch {}
+  const list = readJsonStorage(key, [], Array.isArray);
   list.splice(Math.min(deletedWlItemIndex, list.length), 0, deletedWlItemCache);
-  localStorage.setItem(key, JSON.stringify(list));
+  if (!writeJsonStorage(key, list)) return;
   removeTombstone(watchlistTombstonesKey(deletedWlListId), watchlistItemKey(deletedWlItemCache));
   if (getActiveWatchlistId() === deletedWlListId) renderWatchlist();
   showToast('Retrait annulé.');
@@ -515,6 +515,7 @@ window.watchlistToForm = function(idx) {
   const list = loadWatchlist();
   const item = list[idx];
   if (!item) return;
+  setMediaType('movie');
   searchEl.value = item.title;
   searchEl.dispatchEvent(new Event('input'));
   list.splice(idx, 1);
@@ -522,7 +523,7 @@ window.watchlistToForm = function(idx) {
   recordTombstone(watchlistTombstonesKey(getActiveWatchlistId()), watchlistItemKey(item));
   renderWatchlist();
   
-  if (window.innerWidth <= 860) switchMobileNav('rating');
+  switchMobileNav('rating');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   showToast(`Recherche lancée pour "${item.title}"`);
 };
@@ -551,8 +552,10 @@ wlInput.addEventListener('input', () => {
 
       if (personMatch) {
         const photoUrl = tmdbImage(personMatch.profile_path, 'w92');
-        const personEl = document.createElement('div');
+        const personEl = document.createElement('button');
+        personEl.type = 'button';
         personEl.className = 'wl-suggest-item';
+        personEl.setAttribute('aria-label', `Voir la filmographie de ${personMatch.name}`);
         personEl.innerHTML = `
           ${photoUrl
             ? `<img class="wl-suggest-poster" style="border-radius:50%;object-fit:cover;" src="${photoUrl}" alt="Photo de ${escAttr(personMatch.name)}" loading="lazy">`
@@ -570,8 +573,10 @@ wlInput.addEventListener('input', () => {
 
       data.results.slice(0, 5).forEach(m => {
         const year = m.release_date?.slice(0, 4) || '';
-        const el = document.createElement('div');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'wl-suggest-item';
+        el.setAttribute('aria-label', `Ajouter ${m.title} à une liste`);
         el.innerHTML = `
           ${m.poster_path
             ? `<img class="wl-suggest-poster" src="${tmdbImage(m.poster_path, 'w92')}" alt="Affiche de ${escAttr(m.title)}" loading="lazy">`
@@ -619,15 +624,92 @@ wlInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { wlSuggestEl.style.display = 'none'; }
 });
 
-// Tap sur un film de la watchlist (hors boutons noter/retirer) : ouvre sa fiche détaillée.
+function renderWatchlistCardActionSheet(item, actions, anchor = null) {
+  resetWatchlistMenuPresentation();
+  actionSheetEl.classList.add('watchlist-card-menu', 'watchlist-menu-preparing');
+  actionSheetTitleEl.textContent = item.title;
+  actionSheetListEl.innerHTML = '';
+
+  actions.forEach(({ label, icon, onClick, danger }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'action-sheet-item' + (danger ? ' danger' : '');
+    btn.innerHTML = `${icon} <span>${label}</span>`;
+    btn.addEventListener('click', () => {
+      closeActionSheet();
+      onClick();
+    });
+    actionSheetListEl.appendChild(btn);
+  });
+
+  prepareWatchlistMenuPresentation(anchor);
+  // Fige le départ près de l'affiche avant d'activer les transitions : sinon
+  // le navigateur repart de l'ancienne position de la bottom sheet.
+  actionSheetEl.querySelector('.action-sheet-box').getBoundingClientRect();
+  actionSheetEl.classList.remove('watchlist-menu-preparing');
+  openModalElement(actionSheetEl, {
+    initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
+    returnFocus: anchor || document.getElementById('nav-watchlist'),
+  });
+}
+
+function openWatchlistCardMenu(mediaType, idx, anchor = null) {
+  const isTv = mediaType === 'tv';
+  const list = isTv ? loadTvWatchlist() : loadWatchlist();
+  const item = list[idx];
+  if (!item) return;
+
+  const listId = getActiveWatchlistId(mediaType);
+  const keyForItem = isTv ? tvWatchlistItemKey : watchlistItemKey;
+  const itemKey = keyForItem(item);
+  function onCurrentItem(action) {
+    const current = loadWatchlist(null, mediaType);
+    const currentIdx = current.findIndex(candidate => keyForItem(candidate) === itemKey);
+    if (getActiveWatchlistId(mediaType) !== listId || currentIdx < 0) {
+      showToast('Cette liste a changé. Rouvre les actions de l’affiche.');
+      return;
+    }
+    action(currentIdx);
+  }
+  const actions = [];
+  if (item.tmdbId) {
+    actions.push({
+      label: 'Ouvrir la fiche',
+      icon: ICONS.openDetail,
+      onClick: () => isTv ? openTvDetailSheet(item.tmdbId) : openMovieDetailSheet(item.tmdbId),
+    });
+  }
+  actions.push({
+    label: 'Noter',
+    icon: ICONS.star,
+    onClick: () => onCurrentItem(isTv ? tvWatchlistToForm : watchlistToForm),
+  });
+  actions.push({
+    label: 'Supprimer',
+    icon: ICONS.trash,
+    danger: true,
+    onClick: () => onCurrentItem(isTv ? removeTvWatchlistItem : removeWatchlist),
+  });
+
+  renderWatchlistCardActionSheet(item, actions, anchor);
+}
+
+// Tap sur un film de la watchlist (hors menu) : ouvre sa fiche détaillée.
 document.getElementById('watchlist-list').addEventListener('click', e => {
+  const menuButton = e.target.closest('.wl-menu-btn[data-watchlist-menu="movie"]');
+  if (menuButton) {
+    const idx = Number(menuButton.dataset.watchlistIdx);
+    if (!Number.isInteger(idx) || idx < 0) return;
+    openWatchlistCardMenu('movie', idx, menuButton.closest('.wl-card').querySelector('.wl-card-open'));
+    return;
+  }
   if (e.target.closest('#empty-state-watchlist-cta')) {
     if (window.innerWidth <= 860) switchMobileNav('discover');
     else switchRightTab('discover');
     return;
   }
   const card = e.target.closest('.wl-card');
-  if (!card || e.target.closest('.wl-btn')) return;
+  if (!card || e.target.closest('.wl-menu-btn')) return;
   const idx = parseInt(card.id.replace('wl-item-', ''), 10);
   const list = loadWatchlist();
   const item = list[idx];
@@ -654,6 +736,7 @@ function openWlListManageMenu(id, mediaType = 'movie') {
   const entry = meta.find(l => l.id === id);
   if (!entry) return;
 
+  resetWatchlistMenuPresentation();
   actionSheetTitleEl.textContent = entry.name;
   const actions = [
     { label: 'Renommer', icon: ICONS.edit, onClick: () => openWlListModal('rename', id, mediaType) },
@@ -681,8 +764,9 @@ function openWlListManageMenu(id, mediaType = 'movie') {
     actionSheetListEl.appendChild(btn);
   });
 
-  lastFocusedBeforeModal = document.activeElement;
-  actionSheetEl.classList.add('open');
+  openModalElement(actionSheetEl, {
+    initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
+  });
 }
 
 let wlModalMode = 'create';
@@ -697,9 +781,7 @@ function openWlListModal(mode, targetId = null, mediaType = 'movie') {
   document.getElementById('wl-list-modal-confirm').textContent = mode === 'create' ? 'Créer' : 'Renommer';
   const input = document.getElementById('wl-list-name-input');
   input.value = mode === 'rename' ? (loadWatchlistsMeta(mediaType).find(l => l.id === targetId)?.name || '') : '';
-  lastFocusedBeforeModal = document.activeElement;
-  document.getElementById('wl-list-modal').classList.add('open');
-  setTimeout(() => input.focus(), 50);
+  openModalElement(document.getElementById('wl-list-modal'), { initialFocus: input });
 }
 
 // Ludex 2.0 : un seul gestionnaire, réutilisé pour les deux rangées de
@@ -731,6 +813,7 @@ document.getElementById('wl-list-modal-confirm').addEventListener('click', () =>
   if (!name) { showToast('Donne un nom à la liste.'); return; }
   if (wlModalMode === 'create') {
     const id = createWatchlistList(name, wlModalMediaType);
+    if (!id) return;
     setActiveWatchlistId(id, wlModalMediaType);
     showToast(`Liste "${name}" créée.`);
   } else {
@@ -833,11 +916,12 @@ async function renderTvWatchlistEmptySuggestions() {
       <div class="wl-empty-suggestions-row">
         ${items.map(m => `
           <div class="wl-empty-sugg-card">
-            <img class="wl-empty-sugg-poster" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.name)}" loading="lazy">
+            <img class="wl-empty-sugg-poster editorial-image" src="${tmdbImage(m.poster_path, 'w200')}" alt="Affiche de ${escAttr(m.name)}" loading="lazy">
             <div class="wl-empty-sugg-title">${escAttr(m.name)}</div>
             <button type="button" class="wl-empty-sugg-btn" data-show-id="${m.id}" data-show-name="${escAttr(m.name)}" data-show-year="${(m.first_air_date || '').slice(0,4)}" data-poster="${escAttr(m.poster_path)}">+ Ajouter</button>
           </div>`).join('')}
       </div>`;
+    if (typeof prepareEditorialImages === 'function') prepareEditorialImages(wrap);
   } catch (e) {
     console.warn('Impossible de charger les suggestions séries', e);
     wrap.innerHTML = '';
@@ -891,58 +975,69 @@ function renderTvWatchlist() {
     // vedettes de l'Historique) -- pas besoin de tout re-ajouter.
     const posterSrc = safePosterSrc(item.poster ? item.poster.replace('/w185/', '/w342/') : item.poster);
     const posterHtml = posterSrc
-      ? `<span class="wl-poster"><img src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" onerror="this.parentElement.textContent='🎬'"></span>`
+      ? `<span class="wl-poster"><img class="editorial-image" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async"></span>`
       : `<span class="wl-poster">${ICONS.clapper}</span>`;
     div.innerHTML = `
       <div class="wl-card-content">
-        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}">
+        <button type="button" class="wl-card-open" aria-label="Voir la fiche de ${escAttr(item.title)}" aria-keyshortcuts="Shift+F10">
           ${posterHtml}
         </button>
         <div class="wl-actions">
-          <button class="wl-btn rate" data-tv-idx="${i}" data-action="start" title="Commencer à suivre, noter" aria-label="Commencer à suivre ${escAttr(item.title)}">${ICONS.star}</button>
-          <button class="wl-btn del" data-tv-idx="${i}" data-action="remove" title="Retirer" aria-label="Retirer ${escAttr(item.title)} de la watchlist">${ICONS.close}</button>
+          <button type="button" class="wl-menu-btn" data-watchlist-menu="tv" data-tv-idx="${i}" aria-label="Actions pour ${escAttr(item.title)}" aria-haspopup="dialog" aria-controls="action-sheet">${ICONS.moreVertical}</button>
         </div>
       </div>`;
     div.querySelector('.wl-card-open').addEventListener('click', () => openTvDetailSheet(item.tmdbId));
     container.appendChild(div);
     applyPosterAccent(item.poster, div);
   });
+  if (typeof prepareEditorialImages === 'function') prepareEditorialImages(container);
   window._justSavedTvWatchlistTitle = null;
 }
 
-document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('.wl-btn[data-tv-idx]');
-  if (!btn) return;
-  const idx = Number(btn.dataset.tvIdx);
+function removeTvWatchlistItem(idx) {
   const list = loadTvWatchlist();
   const item = list[idx];
   if (!item) return;
-
-  if (btn.dataset.action === 'remove') {
-    list.splice(idx, 1);
-    saveTvWatchlist(list);
-    recordTombstone(watchlistTombstonesKey(getActiveWatchlistId('tv'), 'tv'), tvWatchlistItemKey(item));
-    renderTvWatchlist();
-    return;
-  }
-
-  // "Commencer à suivre" : même principe que watchlistToForm() côté films —
-  // relance la recherche (ici sur le champ séries), retire l'item de la
-  // watchlist, bascule vers Noter en mode Séries.
   list.splice(idx, 1);
   saveTvWatchlist(list);
   recordTombstone(watchlistTombstonesKey(getActiveWatchlistId('tv'), 'tv'), tvWatchlistItemKey(item));
   renderTvWatchlist();
+}
 
+function tvWatchlistToForm(idx) {
+  const list = loadTvWatchlist();
+  const item = list[idx];
+  if (!item) return;
+  // Ouvrir la fiche n'est pas commencer le suivi. La liste reste intacte
+  // jusqu'au retrait explicite depuis ses actions, même si le parcours échoue.
   if (typeof setMediaType === 'function') setMediaType('tv');
   const tvSearchEl = document.getElementById('tv-search');
   if (tvSearchEl) {
     tvSearchEl.value = item.title;
     tvSearchEl.dispatchEvent(new Event('input'));
   }
-  if (window.innerWidth <= 860) switchMobileNav('rating');
+  switchMobileNav('rating');
+  if (item.tmdbId) openTvDetailSheet(item.tmdbId);
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  showToast(`Recherche lancée pour "${item.title}"`);
+  showToast(`"${item.title}" reste dans À voir jusqu’à ton retrait.`);
+}
+
+document.getElementById('wl-tv-list')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.wl-menu-btn[data-watchlist-menu="tv"]');
+  if (!btn) return;
+  const idx = Number(btn.dataset.tvIdx);
+  if (!Number.isInteger(idx) || idx < 0) return;
+  openWatchlistCardMenu('tv', idx, btn.closest('.wl-card').querySelector('.wl-card-open'));
+});
+
+// Les erreurs d'affiche sont gérées par délégation, sans JavaScript inline :
+// la CSP peut ainsi interdire `unsafe-inline` sans casser les fallbacks.
+['watchlist-list', 'wl-tv-list'].forEach(id => {
+  document.getElementById(id)?.addEventListener('error', event => {
+    const image = event.target.closest?.('.wl-poster img');
+    if (!image) return;
+    image.parentElement.replaceChildren(document.createTextNode('🎬'));
+  }, true);
 });
 
 async function addToTvWatchlist(show, year) {
@@ -994,8 +1089,10 @@ wlTvInput?.addEventListener('input', () => {
       wlTvSuggestEl.style.display = 'block';
       data.results.slice(0, 5).forEach(s => {
         const year = s.first_air_date?.slice(0, 4) || '';
-        const el = document.createElement('div');
+        const el = document.createElement('button');
+        el.type = 'button';
         el.className = 'wl-suggest-item';
+        el.setAttribute('aria-label', `Ajouter ${s.name} à la liste Séries`);
         el.innerHTML = `
           ${s.poster_path
             ? `<img class="wl-suggest-poster" src="${tmdbImage(s.poster_path, 'w92')}" alt="Affiche de ${escAttr(s.name)}" loading="lazy">`
@@ -1035,22 +1132,81 @@ document.getElementById('wl-tv-add-btn')?.addEventListener('click', () => {
   wlTvInput.value = '';
 });
 
+// ── Recherche éditoriale compacte ──────────────────────────────────────────
+// Les champs et leurs comportements d'ajout restent ceux définis ci-dessus.
+// Ce contrôleur ne gère que leur présentation : loupe compacte, focus,
+// Escape et bascule du champ visible avec le switch Films/Séries.
+function setWatchlistSearchOpen(searchEl, open, { restoreFocus = false } = {}) {
+  if (!searchEl) return;
+  const input = searchEl.querySelector('.watchlist-add-input');
+  const addButton = searchEl.querySelector('.watchlist-add-btn');
+  const toggle = searchEl.querySelector('.watchlist-search-toggle');
+  const suggestions = searchEl.querySelector('.wl-suggestions');
+  if (!input || !addButton || !toggle) return;
+
+  searchEl.classList.toggle('is-open', open);
+  input.disabled = !open;
+  addButton.disabled = !open;
+  toggle.setAttribute('aria-expanded', String(open));
+  const mediaLabel = searchEl.dataset.watchlistSearch === 'tv' ? 'Séries' : 'Films';
+  toggle.setAttribute('aria-label', `${open ? 'Fermer' : 'Ouvrir'} la recherche ${mediaLabel}`);
+
+  if (open) {
+    requestAnimationFrame(() => input.focus());
+    return;
+  }
+  clearTimeout(searchEl.dataset.watchlistSearch === 'tv' ? wlTvSearchTimer : wlSearchTimer);
+  input.value = '';
+  if (suggestions) suggestions.style.display = 'none';
+  if (restoreFocus) toggle.focus();
+}
+
+function wireWatchlistEditorialSearch(searchId) {
+  const searchEl = document.getElementById(searchId);
+  const toggle = searchEl?.querySelector('.watchlist-search-toggle');
+  if (!searchEl || !toggle) return;
+  toggle.addEventListener('click', () => {
+    const shouldOpen = !searchEl.classList.contains('is-open');
+    hapticPulse(toggle, 'light');
+    setWatchlistSearchOpen(searchEl, shouldOpen, { restoreFocus: !shouldOpen });
+  });
+  searchEl.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    setWatchlistSearchOpen(searchEl, false, { restoreFocus: true });
+  });
+}
+
+function setWatchlistSearchMedia(mediaType) {
+  document.querySelectorAll('[data-watchlist-search]').forEach(searchEl => {
+    const isCurrent = searchEl.dataset.watchlistSearch === mediaType;
+    if (!isCurrent) setWatchlistSearchOpen(searchEl, false);
+    searchEl.hidden = !isCurrent;
+    searchEl.classList.toggle('is-current', isCurrent);
+  });
+}
+
+wireWatchlistEditorialSearch('watchlist-movie-search');
+wireWatchlistEditorialSearch('watchlist-tv-search');
+
 // ── Toggle Films/Séries ──
 document.getElementById('wl-tab-movie')?.addEventListener('click', () => {
   document.getElementById('wl-tab-movie').classList.add('active');
   document.getElementById('wl-tab-tv').classList.remove('active');
   document.getElementById('wl-movie-section').style.display = '';
   document.getElementById('wl-tv-section').style.display = 'none';
+  setWatchlistSearchMedia('movie');
 });
 document.getElementById('wl-tab-tv')?.addEventListener('click', () => {
   document.getElementById('wl-tab-tv').classList.add('active');
   document.getElementById('wl-tab-movie').classList.remove('active');
   document.getElementById('wl-tv-section').style.display = '';
   document.getElementById('wl-movie-section').style.display = 'none';
+  setWatchlistSearchMedia('tv');
   renderWatchlistTabs('tv');
   renderTvWatchlist();
 });
 
+setWatchlistSearchMedia('movie');
 renderWatchlistTabs('tv');
 renderTvWatchlist();
-

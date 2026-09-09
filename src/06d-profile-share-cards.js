@@ -359,9 +359,7 @@ function drawWrappedShareCard(stats) {
     slides = buildWrappedSlides(stats);
     current = 0;
     renderCurrentSlide();
-    lastFocusedBeforeModal = document.activeElement;
-    modal.classList.add('open');
-    closeBtn.focus();
+    openModalElement(modal, { initialFocus: closeBtn });
   });
 
   nextBtn.addEventListener('click', () => {

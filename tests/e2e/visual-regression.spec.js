@@ -47,25 +47,43 @@ async function seedStableHistory(page) {
   });
 }
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+async function useDeterministicScreenshotFonts(page) {
+  // Les polices Google sont volontairement bloquées dans cette spec. Sans
+  // famille de repli explicite, la machine locale et ubuntu-latest peuvent
+  // choisir des fontes système différentes et produire de faux diffs. Les
+  // trois variantes DejaVu sont installées avec Chromium/Playwright sous
+  // Linux et conservent les trois rôles typographiques du design.
+  await page.addStyleTag({ content: `
+    :root {
+      --font-heading: "DejaVu Serif", serif !important;
+      --font-body: "DejaVu Sans", sans-serif !important;
+      --font-mono: "DejaVu Sans Mono", monospace !important;
+    }
+  ` });
+}
+
+for (const theme of ['dark', 'light']) {
   test.describe(`Régression visuelle — thème ${theme}`, () => {
     test.beforeEach(async ({ page }) => {
       await page.route('**fonts.googleapis.com**', route => route.abort());
       await page.route('**fonts.gstatic.com**', route => route.abort());
       await seedStableHistory(page);
-      if (theme !== 'default') {
+      if (theme !== 'dark') {
         await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       }
     });
 
     test(`Noter un film (${theme})`, async ({ page }) => {
       await page.goto('/');
+      await useDeterministicScreenshotFonts(page);
+      await page.click('#nav-rating');
       await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`rating-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });
     });
 
     test(`Historique (${theme})`, async ({ page }) => {
       await page.goto('/');
+      await useDeterministicScreenshotFonts(page);
       await page.click('#nav-history');
       await page.waitForSelector('#app-splash', { state: 'detached', timeout: 3000 }).catch(() => {}); await page.waitForTimeout(150);
       await expect(page).toHaveScreenshot(`history-${theme}.png`, { animations: 'disabled', maxDiffPixelRatio: 0.02 });

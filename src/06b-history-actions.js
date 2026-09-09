@@ -146,6 +146,7 @@ function openActionSheetForItem(idx) {
   const item = history[idx];
   if (!item) return;
 
+  resetWatchlistMenuPresentation();
   actionSheetTitleEl.textContent = item.title;
 
   const actions = [
@@ -188,9 +189,9 @@ function openActionSheetForItem(idx) {
     actionSheetListEl.appendChild(btn);
   });
 
-  lastFocusedBeforeModal = document.activeElement;
-  actionSheetEl.classList.add('open');
-  actionSheetListEl.querySelector('.action-sheet-item')?.focus();
+  openModalElement(actionSheetEl, {
+    initialFocus: actionSheetListEl.querySelector('.action-sheet-item'),
+  });
 }
 
 function closeActionSheet() {
@@ -198,7 +199,6 @@ function closeActionSheet() {
 }
 
 actionSheetCancelBtn.addEventListener('click', closeActionSheet);
-actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl) closeActionSheet(); });
 
 // Détection de l'appui long (mobile) sur un film de l'historique. Délégué sur
 // le conteneur (pas un listener par carte) : fonctionne aussi pour les films
@@ -504,6 +504,14 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
       if (searchInput) searchInput.focus();
       return;
     }
+    const actionButton = e.target.closest('.hist-action-btn[data-history-action]');
+    if (actionButton) {
+      const idx = Number(actionButton.dataset.historyIdx);
+      if (!Number.isInteger(idx) || idx < 0) return;
+      if (actionButton.dataset.historyAction === 'edit') loadItem(idx);
+      if (actionButton.dataset.historyAction === 'delete') deleteItem(idx, actionButton);
+      return;
+    }
     if (longPressJustFired || wasSwipe) return;
     const item = e.target.closest('.hist-item');
     if (!item || e.target.closest('.hist-action-btn') || e.target.closest('.hist-review')) return;
@@ -597,4 +605,3 @@ actionSheetEl.addEventListener('click', (e) => { if (e.target === actionSheetEl)
     }
   };
 })();
-

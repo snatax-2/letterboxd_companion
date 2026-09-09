@@ -52,6 +52,7 @@ test('bouton effacer sur le champ de recherche de l\'historique, filtre bien la 
   await page.click('#nav-history');
   await page.waitForTimeout(300);
   await expect(page.locator('#history-search-clear-btn')).toBeHidden();
+  await page.click('#history-search-toggle');
   await page.fill('#history-search', 'Film Test');
   await expect(page.locator('#history-search-clear-btn')).toBeVisible();
   await page.waitForTimeout(300);
@@ -74,6 +75,10 @@ test('accessibilite : recherche avec bouton effacer + fenetre modale avec verre 
     overview: 'x', genres: [], credits: { crew: [], cast: [] }, videos: { results: [] },
   } }));
   await page.goto('/');
+  // Le splash est décoratif et retiré après son fondu. Attendre sa disparition
+  // évite qu'Axe mesure une image transitoire semi-transparente qui n'appartient
+  // déjà plus à l'arbre d'accessibilité (`aria-hidden`).
+  await page.locator('#app-splash').waitFor({ state: 'detached' });
   await page.click('#nav-rating');
   await page.fill('#movie-search', 'test');
   let results = await new AxeBuilder({ page }).analyze();

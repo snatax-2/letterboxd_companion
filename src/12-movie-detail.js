@@ -66,13 +66,13 @@ function findSavedPosterUrl(tmdbId, localMatch) {
 // peut en modifier une sans relire les autres. Aucun changement de rendu —
 // les chaînes produites sont identiques, la régression visuelle le vérifie.
 
-function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) {
+function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj, topRank = null }) {
   return `
     <div class="mds-header" style="animation-delay:0s; --mds-backdrop: ${data.backdrop_path ? `url('${tmdbImage(data.backdrop_path, 'w780')}')` : 'none'}">
       <div class="mds-header-left">
         <div class="mds-poster-wrap">
           ${posterUrl
-            ? `<img class="mds-poster" src="${posterUrl}" alt="Affiche de ${escAttr(data.title)}" loading="lazy">`
+            ? `<img class="mds-poster" ${savedPosterAttrs(posterUrl, 'w342', '100px')} alt="Affiche de ${escAttr(data.title)}" loading="lazy" decoding="async">`
             : `<div class="mds-poster mds-poster-ph">${ICONS.clapper}</div>`}
           ${data.vote_average ? `<div class="mds-score-stamp"><span class="mds-score-stamp-val">${data.vote_average.toFixed(1)}</span><span class="mds-score-stamp-label">TMDb</span></div>` : ''}
         </div>
@@ -80,14 +80,14 @@ function mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }) 
       </div>
       <div class="mds-header-info">
         <div class="mds-title" id="mds-title">${escAttr(data.title)}</div>
-        <div class="mds-meta">${[year, runtime, genres].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
+        <div class="mds-meta">${[year, runtime, genres, topRank ? `Top 100 TMDb · #${topRank}` : ''].filter(Boolean).map(s => `<span>${s}</span>`).join('')}</div>
         <div class="mds-external-ratings" id="mds-external-ratings"></div>
         ${directorObj ? `<div class="mds-header-director"><span class="mds-director-label">Réalisé par</span> <b>${escAttr(directorObj.name)}</b></div>` : ''}
       </div>
     </div>`;
 }
 
-function mdsActionsHtml(localMatch) {
+function mdsActionsHtml(localMatch, tmdbId) {
   // Avec une note locale, le bloc « Ta note » (cliquable) remplace ces deux
   // boutons — voir personalHtml dans buildMdsContent.
   return `
@@ -97,6 +97,7 @@ function mdsActionsHtml(localMatch) {
         : `<button type="button" class="mds-action-btn primary" id="mds-rate-btn" title="Noter ce film">${ICONS.star} Noter</button>
            <button type="button" class="mds-action-btn" id="mds-watchlist-btn" title="Ajouter à la watchlist">${ICONS.target} Watchlist</button>`
       }
+      ${watchlistDetailActionsHtml(tmdbId, 'movie')}
     </div>`;
 }
 
@@ -165,7 +166,7 @@ function mdsSagaHtml(data) {
       </div>`;
 }
 
-function buildMdsContent(data, localMatch, localMatchIdx) {
+function buildMdsContent(data, localMatch, localMatchIdx, topRank = null) {
   // Une affiche choisie à la main (voir applyChosenPoster) est enregistrée
   // sur l'item local (historique/watchlist) — elle doit toujours l'emporter
   // sur l'affiche par défaut de TMDb, sinon rouvrir la fiche plus tard
@@ -194,7 +195,7 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
 
   let personalHtml = '';
   if (localMatch) {
-    const critBreakdown = buildCriteriaBreakdown(localMatch);
+    const critBreakdown = buildCriteriaBreakdown(localMatch, { embedded: true });
     // Ludex 2.0 : le bloc "Ta note" devient lui-même le bouton "Modifier"
     // (voir Ludex_Audit_Fiches_Suggestions.pdf — "fusionner l'affichage et
     // l'action") plutôt qu'un bouton séparé dans .mds-actions. Étoiles
@@ -212,16 +213,22 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
         <div class="mds-score-compare-legend"><span>Toi</span><span>TMDb ${tmdbScore.toFixed(1)}</span></div>
       </div>` : '';
     personalHtml = `
-      <div class="mds-section mds-personal" style="animation-delay:.05s">
-        <div class="mds-section-title">Ta note</div>
-        <button type="button" class="mds-personal-score-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note" aria-label="Modifier ma note pour ${escAttr(data.title)}">
+      <details class="mds-section mds-personal-report" style="animation-delay:.05s">
+        <summary class="mds-personal-summary" aria-label="Afficher ton rapport personnel pour ${escAttr(data.title)}">
+          <span class="mds-section-title">Ta note</span>
           <span class="mds-personal-score">${escAttr(localMatch.score)}/10 <span class="mds-personal-stars">${escAttr(localMatch.stars || '')}</span>${localMatch.liked ? ` <span class="liked-badge">${ICONS.heart}</span>` : ''}</span>
-          <span class="mds-personal-edit-hint">${ICONS.edit}</span>
-        </button>
-        ${comparHtml}
-        ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
-      </div>
-      ${critBreakdown}
+          <span class="mds-personal-disclosure" aria-hidden="true">Détails <span>⌄</span></span>
+        </summary>
+        <div class="mds-personal-report-body">
+          <button type="button" class="mds-personal-score-btn" id="mds-edit-btn" data-idx="${localMatchIdx}" title="Modifier ma note" aria-label="Modifier ma note pour ${escAttr(data.title)}">
+            <span>Modifier ma note</span>
+            <span class="mds-personal-edit-hint">${ICONS.edit}</span>
+          </button>
+          ${comparHtml}
+          ${localMatch.review ? `<div class="mds-personal-review">« ${escAttr(localMatch.review)} »</div>` : ''}
+          ${critBreakdown}
+        </div>
+      </details>
     `;
   }
 
@@ -229,8 +236,8 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
   // rend. Avant, tout tenait dans un seul gabarit de ~90 lignes où il
   // fallait compter les accolades pour savoir quelle section on lisait.
   return [
-    mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj }),
-    mdsActionsHtml(localMatch),
+    mdsHeaderHtml(data, { posterUrl, year, runtime, genres, directorObj, topRank }),
+    mdsActionsHtml(localMatch, data.id),
     // Plateformes de streaming : remontées juste sous les CTA (voir
     // Ludex_Specifications_Fiches.pdf — « où le voir ? C'est la donnée la
     // plus recherchée »), chargées en arrière-plan comme les notes externes.
@@ -244,7 +251,6 @@ function buildMdsContent(data, localMatch, localMatchIdx) {
     mdsCastHtml(data),
     mdsSagaHtml(data),
     `<div class="mds-section" style="animation-delay:.35s">
-      ${typeof buildAnalysisSectionHtml === 'function' ? buildAnalysisSectionHtml(data.id, data.title) : ''}
     </div>`,
   ].join('\n');
 }
@@ -256,7 +262,7 @@ const MDS_CRITERIA_LABELS = {
   scenario: 'Scénario', realisation: 'Réalisation', photo: 'Photo',
   acteurs: 'Acteurs', ambiance: 'Ambiance', rythme: 'Rythme', affect: 'Affect',
 };
-function buildCriteriaBreakdown(localMatch) {
+function buildCriteriaBreakdown(localMatch, { embedded = false } = {}) {
   if (localMatch.mode !== 'detail' || !localMatch.values) return '';
 
   const rows = CRITERIA.map((key, i) => {
@@ -272,7 +278,7 @@ function buildCriteriaBreakdown(localMatch) {
   }).join('');
 
   return `
-    <div class="mds-section mds-crit-breakdown" style="animation-delay:.08s">
+    <div class="${embedded ? '' : 'mds-section '}mds-crit-breakdown"${embedded ? '' : ' style="animation-delay:.08s"'}>
       <div class="mds-section-title">Détail par critère</div>
       ${rows}
     </div>
@@ -284,6 +290,75 @@ function buildCriteriaBreakdown(localMatch) {
 // une animation CSS qui bloquerait le glissement manuel natif), à vitesse
 // volontairement plus lente ici (plus de monde à voir défiler, moins de
 // pression pour choisir/lire rapidement).
+const detailCastMotion = new WeakMap();
+
+// Même rythme pour les deux fiches. Le mouvement s'arrête pour lire,
+// naviguer au clavier, consulter une autre modale ou réduire les animations.
+function setupDetailCastMotion(outer, sheet) {
+  detailCastMotion.get(sheet)?.();
+  const track = outer.querySelector('.mds-cast-track');
+  const motionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  let frame = null;
+  let previousTime = null;
+  let pausedUntil = 0;
+  let hovered = false;
+  let focused = false;
+  let lastAutoScroll = outer.scrollLeft;
+  const listeners = [];
+  function listen(target, event, handler, options) {
+    target.addEventListener(event, handler, options);
+    listeners.push(() => target.removeEventListener(event, handler, options));
+  }
+  function pause() { pausedUntil = performance.now() + 3000; }
+  function touch(e) { e.stopPropagation(); pause(); }
+  function stopFrame() {
+    if (frame !== null) cancelAnimationFrame(frame);
+    frame = null;
+    previousTime = null;
+  }
+  function cleanup() {
+    stopFrame();
+    listeners.forEach(remove => remove());
+    motionQuery?.removeEventListener?.('change', syncMotion);
+    detailCastMotion.delete(sheet);
+  }
+  function tick(now) {
+    frame = null;
+    if (!outer.isConnected || !track?.isConnected || !sheet.classList.contains('open')) { cleanup(); return; }
+    if (motionQuery?.matches) return;
+    const elapsed = previousTime === null ? 0 : Math.min(now - previousTime, 50);
+    previousTime = now;
+    if (!hovered && !focused && now >= pausedUntil && !document.hidden && sheet.getAttribute('aria-hidden') !== 'true') {
+      const halfWidth = track.scrollWidth / 2;
+      if (halfWidth > 0 && track.scrollWidth > outer.clientWidth) {
+        outer.scrollLeft += elapsed * 0.018; // 0,3 px/image à 60 Hz, aussi stable à 120 Hz.
+        if (outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
+        lastAutoScroll = outer.scrollLeft;
+      }
+    }
+    frame = requestAnimationFrame(tick);
+  }
+  function syncMotion() {
+    stopFrame();
+    if (!motionQuery?.matches && sheet.classList.contains('open')) frame = requestAnimationFrame(tick);
+  }
+  listen(outer, 'mouseenter', () => { hovered = true; });
+  listen(outer, 'mouseleave', () => { hovered = false; pause(); });
+  listen(outer, 'focusin', () => { focused = true; });
+  listen(outer, 'focusout', e => { focused = outer.contains(e.relatedTarget); pause(); });
+  listen(outer, 'touchstart', touch, { passive: true });
+  listen(outer, 'touchmove', touch, { passive: true });
+  listen(outer, 'wheel', pause, { passive: true });
+  listen(outer, 'scroll', () => {
+    // Le scroll produit par notre propre animation ne doit pas se mettre en pause.
+    if (Math.abs(outer.scrollLeft - lastAutoScroll) > 1) pause();
+  }, { passive: true });
+  listen(sheet, 'modalclosed', cleanup, { once: true });
+  motionQuery?.addEventListener?.('change', syncMotion);
+  detailCastMotion.set(sheet, cleanup);
+  syncMotion();
+}
+
 function renderCastCarousel(castArray) {
   const outer = document.getElementById('mds-cast-carousel');
   if (!outer) return;
@@ -305,40 +380,13 @@ function renderCastCarousel(castArray) {
   // Duplique la liste une fois : le défilement peut boucler sans à-coup dès
   // qu'il a parcouru l'équivalent d'une copie complète.
   outer.innerHTML = `<div class="mds-cast-track">${itemsHtml}${itemsHtml}</div>`;
-  const track = outer.querySelector('.mds-cast-track');
 
   outer.addEventListener('click', (e) => {
     const item = e.target.closest('.mds-cast-item');
     if (item) openPersonDetailSheet(item.dataset.personId, item.dataset.personName);
   });
 
-  const AUTO_SCROLL_SPEED = 0.3; // plus lent que le carrousel tendances (0.5) : plus de monde à voir défiler
-  const RESUME_DELAY_MS = 3000;
-  let autoScrollPaused = false;
-  let resumeTimer = null;
-
-  function pauseThenScheduleResume() {
-    autoScrollPaused = true;
-    clearTimeout(resumeTimer);
-    resumeTimer = setTimeout(() => { autoScrollPaused = false; }, RESUME_DELAY_MS);
-  }
-
-  function tick() {
-    if (!autoScrollPaused && mdsEl.classList.contains('open')) {
-      outer.scrollLeft += AUTO_SCROLL_SPEED;
-      const halfWidth = track.scrollWidth / 2;
-      if (halfWidth > 0 && outer.scrollLeft >= halfWidth) outer.scrollLeft -= halfWidth;
-    }
-    // Arrête la boucle si la fiche a été fermée (évite de faire tourner un
-    // requestAnimationFrame indéfiniment pour un carrousel qu'on ne voit plus).
-    if (mdsEl.classList.contains('open')) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-
-  outer.addEventListener('touchstart', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('touchmove', (e) => { e.stopPropagation(); pauseThenScheduleResume(); }, { passive: true });
-  outer.addEventListener('wheel', pauseThenScheduleResume, { passive: true });
-  outer.addEventListener('scroll', pauseThenScheduleResume, { passive: true });
+  setupDetailCastMotion(outer, mdsEl);
 }
 
 // Bande des autres films de la saga (belongs_to_collection), en bas de la
@@ -441,16 +489,14 @@ function pickBestTrailer(videos) {
 
 let mdsCurrentData = null; // données complètes du film actuellement affiché, pour les boutons d'action
 
-async function openMovieDetailSheet(tmdbId) {
+async function openMovieDetailSheet(tmdbId, { topRank = null } = {}) {
   if (!tmdbId) {
     showToast("Ce film n'a pas de fiche TMDb liée (ajouté en saisie manuelle).");
     return;
   }
 
-  lastFocusedBeforeModal = document.activeElement;
   mdsContentEl.innerHTML = buildMdsSkeleton();
-  mdsEl.classList.add('open');
-  mdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture (pas juste piégé une fois qu'on y est déjà)
+  openModalElement(mdsEl, { initialFocus: mdsCloseBtn });
   const mdsBoxEl = mdsEl.querySelector('.mds-box');
   if (mdsBoxEl) mdsBoxEl.scrollTop = 0; // évite de démarrer en mode compact si une fiche precedente avait été scrollée
 
@@ -464,7 +510,7 @@ async function openMovieDetailSheet(tmdbId) {
     const localMatch = history.find(h => String(h.tmdbId) === String(tmdbId));
     const localMatchIdx = history.findIndex(h => String(h.tmdbId) === String(tmdbId));
 
-    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx);
+    mdsContentEl.innerHTML = buildMdsContent(data, localMatch, localMatchIdx, topRank);
     mdsCurrentData = data;
     renderCastCarousel(data.credits?.cast || []);
     setupOverviewToggle();
@@ -474,7 +520,6 @@ async function openMovieDetailSheet(tmdbId) {
     if (data.belongs_to_collection) populateSagaStrip(data.belongs_to_collection.id, data.id);
     if (data.external_ids?.imdb_id) populateExternalRatings(data.external_ids.imdb_id);
     fetchAndRenderProviders(data.id, 'mds-providers', 'movie');
-    if (typeof wireAnalysisSection === 'function') wireAnalysisSection(data.id, data.title);
   } catch {
     mdsCurrentData = null;
     // État d'erreur avec reprise : l'id du film voyage dans le bouton, le
@@ -674,10 +719,8 @@ function buildPdsContent(data) {
 
 async function openPersonDetailSheet(personId, personName) {
   if (!personId) return;
-  lastFocusedBeforeModal = document.activeElement;
   pdsContentEl.innerHTML = buildPdsSkeleton(personName);
-  pdsEl.classList.add('open');
-  pdsCloseBtn.focus(); // déplace le focus DANS la fiche à l'ouverture
+  openModalElement(pdsEl, { initialFocus: pdsCloseBtn });
 
   try {
     const res = await fetch(`/api/search?personId=${personId}`);
@@ -871,12 +914,14 @@ function applyPosterCellHeights(grid) {
   modal?.addEventListener('transitionend', maybeCleanup);
 }
 
+let posterPickerRequest = 0;
 async function openPosterPicker(tmdbId, mediaType = 'movie') {
+  const request = ++posterPickerRequest;
   const modal = document.getElementById('poster-picker-modal');
   const grid = document.getElementById('poster-picker-grid');
   if (!modal || !grid) return;
-  modal.classList.add('open');
   grid.innerHTML = `<div class="poster-picker-loading">${'<div class="poster-picker-cell skeleton-bg"></div>'.repeat(6)}</div>`;
+  openModalElement(modal, { initialFocus: document.getElementById('poster-picker-close') });
 
   try {
     const param = mediaType === 'tv' ? 'tvImages' : 'images';
@@ -886,6 +931,7 @@ async function openPosterPicker(tmdbId, mediaType = 'movie') {
     // 03-foundation.js) — sans ça, une vraie panne d'API semblait être un
     // simple manque de variantes pour ce film precis.
     const data = await readApiJson(res);
+    if (request !== posterPickerRequest) return;
     const posters = (data && data.posters) || [];
     if (posters.length === 0) {
       grid.innerHTML = `<div class="poster-picker-empty">Aucune affiche alternative disponible pour ${mediaType === 'tv' ? 'cette série' : 'ce film'}.</div>`;
@@ -900,6 +946,7 @@ async function openPosterPicker(tmdbId, mediaType = 'movie') {
     grid.dataset.mediaType = mediaType;
     applyPosterCellHeights(grid);
   } catch (err) {
+    if (request !== posterPickerRequest) return;
     grid.innerHTML = `
       <div class="error-state">
         <div class="error-state-msg">${escAttr(describeApiFailure(err))}</div>
@@ -915,10 +962,10 @@ document.getElementById('movie-detail-sheet')?.addEventListener('click', (e) => 
   if (btn) openPosterPicker(btn.dataset.posterPicker);
 });
 
-document.getElementById('poster-picker-modal')?.addEventListener('click', (e) => {
+document.getElementById('poster-picker-modal')?.addEventListener('click', async (e) => {
   const modal = document.getElementById('poster-picker-modal');
-  if (e.target === modal) { modal.classList.remove('open'); return; }
-  if (e.target.closest('#poster-picker-close')) { modal.classList.remove('open'); return; }
+  if (e.target === modal) { closeModal(modal); return; }
+  if (e.target.closest('#poster-picker-close')) { closeModal(modal); return; }
 
   const retry = e.target.closest('.error-retry-btn[data-retry-posters]');
   if (retry) { openPosterPicker(retry.dataset.retryPosters, retry.dataset.retryMediaType || 'movie'); return; }
@@ -928,20 +975,14 @@ document.getElementById('poster-picker-modal')?.addEventListener('click', (e) =>
   const grid = document.getElementById('poster-picker-grid');
   const tmdbId = grid.dataset.tmdbId;
   const mediaType = grid.dataset.mediaType || 'movie';
-  modal.classList.remove('open');
+  closeModal(modal);
 
   if (mediaType === 'tv') {
-    // Les séries stockent déjà poster_path en fragment brut TMDb (pas une
-    // URL complète comme les films) — on garde ce même format plutôt que
-    // d'introduire une seconde représentation.
-    if (typeof applyChosenTvPoster === 'function') applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
-    if (navigator.vibrate) navigator.vibrate(15);
-    const sheetPoster = document.querySelector('#tv-detail-sheet .mds-poster');
-    if (sheetPoster && sheetPoster.tagName === 'IMG') {
-      sheetPoster.src = tmdbImage(cell.dataset.posterPath, 'w342');
-    }
-    if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
-    showToast('Affiche mise à jour');
+    try {
+      const touched = await applyChosenTvPoster(tmdbId, cell.dataset.posterPath);
+      if (touched && navigator.vibrate) navigator.vibrate(15);
+      showToast(touched ? 'Affiche mise à jour' : 'Cette série a été retirée.');
+    } catch (error) { showToast(error.message); }
     return;
   }
 

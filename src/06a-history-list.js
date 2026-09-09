@@ -50,14 +50,9 @@ function renderHistoryHero(sorted) {
   // On teste l'URL ASSAINIE, pas l'URL brute : une affiche rejetée par
   // safePosterSrc() doit retomber sur l'espace réservé, pas produire un
   // <img src=""> (que le navigateur interprète comme un rechargement de la page).
-  const heroPoster = safePosterSrc(item.poster);
-  // onerror : sans lui, une affiche qui ne repond pas (404 TMDb, reseau
-  // coupe) laissait le navigateur dessiner son icone d'image cassee, avec le
-  // texte alternatif a cote — visible et laid, alors que la grille juste en
-  // dessous degrade proprement vers un espace reserve depuis toujours. Meme
-  // repli ici, pour que les deux se comportent pareil.
+  const heroPoster = savedPosterAttrs(item.poster, 'w342', '96px');
   const imgHtml = heroPoster
-    ? `<img class="hero-entry-poster" src="${heroPoster}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<div class=\\'hero-entry-poster\\'></div>'">`
+    ? `<img class="hero-entry-poster" ${heroPoster} alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
     : `<div class="hero-entry-poster"></div>`;
   hero.innerHTML = `
     <div class="hero-entry">
@@ -68,6 +63,11 @@ function renderHistoryHero(sorted) {
         <div class="hero-entry-score">${item.score}<small>/10</small></div>
       </div>
     </div>`;
+  hero.querySelector('img.hero-entry-poster')?.addEventListener('error', event => {
+    const fallback = document.createElement('div');
+    fallback.className = 'hero-entry-poster';
+    event.currentTarget.replaceWith(fallback);
+  }, { once: true });
 }
 
 let histSearchTimer;
@@ -80,6 +80,29 @@ function renderActiveHistoryView() {
 }
 const historySearchEl = document.getElementById('history-search');
 const historySearchClearBtn = document.getElementById('history-search-clear-btn');
+const historyEditorialSearch = document.getElementById('history-editorial-search');
+const historySearchToggle = document.getElementById('history-search-toggle');
+
+function setHistorySearchOpen(open, { restoreFocus = false } = {}) {
+  if (!historyEditorialSearch || !historySearchEl || !historySearchToggle) return;
+  historyEditorialSearch.classList.toggle('is-open', open);
+  historySearchEl.disabled = !open;
+  historySearchToggle.setAttribute('aria-expanded', String(open));
+  historySearchToggle.setAttribute('aria-label', open ? 'Fermer la recherche' : 'Ouvrir la recherche');
+  if (open) {
+    requestAnimationFrame(() => historySearchEl.focus());
+    return;
+  }
+  historySearchEl.value = '';
+  historySearchEl.dispatchEvent(new Event('input'));
+  if (restoreFocus) historySearchToggle.focus();
+}
+
+historySearchToggle?.addEventListener('click', () => {
+  setHistorySearchOpen(!historyEditorialSearch?.classList.contains('is-open'), { restoreFocus: true });
+});
+historyEditorialSearch?.addEventListener('submit', event => event.preventDefault());
+setHistorySearchOpen(false);
 historySearchEl.addEventListener('input', (e) => {
   historySearchQuery = e.target.value.toLowerCase();
   historySearchClearBtn.style.display = e.target.value ? 'flex' : 'none';
@@ -90,6 +113,9 @@ historySearchClearBtn.addEventListener('click', () => {
   historySearchEl.value = '';
   historySearchEl.dispatchEvent(new Event('input'));
   historySearchEl.focus();
+});
+historySearchEl.addEventListener('keydown', event => {
+  if (event.key === 'Escape') setHistorySearchOpen(false, { restoreFocus: true });
 });
 
 // ═══════════════════════════════════════════
@@ -330,9 +356,9 @@ function renderHistory() {
 
       const targetSize = POSTER_SIZE_BY_TIER[tier];
       const rawPoster = targetSize && item.poster ? item.poster.replace('/w185/', `/${targetSize}/`) : item.poster;
-      const posterSrc = safePosterSrc(rawPoster);
-      const imgHtml = posterSrc
-        ? `<img class="hist-grid-poster" src="${posterSrc}" alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async" onerror="this.outerHTML='<span class=\\'hist-grid-poster-ph\\'>\ud83c\udfac</span>'">`
+      const posterAttrs = savedPosterAttrs(rawPoster, targetSize, tier === 'banner' ? '(min-width: 861px) 500px, 100vw' : '(min-width: 861px) 342px, 50vw');
+      const imgHtml = posterAttrs
+        ? `<img class="hist-grid-poster" ${posterAttrs} alt="Affiche de ${escAttr(item.title)}" loading="lazy" decoding="async">`
         : `<span class="hist-grid-poster-ph">${ICONS.clapper}</span>`;
 
       div.innerHTML = `
@@ -342,8 +368,8 @@ function renderHistory() {
         <div class="hist-grid-badge" style="color:${scoreColor}">${item.score}</div>
         ${isFeatured ? `<div class="hist-grid-featured-badge">${item.liked ? `${ICONS.heart} Coup de c\u0153ur` : `\u2605 ${item.score}`}</div>` : ''}
         <div class="hist-actions">
-          <button class="hist-action-btn" onclick="loadItem(${realIdx})" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
-          <button class="hist-action-btn del" onclick="deleteItem(${realIdx}, this)" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
+          <button type="button" class="hist-action-btn" data-history-action="edit" data-history-idx="${realIdx}" title="Modifier" aria-label="Modifier ma note pour ${escAttr(item.title)}">${ICONS.edit}</button>
+          <button type="button" class="hist-action-btn del" data-history-action="delete" data-history-idx="${realIdx}" title="Supprimer" aria-label="Supprimer ${escAttr(item.title)} de l'historique">${ICONS.trash}</button>
         </div>`;
       gridEl.appendChild(div);
       applyPosterAccent(item.poster, div);
@@ -352,6 +378,16 @@ function renderHistory() {
   window._justSavedHistoryTitle = null;
   if (window.reapplyArmedHistoryState) window.reapplyArmedHistoryState(capturedArmedState);
 }
+
+// `error` ne remonte pas normalement : écoute en capture sur le conteneur
+// persistant, sans gestionnaire inline incompatible avec la CSP.
+document.getElementById('history-list').addEventListener('error', event => {
+  if (!event.target.matches('img.hist-grid-poster')) return;
+  const fallback = document.createElement('span');
+  fallback.className = 'hist-grid-poster-ph';
+  fallback.innerHTML = ICONS.clapper;
+  event.target.replaceWith(fallback);
+}, true);
 
 // ═══════════════════════════════════════════
 //  ACTIONS RAPIDES (appui long sur un film de l'historique)

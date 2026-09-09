@@ -6,9 +6,10 @@
 // visible en overlay (voir isDefaultComposition(), 03-foundation.js, qui
 // retourne maintenant true inconditionnellement). Ce test couvrait
 // auparavant le retrait par glissement tactile ; il couvre maintenant le
-// retrait par bouton, qui est le seul chemin d'action restant — même
+// retrait par le menu compact, qui est le seul chemin d'action restant — même
 // fonction (removeWatchlist), même toast d'annulation.
 const { test, expect } = require('@playwright/test');
+const { holdWatchlistPoster } = require('./helpers/watchlist-hold');
 
 test.beforeEach(async ({ page }) => {
   // L'écran d'accueil (nouvel utilisateur) et le splash initial interceptaient
@@ -26,8 +27,10 @@ test.beforeEach(async ({ page }) => {
   await page.click('#nav-watchlist');
 });
 
-test('retirer une carte de la watchlist via le bouton (avec annulation possible)', async ({ page }) => {
-  await page.click('.wl-card .wl-btn.del');
+test('retirer une carte de la watchlist via le menu (avec annulation possible)', async ({ page }) => {
+  await holdWatchlistPoster(page);
+  await expect(page.locator('#action-sheet')).toHaveClass(/open/);
+  await page.getByRole('button', { name: 'Supprimer', exact: true }).click();
   await page.waitForTimeout(150);
 
   const titles = await page.locator('.wl-title').allTextContents();

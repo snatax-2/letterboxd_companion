@@ -41,6 +41,7 @@ const syncRestoreBtn = document.getElementById('sync-restore-btn');
 const syncStatusEl = document.getElementById('sync-status');
 const syncGenerateBtn = document.getElementById('sync-generate-btn');
 const syncCopyBtn = document.getElementById('sync-copy-btn');
+const syncRevealBtn = document.getElementById('sync-reveal-btn');
 const syncCodeWarningEl = document.getElementById('sync-code-warning');
 
 // ─── Force du code de synchronisation ───────────────────────────────────────
@@ -100,6 +101,14 @@ function setSyncCode(code) {
   localStorage.setItem(SYNC_CODE_KEY, code.trim());
 }
 
+function setSyncCodeVisibility(visible) {
+  if (!syncCodeInput || !syncRevealBtn) return;
+  syncCodeInput.type = visible ? 'text' : 'password';
+  syncRevealBtn.setAttribute('aria-pressed', String(visible));
+  const label = syncRevealBtn.querySelector('span');
+  if (label) label.textContent = visible ? 'Masquer' : 'Afficher';
+}
+
 function setSyncStatus(msg, isError = false) {
   syncStatusEl.textContent = msg;
   syncStatusEl.style.color = isError ? '#ff4040' : 'var(--text-mid)';
@@ -112,11 +121,13 @@ function formatDateTime(iso) {
 // ─── Tombstones (traces de suppression) ─────────────────────────────────────
 
 function loadTombstones(storageKey) {
-  try { return JSON.parse(localStorage.getItem(storageKey)) || []; } catch { return []; }
+  if (storageKey === 'lbx_tv_show_tombstones') return readTvState().showTombstones;
+  if (storageKey === 'lbx_tv_season_tombstones') return readTvState().seasonTombstones;
+  return readJsonStorage(storageKey, [], Array.isArray);
 }
 
 function saveTombstones(storageKey, list) {
-  localStorage.setItem(storageKey, JSON.stringify(list));
+  return writeJsonStorage(storageKey, list);
 }
 
 function recordTombstone(storageKey, key) {
@@ -136,10 +147,113 @@ function removeTombstone(storageKey, key) {
 // mergeWatchlist vivent maintenant dans 03b-pure-logic.js (logique pure,
 // testable automatiquement sans DOM — voir tests/merge-logic.test.js).
 
+function mergeWatchlistCollection(remotePayload, mediaType = 'movie') {
+  const isTv = mediaType === 'tv';
+  const keys = isTv
+    ? { meta: 'tvWatchlistsMeta', lists: 'tvWatchlists', itemTombs: 'tvWatchlistTombstones', listTombs: 'tvWatchlistListTombstones' }
+    : { meta: 'watchlistsMeta', lists: 'watchlists', itemTombs: 'watchlistTombstones', listTombs: 'watchlistListTombstones' };
+  const listTombstoneKey = isTv ? TV_WATCHLIST_LIST_TOMBSTONES_KEY : WATCHLIST_LIST_TOMBSTONES_KEY;
+  const localMeta = loadWatchlistsMeta(mediaType);
+  const remoteMeta = Array.isArray(remotePayload?.[keys.meta]) ? remotePayload[keys.meta] : [];
+  const mergedListTombstones = mergeTombstoneLists(
+    loadTombstones(listTombstoneKey),
+    Array.isArray(remotePayload?.[keys.listTombs]) ? remotePayload[keys.listTombs] : [],
+  );
+  saveTombstones(listTombstoneKey, mergedListTombstones);
+
+  const deletedIds = new Set(mergedListTombstones.map(t => t.key));
+  const metaById = {};
+  remoteMeta.forEach(list => { if (list?.id) metaById[list.id] = { id: list.id, name: list.name }; });
+  localMeta.forEach(list => { if (list?.id) metaById[list.id] = { id: list.id, name: list.name }; });
+  let meta = Object.values(metaById).filter(list => !deletedIds.has(list.id));
+  if (meta.length === 0) meta = [{ id: 'default', name: 'À voir' }];
+
+  const activeId = getActiveWatchlistId(mediaType);
+  saveWatchlistsMeta(meta, mediaType);
+  if (!meta.some(list => list.id === activeId)) setActiveWatchlistId(meta[0].id, mediaType);
+
+  const remoteLists = remotePayload?.[keys.lists] && typeof remotePayload[keys.lists] === 'object' ? remotePayload[keys.lists] : {};
+  const remoteItemTombstones = remotePayload?.[keys.itemTombs] && typeof remotePayload[keys.itemTombs] === 'object' ? remotePayload[keys.itemTombs] : {};
+  const lists = {};
+  const itemTombstones = {};
+  meta.forEach(({ id }) => {
+    const localItems = readJsonStorage(watchlistStorageKey(id, mediaType), []);
+    const mergedTombstones = mergeTombstoneLists(
+      loadTombstones(watchlistTombstonesKey(id, mediaType)),
+      Array.isArray(remoteItemTombstones[id]) ? remoteItemTombstones[id] : [],
+    );
+    const mergedItems = mergeWatchlist(
+      Array.isArray(localItems) ? localItems : [],
+      Array.isArray(remoteLists[id]) ? remoteLists[id] : [],
+      mergedTombstones,
+    );
+    writeJsonStorage(watchlistStorageKey(id, mediaType), mergedItems);
+    saveTombstones(watchlistTombstonesKey(id, mediaType), mergedTombstones);
+    lists[id] = mergedItems;
+    itemTombstones[id] = mergedTombstones;
+  });
+
+  return { meta, lists, itemTombstones, listTombstones: mergedListTombstones };
+}
+
+function mergePersonalCollections(remotePayload) {
+  const localAnalyses = readJsonStorage('lbx_analyses', []);
+  const remoteAnalyses = Array.isArray(remotePayload?.analyses) ? remotePayload.analyses : [];
+  const analysesById = new Map();
+  [...remoteAnalyses, ...localAnalyses].forEach(item => {
+    if (!item || typeof item !== 'object') return;
+    const key = item.id || `${item.filmId || ''}|${item.date || ''}|${item.texteTechnique || ''}`;
+    analysesById.set(key, item);
+  });
+  const analyses = [...analysesById.values()].sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+  writeRegisteredStorage('analyses', analyses);
+
+  const localDuels = readRegisteredStorage('duels', null);
+  const remoteDuels = remotePayload?.duels && typeof remotePayload.duels === 'object' ? remotePayload.duels : null;
+  let duels = localDuels || remoteDuels;
+  if (localDuels?.updatedAt && remoteDuels?.updatedAt) {
+    duels = localDuels.updatedAt >= remoteDuels.updatedAt ? localDuels : remoteDuels;
+  } else if (!localDuels?.updatedAt && remoteDuels?.updatedAt) {
+    duels = remoteDuels;
+  }
+  if (duels) writeRegisteredStorage('duels', duels);
+
+  const localProvidersRaw = readTextStorage('lbx_owned_providers');
+  const ownedProviders = localProvidersRaw === null
+    ? (Array.isArray(remotePayload?.ownedProviders) ? remotePayload.ownedProviders : [])
+    : readJsonStorage('lbx_owned_providers', []);
+  if (localProvidersRaw === null && remotePayload?.ownedProviders) {
+    writeRegisteredStorage('ownedProviders', ownedProviders);
+  }
+
+  const localDraftRaw = readTextStorage('lbx_draft');
+  importTvRatingDrafts(remotePayload?.draft?.tvDrafts);
+  if (localDraftRaw === null && remotePayload?.draft) {
+    const { tvDrafts: _tvDrafts, ...movieDraft } = remotePayload.draft;
+    if (Object.keys(movieDraft).length) writeRegisteredStorage('draft', movieDraft);
+  }
+  const draft = ratingDraftSnapshot();
+
+  const preferences = {};
+  const preferenceKeys = {
+    focusMode: 'lbx_focus_mode',
+    tvContinueCollapsed: 'lbx_tv_continue_collapsed',
+  };
+  Object.entries(preferenceKeys).forEach(([name, storageKey]) => {
+    const localValue = localStorage.getItem(storageKey);
+    const value = localValue ?? remotePayload?.preferences?.[name] ?? null;
+    if (localValue === null && value !== null) localStorage.setItem(storageKey, String(value));
+    preferences[name] = value;
+  });
+
+  return { analyses, duels, ownedProviders, draft, preferences };
+}
+
 // ─── Cœur de la synchro : fusionne l'état local avec un payload cloud ───────
 // Sauvegarde le résultat en local (render inclus) et le retourne, prêt à être
 // ré-uploadé si besoin (c'est ce que fait pushToCloud).
-function mergeWithRemote(remotePayload) {
+async function mergeWithRemote(remotePayload) {
+  validateTvImport(remotePayload?.tvShows || []);
   const localHistory = loadHistory();
   const localHistTomb = loadTombstones(HISTORY_TOMBSTONES_KEY);
   const remoteHistory = Array.isArray(remotePayload?.history) ? remotePayload.history : [];
@@ -149,98 +263,56 @@ function mergeWithRemote(remotePayload) {
   saveHistory(mergedHistory);
   saveTombstones(HISTORY_TOMBSTONES_KEY, mergedHistTomb);
 
-  // ─── Séries suivies ────────────────────────────────────────────────────
-  const localTvShows = typeof loadTvShows === 'function' ? loadTvShows() : [];
+  // Fusion calculée DANS la file, sur l'état frais, puis persistée avant le rendu.
   const remoteTvShows = Array.isArray(remotePayload?.tvShows) ? remotePayload.tvShows : [];
-  const localShowTomb = loadTombstones(TV_SHOW_TOMBSTONES_KEY);
-  const remoteShowTomb = Array.isArray(remotePayload?.tvShowTombstones) ? remotePayload.tvShowTombstones : [];
-  const mergedShowTomb = mergeTombstoneLists(localShowTomb, remoteShowTomb);
-  const localSeasonTomb = loadTombstones(TV_SEASON_TOMBSTONES_KEY);
-  const remoteSeasonTomb = Array.isArray(remotePayload?.tvSeasonTombstones) ? remotePayload.tvSeasonTombstones : [];
-  const mergedSeasonTomb = mergeTombstoneLists(localSeasonTomb, remoteSeasonTomb);
-  const mergedTvShows = mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
-  // Ludex 2.0 : passe par la file d'écriture séquentielle (mutateTvShows(),
-  // 18-tv-shows.js) plutôt qu'un saveTvShows() direct — une synchro qui
-  // tombe pile pendant qu'une note ou un coup de cœur est en cours d'écriture
-  // ailleurs écraserait sinon ce changement avec cette copie fusionnée, déjà
-  // périmée au moment où elle s'écrit. mergedTvShows est déjà entièrement
-  // calculé à ce stade (toute la logique de fusion tourne juste au-dessus,
-  // de façon synchrone) — le mutateur se contente de le renvoyer tel quel
-  // comme tableau de remplacement, sans awaiter ici (cette fonction reste
-  // synchrone comme avant ; la vraie écriture est simplement mise en file).
-  if (typeof mutateTvShows === 'function') mutateTvShows(() => mergedTvShows);
-  else if (typeof saveTvShows === 'function') saveTvShows(mergedTvShows); // repli si 18-tv-shows.js n'est pas chargé
-  saveTombstones(TV_SHOW_TOMBSTONES_KEY, mergedShowTomb);
-  saveTombstones(TV_SEASON_TOMBSTONES_KEY, mergedSeasonTomb);
+  let mergedShowTomb, mergedSeasonTomb;
+  const mergedTvShows = await mutateTvShows((localTvShows, state) => {
+    mergedShowTomb = mergeTvTombstones(state.showTombstones, remotePayload?.tvShowTombstones || []);
+    mergedSeasonTomb = mergeTvTombstones(state.seasonTombstones, remotePayload?.tvSeasonTombstones || []);
+    state.showTombstones = mergedShowTomb;
+    state.seasonTombstones = mergedSeasonTomb;
+    return mergeTvShows(localTvShows, remoteTvShows, mergedShowTomb, mergedSeasonTomb);
+  }, { remote: true });
 
-  // ─── Watchlists : fusion des LISTES elles-mêmes, puis du contenu de chacune ──
-  const localMeta = loadWatchlistsMeta();
-  const remoteMeta = Array.isArray(remotePayload?.watchlistsMeta) ? remotePayload.watchlistsMeta : [];
-  const localListTomb = loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY);
-  const remoteListTomb = Array.isArray(remotePayload?.watchlistListTombstones) ? remotePayload.watchlistListTombstones : [];
-  const mergedListTomb = mergeTombstoneLists(localListTomb, remoteListTomb);
-  saveTombstones(WATCHLIST_LIST_TOMBSTONES_KEY, mergedListTomb);
-  const deletedListIds = new Set(mergedListTomb.map(t => t.key));
-
-  // Union par id (le nom local l'emporte en cas de conflit sur le même id),
-  // en excluant les listes supprimées sur l'un ou l'autre appareil.
-  const metaById = {};
-  remoteMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
-  localMeta.forEach(l => { if (l && l.id) metaById[l.id] = { id: l.id, name: l.name }; });
-  let mergedMeta = Object.values(metaById).filter(l => !deletedListIds.has(l.id));
-  if (mergedMeta.length === 0) mergedMeta = [{ id: 'default', name: 'À voir' }]; // garde-fou : jamais 0 liste
-
-  const activeId = getActiveWatchlistId(); // lu avant de sauvegarder la meta, au cas où la liste active aurait été supprimée ailleurs
-  saveWatchlistsMeta(mergedMeta);
-  if (!mergedMeta.find(l => l.id === activeId)) setActiveWatchlistId(mergedMeta[0].id);
-
-  const remoteWatchlists = remotePayload?.watchlists && typeof remotePayload.watchlists === 'object' ? remotePayload.watchlists : {};
-  const remoteWlTombs = remotePayload?.watchlistTombstones && typeof remotePayload.watchlistTombstones === 'object' ? remotePayload.watchlistTombstones : {};
-
-  const mergedWatchlists = {};
-  const mergedWlTombs = {};
-  mergedMeta.forEach(({ id }) => {
-    let localItems = [];
-    try { localItems = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch {}
-    const remoteItems = Array.isArray(remoteWatchlists[id]) ? remoteWatchlists[id] : [];
-    const localItemTomb = loadTombstones(watchlistTombstonesKey(id));
-    const remoteItemTomb = Array.isArray(remoteWlTombs[id]) ? remoteWlTombs[id] : [];
-    const mergedItemTomb = mergeTombstoneLists(localItemTomb, remoteItemTomb);
-    const mergedItems = mergeWatchlist(localItems, remoteItems, mergedItemTomb);
-
-    localStorage.setItem(watchlistStorageKey(id), JSON.stringify(mergedItems));
-    saveTombstones(watchlistTombstonesKey(id), mergedItemTomb);
-    mergedWatchlists[id] = mergedItems;
-    mergedWlTombs[id] = mergedItemTomb;
-  });
+  // Même moteur pour les listes films et séries : les deux supports sont
+  // désormais sauvegardés, restaurés et synchronisés de façon symétrique.
+  const movieWatchlists = mergeWatchlistCollection(remotePayload, 'movie');
+  const tvWatchlists = mergeWatchlistCollection(remotePayload, 'tv');
 
   // Réglages : pas vraiment "fusionnables" (un thème ou une préférence n'est pas
   // un tableau), on garde ceux du cloud seulement s'ils sont fournis et qu'on
   // n'en a pas localement, pour ne pas écraser un choix local sans raison.
-  const localSettings = JSON.parse(localStorage.getItem('lbx_settings') || 'null');
+  const localSettings = readJsonStorage('lbx_settings', null);
   const settings = localSettings || remotePayload?.settings || null;
   if (remotePayload?.settings && !localSettings) {
-    localStorage.setItem('lbx_settings', JSON.stringify(remotePayload.settings));
+    writeRegisteredStorage('settings', remotePayload.settings);
   }
   applySettings(settings || {});
+  const personal = mergePersonalCollections(remotePayload);
 
   renderAll();
   if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs();
+  if (typeof renderWatchlistTabs === 'function') renderWatchlistTabs('tv');
   renderWatchlist();
-  if (typeof renderTvHistory === 'function' && document.getElementById('hist-tab-tv')?.classList.contains('active')) renderTvHistory();
-  if (typeof statsDirty !== 'undefined') statsDirty = true;
+  if (typeof renderTvWatchlist === 'function') renderTvWatchlist();
 
   return {
+    schemaVersion: 3,
     history: mergedHistory,
     historyTombstones: mergedHistTomb,
     tvShows: mergedTvShows,
     tvShowTombstones: mergedShowTomb,
     tvSeasonTombstones: mergedSeasonTomb,
-    watchlistsMeta: mergedMeta,
-    watchlists: mergedWatchlists,
-    watchlistTombstones: mergedWlTombs,
-    watchlistListTombstones: mergedListTomb,
+    watchlistsMeta: movieWatchlists.meta,
+    watchlists: movieWatchlists.lists,
+    watchlistTombstones: movieWatchlists.itemTombstones,
+    watchlistListTombstones: movieWatchlists.listTombstones,
+    tvWatchlistsMeta: tvWatchlists.meta,
+    tvWatchlists: tvWatchlists.lists,
+    tvWatchlistTombstones: tvWatchlists.itemTombstones,
+    tvWatchlistListTombstones: tvWatchlists.listTombstones,
     settings,
+    ...personal,
   };
 }
 
@@ -255,25 +327,52 @@ function hashPayload(payload) {
   return String(hash);
 }
 
-function currentLocalSnapshot() {
-  const meta = loadWatchlistsMeta();
-  const watchlists = {};
-  const watchlistTombstones = {};
+function readWatchlistSnapshot(mediaType = 'movie') {
+  const meta = loadWatchlistsMeta(mediaType);
+  const lists = {};
+  const tombstones = {};
   meta.forEach(({ id }) => {
-    try { watchlists[id] = JSON.parse(localStorage.getItem(watchlistStorageKey(id))) || []; } catch { watchlists[id] = []; }
-    watchlistTombstones[id] = loadTombstones(watchlistTombstonesKey(id));
+    const stored = readJsonStorage(watchlistStorageKey(id, mediaType), []);
+    lists[id] = Array.isArray(stored) ? stored : [];
+    tombstones[id] = loadTombstones(watchlistTombstonesKey(id, mediaType));
   });
-  return {
+  return { meta, lists, tombstones };
+}
+
+function currentLocalSnapshot({ includeExportDate = false } = {}) {
+  const movies = readWatchlistSnapshot('movie');
+  const tv = readWatchlistSnapshot('tv');
+  const snapshot = {
+    schemaVersion: 3,
     history: loadHistory(),
     historyTombstones: loadTombstones(HISTORY_TOMBSTONES_KEY),
     tvShows: typeof loadTvShows === 'function' ? loadTvShows() : [],
     tvShowTombstones: loadTombstones(TV_SHOW_TOMBSTONES_KEY),
     tvSeasonTombstones: loadTombstones(TV_SEASON_TOMBSTONES_KEY),
-    watchlistsMeta: meta,
-    watchlists,
-    watchlistTombstones,
+    watchlistsMeta: movies.meta,
+    watchlists: movies.lists,
+    watchlistTombstones: movies.tombstones,
     watchlistListTombstones: loadTombstones(WATCHLIST_LIST_TOMBSTONES_KEY),
+    tvWatchlistsMeta: tv.meta,
+    tvWatchlists: tv.lists,
+    tvWatchlistTombstones: tv.tombstones,
+    tvWatchlistListTombstones: loadTombstones(TV_WATCHLIST_LIST_TOMBSTONES_KEY),
+    settings: readRegisteredStorage('settings', null),
+    ownedProviders: readRegisteredStorage('ownedProviders', []),
+    analyses: readJsonStorage('lbx_analyses', []),
+    duels: readRegisteredStorage('duels', null),
+    draft: ratingDraftSnapshot(),
+    preferences: {
+      focusMode: localStorage.getItem('lbx_focus_mode'),
+      tvContinueCollapsed: localStorage.getItem('lbx_tv_continue_collapsed'),
+    },
   };
+  if (includeExportDate) {
+    snapshot.exportedAt = new Date().toISOString();
+    const recovery = collectStorageRecovery();
+    if (recovery.length) snapshot.recovery = recovery;
+  }
+  return snapshot;
 }
 
 // Le code voyage dans un EN-TÊTE, plus dans l'URL : une query string finit
@@ -285,13 +384,18 @@ function syncHeaders(code, extra = {}) {
   return { 'X-Sync-Code': code, ...extra };
 }
 
-async function fetchCloudPayload(code) {
+async function fetchCloudState(code) {
   const res = await fetch('/api/sync', { headers: syncHeaders(code) });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'bad status');
-  return data.found ? data.payload : null;
+  return data.found
+    ? { payload: data.payload, revision: data.updatedAt || null }
+    : { payload: null, revision: null };
 }
 
+async function fetchCloudPayload(code) {
+  return (await fetchCloudState(code)).payload;
+}
 
 // Distingue la VRAIE cause d'un échec de synchro, pour ne plus systématiquement
 // blâmer "ta connexion" quand le problème est ailleurs :
@@ -310,34 +414,58 @@ function describeSyncFailure(err) {
 
 // Sauvegarde : récupère le cloud, fusionne avec le local, sauvegarde le résultat
 // localement, puis pousse la version fusionnée vers le cloud.
-async function pushToCloud(silent = false) {
+let _cloudWriteQueue = Promise.resolve();
+function pushToCloud(silent = false) {
   const code = getSyncCode();
+  const pending = _cloudWriteQueue.then(() => performCloudPush(silent, code));
+  _cloudWriteQueue = pending.catch(() => {});
+  return pending;
+}
+
+async function performCloudPush(silent, code) {
   if (!code) {
     if (!silent) setSyncStatus('Renseigne un code de synchronisation avant de sauvegarder.', true);
     return false;
   }
   if (!silent) setSyncStatus('Synchronisation en cours…');
   try {
-    const remotePayload = await fetchCloudPayload(code);
-    const merged = mergeWithRemote(remotePayload);
-
-    const res = await fetch('/api/sync', {
-      method: 'POST',
-      headers: syncHeaders(code, { 'Content-Type': 'application/json' }),
-      body: JSON.stringify(merged),
-    });
-    if (!res.ok) {
+    let cloud = await fetchCloudState(code);
+    let sentHash;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (getSyncCode() !== code) throw new Error('Code de synchronisation modifié : opération interrompue.');
+      const merged = await mergeWithRemote(cloud.payload);
+      sentHash = hashPayload(merged);
+      const revisionHeaders = cloud.revision ? { 'If-Match': cloud.revision } : { 'If-None-Match': '*' };
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: syncHeaders(code, { 'Content-Type': 'application/json', ...revisionHeaders }),
+        body: JSON.stringify(merged),
+      });
+      if (res.status === 409 && attempt < 2) {
+        const conflict = await res.json();
+        cloud = {
+          payload: conflict.payload || (await fetchCloudState(code)).payload,
+          revision: conflict.revision || null,
+        };
+        continue;
+      }
+      if (!res.ok) {
       // Lit le VRAI message renvoyé par l'API (ex: limite de requêtes, mauvaise
       // configuration serveur) plutôt que de le jeter — c'était la cause du
       // message trompeur "vérifie ta connexion" alors que le problème était
       // côté service, pas côté réseau de l'utilisateur.
-      let apiError = '';
-      try { apiError = (await res.json()).error || ''; } catch { /* réponse non-JSON, tant pis */ }
-      throw new Error(apiError || `bad status ${res.status}`);
+        let apiError = '';
+        try { apiError = (await res.json()).error || ''; } catch { /* réponse non-JSON, tant pis */ }
+        throw new Error(apiError || `bad status ${res.status}`);
+      }
+      break;
     }
 
     const now = new Date().toISOString();
-    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    // Accuse réception du contenu réellement envoyé, pas des modifications
+    // faites pendant la requête : celles-ci restent à envoyer au prochain tick.
+    if (getSyncCode() !== code) return false;
+    localStorage.setItem(SYNC_LAST_HASH_KEY, sentHash);
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     if (!silent) setSyncStatus(`Synchronisé ✓ (${formatDateTime(now)})`);
     return true;
@@ -363,9 +491,11 @@ async function pullFromCloud() {
       setSyncStatus('Aucune sauvegarde trouvée pour ce code.', true);
       return;
     }
-    mergeWithRemote(remotePayload);
+    if (getSyncCode() !== code) return;
+    await mergeWithRemote(remotePayload);
     const now = new Date().toISOString();
-    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(currentLocalSnapshot()));
+    // Une restauration n'a PAS envoyé les modifications locales au cloud.
+    localStorage.setItem(SYNC_LAST_HASH_KEY, hashPayload(remotePayload));
     localStorage.setItem(SYNC_LAST_TIME_KEY, now);
     setSyncStatus(`Synchronisé depuis le cloud ✓ (${formatDateTime(now)})`);
     showToast('Données synchronisées depuis le cloud.');
@@ -377,6 +507,9 @@ async function pullFromCloud() {
 // Pré-remplit le champ code + affiche le statut à chaque ouverture de la modale réglages
 document.getElementById('settings-btn').addEventListener('click', () => {
   syncCodeInput.value = getSyncCode();
+  // Le code est un jeton porteur : chaque nouvelle ouverture des réglages le
+  // masque, même si l'utilisateur l'avait révélé lors de l'ouverture précédente.
+  setSyncCodeVisibility(false);
   refreshSyncCodeWarning();
   const lastTime = localStorage.getItem(SYNC_LAST_TIME_KEY);
   setSyncStatus(lastTime ? `Dernière synchronisation : ${formatDateTime(lastTime)}` : '');
@@ -384,6 +517,12 @@ document.getElementById('settings-btn').addEventListener('click', () => {
 
 syncCodeInput.addEventListener('change', () => setSyncCode(syncCodeInput.value));
 syncCodeInput.addEventListener('input', refreshSyncCodeWarning);
+
+if (syncRevealBtn) {
+  syncRevealBtn.addEventListener('click', () => {
+    setSyncCodeVisibility(syncCodeInput.type === 'password');
+  });
+}
 
 // Générer : on ne remplace jamais un code existant sans confirmation — le
 // perdre, c'est perdre l'accès aux données déjà sauvegardées sous ce code.

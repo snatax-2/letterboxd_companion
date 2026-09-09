@@ -38,12 +38,6 @@ function switchRightTab(tabName) {
     discoverLoaded = true;
     if (typeof loadDiscoverTab === 'function') loadDiscoverTab();
   }
-  // Duels vit désormais dans Profil (arène + classement) — rendu à chaque
-  // affichage pour que la paire proposée reste à jour avec les derniers
-  // films notés, comme avant son déplacement depuis Découvrir.
-  if (tabName === 'profile' && typeof renderDuelsSection === 'function') {
-    renderDuelsSection();
-  }
   if (tabName === 'profile') {
     if (typeof renderProfileExtras === 'function') renderProfileExtras(loadHistory());
     // Ludex 2.0 : renderCuratedListsCard() retiré — "Classiques à explorer"
@@ -83,6 +77,56 @@ const colRightViews = document.getElementById('col-right-views');
 function playMobileViewAnim(el) {
   el.classList.remove('mobile-view-anim');
   requestAnimationFrame(() => el.classList.add('mobile-view-anim'));
+}
+
+// Le nom de l'onglet actif s'écrit brièvement, comme sur un terminal. Le
+// contenu source est mémorisé dans data-label : les bascules rapides ne
+// tronquent donc jamais le texte et chaque animation précédente est annulée.
+let navLabelTypingTimer = null;
+let navLabelTypingToken = 0;
+
+function animateActiveNavLabel(navButton) {
+  const label = navButton?.querySelector('.nav-btn-label');
+  if (!label) return;
+
+  document.querySelectorAll('.mobile-nav .nav-btn-label').forEach(otherLabel => {
+    if (otherLabel === label) return;
+    const otherFullText = otherLabel.dataset.label || otherLabel.textContent.trim();
+    otherLabel.dataset.label = otherFullText;
+    otherLabel.textContent = otherFullText;
+    otherLabel.classList.remove('is-typing');
+  });
+
+  const fullText = label.dataset.label || label.textContent.trim();
+  label.dataset.label = fullText;
+  const isMobile = window.matchMedia?.('(max-width: 860px)').matches;
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  if (navLabelTypingTimer) clearTimeout(navLabelTypingTimer);
+  navLabelTypingToken += 1;
+  const token = navLabelTypingToken;
+  label.classList.remove('is-typing');
+
+  if (!isMobile || reduceMotion) {
+    label.textContent = fullText;
+    return;
+  }
+
+  label.textContent = '';
+  label.classList.add('is-typing');
+  let characterIndex = 0;
+  const typeNextCharacter = () => {
+    if (token !== navLabelTypingToken) return;
+    characterIndex += 1;
+    label.textContent = fullText.slice(0, characterIndex);
+    if (characterIndex < fullText.length) {
+      navLabelTypingTimer = setTimeout(typeNextCharacter, 65);
+    } else {
+      navLabelTypingTimer = null;
+      label.classList.remove('is-typing');
+    }
+  };
+  navLabelTypingTimer = setTimeout(typeNextCharacter, 65);
 }
 
 function switchMobileNav(view) {
@@ -130,6 +174,8 @@ function switchMobileNav(view) {
     switchRightTab('profile');
     playMobileViewAnim(colRightViews);
   }
+
+  animateActiveNavLabel(document.querySelector('.mobile-nav .nav-btn.active'));
 
   // Reflète l'onglet courant dans l'URL (#discover, #history...) — deux
   // bénéfices concrets : un lien copié/mis en favori rouvre sur le bon

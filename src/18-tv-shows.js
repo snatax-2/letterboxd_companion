@@ -21,6 +21,8 @@
 // commentaire à cet endroit pour la raison exacte (calculateScore() y
 // accède dès l'initialisation, avant que ce fichier-ci ne soit atteint).
 let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
+let tvRatingFormBaseline = null;
+let tvFormRevision = 0;
 
 // Ludex 2.0 : cœur "coup de cœur" du formulaire Noter séries — même
 // principe visuel que #heart-btn côté film, mais écrit directement sur
@@ -30,11 +32,12 @@ let selectedShow = null; // { id, name, poster_path } une fois une serie choisie
 // enregistrement de saison pour prendre effet. Migré depuis la fiche
 // détail (#tds-heart-btn, 19-tv-detail.js) — même comportement, juste
 // déplacé pour être au même endroit que côté film.
-document.getElementById('tv-heart-btn')?.addEventListener('click', async () => {
+document.getElementById('tv-heart-btn')?.addEventListener('click', tvAction(async () => {
   const btn = document.getElementById('tv-heart-btn');
   if (!selectedShow) { showToast('Choisis une série avant de la marquer comme coup de cœur.'); return; }
+  const showId = selectedShow.id;
   const liked = await mutateTvShows(shows => {
-    const show = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+    const show = shows.find(s => String(s.tmdbTvId) === String(showId));
     if (!show) return undefined; // signale "série pas encore suivie" à l'appelant, sans rien modifier
     show.liked = !show.liked;
     // Ludex 2.0 : horodatage du dernier changement — bug corrigé (signalé
@@ -51,11 +54,12 @@ document.getElementById('tv-heart-btn')?.addEventListener('click', async () => {
     return show.liked;
   });
   if (liked === undefined) { showToast('Commence à suivre cette série avant de la marquer comme coup de cœur.'); return; }
+  if (String(selectedShow?.id) !== String(showId)) return;
   btn.classList.toggle('active', liked);
   btn.setAttribute('aria-pressed', String(liked));
   hapticPulse(btn, 'medium');
   if (typeof statsDirty !== 'undefined') statsDirty = true;
-});
+}));
 
 // Reflète l'état liked de la série actuelle sur le bouton — appelé chaque
 // fois qu'une série est sélectionnée ou qu'une saison est chargée (voir
@@ -71,7 +75,9 @@ function refreshTvHeartBtnState() {
   btn.setAttribute('aria-pressed', String(liked));
 }
 
-function setMediaType(type) {
+function setMediaType(type, { restore = true } = {}) {
+  const changed = currentMediaType !== type;
+  if (changed) saveDraft();
   currentMediaType = type;
   document.getElementById('tab-media-movie').classList.toggle('active', type === 'movie');
   document.getElementById('tab-media-tv').classList.toggle('active', type === 'tv');
@@ -86,6 +92,10 @@ function setMediaType(type) {
   // sens — selectSeason() la révèle elle-même le moment venu.
   document.getElementById('notation-card').style.display = type === 'movie' || selectedSeasonNumber != null ? '' : 'none';
   if (type === 'tv' && typeof renderTvContinueList === 'function') renderTvContinueList();
+  if (changed && restore) {
+    if (type === 'movie') loadDraft();
+    else withRatingDraftRestore(resumeLastTvDraft);
+  }
 }
 
 // Les deux critères reformulés pour une saison — les 5 autres (scenario,
@@ -174,8 +184,25 @@ async function fetchTvSuggestions(q) {
   }
 }
 
+function resetTvRatingTarget() {
+  tvFormRevision++;
+  tvRatingFormBaseline = null;
+  tvRatingSource = null;
+  tvDraftInitial = '';
+  selectedShow = null;
+  selectedSeasonNumber = null;
+  selectedSeasonName = null;
+  selectedSeasonEpisodeCount = 0;
+  document.getElementById('tv-search').value = '';
+  for (const id of ['tv-season-strip', 'tv-season-picker', 'tv-season-start-prompt', 'tv-season-in-progress-msg', 'tv-season-complete-banner']) document.getElementById(id).style.display = 'none';
+  if (currentMediaType === 'tv') document.getElementById('notation-card').style.display = 'none';
+}
+
 async function selectShow(show) {
+  saveDraft();
+  resetTvRatingTarget();
   selectedShow = show;
+  if (currentMediaType === 'tv') document.getElementById('notation-card').style.display = 'none';
   refreshTvHeartBtnState();
   tvSuggestEl.style.display = 'none';
   tvSearchEl.value = show.name;
@@ -184,7 +211,10 @@ async function selectShow(show) {
   openTvDetailSheet(show.id);
 }
 
-function selectSeason(season) {
+function selectSeason(season, { capture = true } = {}) {
+  if (capture) saveDraft();
+  tvFormRevision++;
+  tvRatingFormBaseline = null;
   const stripEl = document.getElementById('tv-season-strip');
   stripEl.style.display = 'flex';
   const posterImg = document.getElementById('tv-strip-poster');
@@ -198,9 +228,9 @@ function selectSeason(season) {
   refreshShowAverageDisplay();
 
   const shows = loadTvShows();
-  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow?.id));
   const localSeason = showEntry?.seasons?.[String(selectedSeasonNumber)];
-  const episodesComplete = localSeason && localSeason.totalEpisodes > 0 && localSeason.watchedEpisodes.length >= localSeason.totalEpisodes;
+  const episodesComplete = getTvSeasonProgress(selectedShow.id, selectedSeasonNumber, localSeason, { episode_count: season.episodeCount }).complete;
   const isComplete = localSeason && (episodesComplete || localSeason.rating);
 
   const startPromptEl = document.getElementById('tv-season-start-prompt');
@@ -234,21 +264,26 @@ function selectSeason(season) {
 }
 
 async function startTrackingSeason() {
+  if (!selectedShow || selectedSeasonNumber == null) return;
+  const target = { show: { ...selectedShow }, number: selectedSeasonNumber, name: selectedSeasonName, count: selectedSeasonEpisodeCount, revision: tvFormRevision };
   await mutateTvShows(shows => {
-    const showEntry = getOrCreateTvShow(shows);
-    const seasonKey = String(selectedSeasonNumber);
+    const showEntry = getOrCreateTvShow(shows, target.show);
+    showEntry.paused = false;
+    showEntry.continueHidden = false;
+    Object.values(showEntry.seasons).forEach(s => { s.paused = false; });
+    const seasonKey = String(target.number);
     if (!showEntry.seasons[seasonKey]) {
-      showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
+      showEntry.seasons[seasonKey] = { seasonName: target.name, watchedEpisodes: [], totalEpisodes: target.count };
     }
   });
+  if (target.revision !== tvFormRevision) return;
   document.getElementById('tv-season-start-prompt').style.display = 'none';
   document.getElementById('tv-season-in-progress-msg').style.display = 'flex';
   document.getElementById('tv-in-progress-text').textContent =
     `0/${selectedSeasonEpisodeCount} épisodes vus — continue depuis le widget "En cours" en haut de cet onglet.`;
-  if (typeof renderTvContinueList === 'function') renderTvContinueList();
   showToast(`"${selectedShow.name} — ${selectedSeasonName}" ajoutée à En cours`);
 }
-document.getElementById('tv-start-season-btn').addEventListener('click', startTrackingSeason);
+document.getElementById('tv-start-season-btn').addEventListener('click', tvAction(startTrackingSeason));
 
 // ═══════════════════════════════════════════
 //  SÉRIES — Phase 2 : suivi épisode par épisode
@@ -258,74 +293,70 @@ document.getElementById('tv-start-season-btn').addEventListener('click', startTr
 // total. Aucune note stockée ici (Phase 3) : la note de saison viendra
 // plus tard, la note globale de série ne sera jamais stockée du tout,
 // toujours recalculée à la volée à partir des saisons notées.
-const TV_SHOWS_KEY = 'lbx_tv_shows';
 let selectedSeasonNumber = null;
 let selectedSeasonName = null;
 let selectedSeasonEpisodeCount = 0;
 
 function loadTvShows() {
-  try { return JSON.parse(localStorage.getItem(TV_SHOWS_KEY)) || []; } catch { return []; }
+  return readTvState().shows;
 }
-function saveTvShows(shows) {
-  localStorage.setItem(TV_SHOWS_KEY, JSON.stringify(shows));
+function saveTvShows(shows, state) {
+  return persistTvState(shows, state);
 }
 
-// ═══════════════════════════════════════════
-//  FILE D'ÉCRITURE SÉQUENTIELLE (Ludex 2.0)
-// ═══════════════════════════════════════════
-// Cause racine des données perdues en notant les séries (signalé par
-// l'utilisateur, plusieurs fois, sous des formes différentes) : 17 endroits
-// différents faisaient chacun leur propre charger→modifier→sauvegarder sur
-// lbx_tv_shows, sans AUCUNE coordination entre eux. Deux opérations qui se
-// chevauchent (widget "En cours" qui résout une saison suivante pendant
-// qu'on coche un épisode depuis la fiche détail, par exemple) peuvent
-// silencieusement s'écraser l'une l'autre : la seconde sauvegarde avec une
-// copie chargée AVANT que la première n'ait fini d'écrire, effaçant son
-// changement sans jamais lever d'erreur. Un correctif ponctuel (widget
-// résolu séquentiellement en interne) n'a réglé qu'UN des 17 points —
-// toujours cassé dès qu'un AUTRE point entrait en jeu en même temps.
-//
-// mutateTvShows() est désormais le SEUL chemin autorisé pour modifier ce
-// stockage : chaque appel s'enfile après le précédent dans une chaîne de
-// promesses, jamais deux mutations en vol simultanément, peu importe
-// combien de choses se déclenchent au même instant. Le mutateur reçoit le
-// tableau FRAIS (rechargé juste avant lui, jamais une copie périmée),
-// peut être async (nécessaire pour needsNextSeasonCheck, qui doit
-// interroger TMDb avant de savoir quoi écrire), et peut renvoyer une
-// valeur récupérée par l'appelant.
+// Tous les producteurs (fiche, widget, note, import, cloud) partagent la
+// même transaction. Le verrou Web Locks l'étend aux autres onglets.
 let _tvShowsWriteQueue = Promise.resolve();
-function mutateTvShows(mutator) {
-  const resultPromise = _tvShowsWriteQueue.then(async () => {
-    let shows = loadTvShows();
-    const result = await mutator(shows);
-    // Un mutateur peut modifier `shows` sur place (cas le plus courant :
-    // trouver une entrée, changer un champ) OU renvoyer un tableau de
-    // remplacement complet (ex: filter() pour une suppression) — les deux
-    // sont acceptés plutôt que d'imposer un seul style à tous les appelants.
+function mutateTvShows(mutator, { remote = false, recordWatching = false } = {}) {
+  const transaction = async () => {
+    const state = readTvState();
+    const before = normalizeTvShows(state.shows);
+    let shows = JSON.parse(JSON.stringify(before));
+    const result = await mutator(shows, state);
     if (Array.isArray(result)) shows = result;
-    saveTvShows(shows);
-    return result;
+    if (!remote) {
+      const at = nextTvChangeTime(state);
+      shows = stampTvChanges(before, shows, at, recordWatching ? new Date().toISOString() : '');
+      recordTvDeletions(before, shows, state, at);
+    }
+    if (!saveTvShows(shows, state)) {
+      throw new Error('Modification non enregistrée : stockage local indisponible.');
+    }
+    return Array.isArray(result) ? shows : result;
+  };
+  const resultPromise = _tvShowsWriteQueue.then(() =>
+    navigator.locks?.request ? navigator.locks.request('ludex-tv-state', transaction) : transaction()
+  );
+  _tvShowsWriteQueue = resultPromise.catch(error => {
+    console.warn('[Ludex séries]', error.message);
+    showToast(error.message);
   });
-  // Une mutation qui échoue ne doit jamais bloquer la file pour toujours —
-  // l'erreur reste quand même visible pour CET appelant précis (resultPromise
-  // n'est pas affectée par ce .catch, posé sur la branche interne de la file).
-  _tvShowsWriteQueue = resultPromise.catch(() => {});
   return resultPromise;
 }
 
-function getOrCreateTvShow(shows) {
-  let entry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+function getOrCreateTvShow(shows, target) {
+  let entry = shows.find(s => String(s.tmdbTvId) === String(target.id));
   if (!entry) {
-    entry = { tmdbTvId: selectedShow.id, title: selectedShow.name, poster_path: selectedShow.poster_path, genre: selectedShow.genres || '', seasons: {} };
+    entry = { tmdbTvId: target.id, title: target.name, poster_path: target.poster_path, genre: target.genres || '', seasons: {} };
     shows.push(entry);
   }
   return entry;
 }
 function loadSeasonRatingIntoForm() {
+  return withRatingDraftRestore(loadTvRatingForm);
+}
+function loadTvRatingForm() {
+  tvRatingFormBaseline = null;
   const shows = loadTvShows();
   const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
   const seasonEntry = showEntry && showEntry.seasons[String(selectedSeasonNumber)];
   const rating = seasonEntry && seasonEntry.rating;
+  tvRatingSource = tvRatingSourceOf(showEntry, seasonEntry);
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = rating?.weights?.[c] ?? 1; });
+  updateWeightBadges();
+  quickRating = 2.5;
+  document.querySelectorAll('#quick-stars-container input').forEach(input => { input.checked = false; });
+  document.getElementById('s5').checked = true;
 
   if (rating && rating.mode === 'quick' && rating.values?.quick !== undefined) {
     setMode('quick');
@@ -339,7 +370,28 @@ function loadSeasonRatingIntoForm() {
     });
   }
   document.getElementById('review-text').value = rating ? (rating.review || '') : '';
+  document.getElementById('tv-view-date').value = rating?.date?.slice(0, 10) || new Date().toISOString().slice(0, 10);
+  if (rating) tvRatingFormBaseline = { fingerprint: tvStableJson(readTvRatingInputs()), rating: JSON.parse(JSON.stringify(rating)) };
   calculateScore();
+  updateQuickLabel();
+  updateAllSliders();
+  tvDraftInitial = tvStableJson(tvDraftForm());
+  restoreTvRatingDraft();
+}
+
+function readTvRatingInputs() {
+  return {
+    mode: currentMode,
+    values: currentMode === 'detail'
+      ? Object.fromEntries(CRITERIA.map(c => [c, document.getElementById(c).value]))
+      : { quick: quickRating },
+    weights: currentMode === 'detail' ? getWeights() : null,
+  };
+}
+
+function unchangedTvRating() {
+  return tvRatingFormBaseline && tvRatingFormBaseline.fingerprint === tvStableJson(readTvRatingInputs())
+    ? tvRatingFormBaseline.rating : null;
 }
 
 // Toutes les notes de saison, toutes séries confondues, à plat — réutilisé
@@ -355,7 +407,7 @@ function getAllTvSeasonRatings() {
 
 function refreshShowAverageDisplay() {
   const shows = loadTvShows();
-  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow.id));
+  const showEntry = shows.find(s => String(s.tmdbTvId) === String(selectedShow?.id));
   const avg = computeShowAverageScore(showEntry);
   const el = document.getElementById('tv-show-average');
   if (avg == null) {
@@ -373,14 +425,16 @@ async function saveTvSeasonRating() {
     return;
   }
   const score = calculateScore();
+  const target = { show: { ...selectedShow }, name: selectedSeasonName, count: selectedSeasonEpisodeCount, revision: tvFormRevision };
   const seasonKey = String(selectedSeasonNumber);
+  const draftKey = tvDraftKey(target.show.id, seasonKey);
+  const submitted = tvStableJson(tvDraftForm());
+  const submittedInputs = tvStableJson(readTvRatingInputs());
+  const source = tvRatingSource;
   const ratingPayload = {
-    mode: currentMode,
-    values: currentMode === 'detail'
-      ? CRITERIA.reduce((acc, c) => { acc[c] = document.getElementById(c).value; return acc; }, {})
-      : { quick: quickRating },
-    score: score.toFixed(1),
-    stars: document.getElementById('stars-display').textContent,
+    // Sans retouche des curseurs, conserver aussi les anciennes notes dont
+    // les poids historiques sont inconnus. Ne jamais inventer ces poids.
+    ...(unchangedTvRating() || { ...readTvRatingInputs(), score: score.toFixed(1), stars: document.getElementById('stars-display').textContent }),
     review: document.getElementById('review-text').value.trim(),
     // Ludex 2.0 : date choisie par l'utilisateur (voir #tv-view-date,
     // index.html) plutôt que l'instant de sauvegarde imposé — même format
@@ -388,25 +442,35 @@ async function saveTvSeasonRating() {
     date: document.getElementById('tv-view-date')?.value || new Date().toISOString().slice(0, 10),
   };
   await mutateTvShows(shows => {
-    const showEntry = getOrCreateTvShow(shows);
-    // La saison existe déjà forcément (créée dès qu'on "Commence" à la suivre,
-    // voir startTrackingSeason) — on y ajoute juste la note, sans repasser par
-    // getOrCreateTvSeason pour ne pas risquer d'écraser totalEpisodes avec
-    // une valeur périmée.
-    if (!showEntry.seasons[seasonKey]) {
-      showEntry.seasons[seasonKey] = { seasonName: selectedSeasonName, watchedEpisodes: [], totalEpisodes: selectedSeasonEpisodeCount };
-    }
-    showEntry.seasons[seasonKey].rating = ratingPayload;
+    const currentShow = shows.find(show => String(show.tmdbTvId) === String(target.show.id));
+    const currentSeason = currentShow?.seasons[seasonKey];
+    const currentSource = tvRatingSourceOf(currentShow, currentSeason);
+    if (!currentSeason || (source && (source.show !== currentSource.show || source.season !== currentSource.season))) throw new Error('Cette saison a été retirée ou recommencée : rouvre-la avant de noter.');
+    if (source && source.rating !== tvStableJson(currentSeason?.rating)) throw new Error('Note modifiée ailleurs : brouillon conservé. Rouvre une nouvelle critique pour repartir de la note actuelle.');
+    if (!currentSeason.rating && !getTvSeasonProgress(target.show.id, seasonKey, currentSeason).complete) throw new Error('Termine le suivi de cette saison avant sa première note.');
+    currentSeason.rating = ratingPayload;
   });
+  showToast(`"${target.show.name} — ${target.name}" notée`);
+  if (typeof statsDirty !== 'undefined') statsDirty = true;
+  const savedShow = loadTvShows().find(s => String(s.tmdbTvId) === String(target.show.id));
+  const savedSource = tvRatingSourceOf(savedShow, savedShow?.seasons[seasonKey]);
+  const pendingDraft = readJsonStorage(TV_DRAFT_PREFIX + draftKey, null);
+  if (pendingDraft?.form && tvStableJson(pendingDraft.form) !== submitted) {
+    writeJsonStorage(TV_DRAFT_PREFIX + draftKey, { ...pendingDraft, source: savedSource,
+      baseline: { fingerprint: submittedInputs, rating: ratingPayload }, initial: submitted });
+  } else clearTvRatingDraft(draftKey);
+  if (target.revision !== tvFormRevision) return;
   document.getElementById('tv-season-complete-banner').style.display = 'none';
-  showToast(`"${selectedShow.name} — ${selectedSeasonName}" notée`);
+  tvRatingFormBaseline = { fingerprint: submittedInputs, rating: ratingPayload };
+  tvRatingSource = savedSource;
+  tvDraftInitial = submitted;
+  if (submitted !== tvStableJson(tvDraftForm())) saveTvRatingDraft();
   if (typeof playSaveConfirmation === 'function') playSaveConfirmation();
   refreshShowAverageDisplay();
-  if (typeof statsDirty !== 'undefined') statsDirty = true;
 }
 
 function maybeShowSeasonCompleteBanner(showTmdbId, seasonKey, seasonEntry) {
-  if (seasonEntry.watchedEpisodes.length < seasonEntry.totalEpisodes) return;
+  if (!getTvSeasonProgress(showTmdbId, seasonKey, seasonEntry).complete) return;
   const banner = document.getElementById('tv-season-complete-banner');
   banner.dataset.showId = showTmdbId;
   banner.dataset.seasonKey = seasonKey;
@@ -421,30 +485,7 @@ document.getElementById('tv-rate-season-btn').addEventListener('click', () => {
   const showId = banner.dataset.showId;
   const seasonKey = banner.dataset.seasonKey;
   banner.style.display = 'none';
-
-  const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
-  if (show) {
-    switchMobileNav('rating');
-    setMediaType('tv');
-    selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
-    refreshTvHeartBtnState();
-    document.getElementById('tv-search').value = show.title;
-    document.getElementById('tv-season-picker').style.display = 'none';
-    const seasonData = show.seasons[seasonKey];
-    selectedSeasonNumber = Number(seasonKey);
-    selectedSeasonName = seasonData.seasonName;
-    document.getElementById('tv-season-strip').style.display = 'flex';
-    document.getElementById('tv-strip-poster').src = tmdbImage(show.poster_path, 'w200');
-    document.getElementById('tv-strip-title').textContent = `${show.title} — ${seasonData.seasonName}`;
-    document.getElementById('tv-strip-genre').textContent = `${seasonData.totalEpisodes} épisodes`;
-    document.getElementById('tv-season-start-prompt').style.display = 'none';
-    document.getElementById('tv-season-in-progress-msg').style.display = 'none';
-    refreshShowAverageDisplay();
-    loadSeasonRatingIntoForm();
-  }
-  const card = document.getElementById('notation-card');
-  card.style.display = '';
-  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  reopenTvSeason(showId, seasonKey);
 });
 
 // ═══════════════════════════════════════════
@@ -487,15 +528,28 @@ async function retrofitMissingTvGenres() {
   if (historyMediaFilter === 'tv') renderTvHistory();
 }
 
-// Ludex 2.0 : date la plus récente parmi les saisons NOTÉES d'une série —
-// partagée entre le tri "Récents" et le regroupement mensuel de
-// renderTvHistory() (même esprit que monthKeyOf() côté films,
-// 06a-history-list.js), pour ne calculer cette logique qu'à un seul endroit.
-function mostRecentRatingDate(show) {
-  return Object.values(show.seasons || {}).reduce((max, se) => {
-    const d = se.rating?.date || '';
-    return d > max ? d : max;
-  }, '');
+// Récents = dernière activité confirmée : date choisie pour une note, ou
+// date réelle d'une coche encore présente. Jamais une horloge de fusion,
+// un import, une pause, une affiche ou une date inventée pour l'ancien suivi.
+function tvLatestActivity(show) {
+  let latest = { time: -Infinity, date: '' };
+  const include = value => {
+    if (typeof value !== 'string') return;
+    const dayOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+    const parsed = new Date(dayOnly ? value + 'T00:00:00' : value);
+    if (!Number.isFinite(parsed.getTime())) return;
+    const date = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+    if (dayOnly ? date !== value : parsed.toISOString() !== value) return;
+    if (parsed.getTime() > latest.time) latest = { time: parsed.getTime(), date };
+  };
+  Object.values(show.seasons || {}).forEach(season => {
+    include(season.rating?.date);
+    (season.watchedEpisodes || []).forEach(n => {
+      const event = season._sync?.episodes?.[n];
+      if (event?.watched) include(event.watchedAt);
+    });
+  });
+  return latest;
 }
 
 function getSortedTvShows() {
@@ -517,9 +571,10 @@ function getSortedTvShows() {
   if (sortOrder === 'score-desc') return [...s].sort((a, b) => (avg(b) ?? -1) - (avg(a) ?? -1));
   if (sortOrder === 'score-asc')  return [...s].sort((a, b) => (avg(a) ?? 11) - (avg(b) ?? 11));
   if (sortOrder === 'title')      return [...s].sort((a, b) => a.title.localeCompare(b.title));
-  // "Récents" : dernière saison mise à jour (notée ou suivie), la plus
-  // récente d'abord — même esprit que le tri "Récents" des films.
-  return [...s].sort((a, b) => mostRecentRatingDate(b).localeCompare(mostRecentRatingDate(a)));
+  // Tri stable même après fusion : les dates inconnues restent à la fin.
+  const activity = new Map(s.map(show => [show, tvLatestActivity(show).time]));
+  return [...s].sort((a, b) => activity.get(b) - activity.get(a)
+    || String(a.tmdbTvId).localeCompare(String(b.tmdbTvId)));
 }
 
 // Ludex 2.0 : vedette "dernière série notée" côté Séries — même
@@ -528,7 +583,7 @@ function getSortedTvShows() {
 // Séries, l'ancien film restait affiché en haut, même invisible logiquement
 // (repéré par l'utilisateur). Basé sur la date de la dernière NOTE de
 // saison (pas la dernière case cochée) — cohérent avec le choix déjà fait
-// côté film, et évite d'ajouter un nouvel horodatage par épisode.
+// côté film. Cette vedette reste distincte du tri par activité de la grille.
 function renderTvHistoryHero(shows) {
   const hero = document.getElementById('history-hero');
   if (!hero) return;
@@ -558,7 +613,32 @@ function renderTvHistoryHero(shows) {
     </div>`;
 }
 
+const tvHistoryTotalFetches = new Set();
+
+// L'historique ne possède localement que les saisons que l'on a ouvertes.
+// On enrichit donc discrètement chaque série avec son total TMDb pour que la
+// barre sur l'affiche exprime la progression de la série entière.
+function enrichTvHistoryEpisodeTotals(shows) {
+  shows.filter(show => show?.tmdbTvId && !tvHistoryTotalFetches.has(String(show.tmdbTvId)))
+    .forEach(show => {
+      const id = String(show.tmdbTvId);
+      tvHistoryTotalFetches.add(id);
+      const before = JSON.stringify(getTvProgress(show));
+      loadTvCatalogue(show)
+        .then(() => {
+          const current = loadTvShows().find(s => String(s.tmdbTvId) === id);
+          if (current && JSON.stringify(getTvProgress(current)) !== before) notifyTvViewsChanged([id], 'catalogue');
+        })
+        .catch(() => {})
+        .finally(() => tvHistoryTotalFetches.delete(id));
+    });
+}
+
 function renderTvHistory() {
+  return withTvViewState(document.getElementById('tv-history-list'), renderTvHistoryContent);
+}
+
+function renderTvHistoryContent() {
   const allShows = loadTvShows();
   const shows = getSortedTvShows();
   const container = document.getElementById('tv-history-list');
@@ -582,37 +662,31 @@ function renderTvHistory() {
     container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ICONS.clapper}</div>Aucune série suivie pour l'instant — cherche-en une dans l'onglet Noter.</div>`;
     return;
   }
+  enrichTvHistoryEpisodeTotals(allShows);
   if (shows.length === 0) {
     container.innerHTML = `<div class="empty-state">Aucun résultat pour ce filtre.</div>`;
     return;
   }
 
-  // Ludex 2.0 : m\u00eame affichage que les films \u2014 s\u00e9paration par mois, note
-  // moyenne et nombre de s\u00e9ries par mois (voir renderHistory(),
-  // 06a-history-list.js). Une s\u00e9rie peut avoir des saisons not\u00e9es \u00e0 des
-  // dates diff\u00e9rentes ; class\u00e9e selon la date de sa saison la PLUS
-  // R\u00c9CEMMENT not\u00e9e (mostRecentRatingDate(), juste au-dessus \u2014 la m\u00eame
-  // logique d\u00e9j\u00e0 utilis\u00e9e par le tri "R\u00e9cents"), jamais dupliqu\u00e9e entre
-  // plusieurs mois. Les s\u00e9ries sans AUCUNE saison not\u00e9e (juste suivies) vont
-  // dans un groupe \u00e0 part, en tout dernier \u2014 aucune date n'existe pour les
-  // classer ailleurs.
+  // Même composition Pinterest, une série une seule fois dans son mois
+  // d'activité. Notées ou non, toutes passent par le même regroupement.
   const groupByMonth = isDefaultComposition() && sortOrder === 'date';
   const groups = [];
   if (groupByMonth) {
     const byKey = new Map();
-    let unratedGroup = null;
+    const undatedItems = [];
     shows.forEach(show => {
-      const d = mostRecentRatingDate(show);
+      const d = tvLatestActivity(show).date;
       if (!d) {
-        if (!unratedGroup) { unratedGroup = { key: null, items: [] }; }
-        unratedGroup.items.push(show);
+        // Seules les dates réellement inconnues restent à la fin.
+        undatedItems.push(show);
         return;
       }
       const key = monthKeyOf({ date: d });
       if (!byKey.has(key)) { const g = { key, items: [] }; byKey.set(key, g); groups.push(g); }
       byKey.get(key).items.push(show);
     });
-    if (unratedGroup) groups.push(unratedGroup);
+    if (undatedItems.length) groups.push({ key: null, items: undatedItems });
   } else {
     groups.push({ key: null, items: shows });
   }
@@ -624,12 +698,12 @@ function renderTvHistory() {
 
   container.innerHTML = '';
   groups.forEach(group => {
-    if (groupByMonth) {
+    if (groupByMonth && group.key) {
       const sep = document.createElement('div');
       sep.className = 'hist-month-sep';
       const rated = group.items.map(sh => computeShowAverageScore(sh)).filter(v => v != null);
       const avg = rated.length > 0 ? (rated.reduce((a, b) => a + b, 0) / rated.length).toFixed(1) : null;
-      const label = group.key ? escAttr(monthLabelOf(group.key)) : 'S\u00e9ries pas encore not\u00e9es';
+      const label = escAttr(monthLabelOf(group.key));
       sep.innerHTML = `<span class="hist-month-label">${label}</span><span class="hist-month-recap">${group.items.length} s\u00e9rie${group.items.length > 1 ? 's' : ''}${avg !== null ? ` \u00b7 moy. ${avg}` : ''}</span>`;
       container.appendChild(sep);
     }
@@ -661,8 +735,6 @@ function renderTvHistory() {
         `"${show.title}" et toutes ses saisons suivies/notées seront définitivement retirées. Continuer ?`,
         async () => {
           await mutateTvShows(shows => shows.filter(s => String(s.tmdbTvId) !== String(id)));
-          if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_show_tombstones', String(id));
-          renderTvHistory();
           showToast(`"${show.title}" retirée`);
           if (typeof statsDirty !== 'undefined') statsDirty = true;
         },
@@ -683,27 +755,18 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
       ? `"${seasonName}" est la dernière saison suivie de "${show.title}" — la retirer retire toute la série. Continuer ?`
       : `"${seasonName}" de "${show.title}" sera définitivement retirée. Continuer ?`,
     async () => {
-      const remaining = await mutateTvShows(shows => {
+      await mutateTvShows(shows => {
         const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
         if (!showEntry) return shows;
         delete showEntry.seasons[seasonKey];
-        if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_season_tombstones', `${showId}:${seasonKey}`);
         if (Object.keys(showEntry.seasons).length === 0) {
-          if (typeof recordTombstone === 'function') recordTombstone('lbx_tv_show_tombstones', String(showId));
           return shows.filter(s => String(s.tmdbTvId) !== String(showId));
         }
         return shows;
       });
-      renderTvHistory();
-      // Ludex 2.0 : ce bouton est désormais accessible DEPUIS la fiche
-      // détail (voir 19-tv-detail.js) — la rouvrir sur elle-même après
-      // suppression pour que sa liste de saisons reflète le changement,
-      // pas seulement la grille en arrière-plan. tdsCurrentData n'existe
-      // que si ce fichier est chargé (toujours vrai ici) et qu'une fiche
-      // série est actuellement ouverte.
-      if (typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id && remaining.find(s => String(s.tmdbTvId) === String(showId))) {
-        openTvDetailSheet(showId);
-      } else if (typeof closeTvDetailSheet === 'function' && typeof tdsCurrentData !== 'undefined' && tdsCurrentData?.id === Number(showId)) {
+      // Une suppression explicite de la dernière saison ferme la fiche comme
+      // auparavant. Sinon, le rafraîchissement conserve la pastille ouverte.
+      if (!loadTvShows().some(s => String(s.tmdbTvId) === String(showId)) && String(tdsCurrentData?.id) === String(showId)) {
         closeTvDetailSheet(); // la série entière vient de disparaître avec sa dernière saison
       }
       showToast(`"${seasonName}" retirée`);
@@ -721,13 +784,13 @@ function deleteTvSeasonWithConfirm(showId, seasonKey) {
 // plus de repli "tout gérer depuis la grille".
 function renderTvShowCard(show, tier) {
   const avg = computeShowAverageScore(show);
-  const seasons = Object.entries(show.seasons || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
-  const seasonsWithProgress = seasons.filter(([, s]) => s.totalEpisodes > 0);
-  const totalEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.totalEpisodes, 0);
-  const watchedEpisodes = seasonsWithProgress.reduce((sum, [, s]) => sum + s.watchedEpisodes.length, 0);
-  const progressPct = totalEpisodes > 0 ? Math.round((watchedEpisodes / totalEpisodes) * 100) : 0;
+  const progress = getTvProgress(show);
+  const { total: totalEpisodes, watched: watchedEpisodes, percent: progressPct } = progress;
   const scoreColor = avg == null ? 'var(--text-mid)' : avg >= 7.5 ? 'var(--green)' : avg >= 5.0 ? 'var(--gold)' : 'var(--red)';
   const isFeatured = tier !== 'normal';
+  // Bleu électrique tant que le total de la série n'est pas atteint ; or
+  // une fois tous les épisodes de son catalogue vus.
+  const isInProgress = progress.state === 'in_progress';
   // Ludex 2.0 : contrairement aux films, le chemin brut est stocké (pas une
   // URL déjà dimensionnée) — demander une taille plus grande pour les
   // paliers vedette ne demande donc qu'un paramètre différent ici, pas de
@@ -750,8 +813,8 @@ function renderTvShowCard(show, tier) {
       <div class="hist-grid-badge" style="color:${scoreColor}">${avg != null ? avg.toFixed(1) : '—'}</div>
       ${isFeatured ? `<div class="hist-grid-featured-badge">${show.liked ? `${ICONS.heart} Coup de cœur` : `★ ${avg.toFixed(1)}`}</div>` : ''}
       ${totalEpisodes > 0 ? `
-        <div class="hist-grid-progress" title="${watchedEpisodes}/${totalEpisodes} épisodes vus" aria-hidden="true">
-          <div class="hist-grid-progress-fill" style="width:${progressPct}%"></div>
+        <div class="hist-grid-progress" data-progress-state="${progress.state}" title="${watchedEpisodes}/${totalEpisodes} épisodes vus · ${tvProgressLabel(progress)}" aria-hidden="true">
+          <div class="hist-grid-progress-fill${isInProgress ? ' is-following' : ''}" style="width:${progressPct}%;${progress.state === 'unknown' ? 'background:var(--text-mid)' : ''}"></div>
         </div>
       ` : ''}
       <div class="hist-actions">
@@ -763,9 +826,12 @@ function renderTvShowCard(show, tier) {
 
 function reopenTvSeason(showId, seasonKey) {
   const show = loadTvShows().find(s => String(s.tmdbTvId) === String(showId));
-  if (!show) return;
+  if (!show?.seasons[seasonKey]) return;
+  saveDraft();
+  closeTvDetailSheet();
+  tvRatingFormBaseline = null;
   switchMobileNav('rating');
-  setMediaType('tv');
+  setMediaType('tv', { restore: false });
   selectedShow = { id: show.tmdbTvId, name: show.title, poster_path: show.poster_path };
   refreshTvHeartBtnState();
   document.getElementById('tv-search').value = show.title;
@@ -778,7 +844,7 @@ function reopenTvSeason(showId, seasonKey) {
   if (dateInput) {
     dateInput.value = seasonData.rating?.date ? seasonData.rating.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
   }
-  selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path });
+  selectSeason({ number: seasonKey, name: seasonData.seasonName, episodeCount: seasonData.totalEpisodes, poster: show.poster_path }, { capture: false });
   document.getElementById('notation-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -816,6 +882,11 @@ function switchStatsMediaFilter(type) {
 
 function renderTvStats() {
   const shows = loadTvShows();
+  const history = loadHistory();
+  renderMonthlyActivityChart(history, shows);
+  renderProfileExtras(history);
+  stopCountUp(document.getElementById('kpi-avg'));
+  // renderProfileExtras actualise aussi le temps contextualisé et le cumul.
   animateCountUp(document.getElementById('kpi-total'), shows.length);
 
   const showAverages = shows.map(computeShowAverageScore).filter(a => a != null);
@@ -838,6 +909,7 @@ function renderTvStats() {
   if (heroYearSubEl) heroYearSubEl.textContent = `+${yearShowsCount} en ${currentYear}`;
 
   const allRatings = getAllTvSeasonRatings();
+  if (typeof renderRecentRatings === 'function') renderRecentRatings('tv');
 
   if (allRatings.length === 0) {
     document.getElementById('radar-chart-container').innerHTML = '';
@@ -868,114 +940,104 @@ function renderTvStats() {
 // ═══════════════════════════════════════════
 //  SÉRIES — Widget "En cours" (onglet Noter, mode Série uniquement)
 // ═══════════════════════════════════════════
-// Une carte par série ayant un épisode à regarder : soit une saison
-// entamée mais pas finie, soit — si la dernière saison connue vient
-// d'être terminée — la saison suivante si elle existe (détectée via TMDb,
-// pas stockée d'avance puisque seules les saisons déjà sélectionnées sont
-// connues localement). Si aucune suite n'existe, la série disparaît
-// simplement du widget.
+// Une carte par suivi non suspendu/masqué ayant une suite disponible,
+// future ou incertaine. Toutes les saisons régulières du catalogue sont
+// consultées, sans créer de saison personnelle au simple affichage.
+// Une panne réseau ne fait jamais passer une série pour terminée.
 
-async function renderTvContinueList() {
-  const container = document.getElementById('tv-continue-list');
-  const sectionEl = document.getElementById('tv-continue-section');
-  const shows = loadTvShows();
-  const candidates = [];
-
-  for (const show of shows) {
-    const entries = Object.entries(show.seasons || {});
-    const partial = entries
-      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length < s.totalEpisodes && !s.paused)
-      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
-    if (partial) {
-      candidates.push({ show, seasonKey: partial[0], seasonEntry: partial[1] });
-      continue;
-    }
-    const complete = entries
-      .filter(([, s]) => s.totalEpisodes > 0 && s.watchedEpisodes.length >= s.totalEpisodes)
-      .sort((a, b) => Number(b[0]) - Number(a[0]))[0];
-    if (complete) {
-      candidates.push({ show, seasonKey: complete[0], seasonEntry: complete[1], needsNextSeasonCheck: true });
-    }
-  }
-
-  if (candidates.length === 0) {
-    sectionEl.style.display = 'none';
-    container.innerHTML = '';
-    return;
-  }
-
-  sectionEl.style.display = 'block';
-  document.getElementById('tv-continue-count').textContent = `(${candidates.length})`;
-  container.innerHTML = candidates.map((c, i) => `<div class="tv-continue-card tv-continue-loading" data-continue-idx="${i}">Chargement…</div>`).join('');
-
-  // Bug corrigé (signalé par l'utilisateur : notes/coup de cœur qui
-  // disparaissent en validant une saison depuis ce widget) : ce bloc
-  // lançait toutes les résolutions EN PARALLÈLE (forEach + async, jamais
-  // attendu). resolveNextTvEpisode() fait son propre load→modifie→save sur
-  // localStorage — avec plusieurs séries "En cours" en même temps
-  // (notamment celles qui déclenchent needsNextSeasonCheck), deux
-  // résolutions pouvaient se chevaucher : la seconde lit l'état AVANT que
-  // la première n'ait fini d'écrire, puis sauvegarde par-dessus une copie
-  // périmée qui ne contient pas encore le changement de la première —
-  // silencieusement perdu. Boucle séquentielle (une résolution complète
-  // avant que la suivante ne démarre) plutôt que tout lancer d'un coup :
-  // élimine structurellement le chevauchement, pas juste dans les cas où
-  // j'ai réussi à le reproduire.
-  for (let idx = 0; idx < candidates.length; idx++) {
-    const cand = candidates[idx];
-    const resolved = await resolveNextTvEpisode(cand);
-    const placeholder = container.querySelector(`[data-continue-idx="${idx}"]`);
-    if (!placeholder) continue; // le conteneur a pu être reconstruit entre-temps
-    if (!resolved) {
-      placeholder.remove();
-      if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
-      continue;
-    }
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = renderTvContinueCard(resolved);
-    placeholder.replaceWith(wrapper.firstElementChild);
-  }
+// Le compteur dérive des projections métier, jamais du nombre de nœuds DOM.
+let tvContinueRenderVersion = 0;
+let tvContinueProjections = new Map();
+function updateTvContinueCount() {
+  const count = [...tvContinueProjections.values()].filter(p => p.inContinue).length;
+  document.getElementById('tv-continue-count').textContent = `(${count})`;
+  document.getElementById('tv-continue-section').style.display = count ? 'block' : 'none';
 }
 
-async function resolveNextTvEpisode(cand) {
-  const { show, needsNextSeasonCheck } = cand;
-  let seasonKey = cand.seasonKey;
-  let seasonEntry = cand.seasonEntry;
+async function renderTvContinueList() {
+  const version = ++tvContinueRenderVersion;
+  const container = document.getElementById('tv-continue-list');
+  const shows = loadTvShows();
+  tvContinueProjections = new Map(shows.map(show => [String(show.tmdbTvId), getTvProgress(show)]));
+  const candidates = shows.filter(show => getTvProgress(show).inContinue);
+  withTvViewState(container, () => {
+    const ids = new Set(candidates.map(show => String(show.tmdbTvId)));
+    [...container.children].forEach(card => { if (!ids.has(card.dataset.continueId)) card.remove(); });
+    candidates.forEach((show, index) => {
+      const id = String(show.tmdbTvId);
+      let card = [...container.children].find(el => el.dataset.continueId === id);
+      if (!card) {
+        card = document.createElement('div');
+        card.dataset.continueId = id;
+      }
+      if (container.children[index] !== card) container.insertBefore(card, container.children[index] || null);
+      updateTvContinueCard(card, tvEpisodeProjection(show));
+    });
+  });
+  updateTvContinueCount();
+  // Les résolutions ne font aucune écriture personnelle et peuvent se chevaucher.
+  await Promise.all(candidates.map(async show => {
+    const resolved = await resolveNextTvEpisode({ show });
+    if (version !== tvContinueRenderVersion) return;
+    const id = String(show.tmdbTvId);
+    const placeholder = container.querySelector(`[data-continue-id="${id}"]`);
+    if (!placeholder) return;
+    tvContinueProjections.set(id, resolved?.progress || { inContinue: false });
+    withTvViewState(container, () => {
+      if (!resolved?.progress.inContinue) placeholder.remove();
+      else updateTvContinueCard(placeholder, resolved);
+    });
+    updateTvContinueCount();
+  }));
+}
 
-  if (needsNextSeasonCheck) {
-    const nextNum = Number(seasonKey) + 1;
-    try {
-      const showDetail = await fetch(`/api/search?tvId=${show.tmdbTvId}`).then(readApiJson);
-      const nextMeta = (showDetail.seasons || []).find(s => s.season_number === nextNum);
-      if (!nextMeta) return null; // pas de saison suivante
-      seasonKey = String(nextNum);
-      seasonEntry = await mutateTvShows(shows => {
-        const showEntry = shows.find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
-        if (!showEntry.seasons[seasonKey]) {
-          showEntry.seasons[seasonKey] = { seasonName: nextMeta.name, watchedEpisodes: [], totalEpisodes: nextMeta.episode_count };
-        }
-        return showEntry.seasons[seasonKey];
-      });
-    } catch { return null; }
+async function resolveNextTvEpisode({ show }) {
+  const { stale } = await loadTvCatalogue(show);
+  // Le réseau a pu durer : relecture du suivi, notamment après pause/suppression.
+  const current = loadTvShows().find(s => String(s.tmdbTvId) === String(show.tmdbTvId));
+  if (!current) return null;
+  return tvEpisodeProjection(current, stale);
+}
+
+function tvEpisodeProjection(current, stale = false) {
+  const progress = getTvProgress(current);
+  if (stale && !progress.next) {
+    progress.state = 'unknown';
+    progress.inContinue = !isTvPaused(current) && !current.continueHidden;
   }
+  const next = progress.next;
+  return { show: current, progress, stale, seasonKey: next?.seasonKey,
+    seasonEntry: next ? { seasonName: next.seasonName, totalEpisodes: next.totalEpisodes, watchedEpisodes: current.seasons[next.seasonKey]?.watchedEpisodes || [] } : null,
+    episode: next?.episode };
+}
 
-  try {
-    const seasonData = await fetch(`/api/search?tvSeasonShowId=${show.tmdbTvId}&tvSeasonNumber=${seasonKey}`).then(readApiJson);
-    const episodes = seasonData.episodes || [];
-    const nextEp = episodes.find(e => !seasonEntry.watchedEpisodes.includes(e.episode_number));
-    if (!nextEp) return null;
-    return { show, seasonKey, seasonEntry, episode: nextEp };
-  } catch { return null; }
+function updateTvContinueCard(card, resolved) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = renderTvContinueCard(resolved);
+  const fresh = wrapper.firstElementChild;
+  const nextKey = `${resolved.seasonKey}:${resolved.episode?.episode_number}`;
+  const sameEpisode = card.dataset.nextEpisode === nextKey;
+  const synopsisOpen = sameEpisode && !!card.querySelector('details')?.open;
+  withTvViewState(card, () => {
+    setTvViewHtml(card, fresh.innerHTML);
+    card.className = fresh.className;
+    card.dataset.nextEpisode = nextKey;
+    const synopsis = card.querySelector('details');
+    if (synopsis) synopsis.open = synopsisOpen;
+  });
 }
 
 // Texte engageant selon la proximité de diffusion — "Demain", "J-3", ou la
 // date complète au-delà d'une semaine (pas la peine d'un compte à rebours
 // pour un épisode encore loin).
-function formatAirCountdown(airDateStr) {
-  const airDate = new Date(airDateStr + 'T00:00:00');
+function formatAirCountdown(airDateStr, originCountries = []) {
+  const airDate = tvEpisodeUnlockAt(airDateStr, originCountries);
+  if (!airDate) return 'Date de diffusion inconnue';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const diffDays = Math.round((airDate - today) / 86400000);
+  const releaseDay = new Date(airDate);
+  releaseDay.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((releaseDay - today) / 86400000);
   if (diffDays <= 0) return 'Diffusion imminente';
   if (diffDays === 1) return 'Demain';
   if (diffDays <= 13) return `J-${diffDays}`;
@@ -984,6 +1046,7 @@ function formatAirCountdown(airDateStr) {
 
 function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   const posterUrl = tmdbImage(show.poster_path, 'w154');
+  if (!episode) return `<div class="tv-continue-card"><div class="tv-continue-info"><div class="tv-continue-show-title">${escAttr(show.title)}</div><div class="tv-continue-meta">Progression à vérifier — catalogue indisponible</div><button type="button" class="error-retry-btn" data-retry-continue="${show.tmdbTvId}">Ouvrir la fiche</button></div></div>`;
 
   // Ludex 2.0 : protection anti-spoilers — un épisode déjà présent dans la
   // liste de la saison (donc "next unwatched" au sens strict) mais dont la
@@ -993,12 +1056,11 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   // équivalent en pratique à next_episode_to_air pour cet usage précis :
   // le prochain épisode non vu ET pas encore diffusé est justement celui
   // que next_episode_to_air désignerait.
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const airDate = episode.air_date ? new Date(episode.air_date + 'T00:00:00') : null;
-  const isLocked = !airDate || airDate > today;
+  const originCountries = tvCatalogueView(show.tmdbTvId)?.origin_country || [];
+  const isLocked = tvEpisodeAvailability(episode, new Date(), originCountries) !== 'available';
 
   if (isLocked) {
-    const countdown = episode.air_date ? formatAirCountdown(episode.air_date) : 'Date de diffusion inconnue';
+    const countdown = tvEpisodeAvailability(episode, new Date(), originCountries) === 'future' ? formatAirCountdown(episode.air_date, originCountries) : 'Date de diffusion inconnue';
     return `
       <div class="tv-continue-card tv-continue-locked">
         ${posterUrl ? `<img class="tv-continue-poster" src="${posterUrl}" alt="" loading="lazy">` : `<div class="tv-continue-poster tv-continue-poster-ph">${ICONS.clapper}</div>`}
@@ -1043,77 +1105,27 @@ function renderTvContinueCard({ show, seasonKey, seasonEntry, episode }) {
   `;
 }
 
-document.getElementById('tv-continue-list').addEventListener('click', async (e) => {
+document.getElementById('tv-continue-list').addEventListener('click', tvAction(async (e) => {
+  const retry = e.target.closest('[data-retry-continue]');
+  if (retry) { openTvDetailSheet(retry.dataset.retryContinue); return; }
   const removeBtn = e.target.closest('.tv-continue-remove-btn');
-  if (removeBtn) {
-    // Retire uniquement de cette liste — aucune donnée touchée, la carte
-    // peut revenir au prochain rendu si les conditions correspondent
-    // encore (ex : un épisode coché ailleurs).
-    const cardEl = removeBtn.closest('.tv-continue-card');
-    cardEl.remove();
-    const container = document.getElementById('tv-continue-list');
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
-    return;
-  }
-
   const pauseBtn = e.target.closest('.tv-continue-pause-btn');
-  if (pauseBtn) {
-    await mutateTvShows(shows => {
-      const showEntry = shows.find(s => String(s.tmdbTvId) === String(pauseBtn.dataset.showId));
-      const seasonEntry = showEntry?.seasons?.[pauseBtn.dataset.seasonKey];
-      if (seasonEntry) seasonEntry.paused = true;
-    });
-    const cardEl = pauseBtn.closest('.tv-continue-card');
-    cardEl.remove();
-    const container = document.getElementById('tv-continue-list');
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
-    showToast('Mise en pause — reprends-la depuis sa fiche');
+  if (removeBtn || pauseBtn) {
+    const button = removeBtn || pauseBtn;
+    await setTvFollowingState(button.dataset.showId, removeBtn ? { hidden: true } : { paused: true });
+    showToast(removeBtn ? 'Retirée du widget — réaffiche-la depuis sa fiche' : 'Mise en pause — reprends-la depuis sa fiche');
     return;
   }
-
   const btn = e.target.closest('.tv-continue-check-btn');
   if (!btn) return;
-  const showId = btn.dataset.showId;
-  const seasonKey = btn.dataset.seasonKey;
-  const episodeNumber = Number(btn.dataset.episode);
-
-  const result = await mutateTvShows(shows => {
-    const showEntry = shows.find(s => String(s.tmdbTvId) === String(showId));
-    if (!showEntry) return null;
-    const se = showEntry.seasons[seasonKey];
-    if (!se.watchedEpisodes.includes(episodeNumber)) se.watchedEpisodes.push(episodeNumber);
-    // Bug corrigé (signalé par l'utilisateur : "je dois relancer l'app pour
-    // valider l'épisode suivant", confirmé par une vraie erreur console —
-    // "showEntry is not defined") : cette mutation ne renvoyait que la
-    // saison (seasonEntry), pas la série elle-même — mais le code juste
-    // après avait besoin des DEUX pour résoudre l'épisode suivant
-    // (resolveNextTvEpisode() attend un show complet, pas juste son id).
-    // showEntry n'existe qu'à L'INTÉRIEUR de cette fonction (portée perdue
-    // dès qu'elle se termine) ; il fallait le faire remonter avec le
-    // retour, pas y accéder après coup comme s'il était encore visible.
-    return { showEntry, seasonEntry: se };
-  });
-  if (!result) return;
-  const { showEntry, seasonEntry } = result;
-  if (typeof statsDirty !== 'undefined') statsDirty = true;
-  maybeShowSeasonCompleteBanner(showId, seasonKey, seasonEntry);
-
-  const cardEl = btn.closest('.tv-continue-card');
-  cardEl.classList.add('tv-continue-loading');
-  const resolved = await resolveNextTvEpisode({
-    show: showEntry, seasonKey, seasonEntry,
-    needsNextSeasonCheck: seasonEntry.watchedEpisodes.length >= seasonEntry.totalEpisodes,
-  });
-  const container = document.getElementById('tv-continue-list');
-  if (!resolved) {
-    cardEl.remove();
-    if (container.children.length === 0) document.getElementById('tv-continue-section').style.display = 'none';
-  } else {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = renderTvContinueCard(resolved);
-    cardEl.replaceWith(wrapper.firstElementChild);
-  }
-});
+  btn.disabled = true;
+  try {
+    const { showId, seasonKey, episode } = btn.dataset;
+    const show = await setTvEpisodesWatched(showId, seasonKey, [Number(episode)], true);
+    if (typeof statsDirty !== 'undefined') statsDirty = true;
+    maybeShowSeasonCompleteBanner(showId, seasonKey, show.seasons[seasonKey]);
+  } finally { btn.disabled = false; }
+}));
 
 // Repli/dépliage de tout le widget — pour ne pas surcharger l'écran quand
 // plusieurs séries sont en cours. Préférence mémorisée pour rester repliée
@@ -1132,3 +1144,12 @@ if (localStorage.getItem('lbx_tv_continue_collapsed') === '1') {
   document.getElementById('tv-continue-toggle').setAttribute('aria-expanded', 'false');
   document.getElementById('tv-continue-toggle').classList.add('collapsed');
 }
+
+// Gestionnaires externalisés : les boutons restent natifs et la CSP peut
+// refuser le JavaScript inline sans désactiver les bascules Films/Séries.
+document.getElementById('tab-media-movie')?.addEventListener('click', () => setMediaType('movie'));
+document.getElementById('tab-media-tv')?.addEventListener('click', () => setMediaType('tv'));
+document.getElementById('hist-tab-movie')?.addEventListener('click', () => switchHistoryMediaFilter('movie'));
+document.getElementById('hist-tab-tv')?.addEventListener('click', () => switchHistoryMediaFilter('tv'));
+document.getElementById('stats-tab-movie')?.addEventListener('click', () => switchStatsMediaFilter('movie'));
+document.getElementById('stats-tab-tv')?.addEventListener('click', () => switchStatsMediaFilter('tv'));

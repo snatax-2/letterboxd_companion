@@ -100,7 +100,9 @@ function updateQuickLabel() {
 function toggleWeights() {
   weightsOpen = !weightsOpen;
   document.getElementById('weights-panel').classList.toggle('open', weightsOpen);
-  document.getElementById('weights-toggle').style.color = weightsOpen ? 'var(--orange)' : '';
+  const toggle = document.getElementById('weights-toggle');
+  toggle.style.color = weightsOpen ? 'var(--orange)' : '';
+  toggle.setAttribute('aria-expanded', String(weightsOpen));
   document.getElementById('weights-toggle-chevron').style.transform = weightsOpen ? 'rotate(90deg)' : '';
 }
 
@@ -118,7 +120,13 @@ function resetWeights() {
   updateWeightBadges();
   calculateScore();
   document.getElementById('genre-weight-suggest').style.display = 'none';
+  saveDraft();
 }
+
+document.getElementById('tab-detail').addEventListener('click', () => setMode('detail'));
+document.getElementById('tab-quick').addEventListener('click', () => setMode('quick'));
+document.getElementById('weights-toggle').addEventListener('click', toggleWeights);
+document.getElementById('weights-reset-btn').addEventListener('click', resetWeights);
 
 function updateWeightBadges() {
   const w = getWeights();
@@ -133,6 +141,7 @@ CRITERIA.forEach(c => {
     updateWeightBadges();
     calculateScore();
     document.getElementById('genre-weight-suggest').style.display = 'none'; // l'utilisateur personnalise -> on n'insiste plus
+    saveDraft();
   });
 });
 
@@ -228,6 +237,8 @@ document.getElementById('genre-weight-suggest').addEventListener('click', () => 
 // une nouvelle valeur arrive avant la fin — indispensable ici car un
 // glissement de slider déclenche beaucoup de mises à jour rapprochées.
 function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
+  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
+  el._scoreAnimId = null;
   const startValue = parseFloat(el.textContent) || 0;
   if (Math.abs(endValue - startValue) < 0.01) {
     el.textContent = endValue.toFixed(decimals);
@@ -238,7 +249,6 @@ function animateValueTowards(el, endValue, decimals = 1, duration = 200) {
     el.textContent = endValue.toFixed(decimals);
     return;
   }
-  if (el._scoreAnimId) cancelAnimationFrame(el._scoreAnimId);
   const startTime = performance.now();
   function step(now) {
     const progress = Math.min((now - startTime) / duration, 1);
@@ -274,6 +284,13 @@ function calculateScore() {
       descEl.classList.toggle('revealed', val !== 5);
     });
     score = computeWeightedScore(criteriaValues, w);
+  }
+
+  // Une ancienne note peut avoir des pondérations inconnues : tant que les
+  // curseurs ne changent pas, son score enregistré reste la référence.
+  if (currentMediaType === 'tv') {
+    const preserved = unchangedTvRating();
+    if (preserved && Number.isFinite(Number(preserved.score))) score = Number(preserved.score);
   }
 
   const scoreEl = document.getElementById('score-big');
@@ -372,7 +389,8 @@ document.querySelectorAll('.criterion-step-btn').forEach(btn => {
 // ═══════════════════════════════════════════
 document.getElementById('new-btn').addEventListener('click', () => {
   openModal('Nouvelle critique', 'Voulez-vous effacer le formulaire actuel pour commencer une nouvelle critique ?', () => {
-    localStorage.removeItem('lbx_draft');
+    if (currentMediaType === 'tv' && selectedShow && selectedSeasonNumber != null) clearTvRatingDraft(tvDraftKey(selectedShow.id, selectedSeasonNumber));
+    else localStorage.removeItem('lbx_draft');
     resetForm();
     showToast('Formulaire réinitialisé');
   });
@@ -382,22 +400,24 @@ document.getElementById('new-btn').addEventListener('click', () => {
 //  COPY TEXT
 // ═══════════════════════════════════════════
 document.getElementById('copy-btn').addEventListener('click', () => {
-  const title    = document.getElementById('movie-title').value.trim() || searchEl.value.trim() || 'Film sans titre';
-  const year     = document.getElementById('movie-year').value;
-  const director = document.getElementById('movie-director').value;
-  const actors   = document.getElementById('movie-actors').value;
-  const dateVal  = document.getElementById('view-date').value;
+  const tv = currentMediaType === 'tv';
+  if (tv && (!selectedShow || selectedSeasonNumber == null)) { showToast('Choisis une saison avant de copier.'); return; }
+  const title    = tv ? `${selectedShow.name} — ${selectedSeasonName}` : document.getElementById('movie-title').value.trim() || searchEl.value.trim() || 'Film sans titre';
+  const year     = tv ? '' : document.getElementById('movie-year').value;
+  const director = tv ? '' : document.getElementById('movie-director').value;
+  const actors   = tv ? '' : document.getElementById('movie-actors').value;
+  const dateVal  = document.getElementById(tv ? 'tv-view-date' : 'view-date').value;
   const dateStr  = dateVal ? new Date(dateVal + 'T12:00:00').toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) : '';
   const review   = document.getElementById('review-text').value.trim();
   const score    = calculateScore(); 
   const stars    = document.getElementById('stars-display').textContent;
-  const heartStr = isLiked ? ' ❤️' : '';
+  const heartStr = (tv ? loadTvShows().find(s => String(s.tmdbTvId) === String(selectedShow.id))?.liked : isLiked) ? ' ❤️' : '';
 
   let text = `📽 ${title} ${year ? '('+year+') ' : ''}${heartStr}\n`;
   if (director) text += `🎬 Un film de ${director}\n`;
   if (actors) text += `🎭 Avec ${actors}\n`;
   if (dateStr) text += `🗓 Vu le ${dateStr}\n`;
-  if (activeContextTags.size > 0) text += `🏷 ${Array.from(activeContextTags).join(' · ')}\n`;
+  if (!tv && activeContextTags.size > 0) text += `🏷 ${Array.from(activeContextTags).join(' · ')}\n`;
   
   text += `⭐ ${stars} (${score.toFixed(1)}/10)\n`;
 
@@ -406,7 +426,7 @@ document.getElementById('copy-btn').addEventListener('click', () => {
       acc[c] = parseFloat(document.getElementById(c).value).toFixed(1);
       return acc;
     }, {});
-    text += `\nScénario ${vals.scenario} · Réal ${vals.realisation} · Photo ${vals.photo} · Acteurs ${vals.acteurs} · Son ${vals.ambiance} · Affect ${vals.affect}\n`;
+    text += `\nScénario ${vals.scenario} · Réal ${vals.realisation} · ${tv ? 'Final' : 'Photo'} ${vals.photo} · Acteurs ${vals.acteurs} · Son ${vals.ambiance} · ${tv ? 'Rythme & cohérence' : 'Rythme'} ${vals.rythme} · Affect ${vals.affect}\n`;
   }
 
   if (review) text += `\n${review}`;
@@ -417,37 +437,35 @@ document.getElementById('copy-btn').addEventListener('click', () => {
     btn.classList.add('copied');
     setTimeout(() => { btn.innerHTML = `${ICONS.copy} Texte`; btn.classList.remove('copied'); }, 2000);
     showToast('Critique copiée dans le presse-papier');
-  });
+  }).catch(() => showToast('Copie impossible : presse-papier indisponible.'));
 });
 
 // ═══════════════════════════════════════════
 //  SAVE
 // ═══════════════════════════════════════════
-// Animation de validation façon "clap de cinéma" à chaque critique
+// Coche éditoriale de validation à chaque critique
 // enregistrée : renforce le sentiment d'accomplissement (micro-interaction),
 // sans bloquer l'interface (pointer-events: none, se retire toute seule).
 function playSaveConfirmation() {
+  document.querySelector('.save-confirm-overlay')?.remove();
   const overlay = document.createElement('div');
   overlay.className = 'save-confirm-overlay';
   overlay.setAttribute('aria-hidden', 'true');
   overlay.innerHTML = `
-    <div class="save-confirm-ticket">
-      <div class="save-confirm-ticket-half save-confirm-ticket-left">${ICONS.clapper}</div>
-      <div class="save-confirm-ticket-perf"></div>
-      <div class="save-confirm-ticket-half save-confirm-ticket-right">✓</div>
+    <div class="save-confirm-mark">
+      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path pathLength="1" d="M14 33L27 46L51 18"/></svg>
+      <span>${currentMediaType === 'tv' ? 'Saison enregistrée' : 'Film enregistré'}</span>
     </div>
   `;
   document.body.appendChild(overlay);
   if (navigator.vibrate) navigator.vibrate([12, 25, 12]);
-  setTimeout(() => overlay.remove(), 850);
+  setTimeout(() => overlay.remove(), 1500);
 }
 
 document.getElementById('save-btn').addEventListener('click', () => {
-  if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-  hapticPulse(document.getElementById('save-btn'), 'strong');
 
   if (currentMediaType === 'tv') {
-    saveTvSeasonRating();
+    saveTvSeasonRating().catch(error => showToast(error.message));
     return;
   }
 
@@ -458,17 +476,6 @@ document.getElementById('save-btn').addEventListener('click', () => {
   const existing = history.find(h => h.title.toLowerCase() === title.toLowerCase());
   const score    = calculateScore();
 
-  // Ludex 2.0 : réutilise l'animation stampImpact (déjà en place sur le
-  // tampon TMDb de la fiche film) sur le score héros, au moment précis de
-  // la validation — retire puis réapplique la classe (avec un reflow forcé
-  // entre les deux) pour qu'elle puisse aussi rejouer sur une sauvegarde
-  // suivante dans la même session, pas juste la toute première.
-  const scoreMainEl = document.getElementById('score-big')?.closest('.score-main');
-  if (scoreMainEl) {
-    scoreMainEl.classList.remove('stamp-pulse');
-    void scoreMainEl.offsetWidth; // force le reflow entre le retrait et la réapplication
-    scoreMainEl.classList.add('stamp-pulse');
-  }
 
   const movie = {
     title,
@@ -520,16 +527,15 @@ document.getElementById('save-btn').addEventListener('click', () => {
     renderAll();
     showToast(`"${title}" enregistré`);
     playSaveConfirmation();
-    const saveBtn = document.getElementById('save-btn');
-    const origSave = saveBtn.innerHTML;
-    saveBtn.innerHTML = `${ICONS.check} Sauvé !`;
-    saveBtn.style.background = 'var(--green)';
-    saveBtn.style.color = '#0d1117';
-    setTimeout(() => { saveBtn.innerHTML = origSave; saveBtn.style.background = ''; saveBtn.style.color = ''; }, 1800);
   }
 });
 
 function resetForm() {
+  if (currentMediaType === 'tv') {
+    resetTvRatingTarget();
+    document.getElementById('review-text').value = '';
+    return;
+  }
   searchEl.value = '';
   setTodayDate(); // remet la date à aujourd'hui — sinon elle restait bloquée sur la dernière date utilisée
   document.getElementById('movie-title').value     = '';
@@ -551,9 +557,14 @@ function resetForm() {
   setTodayDate();
   
   activeContextTags.clear();
-  document.querySelectorAll('.ctx-tag').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.ctx-tag').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
 
   CRITERIA.forEach(c => { document.getElementById(c).value = 5; });
+  CRITERIA.forEach(c => { document.getElementById(`w-${c}`).value = 1; });
+  updateWeightBadges();
   quickRating = 2.5;
   const defaultRadio = document.getElementById('s5'); 
   if(defaultRadio) defaultRadio.checked = true;
@@ -568,6 +579,7 @@ function resetForm() {
 //  LOAD MOVIE
 // ═══════════════════════════════════════════
 window.loadItem = function(idx) {
+  setMediaType('movie');
   const history = loadHistory(); const item = history[idx]; if (!item) return;
   document.getElementById('movie-title').value  = item.title;
   document.getElementById('movie-year').value   = item.year || '';
@@ -590,6 +602,7 @@ window.loadItem = function(idx) {
   document.querySelectorAll('.ctx-tag').forEach(b => {
     if (activeContextTags.has(b.dataset.tag)) b.classList.add('active');
     else b.classList.remove('active');
+    b.setAttribute('aria-pressed', String(activeContextTags.has(b.dataset.tag)));
   });
 
   const strip = document.getElementById('film-strip');
@@ -729,4 +742,3 @@ focusNextBtn.addEventListener('click', () => goToFocusStep(focusIndex + 1));
 })();
 
 applyFocusMode(); // état initial au chargement, selon la préférence sauvegardée
-

@@ -1,7 +1,8 @@
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
+const { holdWatchlistPoster } = require('./helpers/watchlist-hold');
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`a11y watchlist corrigee - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 900 });
     await page.addInitScript((t) => {
@@ -45,7 +46,7 @@ test('ouvrir la fiche fonctionne toujours en tapant sur la carte (pas les bouton
   await expect(page.locator('#movie-detail-sheet')).toHaveClass(/open/);
 });
 
-test('les boutons Noter/Retirer fonctionnent toujours independamment', async ({ page }) => {
+test('le menu compact permet toujours de retirer un film', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.addInitScript(() => {
     localStorage.setItem('lbx_onboarding_seen', '1');
@@ -58,7 +59,8 @@ test('les boutons Noter/Retirer fonctionnent toujours independamment', async ({ 
   await page.waitForTimeout(1400);
   await page.click('#nav-watchlist');
   await page.waitForTimeout(600);
-  await page.evaluate(() => document.querySelector('.wl-btn.del').click());
+  await holdWatchlistPoster(page);
+  await page.getByRole('button', { name: 'Supprimer', exact: true }).click();
   await page.waitForTimeout(300);
   // La migration au premier chargement copie lbx_watchlist vers
   // lbx_watchlist_default (et laisse l'ancienne clé telle quelle, jamais

@@ -140,6 +140,7 @@ test('supprimer la derniere saison retire toute la serie, avec message adapte', 
   await page.waitForSelector('#tv-detail-sheet.open');
   await page.waitForTimeout(400);
 
+  await page.click('.tds-season-tab[data-season-number="1"]');
   await page.click('.tds-season-delete-btn');
   await page.waitForSelector('#modal.open', { state: 'visible' });
   await expect(page.locator('#modal-body')).toContainText('retire toute la série');
@@ -151,7 +152,7 @@ test('supprimer la derniere saison retire toute la serie, avec message adapte', 
   await expect(page.locator('#tv-history-list .hist-grid-card')).toHaveCount(0);
 });
 
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite suppression de saison - ${theme}`, async ({ page }) => {
     await page.addInitScript((t) => {
       localStorage.setItem('lbx_settings', JSON.stringify({ theme: t }));
@@ -176,6 +177,7 @@ for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 't
     await page.click('.tv-show-card-open-btn');
     await page.waitForSelector('#tv-detail-sheet.open');
     await page.waitForTimeout(400);
+    await page.click('.tds-season-tab[data-season-number="1"]');
     await page.click('.tds-season-delete-btn >> nth=0');
     await page.waitForSelector('#modal.open', { state: 'visible' });
     // Attend la FIN du fondu d'ouverture avant de mesurer. #modal.open devient
@@ -329,7 +331,7 @@ test.describe('Badge, note de carte, réouverture et suppression', () => {
     await expect(page.locator('#hist-count-badge')).toContainText('0 série');
   });
 
-  for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+  for (const theme of ['dark', 'light']) {
     test(`accessibilite historique series (badge/note/suppression) - ${theme}`, async ({ page }) => {
       await page.addInitScript((t) => localStorage.setItem('lbx_settings', JSON.stringify({ theme: t })), theme);
       await goToTvHistory(page);

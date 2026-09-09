@@ -105,7 +105,7 @@ test('placeholder du champ film ne mentionne plus Twin Peaks', async ({ page }) 
 });
 
 const { default: AxeBuilder } = require('@axe-core/playwright');
-for (const theme of ['default', 'carnet', 'filmnoir', 'cinephile', 'moderne', 'technicolor']) {
+for (const theme of ['dark', 'light']) {
   test(`accessibilite correctifs ux - ${theme}`, async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 1400 });
     await page.addInitScript((t) => {

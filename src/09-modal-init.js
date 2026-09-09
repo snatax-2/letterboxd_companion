@@ -2,9 +2,11 @@
 //  MODAL DE CONFIRMATION
 // ═══════════════════════════════════════════
 
-// Mémorise l'élément qui avait le focus avant l'ouverture d'une modale, pour lui
-// rendre le focus à la fermeture (bonne pratique d'accessibilité au clavier).
-let lastFocusedBeforeModal = null;
+// Une pile est nécessaire : certaines modales (confirmation, fiche personne)
+// s'ouvrent depuis une autre modale. Une seule variable globale de focus
+// restaurait alors le mauvais élément et laissait parfois une modale fermée
+// accessible au clavier.
+const modalStack = [];
 
 function getFocusableElements(container) {
   return Array.from(
@@ -15,7 +17,7 @@ function getFocusableElements(container) {
 // Piège le focus (Tab / Shift+Tab) à l'intérieur d'une modale ouverte, pour ne
 // pas laisser un utilisateur au clavier "sortir" vers le contenu masqué derrière.
 function trapFocus(e) {
-  const openModalEl = document.querySelector('.modal-overlay.open');
+  const openModalEl = getTopOpenModal();
   if (!openModalEl || e.key !== 'Tab') return;
   const focusable = getFocusableElements(openModalEl);
   if (!focusable.length) return;
@@ -30,12 +32,54 @@ function trapFocus(e) {
   }
 }
 
-function closeModal(modalEl) {
+function setModalAccessibilityState(modalEl, isOpen) {
+  modalEl.setAttribute('aria-hidden', String(!isOpen));
+  if (isOpen) modalEl.removeAttribute('inert');
+  else modalEl.setAttribute('inert', '');
+}
+
+function getTopOpenModal() {
+  for (let i = modalStack.length - 1; i >= 0; i--) {
+    if (modalStack[i].modalEl.classList.contains('open')) return modalStack[i].modalEl;
+  }
+  const open = document.querySelectorAll('.modal-overlay.open');
+  return open.length ? open[open.length - 1] : null;
+}
+
+function openModalElement(modalEl, options = {}) {
+  if (!modalEl) return;
+  const { initialFocus = null, returnFocus = document.activeElement } = options;
+  const previousTop = getTopOpenModal();
+  if (previousTop && previousTop !== modalEl) setModalAccessibilityState(previousTop, false);
+  const existingIndex = modalStack.findIndex(entry => entry.modalEl === modalEl);
+  if (existingIndex >= 0) modalStack.splice(existingIndex, 1);
+  modalStack.push({ modalEl, returnFocus });
+
+  setModalAccessibilityState(modalEl, true);
+  modalEl.classList.add('open');
+  const target = initialFocus || getFocusableElements(modalEl)[0];
+  if (target && typeof target.focus === 'function') target.focus();
+}
+
+function closeModal(modalEl, options = {}) {
+  if (!modalEl) return;
+  const { restoreFocus = true } = options;
+  const stackIndex = modalStack.map(entry => entry.modalEl).lastIndexOf(modalEl);
+  const wasTop = stackIndex === modalStack.length - 1;
+  const entry = stackIndex >= 0 ? modalStack.splice(stackIndex, 1)[0] : null;
+
   modalEl.classList.remove('open');
+  setModalAccessibilityState(modalEl, false);
+  modalEl.dispatchEvent(new Event('modalclosed'));
   if (modalEl.id === 'modal') pendingAction = null;
-  if (lastFocusedBeforeModal) {
-    lastFocusedBeforeModal.focus();
-    lastFocusedBeforeModal = null;
+
+  if (wasTop) {
+    const previousModal = getTopOpenModal();
+    if (previousModal) setModalAccessibilityState(previousModal, true);
+  }
+
+  if (restoreFocus && wasTop && entry?.returnFocus?.isConnected && typeof entry.returnFocus.focus === 'function') {
+    entry.returnFocus.focus();
   }
 }
 
@@ -46,22 +90,28 @@ function openModal(title, body, onConfirm, danger = false) {
   confirmBtn.className = 'modal-btn ' + (danger ? 'danger' : 'primary');
   confirmBtn.textContent = danger ? 'Supprimer' : 'Confirmer';
   pendingAction = onConfirm;
-  lastFocusedBeforeModal = document.activeElement;
-  document.getElementById('modal').classList.add('open');
   // Focus sur "Annuler" par défaut : plus sûr pour une action destructive
   // (Entrée pressée par réflexe n'active pas la suppression).
-  document.getElementById('modal-cancel').focus();
+  openModalElement(document.getElementById('modal'), {
+    initialFocus: document.getElementById('modal-cancel'),
+  });
 }
 
-document.getElementById('modal-confirm').addEventListener('click', () => {
-  if (pendingAction) { pendingAction(); pendingAction = null; }
+document.getElementById('modal-confirm').addEventListener('click', async () => {
+  const action = pendingAction;
+  pendingAction = null;
   closeModal(document.getElementById('modal'));
+  try { if (action) await action(); }
+  catch (error) { showToast(error.message || 'Action non enregistrée. Réessaie.'); }
 });
 document.getElementById('modal-cancel').addEventListener('click', () => {
   closeModal(document.getElementById('modal'));
 });
 
 document.querySelectorAll('.modal-overlay').forEach(modal => {
+  // Défense en profondeur : même si le HTML est modifié, une modale fermée
+  // reste hors de l'arbre d'accessibilité et de l'ordre de tabulation.
+  setModalAccessibilityState(modal, modal.classList.contains('open'));
   modal.addEventListener('click', e => {
     if (e.target === modal) closeModal(modal);
   });
@@ -70,7 +120,7 @@ document.querySelectorAll('.modal-overlay').forEach(modal => {
 // Échap ferme la modale actuellement ouverte, où que soit le focus.
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    const openModalEl = document.querySelector('.modal-overlay.open');
+    const openModalEl = getTopOpenModal();
     if (openModalEl) closeModal(openModalEl);
   } else if (e.key === 'Tab') {
     trapFocus(e);
@@ -86,19 +136,20 @@ updateAllSliders();
 renderCriteriaAverageMarkers();
 
 // ─── Écran de démarrage (splash) ─────────────────────────────────────────────
-// Masqué une fois l'app initialisée, avec une durée minimale d'affichage pour
-// que ce soit perçu comme un vrai temps de chargement plutôt qu'un flash
-// imperceptible (notamment quand tout est déjà en cache et charge quasi
-// instantanément).
+// Masqué dès que l'initialisation synchrone est terminée. Une courte fenêtre
+// évite un flash, sans imposer 1,2 seconde d'attente artificielle à chaque
+// ouverture de l'application.
 (function hideSplash() {
   const splash = document.getElementById('app-splash');
   if (!splash) return;
-  const MIN_DISPLAY_MS = 1200;
+  // Suffisamment long pour que le carton d'ouverture soit perceptible, sans
+  // retarder inutilement l'accès à l'application une fois initialisée.
+  const MIN_DISPLAY_MS = 620;
   const elapsed = performance.now();
   const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
   setTimeout(() => {
     splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 500); // laisse le temps au fondu de finir avant de retirer le nœud
+    setTimeout(() => splash.remove(), 450); // laisse le temps au fondu de finir avant de retirer le nœud
   }, remaining);
 })();
 
@@ -114,7 +165,7 @@ renderCriteriaAverageMarkers();
 
   const hasHistory = loadHistory().length > 0;
   const hasWatchlistItems = loadWatchlistsMeta().some(meta => {
-    try { return (JSON.parse(localStorage.getItem(`lbx_watchlist_${meta.id}`)) || []).length > 0; } catch { return false; }
+    return readJsonStorage(`lbx_watchlist_${meta.id}`, [], Array.isArray).length > 0;
   });
   if (hasHistory || hasWatchlistItems) {
     localStorage.setItem(ONBOARDING_SEEN_KEY, '1'); // a déjà des données, pas besoin de cet accueil
@@ -150,10 +201,8 @@ renderCriteriaAverageMarkers();
   });
   skipBtn.addEventListener('click', dismiss);
 
-  // Après la disparition de l'écran de démarrage (1200ms + marge), pas avant.
+  // Après le début du fondu du splash, pas avant.
   setTimeout(() => {
-    lastFocusedBeforeModal = document.activeElement;
-    modal.classList.add('open');
-    nextBtn.focus();
-  }, 1400);
+    openModalElement(modal, { initialFocus: nextBtn });
+  }, 350);
 })();
